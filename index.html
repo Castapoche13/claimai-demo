@@ -1,0 +1,882 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ClaimAI Gestion</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Poste de gestion sinistres : barre latérale d'encre, surfaces claires,
+   bleu et jaune du constat amiable pour l'action et l'attente humaine. */
+:root{
+  --ink:#0f1b2d; --ink-2:#1a2a42; --ink-text:#c9d4e4; --ink-muted:#8193ab;
+  --bg:#f3f5f8; --surface:#ffffff; --surface-2:#f8fafc; --line:#dde3ea; --line-strong:#c5cedb;
+  --text:#152031; --muted:#5a6a7e; --faint:#8a98aa;
+  --accent:#1f4fa3; --accent-hover:#183f86; --accent-soft:#e7eefa;
+  --wait:#8a5a00; --wait-soft:#fdf2d6; --wait-line:#f0c451;
+  --ok:#1c6e46; --ok-soft:#e1f2e8; --ko:#a8261b; --ko-soft:#fbe9e7;
+  --ia:#0b6a80; --ia-soft:#dff1f5; --on-accent:#ffffff;
+  --shadow:0 8px 28px rgba(15,27,45,.12);
+  --f-body:"Figtree","Segoe UI",system-ui,-apple-system,sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,"SFMono-Regular",Menlo,Consolas,monospace;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){:root{
+  --bg:#0c1522; --surface:#121e2f; --surface-2:#16243a; --line:#23334a; --line-strong:#2f4461;
+  --text:#e3e9f2; --muted:#9aabc0; --faint:#6f8199;
+  --accent:#6f9cf0; --accent-hover:#8cb1f5; --accent-soft:#1a2c4d;
+  --wait:#f2c451; --wait-soft:#3a2d0e; --wait-line:#8a6a1c;
+  --ok:#6fd19c; --ok-soft:#123424; --ko:#f28b82; --ko-soft:#3d1a18;
+  --ia:#6fcde0; --ia-soft:#0f3340; --on-accent:#0b1420; --shadow:0 8px 28px rgba(0,0,0,.45); color-scheme:dark;}}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--text);font:14px/1.5 var(--f-body);-webkit-font-smoothing:antialiased}
+[hidden]{display:none!important}
+h1,h2,h3,h4{margin:0;line-height:1.25;font-weight:650;text-wrap:balance}
+p{margin:0}
+.mono{font-family:var(--f-mono);font-size:.9em;font-variant-numeric:tabular-nums}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+a{color:var(--accent)}
+
+/* Boutons et champs */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;border-radius:8px;border:1px solid var(--line-strong);background:var(--surface);padding:8px 14px;font-weight:600;font-size:13px;white-space:nowrap;transition:background .15s,border-color .15s}
+.btn:hover{background:var(--surface-2)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.btn.primary:hover{background:var(--accent-hover)}
+.btn.ok{background:var(--ok);border-color:var(--ok);color:var(--on-accent)}
+.btn.ko{color:var(--ko);border-color:var(--ko)}
+.btn.ko:hover{background:var(--ko-soft)}
+.btn.small{padding:5px 10px;font-size:12px}
+.btn:disabled{opacity:.55;cursor:wait}
+.field{display:flex;flex-direction:column;gap:5px;min-width:0}
+.field label,.label{font-size:12px;font-weight:600;color:var(--muted)}
+.field .hint{font-size:12px;color:var(--faint)}
+.input,select.input,textarea.input{width:100%;border:1px solid var(--line-strong);background:var(--surface);border-radius:8px;padding:9px 11px}
+textarea.input{min-height:110px;resize:vertical;line-height:1.5}
+.input:focus{border-color:var(--accent);outline:none;box-shadow:0 0 0 3px var(--accent-soft)}
+.check{display:flex;gap:8px;align-items:flex-start;font-size:13px}
+.check input{margin-top:3px;accent-color:var(--accent)}
+.err{color:var(--ko);font-size:13px;min-height:1em}
+.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+@media (max-width:700px){.grid2,.grid3{grid-template-columns:1fr}}
+
+/* Pastilles */
+.pill{display:inline-flex;align-items:center;gap:6px;padding:2px 9px;border-radius:999px;font-size:12px;font-weight:600;white-space:nowrap;background:var(--surface-2);color:var(--muted);border:1px solid var(--line)}
+.pill::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.t-wait{background:var(--wait-soft);color:var(--wait);border-color:transparent}
+.t-ok{background:var(--ok-soft);color:var(--ok);border-color:transparent}
+.t-ko{background:var(--ko-soft);color:var(--ko);border-color:transparent}
+.t-info{background:var(--accent-soft);color:var(--accent);border-color:transparent}
+.t-ia{background:var(--ia-soft);color:var(--ia);border-color:transparent}
+.t-neutre{background:var(--surface-2);color:var(--muted)}
+.chip{display:inline-block;padding:1px 8px;border-radius:6px;font-size:12px;background:var(--surface-2);border:1px solid var(--line);color:var(--muted);white-space:nowrap}
+
+/* Connexion */
+.login{min-height:100%;display:grid;place-items:center;padding:24px 16px;background:
+  linear-gradient(180deg,var(--ink) 0 38%,var(--bg) 38% 100%)}
+.login-card{width:100%;max-width:440px;background:var(--surface);border-radius:14px;box-shadow:var(--shadow);padding:28px;display:flex;flex-direction:column;gap:16px}
+.brand{display:flex;align-items:center;gap:10px;font-weight:700;font-size:18px;letter-spacing:-.01em}
+.brand .mark{width:30px;height:30px;border-radius:8px;display:grid;place-items:center;background:var(--accent);color:#fff;font-family:var(--f-mono);font-size:13px;font-weight:600}
+.brand-sub{color:var(--muted);font-size:13px}
+.login-note{font-size:12px;color:var(--faint);border-top:1px solid var(--line);padding-top:12px}
+
+/* Structure */
+.app{display:grid;grid-template-columns:232px minmax(0,1fr);min-height:100%}
+.side{background:var(--ink);color:var(--ink-text);display:flex;flex-direction:column;gap:18px;padding:18px 12px;position:sticky;top:0;height:100vh}
+.side .brand{color:#fff;padding:0 6px}
+.side .brand .mark{background:#2f63c4}
+.nav{display:flex;flex-direction:column;gap:2px}
+.nav button{display:flex;align-items:center;justify-content:space-between;gap:8px;text-align:left;background:none;border:0;color:var(--ink-text);padding:9px 10px;border-radius:8px;font-weight:500}
+.nav button:hover{background:var(--ink-2);color:#fff}
+.nav button[aria-current="page"]{background:var(--ink-2);color:#fff;box-shadow:inset 3px 0 0 #f0c451}
+.nav .badge{font-family:var(--f-mono);font-size:11px;background:#f0c451;color:#3a2a00;border-radius:999px;padding:1px 7px;font-weight:600}
+.nav .badge:empty{display:none}
+.side-foot{margin-top:auto;font-size:12px;color:var(--ink-muted);display:flex;flex-direction:column;gap:8px;padding:0 6px}
+.side-foot strong{color:#fff;font-weight:600;display:block;font-size:13px}
+.side-foot button{background:none;border:1px solid var(--ink-2);color:var(--ink-text);border-radius:8px;padding:6px 10px;font-size:12px;align-self:flex-start}
+.side-foot button:hover{border-color:var(--ink-muted)}
+.main{min-width:0;display:flex;flex-direction:column}
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 28px;border-bottom:1px solid var(--line);background:var(--surface);position:sticky;top:0;z-index:5;flex-wrap:wrap}
+.top h1{font-size:19px}
+.top .sub{color:var(--muted);font-size:13px}
+.top-actions{display:flex;align-items:center;gap:10px;color:var(--faint);font-size:12px}
+.vue{padding:22px 28px 48px;display:flex;flex-direction:column;gap:18px;max-width:1240px;width:100%}
+@media (max-width:900px){
+  .app{grid-template-columns:1fr}
+  .side{position:static;height:auto;flex-direction:row;flex-wrap:wrap;align-items:center;padding:10px 12px;gap:10px}
+  .nav{flex-direction:row;flex-wrap:wrap}
+  .side-foot{margin-top:0;flex-direction:row;align-items:center;margin-left:auto}
+  .top{padding:12px 16px}.vue{padding:16px 16px 40px}
+}
+
+/* Cartes et blocs */
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px}
+.card-pad{padding:18px}
+.section-title{display:flex;align-items:baseline;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.section-title h2{font-size:16px}
+.section-title p{color:var(--muted);font-size:13px}
+.empty{padding:36px 20px;text-align:center;color:var(--muted);display:flex;flex-direction:column;gap:6px;align-items:center}
+.empty strong{color:var(--text);font-size:15px}
+
+/* À traiter */
+.queue{display:flex;flex-direction:column;gap:10px}
+.task{display:grid;grid-template-columns:4px minmax(0,1fr) auto;background:var(--surface);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.task .stripe{background:var(--wait-line)}
+.task.k-decision .stripe{background:var(--ko)}
+.task.k-prereglement .stripe{background:var(--accent)}
+.task-body{padding:14px 16px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.task-head{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.task-head .num{font-family:var(--f-mono);font-weight:500;font-size:13px}
+.task-head .since{color:var(--faint);font-size:12px;margin-left:auto}
+.task h3{font-size:15px}
+.task .why{color:var(--muted);font-size:13px}
+.task ul{margin:2px 0 0;padding-left:18px;color:var(--muted);font-size:13px}
+.task-actions{display:flex;flex-direction:column;gap:6px;justify-content:center;padding:14px 16px;border-left:1px solid var(--line);background:var(--surface-2)}
+@media (max-width:700px){.task{grid-template-columns:4px minmax(0,1fr)}.task-actions{grid-column:2;flex-direction:row;flex-wrap:wrap;border-left:0;border-top:1px solid var(--line)}}
+
+/* Tableaux */
+.filters{display:flex;gap:10px;flex-wrap:wrap;align-items:end}
+.filters .field{flex:1 1 220px}
+.filters .field.narrow{flex:0 1 230px}
+.table-wrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:13px}
+th,td{text-align:left;padding:10px 14px;border-bottom:1px solid var(--line);vertical-align:middle;white-space:nowrap}
+th{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--faint);font-weight:600;background:var(--surface-2)}
+tbody tr{cursor:pointer}
+tbody tr:hover td{background:var(--surface-2)}
+td.wrap{white-space:normal;min-width:180px}
+td .sub{display:block;color:var(--faint);font-size:12px}
+.num-right{text-align:right;font-variant-numeric:tabular-nums}
+
+/* Indicateurs */
+.tiles{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+@media (max-width:1000px){.tiles{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:520px){.tiles{grid-template-columns:1fr}}
+.tile{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:4px}
+.tile .v{font-size:28px;font-weight:700;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.tile .l{color:var(--muted);font-size:13px}
+.tile .s{color:var(--faint);font-size:12px}
+.bars{display:flex;flex-direction:column;gap:10px}
+.bar-row{display:grid;grid-template-columns:minmax(120px,210px) minmax(0,1fr) 36px;gap:12px;align-items:center;font-size:13px}
+.bar-row .track{height:10px;background:var(--surface-2);border:1px solid var(--line);border-radius:6px;overflow:hidden}
+.bar-row .fill{height:100%;background:var(--accent);border-radius:6px}
+.bar-row .fill.w{background:var(--wait-line)}
+.bar-row .n{text-align:right;font-family:var(--f-mono);font-size:12px}
+
+/* Panneau fiche */
+.voile{position:fixed;inset:0;background:rgba(10,18,30,.42);z-index:20}
+.panneau{position:fixed;top:0;right:0;bottom:0;width:min(760px,100%);background:var(--bg);z-index:21;display:flex;flex-direction:column;box-shadow:var(--shadow)}
+.panneau-head{background:var(--surface);border-bottom:1px solid var(--line);padding:16px 20px;display:flex;flex-direction:column;gap:8px}
+.panneau-head .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.panneau-head h2{font-family:var(--f-mono);font-size:18px;font-weight:500}
+.panneau-head .close{margin-left:auto}
+.panneau-body{overflow-y:auto;padding:18px 20px 40px;display:flex;flex-direction:column;gap:14px}
+.bloc{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:12px}
+.bloc h3{font-size:14px;display:flex;align-items:center;gap:8px}
+.bloc.alerte{border-color:var(--wait-line);background:linear-gradient(0deg,var(--surface),var(--surface)) padding-box}
+.kv{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px 18px}
+.kv div{display:flex;flex-direction:column;gap:1px;min-width:0}
+.kv dt,.kv .k{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--faint);font-weight:600}
+.kv dd,.kv .v{margin:0;overflow-wrap:anywhere}
+.recit{border-left:3px solid var(--line-strong);padding:4px 0 4px 12px;color:var(--text);font-style:italic;overflow-wrap:anywhere}
+.jauge{height:8px;border-radius:6px;background:var(--surface-2);border:1px solid var(--line);overflow:hidden;max-width:220px}
+.jauge i{display:block;height:100%}
+.liste-simple{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:3px;color:var(--muted)}
+.timeline{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.timeline li{display:grid;grid-template-columns:118px 92px minmax(0,1fr);gap:10px;padding:7px 0;border-bottom:1px dashed var(--line);font-size:13px;align-items:baseline}
+.timeline li:last-child{border-bottom:0}
+.timeline .quand{font-family:var(--f-mono);font-size:12px;color:var(--faint)}
+@media (max-width:600px){.timeline li{grid-template-columns:1fr}}
+.acteur{font-size:11px;font-weight:600;padding:1px 7px;border-radius:6px;background:var(--surface-2);color:var(--muted);justify-self:start}
+.acteur.ia{background:var(--ia-soft);color:var(--ia)}
+.acteur.humain{background:var(--wait-soft);color:var(--wait)}
+details.courrier{border:1px solid var(--line);border-radius:10px;background:var(--surface-2)}
+details.courrier summary{cursor:pointer;padding:10px 12px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;list-style:none}
+details.courrier summary::-webkit-details-marker{display:none}
+details.courrier summary::before{content:"▸";color:var(--faint);transition:transform .15s}
+details.courrier[open] summary::before{transform:rotate(90deg)}
+details.courrier .corps{white-space:pre-wrap;padding:0 14px 14px;font-size:13px;color:var(--text);overflow-wrap:anywhere}
+.anomalie{display:flex;gap:8px;align-items:flex-start;font-size:13px}
+.anomalie b{font-family:var(--f-mono);font-size:11px;background:var(--ko-soft);color:var(--ko);padding:1px 6px;border-radius:5px;font-weight:500}
+.actions-row{display:flex;gap:8px;flex-wrap:wrap}
+
+/* Modale et notifications */
+.modale-fond{position:fixed;inset:0;background:rgba(10,18,30,.5);z-index:40;display:grid;place-items:center;padding:16px}
+.modale{background:var(--surface);border-radius:14px;box-shadow:var(--shadow);width:100%;max-width:480px;padding:22px;display:flex;flex-direction:column;gap:14px}
+.modale h3{font-size:16px}
+.modale p{color:var(--muted)}
+.toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 16px;border-radius:10px;box-shadow:var(--shadow);z-index:50;font-size:13px;max-width:calc(100% - 32px)}
+.toast.err{background:var(--ko)}
+
+/* Intégration */
+.doc-ep{border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.doc-ep header{display:flex;gap:10px;align-items:center;padding:10px 12px;background:var(--surface-2);flex-wrap:wrap}
+.method{font-family:var(--f-mono);font-size:11px;font-weight:600;padding:2px 7px;border-radius:5px;background:var(--accent-soft);color:var(--accent)}
+.method.get{background:var(--ok-soft);color:var(--ok)}
+.doc-ep p{padding:10px 12px 0;color:var(--muted);font-size:13px}
+pre.code{margin:10px 12px 12px;background:var(--ink);color:#dbe6f5;border-radius:8px;padding:12px;font:12px/1.55 var(--f-mono);overflow-x:auto;white-space:pre}
+.secret-box{border:1px dashed var(--wait-line);background:var(--wait-soft);border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:6px;font-size:13px;color:var(--wait)}
+.secret-box code{font-family:var(--f-mono);color:var(--text);overflow-wrap:anywhere;background:var(--surface);padding:6px 8px;border-radius:6px}
+.two-way{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+@media (max-width:700px){.two-way{grid-template-columns:1fr}}
+.way{border:1px solid var(--line);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:6px;background:var(--surface-2)}
+.way .dir{font-family:var(--f-mono);font-size:12px;color:var(--accent)}
+.spin{width:14px;height:14px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:tourne .8s linear infinite;display:inline-block}
+@keyframes tourne{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.spin{animation:none}}
+</style>
+</head>
+<body>
+
+<!-- ======================= CONNEXION ======================= -->
+<div id="login" class="login">
+  <form class="login-card" id="form-login" novalidate>
+    <div>
+      <div class="brand"><span class="mark">CL</span>ClaimAI Gestion</div>
+      <p class="brand-sub">Poste du gestionnaire sinistres : décisions, validations, suivi des dossiers.</p>
+    </div>
+    <div class="field">
+      <label for="l-base">Adresse de l'API ClaimAI</label>
+      <input class="input mono" id="l-base" autocomplete="url" value="https://okugbnabvlotasdsokco.supabase.co/functions/v1/claimai">
+    </div>
+    <div class="field">
+      <label for="l-cle">Clé d'accès de votre compagnie</label>
+      <input class="input mono" id="l-cle" type="password" autocomplete="current-password" placeholder="clm_…">
+      <span class="hint">Fournie par ClaimAI lors du raccordement. Elle identifie votre compagnie.</span>
+    </div>
+    <div class="field">
+      <label for="l-gest">Votre identifiant gestionnaire</label>
+      <input class="input" id="l-gest" autocomplete="username" placeholder="ex. c.lecland">
+      <span class="hint">Il signe chaque validation dans le journal d'audit.</span>
+    </div>
+    <label class="check"><input type="checkbox" id="l-memo"> Se souvenir de moi sur cet ordinateur</label>
+    <p class="err" id="l-err" role="alert"></p>
+    <button class="btn primary" id="l-btn" type="submit">Se connecter</button>
+    <p class="login-note">Les échanges passent directement entre ce poste et l'API ClaimAI, hébergée dans l'Union européenne. Aucune décision défavorable n'est prise sans validation d'un gestionnaire.</p>
+  </form>
+</div>
+
+<!-- ======================= APPLICATION ======================= -->
+<div id="app" class="app" hidden>
+  <aside class="side">
+    <div class="brand"><span class="mark">CL</span>ClaimAI</div>
+    <nav class="nav" aria-label="Navigation principale">
+      <button type="button" data-vue="a-traiter" id="nav-a-traiter">À traiter <span class="badge" id="badge"></span></button>
+      <button type="button" data-vue="dossiers" id="nav-dossiers">Dossiers</button>
+      <button type="button" data-vue="nouveau" id="nav-nouveau">Nouveau sinistre</button>
+      <button type="button" data-vue="indicateurs" id="nav-indicateurs">Indicateurs</button>
+      <button type="button" data-vue="integration" id="nav-integration">Intégration</button>
+    </nav>
+    <div class="side-foot">
+      <div><strong id="s-assureur">…</strong><span id="s-gest"></span></div>
+      <button type="button" id="btn-deco">Se déconnecter</button>
+    </div>
+  </aside>
+
+  <div class="main">
+    <header class="top">
+      <div><h1 id="titre-vue">À traiter</h1><p class="sub" id="sous-titre-vue"></p></div>
+      <div class="top-actions"><span id="maj"></span><button class="btn small" type="button" id="btn-refresh">Actualiser</button></div>
+    </header>
+
+    <!-- À traiter -->
+    <section class="vue" id="vue-a-traiter" data-titre="À traiter" data-sous="Les dossiers qui attendent une décision humaine, du plus ancien au plus récent.">
+      <div class="queue" id="queue"></div>
+    </section>
+
+    <!-- Dossiers -->
+    <section class="vue" id="vue-dossiers" data-titre="Dossiers" data-sous="Tous les dossiers de votre compagnie, du plus récemment modifié au plus ancien." hidden>
+      <div class="filters">
+        <div class="field"><label for="f-q">Rechercher</label><input class="input" id="f-q" placeholder="Numéro, référence, contrat, immatriculation"></div>
+        <div class="field narrow"><label for="f-statut">Statut</label><select class="input" id="f-statut"></select></div>
+      </div>
+      <div class="card"><div class="table-wrap"><table>
+        <thead><tr><th>Dossier</th><th>Sinistre</th><th>Statut</th><th>Contrat</th><th>Date</th><th class="num-right">Règlement</th><th>Mis à jour</th></tr></thead>
+        <tbody id="t-dossiers"></tbody>
+      </table></div></div>
+      <p class="sub" id="compte-dossiers" style="color:var(--faint);font-size:12px"></p>
+    </section>
+
+    <!-- Nouveau sinistre -->
+    <section class="vue" id="vue-nouveau" data-titre="Nouveau sinistre" data-sous="Saisie d'une déclaration, telle que votre outil l'enverrait à ClaimAI." hidden>
+      <form class="card card-pad" id="form-decl" novalidate style="display:flex;flex-direction:column;gap:14px;max-width:820px">
+        <div class="grid3">
+          <div class="field"><label for="d-contrat">Numéro de contrat</label><input class="input mono" id="d-contrat" list="contrats-demo" placeholder="AUTO-2025-0001"><datalist id="contrats-demo"><option value="AUTO-2025-0001"><option value="AUTO-2025-0002"><option value="AUTO-2024-0003"></datalist></div>
+          <div class="field"><label for="d-ref">Référence dans votre outil</label><input class="input mono" id="d-ref"></div>
+          <div class="field"><label for="d-date">Date du sinistre</label><input class="input" id="d-date" type="date"></div>
+        </div>
+        <div class="grid3">
+          <div class="field"><label for="d-theme">Type déclaré</label><select class="input" id="d-theme">
+            <option value="BRIS_GLACE">Bris de glace</option>
+            <option value="PERTE_CONTROLE_OBSTACLE_FIXE">Perte de contrôle, obstacle fixe</option>
+            <option value="GARANTIE_ACCIDENT">Accident corporel</option>
+            <option value="">Je ne sais pas</option></select></div>
+          <div class="field"><label for="d-cp">Code postal du lieu</label><input class="input mono" id="d-cp" inputmode="numeric" maxlength="5" placeholder="77140"></div>
+          <div class="field"><label for="d-ville">Commune</label><input class="input" id="d-ville" placeholder="Nemours"></div>
+        </div>
+        <fieldset style="border:0;padding:0;margin:0;display:flex;gap:18px;flex-wrap:wrap;align-items:center">
+          <legend class="label" style="margin-bottom:6px">Une autre personne ou un autre véhicule est-il impliqué ?</legend>
+          <label class="check"><input type="radio" name="d-tiers" value="false" checked> Non</label>
+          <label class="check"><input type="radio" name="d-tiers" value="true"> Oui</label>
+          <label class="check"><input type="radio" name="d-tiers" value=""> Ne sait pas</label>
+        </fieldset>
+        <div class="field"><label for="d-recit">Récit de l'assuré</label><textarea class="input" id="d-recit" placeholder="Ce qui s'est passé, avec les mots de l'assuré."></textarea><span class="hint">Seuls le type déclaré, la date et ce récit sont transmis à l'analyse IA. Aucun nom ni coordonnée.</span></div>
+        <p class="err" id="d-err" role="alert"></p>
+        <div class="actions-row"><button class="btn primary" type="submit" id="d-btn">Envoyer la déclaration</button><button class="btn" type="button" id="d-exemple">Remplir un exemple</button></div>
+      </form>
+      <div id="d-resultat"></div>
+    </section>
+
+    <!-- Indicateurs -->
+    <section class="vue" id="vue-indicateurs" data-titre="Indicateurs" data-sous="Activité de votre compagnie depuis le raccordement." hidden>
+      <div class="tiles" id="tiles"></div>
+      <div class="grid2">
+        <div class="card card-pad" style="display:flex;flex-direction:column;gap:14px"><div class="section-title"><h2>Dossiers par statut</h2></div><div class="bars" id="bars-statut"></div></div>
+        <div class="card card-pad" style="display:flex;flex-direction:column;gap:14px"><div class="section-title"><h2>Dossiers par type</h2></div><div class="bars" id="bars-theme"></div></div>
+      </div>
+      <div class="card card-pad" style="display:flex;flex-direction:column;gap:14px"><div class="section-title"><h2>Pourquoi un gestionnaire intervient</h2><p>Dossiers en cours sortis du circuit automatique, par motif.</p></div><div class="bars" id="bars-motif"></div></div>
+    </section>
+
+    <!-- Intégration -->
+    <section class="vue" id="vue-integration" data-titre="Intégration" data-sous="Raccorder ClaimAI à votre outil de gestion, dans les deux sens." hidden>
+      <div class="two-way">
+        <div class="way"><span class="dir">Votre outil → ClaimAI</span><strong>Envoi des déclarations et des pièces</strong><p class="sub" style="color:var(--muted)">Votre outil appelle l'API avec la clé de votre compagnie : déclaration, retour du réparateur, confirmation de virement.</p></div>
+        <div class="way"><span class="dir">ClaimAI → votre outil</span><strong>Notification de chaque changement de statut</strong><p class="sub" style="color:var(--muted)">ClaimAI appelle l'adresse de votre choix à chaque étape, avec une signature pour garantir l'origine du message.</p></div>
+      </div>
+
+      <div class="card card-pad" style="display:flex;flex-direction:column;gap:14px">
+        <div class="section-title"><h2>Identifiants</h2></div>
+        <div class="kv">
+          <div><span class="k">Adresse de l'API</span><span class="v mono" id="i-base"></span></div>
+          <div><span class="k">Clé utilisée ici</span><span class="v mono" id="i-cle"></span></div>
+          <div><span class="k">Mode de raccordement</span><span class="v" id="i-mode"></span></div>
+        </div>
+        <div class="table-wrap"><table><thead><tr><th>Clé</th><th>Libellé</th><th>État</th><th>Dernière utilisation</th></tr></thead><tbody id="i-cles"></tbody></table></div>
+      </div>
+
+      <div class="card card-pad" style="display:flex;flex-direction:column;gap:14px">
+        <div class="section-title"><h2>Notifications vers votre outil</h2><p>Une requête POST signée à chaque changement de statut.</p></div>
+        <form id="form-webhook" novalidate style="display:flex;gap:10px;flex-wrap:wrap;align-items:end">
+          <div class="field" style="flex:1 1 360px"><label for="w-url">Adresse de réception (https)</label><input class="input mono" id="w-url" placeholder="https://votre-outil.fr/claimai/evenements"></div>
+          <button class="btn primary" type="submit" id="w-save">Enregistrer</button>
+          <button class="btn" type="button" id="w-test">Envoyer un test</button>
+          <button class="btn" type="button" id="w-secret">Nouveau secret</button>
+        </form>
+        <p class="err" id="w-err" role="alert"></p>
+        <div id="w-secret-box"></div>
+        <div class="table-wrap"><table><thead><tr><th>Envoyé le</th><th>Événement</th><th>Résultat</th><th>Détail</th></tr></thead><tbody id="w-envois"></tbody></table></div>
+      </div>
+
+      <div class="card card-pad" style="display:flex;flex-direction:column;gap:14px">
+        <div class="section-title"><h2>Règles de contrôle</h2><p>Au-delà de ces seuils, le dossier passe à un gestionnaire.</p></div>
+        <form id="form-regles" novalidate style="display:flex;flex-direction:column;gap:14px">
+          <div class="grid2">
+            <div class="field"><label for="r-ecart">Écart toléré devis / expertise (%)</label><input class="input" id="r-ecart" type="number" min="0" max="100" step="0.5"></div>
+            <div class="field"><label for="r-taux">Taux horaire maximum (€ HT)</label><input class="input" id="r-taux" type="number" min="1" step="1"></div>
+            <div class="field"><label for="r-bg">Bris de glace sans expertise jusqu'à (€ TTC)</label><input class="input" id="r-bg" type="number" min="1" step="50"></div>
+            <div class="field"><label for="r-relance">Relance après (jours sans réponse)</label><input class="input" id="r-relance" type="number" min="1" max="60" step="1"></div>
+          </div>
+          <p class="err" id="r-err" role="alert"></p>
+          <div><button class="btn primary" type="submit" id="r-save">Enregistrer les règles</button></div>
+        </form>
+      </div>
+
+      <div class="card card-pad" style="display:flex;flex-direction:column;gap:12px">
+        <div class="section-title"><h2>Documentation de l'API</h2><p>Chaque appel porte l'en-tête <span class="mono">x-claimai-key</span>. Réponses en JSON.</p></div>
+        <div id="doc" style="display:flex;flex-direction:column;gap:10px"></div>
+      </div>
+    </section>
+  </div>
+</div>
+
+<div id="voile" class="voile" hidden></div>
+<aside id="panneau" class="panneau" hidden aria-label="Fiche dossier" role="dialog" aria-modal="true"></aside>
+<div id="modale-fond" class="modale-fond" hidden></div>
+<div id="toast" class="toast" hidden role="status"></div>
+
+<script>
+(function(){
+"use strict";
+
+/* ---------------- Libellés métier ---------------- */
+var STATUTS = {
+  recu:["Reçu","info"], contrat_verifie:["Contrat vérifié","info"], analyse:["Analysé","info"],
+  hors_perimetre:["À reprendre","wait"], decision_a_valider:["Refus à valider","wait"],
+  refuse:["Refusé","ko"], mission_envoyee:["Mission envoyée","info"], attente_pieces:["Attente pièces","info"],
+  expertise_recue:["Retour reçu","info"], anomalie_gestionnaire:["Anomalie","wait"],
+  prereglement_a_valider:["Pré-règlement à valider","wait"], reglement_envoye:["Règlement envoyé","info"], clos:["Clos","ok"], classe_sans_suite:["Classé sans suite","neutre"]
+};
+var THEMES = {BRIS_GLACE:"Bris de glace", PERTE_CONTROLE_OBSTACLE_FIXE:"Perte de contrôle", GARANTIE_ACCIDENT:"Accident corporel", AUTRE:"Autre", NON_QUALIFIE:"Non qualifié"};
+var MOTIFS = {
+  garantie_non_souscrite:"La garantie correspondant au sinistre n'est pas souscrite",
+  contrat_non_actif_a_la_date:"Le contrat n'était pas en vigueur à la date du sinistre",
+  contrat_introuvable:"Aucun contrat ne correspond au numéro déclaré",
+  theme_non_gere:"Type de sinistre non couvert par le circuit",
+  theme_hors_perimetre:"Sinistre hors du circuit automatique (autre type, tiers ou circonstances à éclaircir)",
+  tiers_implique:"Un tiers est impliqué : sort du contractuel pur",
+  tiers_non_determine:"La présence d'un tiers n'est pas établie",
+  analyse_incertaine:"L'analyse du récit est peu sûre (confiance sous 0,7)",
+  theme_declare_incoherent:"Le type déclaré ne correspond pas au récit",
+  doublon_possible:"Un dossier identique existe déjà (même contrat, même date, même type)",
+  analyse_ia_en_echec:"L'analyse IA n'a pas abouti",
+  aucun_reparateur_agree:"Aucun réparateur agréé dans la zone",
+  aucun_expert_zone:"Aucun expert disponible dans le département",
+  anomalie_expertise:"Anomalie relevée sur la facture ou l'expertise",
+  calcul_impossible:"Le calcul du règlement est impossible",
+  prereglement_a_valider:"Pré-règlement calculé, à valider",
+  prereglement_rejete:"Pré-règlement rejeté par un gestionnaire",
+  traitement_manuel:"Dossier repris en traitement manuel",
+  relances_sans_reponse:"Trois relances sans réponse"
+};
+var ANOMALIES = {
+  VEI:"Véhicule économiquement irréparable", REGLEMENT_DIRECT_REFUSE:"L'expert n'accorde pas le règlement direct au réparateur",
+  TAUX_HORAIRE:"Taux horaire au-dessus du maximum", ECART_DEVIS:"Écart entre devis et montant retenu",
+  PLAFOND_DEPASSE:"Plafond de garantie dépassé", SEUIL_SANS_EXPERT:"Bris de glace au-dessus du seuil sans expertise",
+  AUCUN_REPARATEUR:"Aucun réparateur agréé trouvé", AUCUN_EXPERT:"Aucun expert trouvé",
+  RELANCES_SANS_REPONSE:"Trois relances sans réponse", CALCUL_IMPOSSIBLE:"Calcul du règlement impossible"
+};
+var COURRIERS = {accuse_reception:"Accusé de réception", refus:"Refus", mission_expert:"Mission d'expertise",
+  prise_en_charge_garage:"Prise en charge réparateur", demande_pieces:"Demande de pièces", relance:"Relance", avis_reglement:"Avis de règlement"};
+var DEST = {assure:"Assuré", expert:"Expert", garage:"Réparateur", gestionnaire:"Gestionnaire"};
+var RESP = {non_applicable:"Sans objet", responsable:"Responsable", non_responsable:"Non responsable", partagee:"Partagée", a_determiner:"À déterminer"};
+var ACTIONS = {creation_dossier:"Dossier créé à partir de la déclaration", analyse_declaration:"Analyse de la déclaration",
+  controle_expertise:"Contrôle de la facture ou de l'expertise", reprise_analyse:"Analyse relancée",
+  reprise_gestionnaire:"Dossier repris par un gestionnaire", classement_sans_suite:"Classement sans suite"};
+
+/* ---------------- Utilitaires ---------------- */
+function $(id){return document.getElementById(id);}
+function esc(v){return String(v==null?"":v).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];});}
+var EUR = new Intl.NumberFormat("fr-FR",{style:"currency",currency:"EUR"});
+function eur(n){return n==null||n===""?"":EUR.format(Number(n));}
+function dateFr(s){if(!s)return "";var d=new Date(String(s).length<=10?s+"T12:00:00":s);return d.toLocaleDateString("fr-FR");}
+function heureFr(s){if(!s)return "";var d=new Date(s);return d.toLocaleDateString("fr-FR",{day:"2-digit",month:"2-digit"})+" "+d.toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit"});}
+function depuis(s){if(!s)return "";var m=Math.round((Date.now()-new Date(s).getTime())/60000);
+  if(m<1)return "à l'instant"; if(m<60)return "il y a "+m+" min"; var h=Math.round(m/60); if(h<24)return "il y a "+h+" h"; var j=Math.round(h/24); return "il y a "+j+" j";}
+function pillStatut(s){var x=STATUTS[s]||[s,"info"];return '<span class="pill t-'+x[1]+'">'+esc(x[0])+'</span>';}
+function theme(t){return esc(THEMES[t]||t||"Non qualifié");}
+function motif(m){return esc(MOTIFS[m]||m||"");}
+function acteurBadge(a){a=a||"";if(a==="ia")return '<span class="acteur ia">Claude</span>';
+  if(a.indexOf("humain:")===0)return '<span class="acteur humain">'+esc(a.slice(7))+'</span>';return '<span class="acteur">Système</span>';}
+
+var toastTimer;
+function toast(msg,erreur){var t=$("toast");t.textContent=msg;t.className="toast"+(erreur?" err":"");t.hidden=false;clearTimeout(toastTimer);toastTimer=setTimeout(function(){t.hidden=true;},erreur?6000:3200);}
+
+/* ---------------- Session et API ---------------- */
+var S={base:"",cle:"",gest:"",assureur:""};
+var MEMO="claimai-gestion-v1";
+
+function api(chemin,opts){
+  opts=opts||{};
+  var h={"x-claimai-key":S.cle};
+  if(opts.body!==undefined)h["Content-Type"]="application/json";
+  return fetch(S.base.replace(/\/+$/,"")+"/"+chemin,{method:opts.method||(opts.body!==undefined?"POST":"GET"),headers:h,body:opts.body!==undefined?JSON.stringify(opts.body):undefined})
+    .then(function(r){return r.text().then(function(t){var d=null;try{d=t?JSON.parse(t):null;}catch(e){}
+      if(!r.ok){var err=new Error((d&&d.erreur)||("Erreur "+r.status+" de l'API"));err.status=r.status;throw err;}return d;});},
+      function(){throw new Error("API injoignable. Vérifiez l'adresse et votre connexion.");});
+}
+
+function busy(btn,on,label){if(!btn)return;if(on){btn.dataset.l=btn.innerHTML;btn.disabled=true;btn.innerHTML='<span class="spin"></span> '+(label||"Patientez");}else{btn.disabled=false;if(btn.dataset.l)btn.innerHTML=btn.dataset.l;}}
+
+$("form-login").addEventListener("submit",function(e){
+  e.preventDefault();
+  var base=$("l-base").value.trim(), cle=$("l-cle").value.trim(), gest=$("l-gest").value.trim();
+  var err=$("l-err"); err.textContent="";
+  if(!/^https:\/\/.+/.test(base)){err.textContent="Indiquez l'adresse de l'API, qui commence par https://";return;}
+  if(cle.length<20){err.textContent="Indiquez la clé d'accès de votre compagnie.";return;}
+  if(!gest){err.textContent="Indiquez votre identifiant : il signe vos validations.";return;}
+  S.base=base;S.cle=cle;S.gest=gest;
+  var b=$("l-btn");busy(b,true,"Connexion");
+  api("indicateurs").then(function(ind){
+    S.assureur=ind&&ind.assureur||"";
+    if($("l-memo").checked){try{localStorage.setItem(MEMO,JSON.stringify({base:base,cle:cle,gest:gest}));}catch(x){}}
+    demarrer(ind);
+  }).catch(function(x){err.textContent=x.status===401?"Clé refusée. Vérifiez la clé d'accès fournie par ClaimAI.":x.message;})
+    .finally(function(){busy(b,false);});
+});
+["l-base","l-cle","l-gest"].forEach(function(id){$(id).addEventListener("input",function(){$("l-err").textContent="";});});
+
+$("btn-deco").addEventListener("click",function(){try{localStorage.removeItem(MEMO);}catch(x){}location.reload();});
+
+/* ---------------- Navigation ---------------- */
+var vueCourante="a-traiter", minuteur=null;
+function montrer(vue){
+  vueCourante=vue;
+  document.querySelectorAll(".vue").forEach(function(s){s.hidden=s.id!=="vue-"+vue;});
+  document.querySelectorAll(".nav button").forEach(function(b){if(b.dataset.vue===vue)b.setAttribute("aria-current","page");else b.removeAttribute("aria-current");});
+  var s=$("vue-"+vue);$("titre-vue").textContent=s.dataset.titre;$("sous-titre-vue").textContent=s.dataset.sous||"";
+  rafraichir();
+}
+document.querySelectorAll(".nav button").forEach(function(b){b.addEventListener("click",function(){montrer(b.dataset.vue);});});
+$("btn-refresh").addEventListener("click",function(){rafraichir(true);});
+
+function demarrer(ind){
+  $("login").hidden=true;$("app").hidden=false;
+  $("s-assureur").textContent=S.assureur||"Compagnie";$("s-gest").textContent="Connecté : "+S.gest;
+  if(ind)majBadge(ind.a_traiter);
+  remplirDoc();
+  montrer("a-traiter");
+  clearInterval(minuteur);minuteur=setInterval(function(){if(!document.hidden&&$("panneau").hidden&&$("modale-fond").hidden)rafraichir();},30000);
+}
+function majBadge(n){$("badge").textContent=n?String(n):"";}
+function horodater(){$("maj").textContent="Mis à jour à "+new Date().toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit"});}
+
+function rafraichir(manuel){
+  var p;
+  if(vueCourante==="a-traiter")p=chargerATraiter();
+  else if(vueCourante==="dossiers")p=chargerDossiers();
+  else if(vueCourante==="indicateurs")p=chargerIndicateurs();
+  else if(vueCourante==="integration")p=chargerIntegration();
+  else p=Promise.resolve();
+  if(vueCourante!=="a-traiter")api("a-traiter").then(function(l){majBadge((l||[]).length);}).catch(function(){});
+  return p.then(horodater).catch(function(x){if(manuel)toast(x.message,true);});
+}
+
+/* ---------------- À traiter ---------------- */
+function descriptionTache(t){
+  var v=t.validation, p=v&&v.proposition||{};
+  if(v&&v.etape==="decision")return {k:"decision",titre:"Refus proposé : à confirmer ou à écarter",why:esc(p.explication?("Motif : "+p.explication):motif(t.motif))};
+  if(v&&v.etape==="prereglement")return {k:"prereglement",titre:"Pré-règlement de "+eur(p.montant_net)+" à valider",
+    why:"Base "+eur(p.montant_base)+", franchise "+eur(p.franchise_eur)+(p.tva_recuperable?", TVA récupérable (base HT)":"")+". Règlement direct au réparateur."};
+  if(v&&v.etape==="anomalie"){var an=(p.anomalies||[]).map(function(a){return "<li>"+esc(ANOMALIES[a.code]||a.code)+(a.detail?" : "+esc(a.detail):"")+"</li>";}).join("");
+    if(!an&&p.code)an="<li>"+esc(ANOMALIES[p.code]||p.code)+"</li>";
+    return {k:"anomalie",titre:"Anomalie à examiner",why:motif(t.motif),liste:an};}
+  return {k:"reprise",titre:"Dossier à reprendre",why:motif(t.motif)};
+}
+function chargerATraiter(){
+  return api("a-traiter").then(function(l){
+    l=l||[];majBadge(l.length);
+    var q=$("queue");
+    if(!l.length){q.innerHTML='<div class="card empty"><strong>Rien à traiter pour le moment</strong><span>Les dossiers qui demandent une décision humaine apparaîtront ici, du plus ancien au plus récent.</span></div>';return;}
+    q.innerHTML=l.map(function(t){var d=descriptionTache(t),v=t.validation;
+      var boutons='';
+      if(v&&v.etape==="decision")boutons='<button class="btn ok small" data-val="'+esc(v.id)+'" data-res="valide" data-etape="decision" data-num="'+esc(t.numero)+'">Confirmer le refus</button><button class="btn small" data-val="'+esc(v.id)+'" data-res="rejete" data-etape="decision" data-num="'+esc(t.numero)+'">Prendre en charge</button>';
+      else if(v&&v.etape==="prereglement")boutons='<button class="btn ok small" data-val="'+esc(v.id)+'" data-res="valide" data-etape="prereglement" data-num="'+esc(t.numero)+'">Valider le règlement</button><button class="btn ko small" data-val="'+esc(v.id)+'" data-res="rejete" data-etape="prereglement" data-num="'+esc(t.numero)+'">Rejeter</button>';
+      else if(v&&v.etape==="anomalie")boutons='<button class="btn ok small" data-val="'+esc(v.id)+'" data-res="valide" data-etape="anomalie" data-num="'+esc(t.numero)+'">Accepter et chiffrer</button><button class="btn small" data-val="'+esc(v.id)+'" data-res="rejete" data-etape="anomalie" data-num="'+esc(t.numero)+'">Traiter manuellement</button>';
+      if(t.motif==="analyse_ia_en_echec")boutons+='<button class="btn primary small" data-reanalyser="'+esc(t.numero)+'">Relancer l\'analyse</button>';
+      if(!v&&t.motif!=="analyse_ia_en_echec")boutons+='<button class="btn primary small" data-ouvrir="'+esc(t.numero)+'">Reprendre le dossier</button>';
+      else boutons+='<button class="btn small" data-ouvrir="'+esc(t.numero)+'">Ouvrir la fiche</button>';
+      return '<article class="task k-'+d.k+'"><div class="stripe"></div><div class="task-body">'+
+        '<div class="task-head"><span class="num">'+esc(t.numero)+'</span><span class="chip">'+theme(t.theme)+'</span>'+pillStatut(t.statut)+'<span class="since">'+esc(depuis(t.depuis))+'</span></div>'+
+        '<h3>'+esc(d.titre)+'</h3><p class="why">'+d.why+'</p>'+(d.liste?'<ul>'+d.liste+'</ul>':'')+
+        '</div><div class="task-actions">'+boutons+'</div></article>';}).join("");
+  });
+}
+document.addEventListener("click",function(e){
+  var b=e.target.closest("[data-val]");
+  if(b){e.preventDefault();demanderValidation(b.dataset.val,b.dataset.res,b.dataset.etape,b.dataset.num);return;}
+  var o=e.target.closest("[data-ouvrir]");
+  if(o){e.preventDefault();ouvrirFiche(o.dataset.ouvrir);return;}
+  var r=e.target.closest("[data-reanalyser]");
+  if(r){e.preventDefault();reanalyser(r.dataset.reanalyser,r);}
+});
+
+/* ---------------- Modale de validation ---------------- */
+var TEXTES_VALID={
+  "decision:valide":["Confirmer le refus","Le courrier de refus, avec les voies de recours, sera envoyé à l'assuré et le dossier classé.","Confirmer le refus","ok"],
+  "decision:rejete":["Prendre en charge le sinistre","Vous estimez le sinistre garanti : l'accusé de réception part et le réparateur ou l'expert est missionné.","Prendre en charge","primary"],
+  "prereglement:valide":["Valider le règlement","Le virement au réparateur est déclenché et l'avis de règlement lui est adressé.","Valider le règlement","ok"],
+  "prereglement:rejete":["Rejeter le pré-règlement","Le règlement est annulé et le dossier reste chez vous pour traitement.","Rejeter","ko"],
+  "anomalie:valide":["Accepter malgré l'anomalie","Le pré-règlement est calculé et vous sera proposé pour une seconde validation.","Accepter","ok"],
+  "anomalie:rejete":["Traiter manuellement","Le dossier sort du circuit automatique et reste assigné aux gestionnaires.","Traiter manuellement","primary"]
+};
+function demanderValidation(id,res,etape,numero){
+  var t=TEXTES_VALID[etape+":"+res]||["Confirmer","", "Confirmer","primary"];
+  var oblig=res==="rejete";
+  var f=$("modale-fond");
+  f.innerHTML='<form class="modale" id="m-form" novalidate><h3>'+esc(t[0])+' · <span class="mono">'+esc(numero)+'</span></h3><p>'+esc(t[1])+'</p>'+
+    '<div class="field"><label for="m-com">Commentaire'+(oblig?" (obligatoire)":" (facultatif)")+'</label><textarea class="input" id="m-com" style="min-height:80px"></textarea><span class="hint">Enregistré dans le journal d\'audit avec votre identifiant ('+esc(S.gest)+').</span></div>'+
+    '<p class="err" id="m-err" role="alert"></p><div class="actions-row" style="justify-content:flex-end"><button type="button" class="btn" id="m-annuler">Annuler</button><button type="submit" class="btn '+t[3]+'" id="m-ok">'+esc(t[2])+'</button></div></form>';
+  f.hidden=false;$("m-com").focus();
+  $("m-annuler").onclick=fermerModale;
+  $("m-com").addEventListener("input",function(){$("m-err").textContent="";});
+  $("m-form").addEventListener("submit",function(e){e.preventDefault();
+    var c=$("m-com").value.trim();if(oblig&&!c){$("m-err").textContent="Expliquez votre décision en quelques mots.";return;}
+    var bt=$("m-ok");busy(bt,true,"Envoi");
+    api("valider",{body:{validation_id:id,resultat:res,valide_par:S.gest,commentaire:c||null}}).then(function(r){
+      fermerModale();toast("Dossier "+numero+" : "+((STATUTS[r&&r.statut]||[r&&r.statut])[0]||"mis à jour"));
+      rafraichir();if(!$("panneau").hidden)ouvrirFiche(numero);
+    }).catch(function(x){busy(bt,false);$("m-err").textContent=x.message;});
+  });
+}
+function fermerModale(){$("modale-fond").hidden=true;$("modale-fond").innerHTML="";}
+$("modale-fond").addEventListener("click",function(e){if(e.target===this)fermerModale();});
+
+function reanalyser(numero,btn){
+  busy(btn,true,"Analyse");
+  api("reanalyser",{body:{numero:numero}}).then(function(f){toast("Dossier "+numero+" analysé : "+((STATUTS[f.statut]||[f.statut])[0]));rafraichir();if(!$("panneau").hidden)afficherFiche(f);})
+    .catch(function(x){busy(btn,false);toast(x.message,true);});
+}
+
+/* ---------------- Dossiers ---------------- */
+var sel=$("f-statut");
+sel.innerHTML='<option value="">Tous les statuts</option>'+Object.keys(STATUTS).map(function(k){return '<option value="'+k+'">'+esc(STATUTS[k][0])+'</option>';}).join("");
+var tempo;
+$("f-q").addEventListener("input",function(){clearTimeout(tempo);tempo=setTimeout(chargerDossiers,300);});
+sel.addEventListener("change",chargerDossiers);
+function chargerDossiers(){
+  var qs="dossiers?limite=200"+(sel.value?"&statut="+encodeURIComponent(sel.value):"")+($("f-q").value.trim()?"&q="+encodeURIComponent($("f-q").value.trim()):"");
+  return api(qs).then(function(l){
+    l=l||[];var tb=$("t-dossiers");
+    if(!l.length){tb.innerHTML='<tr><td colspan="7"><div class="empty"><strong>Aucun dossier</strong><span>Modifiez la recherche ou le filtre, ou saisissez un nouveau sinistre.</span></div></td></tr>';}
+    else tb.innerHTML=l.map(function(d){return '<tr data-ouvrir="'+esc(d.numero)+'" tabindex="0"><td><span class="mono">'+esc(d.numero)+'</span><span class="sub mono">'+esc(d.ref_externe||"")+'</span></td>'+
+      '<td>'+theme(d.theme)+'<span class="sub">'+esc(d.code_postal||"")+(d.confiance_ia!=null?" · confiance IA "+Number(d.confiance_ia).toFixed(2).replace(".",","):"")+'</span></td>'+
+      '<td>'+pillStatut(d.statut)+(d.intervention_humaine?'<span class="sub">Gestionnaire intervenu</span>':'')+'</td>'+
+      '<td><span class="mono">'+esc(d.contrat||"Inconnu")+'</span><span class="sub mono">'+esc(d.immatriculation||"")+'</span></td>'+
+      '<td>'+esc(dateFr(d.date_sinistre))+'</td><td class="num-right">'+esc(eur(d.montant))+'</td><td>'+esc(depuis(d.maj))+'</td></tr>';}).join("");
+    $("compte-dossiers").textContent=l.length+" dossier"+(l.length>1?"s":"")+(l.length>=200?" (200 premiers affichés)":"");
+  });
+}
+$("t-dossiers").addEventListener("keydown",function(e){if(e.key==="Enter"){var r=e.target.closest("[data-ouvrir]");if(r)ouvrirFiche(r.dataset.ouvrir);}});
+
+/* ---------------- Fiche dossier ---------------- */
+var ficheCourante=null;
+function ouvrirFiche(numero){
+  var p=$("panneau");
+  if(p.hidden){p.innerHTML='<div class="panneau-head"><div class="row"><h2>'+esc(numero)+'</h2><button class="btn small close" type="button" id="p-close">Fermer</button></div></div><div class="panneau-body"><div class="empty"><span class="spin"></span>Chargement de la fiche</div></div>';
+    p.hidden=false;$("voile").hidden=false;$("p-close").onclick=fermerFiche;}
+  return api("dossier?numero="+encodeURIComponent(numero)).then(afficherFiche).catch(function(x){toast(x.message,true);fermerFiche();});
+}
+function fermerFiche(){$("panneau").hidden=true;$("voile").hidden=true;ficheCourante=null;}
+$("voile").addEventListener("click",fermerFiche);
+document.addEventListener("keydown",function(e){if(e.key==="Escape"){if(!$("modale-fond").hidden)fermerModale();else if(!$("panneau").hidden)fermerFiche();}});
+
+function bloc(titre,contenu,cls){return '<section class="bloc'+(cls?" "+cls:"")+'"><h3>'+titre+'</h3>'+contenu+'</section>';}
+function kv(paires){return '<div class="kv">'+paires.filter(function(p){return p[1]!==null&&p[1]!==undefined&&p[1]!=="";}).map(function(p){return '<div><span class="k">'+esc(p[0])+'</span><span class="v">'+p[1]+'</span></div>';}).join("")+'</div>';}
+function libelleHisto(h){
+  var d=h.detail||{};
+  if(h.action==="changement_etat"){var av=STATUTS[d.statut_avant],ap=STATUTS[d.statut_apres];
+    if(d.statut_avant===d.statut_apres)return "Décision : "+esc(d.decision_apres==="non_garanti"?"non garanti":d.decision_apres==="garanti"?"garanti":d.decision_apres);
+    return "Statut : "+esc(av?av[0]:d.statut_avant)+" → <strong>"+esc(ap?ap[0]:d.statut_apres)+"</strong>"+(d.motif&&d.motif!=="prereglement_a_valider"?' <span style="color:var(--faint)">('+esc(MOTIFS[d.motif]||d.motif)+')</span>':"");}
+  if(h.action==="courrier_redige")return "Courrier rédigé : "+esc(COURRIERS[d.type]||d.type)+" → "+esc(DEST[d.destinataire]||d.destinataire);
+  if((h.action==="reprise_gestionnaire"||h.action==="classement_sans_suite")&&d.commentaire)return esc(ACTIONS[h.action])+' <span style="color:var(--muted)">« '+esc(d.commentaire)+' »</span>';
+  return esc(ACTIONS[h.action]||h.action);
+}
+function afficherFiche(f){
+  ficheCourante=f;var p=$("panneau");if(p.hidden){p.hidden=false;$("voile").hidden=false;}
+  var html='<div class="panneau-head"><div class="row"><h2>'+esc(f.numero)+'</h2>'+pillStatut(f.statut)+'<span class="chip">'+theme(f.theme)+'</span><button class="btn small close" type="button" id="p-close">Fermer</button></div>'+
+    '<div class="row" style="color:var(--muted);font-size:13px"><span>Réf. <span class="mono">'+esc(f.ref_externe||"aucune")+'</span></span><span>Déclaré le '+esc(dateFr(f.date_declaration))+'</span>'+(f.motif?'<span>'+motif(f.motif)+'</span>':'')+'</div></div><div class="panneau-body">';
+
+  // Actions requises
+  (f.validations_en_attente||[]).forEach(function(v){
+    var t=descriptionTache({validation:v,motif:f.motif,numero:f.numero});
+    var b=v.etape==="decision"?'<button class="btn ok" data-val="'+esc(v.id)+'" data-res="valide" data-etape="decision" data-num="'+esc(f.numero)+'">Confirmer le refus</button><button class="btn" data-val="'+esc(v.id)+'" data-res="rejete" data-etape="decision" data-num="'+esc(f.numero)+'">Prendre en charge</button>':
+      v.etape==="prereglement"?'<button class="btn ok" data-val="'+esc(v.id)+'" data-res="valide" data-etape="prereglement" data-num="'+esc(f.numero)+'">Valider le règlement</button><button class="btn ko" data-val="'+esc(v.id)+'" data-res="rejete" data-etape="prereglement" data-num="'+esc(f.numero)+'">Rejeter</button>':
+      '<button class="btn ok" data-val="'+esc(v.id)+'" data-res="valide" data-etape="anomalie" data-num="'+esc(f.numero)+'">Accepter et chiffrer</button><button class="btn" data-val="'+esc(v.id)+'" data-res="rejete" data-etape="anomalie" data-num="'+esc(f.numero)+'">Traiter manuellement</button>';
+    html+=bloc('<span class="pill t-wait">Action requise</span> '+esc(t.titre),'<p style="color:var(--muted)">'+t.why+'</p>'+(t.liste?'<ul class="liste-simple">'+t.liste+'</ul>':'')+'<div class="actions-row">'+b+'</div>','alerte');
+  });
+  if(f.motif==="analyse_ia_en_echec")html+=bloc('<span class="pill t-wait">Action requise</span> Relancer l\'analyse','<p style="color:var(--muted)">L\'analyse IA n\'a pas abouti. Le dossier n\'a fait l\'objet d\'aucune décision.</p><div class="actions-row"><button class="btn primary" data-reanalyser="'+esc(f.numero)+'">Relancer l\'analyse</button></div>','alerte');
+  var enAttente=(f.validations_en_attente||[]).length>0;
+  if(!enAttente&&(f.statut==="hors_perimetre"||f.statut==="anomalie_gestionnaire"))html+=bloc('<span class="pill t-wait">Action requise</span> '+(f.statut==="hors_perimetre"?"Reprendre le dossier":"Traitement manuel"),formReprise(f),'alerte');
+  if(f.statut==="attente_pieces"||f.statut==="mission_envoyee")html+=bloc(f.statut==="mission_envoyee"?"Saisir le rapport de l'expert":"Saisir la facture du réparateur",formRetour(f));
+  if(f.statut==="reglement_envoye")html+=bloc("Confirmer le virement",'<form id="form-vir" class="actions-row" novalidate style="align-items:end"><div class="field" style="flex:1 1 220px"><label for="v-ref">Référence du virement</label><input class="input mono" id="v-ref" placeholder="VIR-2026-…"></div><button class="btn primary" type="submit" id="v-btn">Confirmer et clore</button></form><p class="err" id="v-err" role="alert"></p>');
+
+  // Déclaration
+  var c=f.contrat||{},l=f.lieu||{};
+  var gar=(c.garanties||[]).map(function(g){return esc(g.code==="BRIS_GLACE"?"Bris de glace":g.code==="DOMMAGES_TOUS_ACCIDENTS"?"Dommages tous accidents":g.code==="GARANTIE_ACCIDENT"?"Garantie accident":g.code)+" (franchise "+esc(eur(g.franchise))+")";}).join("<br>");
+  html+=bloc("Déclaration",kv([["Date du sinistre",esc(dateFr(f.date_sinistre))],["Lieu",esc([l.ville,l.code_postal].filter(Boolean).join(" "))+(l.departement?' <span class="chip">'+esc(l.departement)+'</span>':'')],
+    ["Contrat",'<span class="mono">'+esc(c.numero||"Introuvable")+'</span>'+(c.statut&&c.statut!=="actif"?' <span class="pill t-ko">'+esc(c.statut)+'</span>':'')],["Véhicule",'<span class="mono">'+esc(c.immatriculation||"")+'</span>'],
+    ["Garanties",gar||'<span style="color:var(--ko)">Aucune garantie dommages</span>'],["Tiers",f.tiers_implique===true?"Oui":f.tiers_implique===false?"Non":"Inconnu"],["Responsabilité",esc(RESP[f.responsabilite]||f.responsabilite)]])+
+    '<p class="recit">'+esc(f.recit)+'</p>');
+
+  // Analyse
+  var a=f.analyse||{},ad=a.detail||{};
+  var corpsA;
+  if(a.source==="ia"){var conf=Number(ad.confiance),col=conf>=.85?"var(--ok)":conf>=.7?"var(--accent)":"var(--wait-line)";
+    corpsA='<p>'+esc(ad.resume)+'</p>'+kv([["Type retenu",theme(ad.theme)],["Type déclaré cohérent",ad.theme_declare_coherent===false?'<span style="color:var(--ko)">Non</span>':"Oui"],["Tiers impliqué",ad.tiers_implique?"Oui":"Non"],["Responsabilité",esc(RESP[ad.responsabilite]||ad.responsabilite)],
+      ["Confiance",'<span class="mono">'+conf.toFixed(2).replace(".",",")+'</span><div class="jauge"><i style="width:'+Math.round(conf*100)+'%;background:'+col+'"></i></div>']])+
+      ((ad.dommages||[]).length?'<div><span class="label">Dommages décrits</span><ul class="liste-simple">'+ad.dommages.map(function(x){return "<li>"+esc(x)+"</li>";}).join("")+'</ul></div>':'')+
+      ((ad.incoherences||[]).length?'<div><span class="label">Points d\'attention relevés</span><ul class="liste-simple">'+ad.incoherences.map(function(x){return "<li>"+esc(x)+"</li>";}).join("")+'</ul></div>':'')+
+      '<p style="color:var(--faint);font-size:12px">Analysé par '+esc(ad.modele||"Claude")+' le '+esc(heureFr(a.quand))+'. L\'IA qualifie le récit, elle ne décide pas de la garantie.</p>';}
+  else if(ad.echec_ia)corpsA='<p style="color:var(--ko)">L\'analyse IA a échoué : '+esc(ad.echec_ia)+'</p>';
+  else if(a.source)corpsA='<p style="color:var(--muted)">Analysé sans IA, à partir des champs déclarés (type et présence d\'un tiers).</p>';
+  else corpsA='<p style="color:var(--muted)">Pas encore analysé.</p>';
+  html+=bloc((a.source==="ia"?'<span class="pill t-ia">IA</span> ':'')+"Analyse de la déclaration",corpsA);
+
+  // Missions
+  if((f.missions||[]).length)html+=bloc("Missions",f.missions.map(function(m){return kv([["Type",m.type==="expertise"?"Expertise":"Réparation"],["Prestataire",esc(m.expert||m.garage)+(m.garage_cp?" ("+esc(m.garage_cp)+")":"")],["Contact",'<span class="mono">'+esc(m.expert_email||m.garage_email||"")+'</span>'],["Envoyée",esc(heureFr(m.envoyee_le))],["Retour",esc(m.retour_le?heureFr(m.retour_le):"En attente")]]);}).join('<hr style="border:0;border-top:1px solid var(--line);margin:0">'));
+
+  // Expertises
+  if((f.expertises||[]).length)html+=bloc("Facture et expertise",f.expertises.map(function(x){var an=(x.anomalies||[]);
+    return kv([["Devis TTC",esc(eur(x.devis_ttc))],["Retenu HT",esc(eur(x.retenu_ht))],["Retenu TTC",esc(eur(x.retenu_ttc))],["Taux horaire",x.taux_horaire!=null?esc(eur(x.taux_horaire))+" / h":""],["Heures",x.heures!=null?esc(String(x.heures).replace(".",",")):""],["Irréparable",x.vei?'<span style="color:var(--ko)">Oui</span>':"Non"],["Règlement direct",x.reglement_direct?"Accordé":'<span style="color:var(--ko)">Refusé</span>']])+
+      (x.conclusion?'<p style="color:var(--muted)">'+esc(x.conclusion)+'</p>':'')+
+      (an.length?an.map(function(a){return '<div class="anomalie"><b>'+esc(a.code)+'</b><span>'+esc(ANOMALIES[a.code]||"")+(a.detail?" : "+esc(a.detail):"")+'</span></div>';}).join(""):'<p style="color:var(--ok);font-size:13px">Aucune anomalie relevée.</p>');}).join('<hr style="border:0;border-top:1px solid var(--line);margin:0">'));
+
+  // Règlements
+  if((f.reglements||[]).length)html+=bloc("Règlement",f.reglements.map(function(r){return kv([["Montant net",'<strong>'+esc(eur(r.montant_net))+'</strong>'],["Base",esc(eur(r.montant_base))+(r.tva_recuperable?" HT":" TTC")],["Franchise",esc(eur(r.franchise))],["État",esc({propose:"Proposé",valide:"Validé",envoye:"Virement en cours",confirme:"Virement confirmé",annule:"Annulé"}[r.statut]||r.statut)],["Virement",'<span class="mono">'+esc(r.ref_virement||"")+'</span>']]);}).join(""));
+
+  // Validations faites
+  if((f.validations_faites||[]).length)html+=bloc("Décisions des gestionnaires",'<ul class="timeline">'+f.validations_faites.map(function(v){return '<li><span class="quand">'+esc(heureFr(v.le))+'</span><span class="acteur humain">'+esc(v.par)+'</span><span>'+esc({decision:"Décision",prereglement:"Pré-règlement",anomalie:"Anomalie"}[v.etape]||v.etape)+" : "+(v.resultat==="valide"?"validé":"rejeté")+(v.commentaire?' <span style="color:var(--muted)">« '+esc(v.commentaire)+' »</span>':'')+'</span></li>';}).join("")+'</ul>');
+
+  // Courriers
+  if((f.courriers||[]).length)html+=bloc("Courriers ("+f.courriers.length+")",f.courriers.map(function(k){return '<details class="courrier"><summary><strong>'+esc(COURRIERS[k.type]||k.type)+'</strong><span class="chip">'+esc(DEST[k.destinataire]||k.destinataire)+'</span><span class="mono" style="color:var(--faint);font-size:12px">'+esc(k.email||"")+'</span><span class="pill '+(k.statut==="envoye"?"t-ok":"")+'" style="margin-left:auto">'+(k.statut==="envoye"?"Envoyé":k.statut==="erreur"?"Erreur":"Rédigé")+'</span></summary><div class="corps"><p style="font-weight:600;margin-bottom:8px">'+esc(k.objet)+'</p>'+esc(k.corps)+'</div></details>';}).join(""));
+
+  // Historique
+  html+=bloc("Journal d'audit",'<ul class="timeline">'+(f.historique||[]).map(function(h){return '<li><span class="quand">'+esc(heureFr(h.quand))+'</span>'+acteurBadge(h.acteur)+'<span>'+libelleHisto(h)+'</span></li>';}).join("")+'</ul><p style="color:var(--faint);font-size:12px">Journal en ajout seul : aucune ligne ne peut être modifiée ni supprimée.</p>');
+
+  html+='</div>';
+  p.innerHTML=html;$("p-close").onclick=fermerFiche;
+  brancherFormulairesFiche(f);
+}
+function formReprise(f){var hp=f.statut==="hors_perimetre";
+  var th=f.theme==="PERTE_CONTROLE_OBSTACLE_FIXE"?"PERTE_CONTROLE_OBSTACLE_FIXE":"BRIS_GLACE";
+  return '<p style="color:var(--muted)">'+(hp?"Si, après vérification, il s\'agit bien d\'un sinistre contractuel sans tiers, prenez-le en charge : le contrat est contrôlé et le réparateur ou l\'expert missionné. Sinon, classez-le en indiquant pourquoi (transfert au service recours, doublon, déclaration retirée…).":"Le dossier est en traitement manuel. Classez-le une fois le traitement terminé hors ClaimAI.")+'</p>'+
+    '<form id="form-reprise" novalidate style="display:flex;flex-direction:column;gap:12px">'+
+    (hp?'<div class="field" style="max-width:340px"><label for="rp-theme">Type retenu</label><select class="input" id="rp-theme"><option value="BRIS_GLACE"'+(th==="BRIS_GLACE"?" selected":"")+'>Bris de glace</option><option value="PERTE_CONTROLE_OBSTACLE_FIXE"'+(th!=="BRIS_GLACE"?" selected":"")+'>Perte de contrôle, obstacle fixe, sans tiers</option></select></div>':'')+
+    '<div class="field"><label for="rp-com">Commentaire</label><textarea class="input" id="rp-com" style="min-height:70px" placeholder="Ce que vous avez vérifié ou pourquoi vous classez"></textarea><span class="hint">Obligatoire pour classer. Signé '+esc(S.gest)+' dans le journal d\'audit.</span></div>'+
+    '<p class="err" id="rp-err" role="alert"></p><div class="actions-row">'+(hp?'<button class="btn primary" type="submit" id="rp-prendre">Prendre en charge</button>':'')+'<button class="btn" type="button" id="rp-classer">Classer sans suite</button></div></form>';}
+function formRetour(f){var exp=f.statut==="mission_envoyee";
+  return '<form id="form-retour" novalidate style="display:flex;flex-direction:column;gap:12px"><div class="grid3">'+
+    '<div class="field"><label for="x-ttc">'+(exp?"Montant retenu TTC":"Facture TTC")+' (€)</label><input class="input" id="x-ttc" type="number" min="0" step="0.01"></div>'+
+    '<div class="field"><label for="x-ht">Montant HT (€)</label><input class="input" id="x-ht" type="number" min="0" step="0.01"><span class="hint">Vide : calculé à 20 %</span></div>'+
+    '<div class="field"><label for="x-devis">Devis TTC (€)</label><input class="input" id="x-devis" type="number" min="0" step="0.01"><span class="hint">Vide : égal au montant TTC</span></div>'+
+    (exp?'<div class="field"><label for="x-taux">Taux horaire (€ HT)</label><input class="input" id="x-taux" type="number" min="0" step="0.5"></div><div class="field"><label for="x-h">Heures de main-d\'œuvre</label><input class="input" id="x-h" type="number" min="0" step="0.1"></div>':'')+
+    '</div><div class="field"><label for="x-concl">Conclusion ou détail</label><input class="input" id="x-concl" placeholder="'+(exp?"Conclusions de l'expert":"Ex. remplacement pare-brise avec calibrage caméra")+'"></div>'+
+    '<div style="display:flex;gap:18px;flex-wrap:wrap"><label class="check"><input type="checkbox" id="x-deleg" checked> Délégation de paiement signée reçue</label>'+
+    (exp?'<label class="check"><input type="checkbox" id="x-direct" checked> Règlement direct accordé par l\'expert</label><label class="check"><input type="checkbox" id="x-vei"> Véhicule économiquement irréparable</label>':'')+
+    '<label class="check"><input type="checkbox" id="x-tva"> Assuré assujetti à la TVA (règlement HT)</label></div>'+
+    '<p class="err" id="x-err" role="alert"></p><div><button class="btn primary" type="submit" id="x-btn">Enregistrer et contrôler</button></div></form>';}
+function num(id){var el=$(id);if(!el||el.value==="")return undefined;return Number(el.value);}
+function brancherFormulairesFiche(f){
+  var fp=$("form-reprise");
+  if(fp){var envoyer=function(action,btn){var err=$("rp-err");err.textContent="";var com=$("rp-com").value.trim();
+      if(action==="classer"&&!com){err.textContent="Indiquez le motif du classement.";$("rp-com").focus();return;}
+      var body={numero:f.numero,action:action,par:S.gest,commentaire:com||null};if(action==="prendre_en_charge")body.theme=$("rp-theme").value;
+      busy(btn,true,action==="classer"?"Classement":"Prise en charge");
+      api("reprendre",{body:body}).then(function(r){toast("Dossier "+f.numero+" : "+((STATUTS[r.statut]||[r.statut])[0]));afficherFiche(r);rafraichirSilencieux();})
+        .catch(function(x){busy(btn,false);err.textContent=x.message;});};
+    $("rp-com").addEventListener("input",function(){$("rp-err").textContent="";});
+    fp.addEventListener("submit",function(e){e.preventDefault();envoyer("prendre_en_charge",$("rp-prendre"));});
+    $("rp-classer").addEventListener("click",function(){envoyer("classer",this);});}
+  var fr=$("form-retour");
+  if(fr)fr.addEventListener("submit",function(e){e.preventDefault();var err=$("x-err");err.textContent="";
+    var ttc=num("x-ttc");if(!(ttc>0)){err.textContent="Indiquez le montant TTC.";return;}
+    var body={numero:f.numero,montant_ttc:ttc,montant_ht:num("x-ht"),montant_devis_ttc:num("x-devis"),taux_horaire:num("x-taux"),heures:num("x-h"),
+      conclusion:$("x-concl").value.trim()||undefined,delegation_paiement:$("x-deleg").checked,tva_recuperable:$("x-tva").checked};
+    if($("x-direct"))body.reglement_direct_autorise=$("x-direct").checked;if($("x-vei"))body.vei=$("x-vei").checked;
+    var b=$("x-btn");busy(b,true,"Contrôle");
+    api("retour",{body:body}).then(function(r){toast("Retour enregistré : "+((STATUTS[r.statut]||[r.statut])[0]));afficherFiche(r);rafraichirSilencieux();})
+      .catch(function(x){busy(b,false);err.textContent=x.message;});});
+  var fv=$("form-vir");
+  if(fv)fv.addEventListener("submit",function(e){e.preventDefault();var ref=$("v-ref").value.trim();if(!ref){$("v-err").textContent="Indiquez la référence du virement.";return;}
+    var b=$("v-btn");busy(b,true,"Clôture");
+    api("virement",{body:{numero:f.numero,ref_virement:ref}}).then(function(r){toast("Virement confirmé, dossier clos.");afficherFiche(r);rafraichirSilencieux();})
+      .catch(function(x){busy(b,false);$("v-err").textContent=x.message;});});
+}
+function rafraichirSilencieux(){rafraichir().catch(function(){});}
+
+/* ---------------- Nouveau sinistre ---------------- */
+function initDecl(){$("d-date").value=new Date().toISOString().slice(0,10);$("d-date").max=$("d-date").value;$("d-ref").value="SIN-"+new Date().toISOString().replace(/\D/g,"").slice(2,12);}
+initDecl();
+["d-contrat","d-date","d-cp","d-recit"].forEach(function(id){$(id).addEventListener("input",function(){$("d-err").textContent="";});});
+$("d-exemple").addEventListener("click",function(){$("d-contrat").value="AUTO-2025-0001";$("d-theme").value="BRIS_GLACE";$("d-cp").value="77140";$("d-ville").value="Nemours";
+  $("d-recit").value="En sortant du parking de la gare, un gravillon projeté par une camionnette a fait un impact sur mon pare-brise. L'impact s'est transformé en fissure pendant le trajet. Rien d'autre sur la voiture.";
+  document.querySelector('input[name="d-tiers"][value="false"]').checked=true;});
+$("form-decl").addEventListener("submit",function(e){e.preventDefault();var err=$("d-err");err.textContent="";
+  var body={numero_contrat:$("d-contrat").value.trim(),ref_externe:$("d-ref").value.trim()||undefined,date_sinistre:$("d-date").value,theme:$("d-theme").value||undefined,
+    code_postal:$("d-cp").value.trim(),ville:$("d-ville").value.trim()||undefined,recit:$("d-recit").value.trim()};
+  var tiers=document.querySelector('input[name="d-tiers"]:checked').value;if(tiers!=="")body.tiers_implique=tiers==="true";
+  if(!body.numero_contrat){err.textContent="Indiquez le numéro de contrat.";return;}
+  if(!body.date_sinistre){err.textContent="Indiquez la date du sinistre.";return;}
+  if(!/^\d{5}$/.test(body.code_postal)){err.textContent="Le code postal compte 5 chiffres.";return;}
+  if(body.recit.length<10){err.textContent="Le récit est trop court (10 caractères minimum).";return;}
+  var b=$("d-btn");busy(b,true,"Analyse en cours");
+  api("declarer",{body:body}).then(function(f){
+    var auto=!(f.validations_en_attente||[]).length&&["hors_perimetre","anomalie_gestionnaire","decision_a_valider"].indexOf(f.statut)<0;
+    $("d-resultat").innerHTML='<div class="card card-pad" style="display:flex;flex-direction:column;gap:10px;max-width:820px"><div class="task-head"><span class="num mono">'+esc(f.numero)+'</span>'+pillStatut(f.statut)+'<span class="chip">'+theme(f.theme)+'</span></div>'+
+      '<h3 style="font-size:16px">'+(auto?"Dossier pris en charge automatiquement":"Dossier transmis à un gestionnaire")+'</h3>'+
+      '<p style="color:var(--muted)">'+(auto?esc(((f.missions||[])[0]||{}).garage||((f.missions||[])[0]||{}).expert||"")+((f.missions||[]).length?" missionné. ":"")+(f.courriers||[]).length+" courrier"+((f.courriers||[]).length>1?"s":"")+" rédigé"+((f.courriers||[]).length>1?"s":"")+".":motif(f.motif))+'</p>'+
+      (f.analyse&&f.analyse.detail&&f.analyse.detail.resume?'<p class="recit">'+esc(f.analyse.detail.resume)+'</p>':'')+
+      '<div><button class="btn primary" data-ouvrir="'+esc(f.numero)+'">Ouvrir la fiche</button></div></div>';
+    initDecl();$("d-recit").value="";rafraichirSilencieux();
+  }).catch(function(x){err.textContent=x.message;}).finally(function(){busy(b,false);});
+});
+
+/* ---------------- Indicateurs ---------------- */
+function barres(el,obj,lib,attente){var ks=Object.keys(obj||{});if(!ks.length){el.innerHTML='<p style="color:var(--muted)">Aucune donnée pour le moment.</p>';return;}
+  var max=Math.max.apply(null,ks.map(function(k){return obj[k];}));
+  el.innerHTML=ks.sort(function(a,b){return obj[b]-obj[a];}).map(function(k){var w=Math.max(3,Math.round(100*obj[k]/max));var isW=attente&&attente(k);
+    return '<div class="bar-row"><span>'+esc(lib(k))+'</span><div class="track"><div class="fill'+(isW?" w":"")+'" style="width:'+w+'%"></div></div><span class="n">'+obj[k]+'</span></div>';}).join("");}
+function chargerIndicateurs(){
+  return api("indicateurs").then(function(i){majBadge(i.a_traiter);
+    var h=i.delai_moyen_cloture_heures;var delai=h==null?"Aucun":(h<1?"< 1 h":String(h).replace(".",",")+" h");
+    $("tiles").innerHTML=[
+      [i.total,"Dossiers reçus",i.en_cours+" en cours, "+i.clos+" clos, "+i.refuses+" refusés, "+(i.classes||0)+" classés"],
+      [(i.taux_sans_intervention==null?"":String(i.taux_sans_intervention).replace(".",",")+" %"),"Traités sans gestionnaire",i.sans_intervention+" dossiers, hors validation du règlement"],
+      [i.a_traiter,"En attente d'un gestionnaire","Voir l'onglet À traiter"],
+      [eur(i.montant_regle),"Réglé aux réparateurs",eur(i.montant_en_cours)+" en cours de règlement"],
+      [delai,"Délai moyen de clôture","De la déclaration au virement confirmé"],
+      [(i.confiance_moyenne==null?"":String(i.confiance_moyenne).replace(".",",")),"Confiance moyenne de l'IA",i.analyses_ia+" récits analysés par Claude"]
+    ].map(function(t){return '<div class="tile"><span class="v">'+esc(t[0])+'</span><span class="l">'+esc(t[1])+'</span><span class="s">'+esc(t[2])+'</span></div>';}).join("");
+    barres($("bars-statut"),i.par_statut,function(k){return (STATUTS[k]||[k])[0];},function(k){return (STATUTS[k]||[])[1]==="wait";});
+    barres($("bars-theme"),i.par_theme,function(k){return THEMES[k]||k;});
+    barres($("bars-motif"),i.par_motif,function(k){return MOTIFS[k]||k;},function(){return true;});
+  });
+}
+
+/* ---------------- Intégration ---------------- */
+function afficherSecret(s){$("w-secret-box").innerHTML=s?'<div class="secret-box"><strong>Secret de signature : copiez-le maintenant, il ne sera plus affiché.</strong><code id="w-secret-val">'+esc(s)+'</code><span>Votre outil recalcule HMAC-SHA256(corps brut, secret) et le compare à l\'en-tête x-claimai-signature.</span><div><button class="btn small" type="button" id="w-copy">Copier le secret</button></div></div>':"";
+  var c=$("w-copy");if(c)c.onclick=function(){copier(s,c);};}
+function copier(txt,btn){var ok=function(){var l=btn.textContent;btn.textContent="Copié";setTimeout(function(){btn.textContent=l;},1800);};
+  try{navigator.clipboard.writeText(txt).then(ok,function(){toast("Copie impossible : sélectionnez le texte à la main.",true);});}catch(e){toast("Copie impossible : sélectionnez le texte à la main.",true);}}
+function remplirParametres(p){
+  $("i-base").textContent=S.base;$("i-cle").textContent=S.cle.slice(0,12)+"…"+S.cle.slice(-4);
+  $("i-mode").innerHTML=p.webhook_url?'<span class="pill t-ok">API et notifications</span>':'<span class="pill t-info">API seule</span>';
+  $("i-cles").innerHTML=(p.cles||[]).map(function(k){return '<tr><td class="mono">'+esc(k.prefixe)+'…</td><td>'+esc(k.libelle)+'</td><td>'+(k.actif?'<span class="pill t-ok">Active</span>':'<span class="pill t-ko">Révoquée</span>')+'</td><td>'+esc(k.derniere_utilisation?heureFr(k.derniere_utilisation):"Jamais")+'</td></tr>';}).join("");
+  if(document.activeElement!==$("w-url"))$("w-url").value=p.webhook_url||"";
+  $("w-envois").innerHTML=(p.derniers_envois||[]).length?p.derniers_envois.map(function(s){return '<tr><td>'+esc(heureFr(s.quand))+'</td><td class="mono">'+esc(s.evenement)+'</td><td>'+(s.statut==="ok"?'<span class="pill t-ok">Transmis</span>':'<span class="pill t-ko">Erreur</span>')+'</td><td class="wrap" style="color:var(--faint)">'+esc(s.detail||"")+'</td></tr>';}).join(""):'<tr><td colspan="4" style="color:var(--muted)">Aucun envoi pour le moment.</td></tr>';
+  var r=[["r-ecart","seuil_ecart_prix_pct"],["r-taux","taux_horaire_max_eur"],["r-bg","bris_glace_sans_expert_max"],["r-relance","delai_relance_jours"]];
+  r.forEach(function(x){if(document.activeElement!==$(x[0]))$(x[0]).value=p[x[1]];});
+}
+function chargerIntegration(){return api("parametres").then(remplirParametres);}
+$("form-webhook").addEventListener("submit",function(e){e.preventDefault();var u=$("w-url").value.trim(),err=$("w-err");err.textContent="";
+  if(u&&!/^https:\/\/\S+$/.test(u)){err.textContent="L'adresse doit commencer par https:// et ne contenir aucun espace.";return;}
+  var b=$("w-save");busy(b,true,"Enregistrement");
+  api("parametres",{body:{webhook_url:u}}).then(function(p){remplirParametres(p);afficherSecret(p.webhook_secret);toast(u?"Adresse enregistrée.":"Notifications désactivées.");})
+    .catch(function(x){err.textContent=x.message;}).finally(function(){busy(b,false);});});
+$("w-url").addEventListener("input",function(){$("w-err").textContent="";});
+$("w-test").addEventListener("click",function(){var b=this;busy(b,true,"Envoi");$("w-err").textContent="";
+  api("tester-webhook",{body:{}}).then(function(){toast("Événement de test envoyé.");setTimeout(chargerIntegration,1500);}).catch(function(x){$("w-err").textContent=x.message;}).finally(function(){busy(b,false);});});
+$("w-secret").addEventListener("click",function(){var b=this;
+  var f=$("modale-fond");f.innerHTML='<div class="modale"><h3>Générer un nouveau secret ?</h3><p>L\'ancien secret cesse de fonctionner immédiatement. Votre outil devra utiliser le nouveau pour vérifier les notifications.</p><div class="actions-row" style="justify-content:flex-end"><button class="btn" type="button" id="m-annuler">Annuler</button><button class="btn primary" type="button" id="m-ok">Générer</button></div></div>';
+  f.hidden=false;$("m-annuler").onclick=fermerModale;
+  $("m-ok").onclick=function(){fermerModale();busy(b,true,"Génération");api("nouveau-secret",{body:{}}).then(function(p){remplirParametres(p);afficherSecret(p.webhook_secret);}).catch(function(x){$("w-err").textContent=x.message;}).finally(function(){busy(b,false);});};});
+$("form-regles").addEventListener("submit",function(e){e.preventDefault();var err=$("r-err");err.textContent="";
+  var body={seuil_ecart_prix_pct:num("r-ecart"),taux_horaire_max_eur:num("r-taux"),bris_glace_sans_expert_max:num("r-bg"),delai_relance_jours:num("r-relance")};
+  if(Object.keys(body).some(function(k){return body[k]===undefined||isNaN(body[k]);})){err.textContent="Renseignez les quatre règles.";return;}
+  var b=$("r-save");busy(b,true,"Enregistrement");
+  api("parametres",{body:body}).then(function(p){remplirParametres(p);toast("Règles enregistrées.");}).catch(function(x){err.textContent=x.message;}).finally(function(){busy(b,false);});});
+
+var DOC=[
+  ["POST","declarer","Transmet une déclaration. ClaimAI crée le dossier, l'analyse, vérifie le contrat et missionne le réparateur ou l'expert.",
+   '{\n  "numero_contrat": "AUTO-2025-0001",\n  "ref_externe": "SIN-240517",\n  "date_sinistre": "2026-09-28",\n  "theme": "BRIS_GLACE",\n  "tiers_implique": false,\n  "code_postal": "77140",\n  "ville": "Nemours",\n  "recit": "Un gravillon a fissuré le pare-brise sur la N7."\n}'],
+  ["POST","retour","Transmet la facture du réparateur ou le rapport de l'expert.",
+   '{\n  "numero": "CLM-2026-000001",\n  "montant_ttc": 642.50,\n  "montant_devis_ttc": 642.50,\n  "taux_horaire": 72,\n  "heures": 2,\n  "delegation_paiement": true,\n  "reglement_direct_autorise": true,\n  "vei": false\n}'],
+  ["POST","valider","Enregistre la décision d'un gestionnaire sur une validation en attente.",
+   '{\n  "validation_id": "…",\n  "resultat": "valide",\n  "valide_par": "c.lecland",\n  "commentaire": "Facture conforme"\n}'],
+  ["POST","virement","Confirme le virement au réparateur. Le dossier est clos.",'{\n  "numero": "CLM-2026-000001",\n  "ref_virement": "VIR-2026-0042"\n}'],
+  ["POST","reprendre","Un gestionnaire prend en charge (type retenu) ou classe sans suite un dossier sorti du circuit.",'{\n  "numero": "CLM-2026-000002",\n  "action": "prendre_en_charge",\n  "theme": "PERTE_CONTROLE_OBSTACLE_FIXE",\n  "par": "c.lecland",\n  "commentaire": "Pas de tiers après appel à l\u2019assuré"\n}'],
+  ["POST","reanalyser","Relance l'analyse d'un dossier bloqué par une indisponibilité de l'IA.",'{\n  "numero": "CLM-2026-000005"\n}'],
+  ["GET","dossier?numero=CLM-2026-000001","Fiche complète : analyse, missions, courriers, règlements, journal d'audit.",null],
+  ["GET","dossiers?statut=&q=","Liste et recherche des dossiers (numéro, référence, contrat, immatriculation).",null],
+  ["GET","a-traiter","Dossiers qui attendent un gestionnaire, avec la proposition de ClaimAI.",null],
+  ["GET","indicateurs","Chiffres de pilotage de votre compagnie.",null]
+];
+function remplirDoc(){$("doc").innerHTML=DOC.map(function(d,i){var curl="curl -X "+d[0]+" '"+S.base.replace(/\/+$/,"")+"/"+d[1]+"' \\\n  -H 'x-claimai-key: VOTRE_CLE'"+(d[3]?" \\\n  -H 'Content-Type: application/json' \\\n  -d '"+d[3].replace(/\n\s*/g," ")+"'":"");
+  return '<div class="doc-ep"><header><span class="method'+(d[0]==="GET"?" get":"")+'">'+d[0]+'</span><span class="mono">/'+esc(d[1])+'</span><button class="btn small" type="button" data-copier="'+i+'" style="margin-left:auto">Copier l\'exemple</button></header><p>'+esc(d[2])+'</p><pre class="code">'+esc(curl)+'</pre></div>';}).join("")+
+  '<div class="doc-ep"><header><span class="method">WEBHOOK</span><span class="mono">POST vers votre adresse</span></header><p>Envoyé à chaque changement de statut. En-têtes : x-claimai-evenement, x-claimai-signature (HMAC-SHA256 du corps avec votre secret).</p><pre class="code">'+esc('{\n  "evenement": "changement_statut",\n  "numero": "CLM-2026-000001",\n  "ref_externe": "SIN-240517",\n  "statut": "attente_pieces",\n  "statut_precedent": "contrat_verifie",\n  "decision": "garanti",\n  "motif": null,\n  "theme": "BRIS_GLACE",\n  "envoye_le": "2026-09-30T17:20:23Z"\n}')+'</pre></div>';
+  document.querySelectorAll("[data-copier]").forEach(function(b){b.onclick=function(){var d=DOC[Number(b.dataset.copier)];copier(b.closest(".doc-ep").querySelector("pre").textContent,b);};});}
+
+/* ---------------- Démarrage ---------------- */
+var memo=null;try{memo=JSON.parse(localStorage.getItem(MEMO)||"null");}catch(x){}
+if(memo&&memo.cle){$("l-base").value=memo.base;$("l-cle").value=memo.cle;$("l-gest").value=memo.gest;$("l-memo").checked=true;
+  S.base=memo.base;S.cle=memo.cle;S.gest=memo.gest;
+  api("indicateurs").then(function(i){S.assureur=i.assureur;demarrer(i);}).catch(function(){});}
+})();
+</script>
+</body>
+</html>
