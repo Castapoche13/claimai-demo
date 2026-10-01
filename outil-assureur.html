@@ -9,7 +9,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
 <style>
-/* L'outil maison de la compagnie : une autre identité que ClaimAI */
+/* L'outil maison de la compagnie : une autre identité que Klerio */
 :root { --cie: #0F5C4D; --cie-2: #0B4A3E; --cie-pale: #E3F0EC; }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --cie: #3FA88F; --cie-2: #2E8C76; --cie-pale: #12302A; } }
 body { font-size: 14px; }
@@ -63,7 +63,7 @@ tr.neuf td { animation: neuf 2.4s ease-out; }
 </style>
 </head>
 <body>
-<div class="bandeau">Démonstration : cette page simule l'outil interne de la compagnie, raccordé à ClaimAI. <a href="index.html">Ouvrir la console ClaimAI</a></div>
+<div class="bandeau">Démonstration : cette page simule l'outil interne de la compagnie, raccordé à Klerio. <a href="index.html">Ouvrir la console Klerio</a></div>
 <header class="entete"><div class="entete-in">
   <div class="cie-nom"><svg width="22" height="22" viewBox="0 0 22 22" aria-hidden="true"><path d="M11 2l8 3.5v5c0 5-3.6 8.5-8 9.5-4.4-1-8-4.5-8-9.5v-5z" fill="#fff" opacity=".95"/><path d="M7.5 11l2.5 2.5 4.5-5" fill="none" stroke="#0F5C4D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Mutuelle Démo du Gâtinais <span>Gestion sinistres</span></div>
   <nav class="onglets" aria-label="Modules de l'outil"><span>Sociétaires</span><span>Contrats</span><span class="actif">Sinistres</span><span>Comptabilité</span></nav>
@@ -71,10 +71,10 @@ tr.neuf td { animation: neuf 2.4s ease-out; }
 </div></header>
 
 <div id="ecran-cle" class="connexion" hidden>
-  <div class="panneau"><div class="panneau-tete"><h2>Raccordement à ClaimAI</h2></div>
-  <form class="panneau-corps" id="form-cle"><p class="muet">L'outil de la compagnie s'identifie auprès de ClaimAI avec la clé de la compagnie, comme le ferait son logiciel en production. Les gestionnaires, eux, se connectent à la console avec leur compte.</p>
+  <div class="panneau"><div class="panneau-tete"><h2>Raccordement à Klerio</h2></div>
+  <form class="panneau-corps" id="form-cle"><p class="muet">L'outil de la compagnie s'identifie auprès de Klerio avec la clé de la compagnie, comme le ferait son logiciel en production. Les gestionnaires, eux, se connectent à la console avec leur compte.</p>
     <label class="champ">Adresse du service<input class="saisie" id="k-base"></label>
-    <label class="champ">Clé d'accès de la compagnie <span class="aide">clm_test_… pour la recette, clm_live_… pour la production</span><input class="saisie" id="k-cle" type="password" placeholder="clm_…"></label>
+    <label class="champ">Clé d'accès de la compagnie <span class="aide">klr_test_… pour la recette, klr_live_… pour la production</span><input class="saisie" id="k-cle" type="password" placeholder="klr_…"></label>
     <button class="btn cie" type="submit">Raccorder</button><p class="muet petit" id="k-err" role="alert"></p></form></div>
 </div>
 
@@ -95,15 +95,15 @@ tr.neuf td { animation: neuf 2.4s ease-out; }
       </form>
     </section>
     <section class="panneau">
-      <div class="panneau-tete"><h2>Messages reçus de ClaimAI</h2><span class="direct"><i></i>En direct</span></div>
+      <div class="panneau-tete"><h2>Messages reçus de Klerio</h2><span class="direct"><i></i>En direct</span></div>
       <ul class="journal-cie" id="journal"></ul>
     </section>
   </div>
   <section class="panneau">
     <div class="panneau-tete"><h2>Portefeuille sinistres</h2><span style="display:flex;gap:12px;align-items:center"><span class="muet petit" id="maj"></span><button class="btn petit" id="b-panne" type="button">Simuler une panne de l'outil</button></span></div>
-    <p class="resultat ko" id="panne-info" hidden style="margin:12px 16px 0">Panne simulée : l'outil refuse les messages de ClaimAI. Ils restent en file chez ClaimAI et seront renvoyés automatiquement, une fois l'outil rétabli.</p>
-    <p class="muet petit" style="padding:12px 16px 0">Chaque ligne est tenue à jour par les messages signés de ClaimAI, sans ressaisie. Une ligne surlignée vient de changer.</p>
-    <div class="table-wrap"><table><thead><tr><th>N° ClaimAI</th><th>Notre réf.</th><th>Nature</th><th>Situation</th><th>Intervenants</th><th>Pièces manquantes</th><th>Règlement</th></tr></thead><tbody id="porte"></tbody></table></div>
+    <p class="resultat ko" id="panne-info" hidden style="margin:12px 16px 0">Panne simulée : l'outil refuse les messages de Klerio. Ils restent en file chez Klerio et seront renvoyés automatiquement, une fois l'outil rétabli.</p>
+    <p class="muet petit" style="padding:12px 16px 0">Chaque ligne est tenue à jour par les messages signés de Klerio, sans ressaisie. Une ligne surlignée vient de changer.</p>
+    <div class="table-wrap"><table><thead><tr><th>N° Klerio</th><th>Notre réf.</th><th>Nature</th><th>Situation</th><th>Intervenants</th><th>Pièces manquantes</th><th>Règlement</th></tr></thead><tbody id="porte"></tbody></table></div>
   </section>
 </main>
 <div id="toast" class="toast" hidden role="status"></div>
@@ -115,7 +115,10 @@ tr.neuf td { animation: neuf 2.4s ease-out; }
 var C = window.CA, $ = C.$, esc = C.esc, eur = C.eur;
 var MEMO = "claimai-outil-v1";
 function lire() { try { return JSON.parse(localStorage.getItem(MEMO) || "null"); } catch (e) { return null; } }
-var S = lire() || {}, api, apiOutil, vus = {}, premier = true, panne = false;
+var S = lire() || {};
+// Ancienne adresse du service (avant le nom Klerio)
+if (S.base) S.base = S.base.replace(/\/claimai\/?$/, "/klerio");
+var api, apiOutil, vus = {}, premier = true, panne = false;
 
 var SITUATION = {
   recu: ["Ouvert", ""], analyse: ["Ouvert", ""], contrat_verifie: ["Garanti", ""], hors_perimetre: ["Chez un gestionnaire", "att"],
@@ -143,7 +146,7 @@ function demarrer() {
   $("b-cle").onclick = function () { try { localStorage.removeItem(MEMO); } catch (e) { } location.reload(); };
   $("o-contrats").innerHTML = (essai() ? ["ESSAI-AUTO-0001", "ESSAI-AUTO-0002", "ESSAI-AUTO-0003", "ESSAI-GA-0004"] : ["AUTO-2025-0001", "AUTO-2025-0004", "GA-2024-0005", "GA-2025-0006"])
     .map(function (n) { return '<option value="' + n + '">'; }).join("");
-  apiOutil = C.client(S.base.replace(/\/claimai\/?$/, "/assureur-demo"), S.cle);
+  apiOutil = C.client(S.base.replace(/\/(klerio|claimai)\/?$/, "/assureur-demo"), S.cle);
   $("ecran-cle").hidden = true; $("ecran-outil").hidden = false;
   var d = new Date(); d.setDate(d.getDate() - 1); $("o-date").value = d.toISOString().slice(0, 10);
   $("modeles").innerHTML = APPELS.map(function (a, i) { return '<button type="button" class="btn petit" data-a="' + i + '">' + esc(a[0]) + "</button>"; }).join("");
@@ -172,10 +175,10 @@ function declarer(e) {
     code_postal: $("o-cp").value.trim(), recit: $("o-recit").value.trim() };
   if (corps.theme === "GARANTIE_ACCIDENT") corps.victime = { age: Number($("o-age").value) || null, lien: $("o-lien").value };
   if (!corps.numero_contrat || !/^\d{5}$/.test(corps.code_postal) || corps.recit.length < 10) { C.toast("Contrat, code postal et récit sont nécessaires.", true); return; }
-  var b = $("o-envoyer"), r = $("o-res"); C.occupe(b, true, "Transmission à ClaimAI"); r.hidden = true;
+  var b = $("o-envoyer"), r = $("o-res"); C.occupe(b, true, "Transmission à Klerio"); r.hidden = true;
   api("declarer", { body: corps }).then(function (f) {
     r.hidden = false; r.className = "resultat";
-    r.innerHTML = "Sinistre <b>" + esc(ref) + "</b> transmis. ClaimAI l'a enregistré sous <b>" + esc(f.numero) + "</b> : " + esc((SITUATION[f.statut] || [f.statut])[0].toLowerCase()) + ". " +
+    r.innerHTML = "Sinistre <b>" + esc(ref) + "</b> transmis. Klerio l'a enregistré sous <b>" + esc(f.numero) + "</b> : " + esc((SITUATION[f.statut] || [f.statut])[0].toLowerCase()) + ". " +
       '<a href="index.html#/dossier/' + esc(f.numero) + '">Voir dans la console</a>';
     rafraichir();
   }).catch(function (x) { r.hidden = false; r.className = "resultat ko"; r.textContent = x.message; })

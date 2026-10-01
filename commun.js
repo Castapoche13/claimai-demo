@@ -1,7 +1,7 @@
-/* ClaimAI : libellés métier et utilitaires partagés */
+/* Klerio : libellés métier et utilitaires partagés */
 (function (g) {
   "use strict";
-  var API_DEFAUT = "https://okugbnabvlotasdsokco.supabase.co/functions/v1/claimai";
+  var API_DEFAUT = "https://okugbnabvlotasdsokco.supabase.co/functions/v1/klerio";
   // Adresse et clé publique du service de connexion : faites pour être visibles dans le navigateur
   var SUPABASE_URL = "https://okugbnabvlotasdsokco.supabase.co";
   var CLE_PUBLIQUE = "sb_publishable_ybKkc2FMkcVCBkJI50RAIQ_X6sCEPe4";
@@ -116,7 +116,7 @@
       var jeton = typeof auth === "function" ? Promise.resolve(auth()) : Promise.resolve(null);
       return jeton.then(function (j) {
         var h = typeof entetes === "function" ? (entetes() || {}) : {};
-        if (typeof auth === "string" && auth) h["x-claimai-key"] = auth;
+        if (typeof auth === "string" && auth) h["x-klerio-key"] = auth;
         if (j) h["Authorization"] = "Bearer " + j;
         if (opts.body !== undefined) h["Content-Type"] = "application/json";
         return fetch(String(base).replace(/\/+$/, "") + "/" + chemin, {

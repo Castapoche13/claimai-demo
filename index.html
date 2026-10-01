@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Console sinistres ClaimAI</title>
+<title>Console sinistres Klerio</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
@@ -305,7 +305,7 @@ textarea.saisie.code-saisie { font-family: ui-monospace, Menlo, Consolas, monosp
 .code-http.attention { color: var(--orange-texte); }
 .tableau.fixe tbody tr { cursor: default; }
 .tableau.fixe tbody tr:hover { background: none; }
-.tableau.fixe td:first-child { white-space: nowrap; }
+.tableau.appels td:first-child { white-space: nowrap; }
 </style>
 </head>
 <body>
@@ -395,8 +395,8 @@ var S = { base: "", cle: "", gest: "", assureur: "" };
 var api = null;
 var etat = { file: null, liste: null, boite: null, msg: null, boites: null };
 
-$("logo-c").innerHTML = C.LOGO + "<span>ClaimAI</span>";
-$("logo-n").innerHTML = C.LOGO + "<span>ClaimAI</span>";
+$("logo-c").innerHTML = C.LOGO + "<span>Klerio</span>";
+$("logo-n").innerHTML = C.LOGO + "<span>Klerio</span>";
 $("c-base").value = C.API_DEFAUT;
 
 /* ---------------- Thème ---------------- */
@@ -442,13 +442,13 @@ $("form-mdp").addEventListener("submit", function (e) {
 var ENV = "claimai-environnement";
 S.env = "production";
 try { if (localStorage.getItem(ENV) === "test") S.env = "test"; } catch (e) { }
-function entetesEnv() { return S.env === "test" ? { "x-claimai-environnement": "test" } : {}; }
+function entetesEnv() { return S.env === "test" ? { "x-klerio-environnement": "test" } : {}; }
 function afficherEnv() {
   var essai = S.env === "test";
   $("env-prod").setAttribute("aria-pressed", String(!essai));
   $("env-essai").setAttribute("aria-pressed", String(essai));
   $("bandeau-essai").hidden = !essai;
-  document.title = (essai ? "[Essai] " : "") + "Console sinistres ClaimAI";
+  document.title = (essai ? "[Essai] " : "") + "Console sinistres Klerio";
 }
 function changerEnv(env) {
   if (env === S.env) return;
@@ -646,7 +646,7 @@ function legendeParcours(f) {
   if (f.statut === "classe_sans_suite") return "Dossier classé.";
   if (C.attendVous(f.statut)) return "Le dossier attend votre décision : rien ne part sans votre validation.";
   var m = (f.pieces || []).filter(function (p) { return p.obligatoire && !p.recue_le; });
-  if (f.statut === "mission_envoyee") return "Mission envoyée. ClaimAI relance automatiquement sans réponse sous 7 jours.";
+  if (f.statut === "mission_envoyee") return "Mission envoyée. Klerio relance automatiquement sans réponse sous 7 jours.";
   if (f.statut === "attente_pieces") return m.length ? "En attente de : " + m.map(function (p) { return p.libelle; }).join(", ") + "." : "En attente de pièces.";
   if (f.statut === "reglement_envoye") return "Virement ordonné. Le dossier se clôt dès la confirmation du paiement.";
   return C.motif(f.motif) || "";
@@ -726,7 +726,7 @@ function carteAction(f) {
     } else {
       var an = p.anomalies || (p.code ? [p] : []);
       titre = an.length > 1 ? an.length + " écarts relevés" : (C.ANOMALIES[(an[0] || {}).code] || "Anomalie à examiner");
-      expl = "ClaimAI a arrêté le circuit automatique. Vérifiez puis décidez de la suite.";
+      expl = "Klerio a arrêté le circuit automatique. Vérifiez puis décidez de la suite.";
       corps = '<div class="pile">' + an.map(function (a) {
         return '<div class="alerte ko"><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2l6.5 11.5h-13z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M8 6.5v3M8 11.5v.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg><span><b>' + esc(C.ANOMALIES[a.code] || a.code) + "</b>" + (a.detail ? "<br>" + esc(a.detail) : "") + "</span></div>";
       }).join("") + "</div>";
@@ -882,7 +882,7 @@ function acteur(a) {
   if (a === "ia") return '<span class="acteur ia">Claude</span>';
   if (a.indexOf("humain:") === 0) return '<span class="acteur humain">' + esc(a.slice(7)) + "</span>";
   if (a.indexOf("portail:") === 0) return '<span class="acteur partenaire">' + esc(C.ROLES[a.slice(8)] || a.slice(8)) + "</span>";
-  return '<span class="acteur">ClaimAI</span>';
+  return '<span class="acteur">Klerio</span>';
 }
 function blocJournal(f) {
   var hs = f.historique || [];
@@ -999,7 +999,7 @@ function vueDeclarer() {
 function vueBoites() {
   api("boites").then(function (bx) {
     etat.boites = bx || [];
-    var h = '<div class="entete-vue"><div><h1>Boîtes mail de test</h1><p>Chaque courrier préparé par ClaimAI, rangé par destinataire. Ouvrez le lien d\'un message pour répondre à la place de l\'expert, du garage ou de l\'assuré.</p></div><button class="btn" id="b-maj">Actualiser</button></div>';
+    var h = '<div class="entete-vue"><div><h1>Boîtes mail de test</h1><p>Chaque courrier préparé par Klerio, rangé par destinataire. Ouvrez le lien d\'un message pour répondre à la place de l\'expert, du garage ou de l\'assuré.</p></div><button class="btn" id="b-maj">Actualiser</button></div>';
     if (!etat.boites.length) { $("vue").innerHTML = h + '<div class="bloc"><div class="vide"><b>Aucun courrier pour l\'instant</b>Déclarez un sinistre : les premiers messages apparaîtront ici.</div></div>'; $("b-maj").onclick = vueBoites; return; }
     h += '<div class="messagerie"><div class="col-boites" id="mb-boites"></div><div class="col-messages" id="mb-msgs"></div><div class="lecteur" id="mb-lecteur"></div></div>';
     $("vue").innerHTML = h; $("b-maj").onclick = vueBoites;
@@ -1128,8 +1128,8 @@ function vueRaccordement(onglet) {
   if (!ONGLETS_R.some(function (o) { return o[0] === onglet; })) onglet = "verification";
   var admin = !!(S.moi && S.moi.role === "admin"), essai = S.env === "test";
   var tete = '<div class="entete-vue"><div><h1>Raccordement</h1><p>' +
-    (essai ? "Environnement d'essai : branchez ici le serveur de recette de votre outil, avec une clé <span class=\"mono\">clm_test_</span>. Rien de ce qui se passe ici ne touche la production."
-           : "Production : ce qui relie ClaimAI à l'outil de la compagnie. Faites d'abord les contrôles dans l'environnement d'essai.") +
+    (essai ? "Environnement d'essai : branchez ici le serveur de recette de votre outil, avec une clé <span class=\"mono\">klr_test_</span>. Rien de ce qui se passe ici ne touche la production."
+           : "Production : ce qui relie Klerio à l'outil de la compagnie. Faites d'abord les contrôles dans l'environnement d'essai.") +
     (admin ? "" : " Lecture seule : seuls les administrateurs modifient ces réglages.") +
     '</p></div><a class="btn" href="guide.html" target="_blank" rel="noopener">Guide d\'intégration</a></div>' +
     '<nav class="onglets" aria-label="Rubriques du raccordement">' + ONGLETS_R.map(function (o) {
@@ -1153,8 +1153,8 @@ function vueVerification(tete, essais) {
     var essai = v.environnement === "test";
     var titre = v.pret ? (essai ? "Raccordement d'essai validé" : "Raccordement de production validé")
                        : faits + " contrôle" + (faits > 1 ? "s" : "") + " obligatoire" + (faits > 1 ? "s" : "") + " sur " + obl.length;
-    var sous = v.pret ? (essai ? "Votre outil et ClaimAI échangent correctement. Refaites ces contrôles en production avec une clé clm_live_ avant la mise en service."
-                               : "Votre outil et ClaimAI échangent correctement en production.")
+    var sous = v.pret ? (essai ? "Votre outil et Klerio échangent correctement. Refaites ces contrôles en production avec une clé klr_live_ avant la mise en service."
+                               : "Votre outil et Klerio échangent correctement en production.")
                       : "Chaque ligne se coche seule dès que votre outil fait l'action attendue. Rien à déclarer à la main.";
     var h = tete + '<section class="bloc"><div class="verif-tete"><div><h2>' + esc(titre) + "</h2><p>" + esc(sous) + "</p></div>" +
       '<div class="decision-actions"><button class="btn" id="v-sig">Tester la signature</button><button class="btn" id="v-msg">Envoyer un message de test</button><button class="btn discret" id="v-maj">Actualiser</button></div>' +
@@ -1187,8 +1187,8 @@ function ligneControle(c) {
 }
 function classeCode(n) { return n < 300 ? "ok" : n === 401 || n === 403 || n >= 500 ? "ko" : "attention"; }
 function tableAppels(a) {
-  if (!a.length) return '<div class="vide"><b>Aucun appel reçu pour l\'instant</b>Premier essai depuis votre outil : <span class="mono">GET /moi</span> avec l\'en-tête <span class="mono">x-claimai-key</span>.</div>';
-  return '<div class="tableau-wrap"><table class="tableau fixe"><thead><tr><th>Heure</th><th>Appel</th><th>Réponse</th><th class="nb">Durée</th><th>Dossier</th><th>Clé</th><th>N° de requête</th></tr></thead><tbody>' +
+  if (!a.length) return '<div class="vide"><b>Aucun appel reçu pour l\'instant</b>Premier essai depuis votre outil : <span class="mono">GET /moi</span> avec l\'en-tête <span class="mono">x-klerio-key</span>.</div>';
+  return '<div class="tableau-wrap"><table class="tableau fixe appels"><thead><tr><th>Heure</th><th>Appel</th><th>Réponse</th><th class="nb">Durée</th><th>Dossier</th><th>Clé</th><th>N° de requête</th></tr></thead><tbody>' +
     a.map(function (x) {
       return "<tr><td>" + esc(C.heure(x.created_at)) + '</td><td class="mono">' + esc(x.methode + " /" + (x.route || "")) + "</td>" +
         '<td><span class="code-http ' + classeCode(x.code_http) + '">' + x.code_http + "</span>" + (x.erreur ? '<div class="muet petit" style="max-width:36ch">' + esc(x.erreur) + "</div>" : "") + "</td>" +
@@ -1219,13 +1219,13 @@ function blocCles(cles, admin) {
 function ongletConnexion(p, admin) {
   var essai = p.environnement === "test", url = S.base.replace(/\/+$/, "");
   var h = '<div class="reglage"><div class="expl"><h3>Clés API</h3><p>' +
-    (essai ? "Les clés <span class=\"mono\">clm_test_</span> n'ouvrent que l'environnement d'essai : contrats fictifs, emails redirigés."
-           : "Les clés <span class=\"mono\">clm_live_</span> ouvrent les vrais dossiers. Une clé par serveur ; révoquez celle d'un serveur retiré, effet immédiat.") +
+    (essai ? "Les clés <span class=\"mono\">klr_test_</span> n'ouvrent que l'environnement d'essai : contrats fictifs, emails redirigés."
+           : "Les clés <span class=\"mono\">klr_live_</span> ouvrent les vrais dossiers. Une clé par serveur ; révoquez celle d'un serveur retiré, effet immédiat.") +
     '</p></div><div class="zone" id="zone-cles">' + blocCles(p.cles || [], admin) + "</div></div>";
   h += '<div class="reglage"><div class="expl"><h3>Recevoir les nouveaux sinistres</h3><p>Votre outil envoie chaque déclaration à cette adresse avec sa clé. Le dossier est créé, lu et orienté en quelques secondes. Renvoyer la même <span class="mono">ref_externe</span> rend le dossier existant, sans doublon.</p></div><div class="zone">' +
-    '<pre class="code">POST ' + esc(url) + '/declarer\nx-claimai-key: ' + (essai ? "clm_test_…" : "clm_live_…") + '\n\n{ "numero_contrat": "' + (essai ? "ESSAI-AUTO-0001" : "AUTO-2025-0001") + '", "theme": "BRIS_GLACE",\n  "date_sinistre": "2026-09-28", "code_postal": "77140",\n  "recit": "…", "ref_externe": "SIN-2026-10433" }</pre>' +
+    '<pre class="code">POST ' + esc(url) + '/declarer\nx-klerio-key: ' + (essai ? "klr_test_…" : "klr_live_…") + '\n\n{ "numero_contrat": "' + (essai ? "ESSAI-AUTO-0001" : "AUTO-2025-0001") + '", "theme": "BRIS_GLACE",\n  "date_sinistre": "2026-09-28", "code_postal": "77140",\n  "recit": "…", "ref_externe": "SIN-2026-10433" }</pre>' +
     '<p class="muet petit">Pour un accident corporel, ajoutez <b>"victime": { "age": 35, "lien": "societaire" }</b>. Détail des champs dans le <a href="guide.html#declarer" target="_blank" rel="noopener">guide d\'intégration</a>.</p></div></div>';
-  h += '<div class="reglage"><div class="expl"><h3>Tenir votre outil à jour</h3><p>À chaque étape, ClaimAI envoie le nouvel état du dossier à votre outil, signé avec un secret propre à cet environnement.</p></div><div class="zone">' +
+  h += '<div class="reglage"><div class="expl"><h3>Tenir votre outil à jour</h3><p>À chaque étape, Klerio envoie le nouvel état du dossier à votre outil, signé avec un secret propre à cet environnement.</p></div><div class="zone">' +
     '<label class="champ">Adresse de réception de votre outil<input class="saisie" id="w-url" type="url" value="' + esc(p.webhook_url || "") + '" placeholder="https://"></label>' +
     '<div class="decision-actions"><button class="btn primaire" id="w-ok">Enregistrer</button><button class="btn" id="w-test">Envoyer un message de test</button><button class="btn discret" id="w-secret">Changer le secret</button></div>' +
     '<p class="muet petit">Secret de signature : ' + (p.webhook_secret_defini ? "défini" : "pas encore créé") + ". Il n'est affiché qu'une fois, à sa création.</p>" +
@@ -1241,7 +1241,7 @@ function ongletConnexion(p, admin) {
 
 function ongletDonnees(p) {
   var essai = p.environnement === "test";
-  var h = '<div class="reglage"><div class="expl"><h3>Réseau agréé et contrats</h3><p>ClaimAI missionne uniquement vos experts et garages, selon le lieu du sinistre. Votre outil les tient à jour ici ; un même email met à jour la fiche existante.' +
+  var h = '<div class="reglage"><div class="expl"><h3>Réseau agréé et contrats</h3><p>Klerio missionne uniquement vos experts et garages, selon le lieu du sinistre. Votre outil les tient à jour ici ; un même email met à jour la fiche existante.' +
     (essai ? " L'essai contient quatre contrats fictifs (ESSAI-AUTO-0001 à 0003, ESSAI-GA-0004)." : "") + '</p></div><div class="zone">' +
     "<p><b>" + p.reseau.experts + "</b> experts, <b>" + p.reseau.garages + "</b> garages et <b>" + p.reseau.contrats + "</b> contrats connus.</p>" +
     '<label class="champ">Experts et garages (format JSON)<textarea class="saisie code-saisie" id="i-reseau">' + esc(JSON.stringify(EX_RESEAU, null, 2)) + "</textarea></label>" +
@@ -1253,7 +1253,7 @@ function ongletDonnees(p) {
     champNum("s-taux", "Taux horaire maximum", "€", p.taux_horaire_max_eur) + champNum("s-bg", "Bris de glace sans expert, jusqu'à", "€", p.bris_glace_sans_expert_max) +
     champNum("s-relance", "Relance sans réponse après", "jours", p.delai_relance_jours) + champNum("s-aipp", "Écart AIPP et barème toléré", "points", p.ga_ecart_aipp_points) +
     '</div><p class="muet petit">Unité de compte de la Garantie Accident : ' + esc(eur(p.uc_eur)) + '.</p><div class="decision-actions"><button class="btn primaire" id="s-ok">Enregistrer les règles</button></div></div></div>';
-  h += '<div class="reglage"><div class="expl"><h3>Adresses de l\'API</h3><p>Toutes demandent l\'en-tête <b>x-claimai-key</b>, sauf l\'espace en ligne, ouvert par le lien personnel de chaque courrier. Exemples complets dans le <a href="guide.html" target="_blank" rel="noopener">guide</a>.</p></div><div class="zone"><table class="routes">' +
+  h += '<div class="reglage"><div class="expl"><h3>Adresses de l\'API</h3><p>Toutes demandent l\'en-tête <b>x-klerio-key</b>, sauf l\'espace en ligne, ouvert par le lien personnel de chaque courrier. Exemples complets dans le <a href="guide.html" target="_blank" rel="noopener">guide</a>.</p></div><div class="zone"><table class="routes">' +
     [["GET /moi", "Vérifier la clé et l'environnement"], ["POST /declarer", "Nouveau sinistre"], ["GET /dossier?numero=", "Fiche complète d'un dossier"], ["GET /dossiers", "Liste, filtres statut et q"], ["GET /a-traiter", "Dossiers qui attendent un humain"],
      ["POST /valider", "Décision d'un gestionnaire"], ["POST /virement", "Paiement confirmé, clôture"], ["POST /pieces", "Pièce reçue en agence"], ["POST /retour", "Rapport ou facture saisi par la compagnie"],
      ["POST /reprendre", "Reprise ou classement"], ["POST /reseau", "Import des experts et garages"], ["POST /contrats", "Import des contrats"], ["GET /indicateurs", "Pilotage"],

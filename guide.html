@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Guide d'intégration ClaimAI</title>
-<meta name="description" content="Brancher l'outil de gestion des sinistres d'une compagnie sur ClaimAI : clés, déclarations, messages signés, recette.">
+<title>Guide d'intégration Klerio</title>
+<meta name="description" content="Brancher l'outil de gestion des sinistres d'une compagnie sur Klerio : clés, déclarations, messages signés, recette.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
@@ -91,12 +91,12 @@ table.doc td:first-child { white-space: nowrap; }
       <li><a href="#environnements">Essai et production</a></li>
       <li><a href="#demarrage">Démarrage en 6 étapes</a></li>
       <li><a href="#authentification">Authentification</a></li>
-      <li class="groupe">Envoyer à ClaimAI</li>
+      <li class="groupe">Envoyer à Klerio</li>
       <li><a href="#declarer">Déclarer un sinistre</a></li>
       <li><a href="#suivre">Lire un dossier</a></li>
       <li><a href="#agir">Agir depuis votre outil</a></li>
       <li><a href="#referentiels">Contrats et réseau</a></li>
-      <li class="groupe">Recevoir de ClaimAI</li>
+      <li class="groupe">Recevoir de Klerio</li>
       <li><a href="#messages">Messages signés</a></li>
       <li><a href="#signature">Vérifier la signature</a></li>
       <li><a href="#fiabilite">Ordre, doublons, reprises</a></li>
@@ -109,16 +109,16 @@ table.doc td:first-child { white-space: nowrap; }
 
   <main>
     <section id="principe">
-      <h1>Brancher votre outil sur ClaimAI</h1>
-      <p class="chapeau">Ce guide s'adresse à l'équipe informatique de la compagnie. ClaimAI ne remplace pas votre outil de gestion : il s'y branche par deux canaux, dans les deux sens, et votre outil reste la référence.</p>
-      <div class="schema" role="img" aria-label="Votre outil envoie les déclarations à ClaimAI ; ClaimAI renvoie chaque étape à votre outil par un message signé.">
+      <h1>Brancher votre outil sur Klerio</h1>
+      <p class="chapeau">Ce guide s'adresse à l'équipe informatique de la compagnie. Klerio ne remplace pas votre outil de gestion : il s'y branche par deux canaux, dans les deux sens, et votre outil reste la référence.</p>
+      <div class="schema" role="img" aria-label="Votre outil envoie les déclarations à Klerio ; Klerio renvoie chaque étape à votre outil par un message signé.">
         <div class="boite-s"><b>Votre outil sinistres</b><span>Déclarations, contrats, réseau agréé, décisions</span></div>
         <div class="fleches"><div class="d">API : POST /declarer…</div><div class="g">Messages signés à chaque étape</div></div>
-        <div class="boite-s"><b>ClaimAI</b><span>Analyse, contrôle de garantie, missions, calcul, propositions</span></div>
+        <div class="boite-s"><b>Klerio</b><span>Analyse, contrôle de garantie, missions, calcul, propositions</span></div>
       </div>
-      <p><b>Vers ClaimAI</b> : votre outil appelle l'API REST (JSON sur HTTPS) pour déclarer un sinistre, transmettre les contrats et le réseau, et enregistrer les décisions prises chez vous.</p>
-      <p><b>Vers votre outil</b> : à chaque changement d'étape, ClaimAI envoie un message signé (webhook) à une adresse HTTPS que vous lui donnez. Votre outil met sa fiche à jour.</p>
-      <div class="note"><b>Aucun refus ni aucun paiement ne part sans validation humaine.</b> ClaimAI propose ; un gestionnaire décide, dans la console ClaimAI ou dans votre outil par <code>POST /valider</code>. Chaque action est tracée au journal du dossier.</div>
+      <p><b>Vers Klerio</b> : votre outil appelle l'API REST (JSON sur HTTPS) pour déclarer un sinistre, transmettre les contrats et le réseau, et enregistrer les décisions prises chez vous.</p>
+      <p><b>Vers votre outil</b> : à chaque changement d'étape, Klerio envoie un message signé (webhook) à une adresse HTTPS que vous lui donnez. Votre outil met sa fiche à jour.</p>
+      <div class="note"><b>Aucun refus ni aucun paiement ne part sans validation humaine.</b> Klerio propose ; un gestionnaire décide, dans la console Klerio ou dans votre outil par <code>POST /valider</code>. Chaque action est tracée au journal du dossier.</div>
     </section>
 
     <section id="environnements">
@@ -127,7 +127,7 @@ table.doc td:first-child { white-space: nowrap; }
       <div class="tableau-defil"><table class="doc">
         <thead><tr><th></th><th>Essai</th><th>Production</th></tr></thead>
         <tbody>
-          <tr><td>Clé API</td><td><code>clm_test_…</code></td><td><code>clm_live_…</code></td></tr>
+          <tr><td>Clé API</td><td><code>klr_test_…</code></td><td><code>klr_live_…</code></td></tr>
           <tr><td>Numéro des dossiers</td><td><code>ESS-2026-000123</code></td><td><code>CLM-2026-000123</code></td></tr>
           <tr><td>Contrats</td><td>Quatre contrats fictifs fournis, ou les vôtres anonymisés</td><td>Vos contrats réels</td></tr>
           <tr><td>Emails</td><td>Toujours redirigés vers votre adresse de test, jamais aux vrais destinataires</td><td>Mode test ou réel, au choix de l'administrateur</td></tr>
@@ -135,7 +135,7 @@ table.doc td:first-child { white-space: nowrap; }
         </tbody>
       </table></div>
       <p>L'adresse de l'API est la même pour les deux : <b>c'est la clé qui choisit l'environnement</b>. Votre serveur de recette utilise une clé d'essai, votre production une clé de production.</p>
-      <pre id="base-url">https://okugbnabvlotasdsokco.supabase.co/functions/v1/claimai</pre>
+      <pre id="base-url">https://okugbnabvlotasdsokco.supabase.co/functions/v1/klerio</pre>
       <p>Contrats fictifs de l'environnement d'essai :</p>
       <div class="tableau-defil"><table class="doc">
         <thead><tr><th>Contrat</th><th>Situation</th><th>Pour tester</th></tr></thead>
@@ -153,32 +153,32 @@ table.doc td:first-child { white-space: nowrap; }
       <ol class="etapes">
         <li>Un administrateur de la compagnie se connecte à la console, bascule sur <b>Essai</b> (en haut de l'écran), ouvre <b>Raccordement › Clés et messages</b> et crée une clé d'essai. Elle n'est affichée qu'une fois : rangez-la dans votre coffre à secrets.</li>
         <li>Vérifiez la clé depuis votre serveur : <code>GET /moi</code> doit répondre <code>"environnement": "test"</code>.</li>
-        <li>Renseignez l'adresse HTTPS de réception de votre outil. ClaimAI crée alors le secret de signature et l'affiche une fois.</li>
+        <li>Renseignez l'adresse HTTPS de réception de votre outil. Klerio crée alors le secret de signature et l'affiche une fois.</li>
         <li>Envoyez une déclaration d'essai par <code>POST /declarer</code> avec le contrat <code>ESSAI-AUTO-0001</code>.</li>
         <li>Faites vérifier la signature par votre outil, puis lancez <b>Tester la signature</b> dans la console.</li>
         <li>Ouvrez <b>Raccordement › Vérification</b> : chaque contrôle se coche seul. Quand tout est vert, refaites les mêmes étapes en production.</li>
       </ol>
-<pre>curl https://okugbnabvlotasdsokco.supabase.co/functions/v1/claimai/moi \
-  -H "x-claimai-key: $CLAIMAI_CLE"
+<pre>curl https://okugbnabvlotasdsokco.supabase.co/functions/v1/klerio/moi \
+  -H "x-klerio-key: $KLERIO_CLE"
 
 {
   "type": "outil",
   "compagnie": "Mutuelle Démo du Gâtinais",
   "environnement": "test",
-  "cle": "clm_test_f621ed6…",
+  "cle": "klr_test_f621ed6…",
   "message": "Connexion réussie : votre clé est reconnue."
 }</pre>
     </section>
 
     <section id="authentification">
       <h2>Authentification</h2>
-      <p>Chaque appel porte l'en-tête <code>x-claimai-key</code>. Les clés sont créées et révoquées par un administrateur de la compagnie dans la console, jamais par l'API. Une clé révoquée est refusée immédiatement.</p>
+      <p>Chaque appel porte l'en-tête <code>x-klerio-key</code>. Les clés sont créées et révoquées par un administrateur de la compagnie dans la console, jamais par l'API. Une clé révoquée est refusée immédiatement.</p>
       <ul>
         <li>Une clé par serveur ou par usage (« Outil sinistres, production », « Batch contrats nocturne »), pour pouvoir en révoquer une sans couper les autres.</li>
         <li>Rotation : créez la nouvelle clé, déployez-la, vérifiez sa date de dernière utilisation dans la console, puis révoquez l'ancienne.</li>
-        <li>ClaimAI ne conserve qu'une empreinte SHA-256 de la clé : elle ne peut pas être réaffichée. Perdue, elle se remplace.</li>
+        <li>Klerio ne conserve qu'une empreinte SHA-256 de la clé : elle ne peut pas être réaffichée. Perdue, elle se remplace.</li>
       </ul>
-      <p>Chaque réponse porte l'en-tête <code>x-claimai-requete</code> : un identifiant unique de l'appel, repris dans le journal de la console. Donnez-le au support pour toute question sur un appel précis.</p>
+      <p>Chaque réponse porte l'en-tête <code>x-klerio-requete</code> : un identifiant unique de l'appel, repris dans le journal de la console. Donnez-le au support pour toute question sur un appel précis.</p>
     </section>
 
     <section id="declarer">
@@ -187,19 +187,19 @@ table.doc td:first-child { white-space: nowrap; }
       <div class="tableau-defil"><table class="doc">
         <thead><tr><th>Champ</th><th>Type</th><th>Description</th></tr></thead>
         <tbody>
-          <tr><td><code>numero_contrat</code><span class="oblig">obligatoire</span></td><td>texte</td><td>Numéro du contrat tel que connu de ClaimAI (voir <a href="#referentiels">Contrats</a>).</td></tr>
+          <tr><td><code>numero_contrat</code><span class="oblig">obligatoire</span></td><td>texte</td><td>Numéro du contrat tel que connu de Klerio (voir <a href="#referentiels">Contrats</a>).</td></tr>
           <tr><td><code>date_sinistre</code><span class="oblig">obligatoire</span></td><td>AAAA-MM-JJ</td><td>Pas dans le futur.</td></tr>
           <tr><td><code>code_postal</code><span class="oblig">obligatoire</span></td><td>5 chiffres</td><td>Lieu du sinistre : sert à choisir l'expert et le réparateur les plus proches.</td></tr>
           <tr><td><code>recit</code><span class="oblig">obligatoire</span></td><td>texte</td><td>Récit de l'assuré, 10 caractères au moins. C'est lui que l'IA qualifie.</td></tr>
           <tr><td><code>ref_externe</code></td><td>texte</td><td>Votre référence de sinistre. <b>Fortement recommandée</b> : elle rend le renvoi sans risque (voir plus bas) et figure dans chaque message.</td></tr>
-          <tr><td><code>theme</code></td><td>texte</td><td>Type choisi par l'assuré : <code>BRIS_GLACE</code>, <code>PERTE_CONTROLE_OBSTACLE_FIXE</code>, <code>VANDALISME</code>, <code>GARANTIE_ACCIDENT</code>, <code>AUTRE</code>. ClaimAI le compare au récit.</td></tr>
+          <tr><td><code>theme</code></td><td>texte</td><td>Type choisi par l'assuré : <code>BRIS_GLACE</code>, <code>PERTE_CONTROLE_OBSTACLE_FIXE</code>, <code>VANDALISME</code>, <code>GARANTIE_ACCIDENT</code>, <code>AUTRE</code>. Klerio le compare au récit.</td></tr>
           <tr><td><code>ville</code></td><td>texte</td><td>Commune, pour situer le lieu plus précisément.</td></tr>
           <tr><td><code>tiers_implique</code></td><td>booléen</td><td>Si votre outil le sait déjà.</td></tr>
           <tr><td><code>victime</code></td><td>objet</td><td>Garantie Accident : <code>{"age": 35, "lien": "societaire"}</code>. <code>lien</code> parmi <code>societaire</code>, <code>conjoint</code>, <code>enfant_mineur</code>, <code>enfant_etudiant</code>, <code>enfant_handicape</code>, <code>personne_a_charge</code>, <code>conducteur_tiers</code>. Ni nom ni numéro de sécurité sociale.</td></tr>
         </tbody>
       </table></div>
-<pre>curl -X POST https://okugbnabvlotasdsokco.supabase.co/functions/v1/claimai/declarer \
-  -H "x-claimai-key: $CLAIMAI_CLE" -H "Content-Type: application/json" \
+<pre>curl -X POST https://okugbnabvlotasdsokco.supabase.co/functions/v1/klerio/declarer \
+  -H "x-klerio-key: $KLERIO_CLE" -H "Content-Type: application/json" \
   -d '{
     "numero_contrat": "ESSAI-AUTO-0001",
     "ref_externe": "SIN-2026-10433",
@@ -213,7 +213,7 @@ table.doc td:first-child { white-space: nowrap; }
         <thead><tr><th>Réponse</th><th>Sens</th></tr></thead>
         <tbody>
           <tr><td><code>201</code></td><td>Dossier créé. Le corps est la fiche complète : <code>numero</code>, <code>statut</code>, <code>theme</code>, <code>decision</code>, <code>motif</code>…</td></tr>
-          <tr><td><code>200</code> + <code>"deja_recu": true</code></td><td>Cette <code>ref_externe</code> existe déjà : ClaimAI rend le dossier existant sans en créer un second. Vous pouvez donc renvoyer une déclaration après un délai dépassé sans risque de doublon.</td></tr>
+          <tr><td><code>200</code> + <code>"deja_recu": true</code></td><td>Cette <code>ref_externe</code> existe déjà : Klerio rend le dossier existant sans en créer un second. Vous pouvez donc renvoyer une déclaration après un délai dépassé sans risque de doublon.</td></tr>
           <tr><td><code>400</code></td><td>Champ manquant ou mal formé : le message dit lequel.</td></tr>
           <tr><td><code>422</code></td><td>Règle métier refusée (date dans le futur, récit trop court…).</td></tr>
         </tbody>
@@ -223,7 +223,7 @@ table.doc td:first-child { white-space: nowrap; }
 
     <section id="suivre">
       <h2>Lire un dossier</h2>
-      <p>Les messages signés suffisent à tenir votre outil à jour. Ces lectures servent à se resynchroniser après un incident, ou à afficher la fiche ClaimAI dans votre outil.</p>
+      <p>Les messages signés suffisent à tenir votre outil à jour. Ces lectures servent à se resynchroniser après un incident, ou à afficher la fiche Klerio dans votre outil.</p>
       <div class="tableau-defil"><table class="doc">
         <thead><tr><th>Appel</th><th>Rend</th></tr></thead>
         <tbody>
@@ -245,7 +245,7 @@ table.doc td:first-child { white-space: nowrap; }
           <tr><td><code>POST /valider</code></td><td><code>{"validation_id", "resultat": "valide"|"rejete", "valide_par", "commentaire"}</code></td><td>Décision sur une proposition (refus, règlement…). L'identifiant vient de la fiche, rubrique des validations en attente.</td></tr>
           <tr><td><code>POST /virement</code></td><td><code>{"numero", "ref_virement"}</code></td><td>Paiement exécuté par votre outil : le dossier est clos.</td></tr>
           <tr><td><code>POST /pieces</code></td><td><code>{"numero", "pieces": ["DEPOT_PLAINTE"]}</code></td><td>Pièce reçue en agence. Codes : <code>FACTURE</code>, <code>DELEGATION_PAIEMENT</code>, <code>RAPPORT_EXPERTISE</code>, <code>DEPOT_PLAINTE</code>, <code>CMI</code>, <code>FICHE_RENSEIGNEMENTS</code>, <code>RIB</code>, <code>RAPPORT_MEDICAL</code>.</td></tr>
-          <tr><td><code>POST /retour</code></td><td>Rapport d'expert ou facture : <code>{"numero", "montant_ttc", …}</code></td><td>Quand l'expert vous répond hors de ClaimAI. Champs selon le cas : <code>heures</code>, <code>taux_horaire</code>, <code>montant_pieces_ht</code>, <code>vei</code>, <code>aipp_pct</code>, <code>date_consolidation</code>…</td></tr>
+          <tr><td><code>POST /retour</code></td><td>Rapport d'expert ou facture : <code>{"numero", "montant_ttc", …}</code></td><td>Quand l'expert vous répond hors de Klerio. Champs selon le cas : <code>heures</code>, <code>taux_horaire</code>, <code>montant_pieces_ht</code>, <code>vei</code>, <code>aipp_pct</code>, <code>date_consolidation</code>…</td></tr>
           <tr><td><code>POST /reprendre</code></td><td><code>{"numero", "action", "par", "commentaire"}</code></td><td>Reprise d'un dossier sorti du circuit, ou classement.</td></tr>
         </tbody>
       </table></div>
@@ -254,7 +254,7 @@ table.doc td:first-child { white-space: nowrap; }
 
     <section id="referentiels">
       <h2>Contrats et réseau</h2>
-      <p>ClaimAI vérifie la garantie à partir des contrats que vous lui transmettez, et ne missionne que votre réseau agréé. Les deux imports sont des mises à jour : un même numéro de contrat, ou un même email d'expert ou de garage, remplace la fiche existante.</p>
+      <p>Klerio vérifie la garantie à partir des contrats que vous lui transmettez, et ne missionne que votre réseau agréé. Les deux imports sont des mises à jour : un même numéro de contrat, ou un même email d'expert ou de garage, remplace la fiche existante.</p>
 <pre>POST /contrats
 { "contrats": [ {
     "numero_contrat": "AUTO-2026-0100", "assure_ref": "SOC-20100",
@@ -274,13 +274,13 @@ POST /reseau
 
     <section id="messages">
       <h2>Messages signés vers votre outil</h2>
-      <p>À chaque étape, ClaimAI envoie un <code>POST</code> JSON à votre adresse de réception. Répondez <b>2xx en moins de 10 secondes</b> : enregistrez le message, traitez-le ensuite.</p>
+      <p>À chaque étape, Klerio envoie un <code>POST</code> JSON à votre adresse de réception. Répondez <b>2xx en moins de 10 secondes</b> : enregistrez le message, traitez-le ensuite.</p>
       <div class="tableau-defil"><table class="doc">
         <thead><tr><th>En-tête</th><th>Contenu</th></tr></thead>
         <tbody>
-          <tr><td><code>x-claimai-signature</code></td><td>HMAC-SHA256 du corps brut avec votre secret, en hexadécimal minuscule.</td></tr>
-          <tr><td><code>x-claimai-evenement</code></td><td>Type d'événement, comme le champ <code>evenement</code>.</td></tr>
-          <tr><td><code>x-claimai-evenement-id</code></td><td>Identifiant unique du message, comme le champ <code>evenement_id</code>.</td></tr>
+          <tr><td><code>x-klerio-signature</code></td><td>HMAC-SHA256 du corps brut avec votre secret, en hexadécimal minuscule.</td></tr>
+          <tr><td><code>x-klerio-evenement</code></td><td>Type d'événement, comme le champ <code>evenement</code>.</td></tr>
+          <tr><td><code>x-klerio-evenement-id</code></td><td>Identifiant unique du message, comme le champ <code>evenement_id</code>.</td></tr>
         </tbody>
       </table></div>
       <div class="tableau-defil"><table class="doc">
@@ -320,7 +320,7 @@ POST /reseau
 
     <section id="signature">
       <h2>Vérifier la signature</h2>
-      <p>Calculez l'HMAC-SHA256 du <b>corps brut, tel que reçu</b>, avant tout décodage JSON, avec le secret de l'environnement. Comparez au contenu de <code>x-claimai-signature</code> en temps constant. Différent : répondez <code>401</code> et n'enregistrez rien.</p>
+      <p>Calculez l'HMAC-SHA256 du <b>corps brut, tel que reçu</b>, avant tout décodage JSON, avec le secret de l'environnement. Comparez au contenu de <code>x-klerio-signature</code> en temps constant. Différent : répondez <code>401</code> et n'enregistrez rien.</p>
       <div class="note attention"><b>Piège courant :</b> recalculer la signature sur un JSON relu puis réécrit. L'ordre des champs ou les espaces changent, la signature ne correspond plus. Signez toujours les octets reçus.</div>
       <div class="tab-code" data-onglets>
         <div class="langs" role="tablist">
@@ -331,9 +331,9 @@ import crypto from "node:crypto";
 import express from "express";
 
 const app = express();
-app.post("/claimai", express.raw({ type: "application/json" }), (req, res) => {
-  const attendu = crypto.createHmac("sha256", process.env.CLAIMAI_SECRET).update(req.body).digest("hex");
-  const recu = req.get("x-claimai-signature") || "";
+app.post("/klerio", express.raw({ type: "application/json" }), (req, res) => {
+  const attendu = crypto.createHmac("sha256", process.env.KLERIO_SECRET).update(req.body).digest("hex");
+  const recu = req.get("x-klerio-signature") || "";
   const ok = recu.length === attendu.length && crypto.timingSafeEqual(Buffer.from(recu), Buffer.from(attendu));
   if (!ok) return res.sendStatus(401);
 
@@ -346,13 +346,13 @@ import hashlib, hmac, os
 from flask import Flask, abort, request
 
 app = Flask(__name__)
-SECRET = os.environ["CLAIMAI_SECRET"].encode()
+SECRET = os.environ["KLERIO_SECRET"].encode()
 
-@app.post("/claimai")
+@app.post("/klerio")
 def recevoir():
     brut = request.get_data()                      # octets reçus, avant tout décodage
     attendu = hmac.new(SECRET, brut, hashlib.sha256).hexdigest()
-    if not hmac.compare_digest(attendu, request.headers.get("x-claimai-signature", "")):
+    if not hmac.compare_digest(attendu, request.headers.get("x-klerio-signature", "")):
         abort(401)
     message = request.get_json()
     file.ajouter(message)                          # traitement après la réponse
@@ -367,7 +367,7 @@ import javax.crypto.spec.SecretKeySpec;
 Mac mac = Mac.getInstance("HmacSHA256");
 mac.init(new SecretKeySpec(secret.getBytes(StandardCharsets.UTF_8), "HmacSHA256"));
 String attendu = HexFormat.of().formatHex(mac.doFinal(corpsBrut));
-String recu = signature == null ? "" : signature;   // en-tête x-claimai-signature
+String recu = signature == null ? "" : signature;   // en-tête x-klerio-signature
 if (!MessageDigest.isEqual(attendu.getBytes(StandardCharsets.UTF_8), recu.getBytes(StandardCharsets.UTF_8))) {
     return ResponseEntity.status(401).build();
 }</pre>
@@ -375,13 +375,13 @@ if (!MessageDigest.isEqual(attendu.getBytes(StandardCharsets.UTF_8), recu.getByt
 using System.Security.Cryptography;
 using System.Text;
 
-app.MapPost("/claimai", async (HttpRequest req) => {
+app.MapPost("/klerio", async (HttpRequest req) => {
     using var ms = new MemoryStream();
     await req.Body.CopyToAsync(ms);
     var corpsBrut = ms.ToArray();
     using var hmac = new HMACSHA256(Encoding.UTF8.GetBytes(secret));
     var attendu = Convert.ToHexString(hmac.ComputeHash(corpsBrut)).ToLowerInvariant();
-    var recu = req.Headers["x-claimai-signature"].ToString();
+    var recu = req.Headers["x-klerio-signature"].ToString();
     if (!CryptographicOperations.FixedTimeEquals(Encoding.UTF8.GetBytes(attendu), Encoding.UTF8.GetBytes(recu)))
         return Results.Unauthorized();
     file.Ajouter(Encoding.UTF8.GetString(corpsBrut));
@@ -389,8 +389,8 @@ app.MapPost("/claimai", async (HttpRequest req) => {
 });</pre>
 <pre hidden>&lt;?php
 $brut = file_get_contents('php://input');            // corps brut
-$attendu = hash_hmac('sha256', $brut, getenv('CLAIMAI_SECRET'));
-$recu = $_SERVER['HTTP_X_CLAIMAI_SIGNATURE'] ?? '';
+$attendu = hash_hmac('sha256', $brut, getenv('KLERIO_SECRET'));
+$recu = $_SERVER['HTTP_X_KLERIO_SIGNATURE'] ?? '';
 if (!hash_equals($attendu, $recu)) {
     http_response_code(401);
     exit;
@@ -408,7 +408,7 @@ signature : 8e9de53ea776ae18b78919fb25074e994a2c1942d0e809367580a7ba62b2e450</pr
     <section id="fiabilite">
       <h2>Ordre, doublons, reprises</h2>
       <h3>Reprises automatiques</h3>
-      <p>Si votre outil ne répond pas 2xx dans les 10 secondes (coupure, maintenance, erreur 5xx), ClaimAI garde le message et le renvoie : 1, 2, 5, 15, 30, 60 puis 120 minutes après l'échec précédent, soit 8 tentatives sur environ 4 heures. Au-delà, le message passe « en échec » et la console le signale ; un administrateur peut le renvoyer en un clic après correction.</p>
+      <p>Si votre outil ne répond pas 2xx dans les 10 secondes (coupure, maintenance, erreur 5xx), Klerio garde le message et le renvoie : 1, 2, 5, 15, 30, 60 puis 120 minutes après l'échec précédent, soit 8 tentatives sur environ 4 heures. Au-delà, le message passe « en échec » et la console le signale ; un administrateur peut le renvoyer en un clic après correction.</p>
       <h3>Doublons</h3>
       <p>Un même message peut arriver deux fois (votre outil l'a enregistré mais la réponse s'est perdue). Gardez les <code>evenement_id</code> déjà traités et ignorez un message déjà vu, en répondant quand même 2xx.</p>
       <h3>Ordre</h3>
@@ -467,7 +467,7 @@ répondre 200</pre>
         <li><span><b>Aucun message abandonné ces 7 derniers jours</b> (recommandé).</span></li>
         <li><span><b>Votre outil sait relire un dossier</b> (recommandé). <code>GET /dossier</code>.</span></li>
       </ol>
-      <p style="margin-top:16px">Deux contrôles restent de votre côté, car ClaimAI ne peut pas les voir : un message reçu deux fois ne crée qu'une mise à jour, et un message plus ancien n'écrase pas un plus récent (voir <a href="#fiabilite">Ordre, doublons, reprises</a>).</p>
+      <p style="margin-top:16px">Deux contrôles restent de votre côté, car Klerio ne peut pas les voir : un message reçu deux fois ne crée qu'une mise à jour, et un message plus ancien n'écrase pas un plus récent (voir <a href="#fiabilite">Ordre, doublons, reprises</a>).</p>
     </section>
   </main>
 </div>
@@ -477,8 +477,8 @@ répondre 200</pre>
 (function () {
   "use strict";
   var C = window.CA;
-  document.getElementById("logo").innerHTML = C.LOGO + "<span>ClaimAI</span>";
-  var QUI = { vous: "Gestionnaire", ok: "Terminé", ko: "Terminé", neutre: "Terminé", encours: "ClaimAI, expert ou assuré" };
+  document.getElementById("logo").innerHTML = C.LOGO + "<span>Klerio</span>";
+  var QUI = { vous: "Gestionnaire", ok: "Terminé", ko: "Terminé", neutre: "Terminé", encours: "Klerio, expert ou assuré" };
   document.querySelector("#statuts tbody").innerHTML = Object.keys(C.STATUTS).map(function (k) {
     var s = C.STATUTS[k];
     return "<tr><td><code>" + C.esc(k) + "</code></td><td>" + C.esc(s[0]) + "</td><td>" + C.esc(QUI[s[1]] || "") + "</td></tr>";
