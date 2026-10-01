@@ -4,11 +4,11 @@
   var API_DEFAUT = "https://okugbnabvlotasdsokco.supabase.co/functions/v1/claimai";
 
   var STATUTS = {
-    recu: ["Reçu", ""], analyse: ["Analysé", ""], contrat_verifie: ["Contrat vérifié", ""],
+    recu: ["Reçu", "encours"], analyse: ["Analysé", "encours"], contrat_verifie: ["Contrat vérifié", "encours"],
     hors_perimetre: ["À reprendre", "vous"], decision_a_valider: ["Décision à valider", "vous"],
-    refuse: ["Refusé", "ko"], mission_envoyee: ["Mission en cours", ""], attente_pieces: ["Attente de pièces", ""],
-    expertise_recue: ["Retour reçu", ""], anomalie_gestionnaire: ["Anomalie à examiner", "vous"],
-    prereglement_a_valider: ["Règlement à valider", "vous"], reglement_envoye: ["Virement en cours", ""],
+    refuse: ["Refusé", "ko"], mission_envoyee: ["Mission en cours", "encours"], attente_pieces: ["Attente de pièces", "encours"],
+    expertise_recue: ["Retour reçu", "encours"], anomalie_gestionnaire: ["Anomalie à examiner", "vous"],
+    prereglement_a_valider: ["Règlement à valider", "vous"], reglement_envoye: ["Virement en cours", "encours"],
     clos: ["Clos et payé", "ok"], classe_sans_suite: ["Classé", "neutre"]
   };
   var THEMES = {
@@ -127,7 +127,7 @@
   function ecrireSession(s) { try { localStorage.setItem(SESSION, JSON.stringify(s)); } catch (e) { } }
   function oublierSession() { try { localStorage.removeItem(SESSION); } catch (e) { } }
 
-  var LOGO = '<svg width="26" height="26" viewBox="0 0 26 26" aria-hidden="true"><rect x="1" y="1" width="24" height="24" rx="6" fill="#2F5FA7"/><path d="M7 9.5h12M7 13h8M7 16.5h5" stroke="#fff" stroke-width="2" stroke-linecap="round"/><circle cx="18.5" cy="17" r="3" fill="#F2C84B"/></svg>';
+  var LOGO = '<svg width="24" height="24" viewBox="0 0 26 26" aria-hidden="true"><rect x="1" y="1" width="24" height="24" rx="6" fill="#2563EB"/><path d="M7.5 9h11M7.5 13h11M7.5 17h6.5" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg>';
 
   g.CA = {
     API_DEFAUT: API_DEFAUT, STATUTS: STATUTS, THEMES: THEMES, MOTIFS: MOTIFS, ANOMALIES: ANOMALIES, COURRIERS: COURRIERS,
