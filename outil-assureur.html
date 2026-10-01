@@ -1,0 +1,198 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Gestion sinistres, Mutuelle Démo du Gâtinais</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<style>
+/* L'outil maison de la compagnie : une autre identité que ClaimAI */
+:root { --cie: #0F5C4D; --cie-2: #0B4A3E; --cie-pale: #E3F0EC; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --cie: #3FA88F; --cie-2: #2E8C76; --cie-pale: #12302A; } }
+body { font-size: 14px; }
+.bandeau { background: var(--jaune-pale); color: var(--jaune-texte); font-size: 13px; padding: 8px 20px; text-align: center; }
+.bandeau a { color: inherit; font-weight: 600; }
+.entete { background: var(--cie); color: #fff; }
+.entete-in { max-width: 1480px; margin: 0 auto; padding: 0 20px; display: flex; align-items: center; gap: 28px; min-height: 56px; flex-wrap: wrap; }
+.cie-nom { font-weight: 700; font-size: 16px; display: flex; align-items: center; gap: 10px; }
+.cie-nom span { font-weight: 400; opacity: .8; font-size: 13px; }
+.onglets { display: flex; gap: 2px; align-self: stretch; }
+.onglets span { display: flex; align-items: center; padding: 0 14px; font-size: 13.5px; opacity: .75; border-bottom: 3px solid transparent; }
+.onglets span.actif { opacity: 1; border-bottom-color: #fff; font-weight: 600; }
+.entete .agent { margin-left: auto; font-size: 13px; opacity: .85; }
+main { max-width: 1480px; margin: 0 auto; padding: 22px 20px 60px; display: grid; grid-template-columns: 320px minmax(0, 1fr); gap: 20px; align-items: start; }
+@media (max-width: 1040px) { main { grid-template-columns: 1fr; } }
+.panneau { background: var(--feuille); border: 1px solid var(--trait); border-radius: 6px; }
+.panneau + .panneau { margin-top: 20px; }
+.panneau-tete { padding: 12px 16px; border-bottom: 1px solid var(--trait); display: flex; justify-content: space-between; align-items: center; gap: 10px; background: var(--feuille-2); border-radius: 6px 6px 0 0; }
+.panneau-tete h2 { font-size: 15px; }
+.panneau-corps { padding: 16px; }
+form.panneau-corps { display: grid; gap: 14px; }
+.btn.cie { background: var(--cie); border-color: var(--cie); color: #fff; }
+.btn.cie:hover { background: var(--cie-2); }
+.modeles { display: flex; flex-wrap: wrap; gap: 6px; }
+.resultat { font-size: 13.5px; padding: 10px 12px; border-radius: 6px; background: var(--cie-pale); color: var(--encre); }
+.resultat.ko { background: var(--rouge-pale); color: var(--rouge); }
+.direct { display: inline-flex; align-items: center; gap: 7px; font-size: 12.5px; color: var(--gris); }
+.direct i { width: 8px; height: 8px; border-radius: 50%; background: var(--vert); animation: pouls 2s infinite; }
+@keyframes pouls { 50% { opacity: .3; } }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th { text-align: left; font-weight: 600; color: var(--gris); font-size: 12.5px; padding: 8px 12px; border-bottom: 1px solid var(--trait); white-space: nowrap; background: var(--feuille-2); }
+td.nw { white-space: nowrap; }
+td { padding: 9px 10px; border-bottom: 1px solid var(--trait); vertical-align: top; }
+tr.neuf td { animation: neuf 2.4s ease-out; }
+@keyframes neuf { 0% { background: var(--jaune-pale); } 100% { background: transparent; } }
+.etat-cie { display: inline-block; padding: 1px 8px; border-radius: 3px; font-size: 12.5px; font-weight: 600; background: var(--feuille-2); border: 1px solid var(--trait); white-space: nowrap; }
+.etat-cie.att { background: var(--jaune-pale); border-color: transparent; color: var(--jaune-texte); }
+.etat-cie.ok { background: var(--vert-pale); border-color: transparent; color: var(--vert); }
+.etat-cie.ko { background: var(--rouge-pale); border-color: transparent; color: var(--rouge); }
+.table-wrap { overflow-x: auto; }
+.journal-cie { list-style: none; margin: 0; padding: 0; max-height: 420px; overflow-y: auto; }
+.journal-cie li { display: grid; grid-template-columns: 70px 1fr auto; gap: 10px; padding: 8px 16px; border-bottom: 1px solid var(--trait); font-size: 13px; }
+.journal-cie .h { color: var(--gris); }
+.sig { font-size: 12px; font-weight: 600; color: var(--vert); white-space: nowrap; }
+.sig.ko { color: var(--rouge); }
+.vide { padding: 28px 16px; text-align: center; color: var(--gris); }
+.connexion { max-width: 440px; margin: 60px auto; }
+</style>
+</head>
+<body>
+<div class="bandeau">Démonstration : cette page simule l'outil interne de la compagnie, raccordé à ClaimAI. <a href="index.html">Ouvrir la console ClaimAI</a></div>
+<header class="entete"><div class="entete-in">
+  <div class="cie-nom"><svg width="22" height="22" viewBox="0 0 22 22" aria-hidden="true"><path d="M11 2l8 3.5v5c0 5-3.6 8.5-8 9.5-4.4-1-8-4.5-8-9.5v-5z" fill="#fff" opacity=".95"/><path d="M7.5 11l2.5 2.5 4.5-5" fill="none" stroke="#0F5C4D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Mutuelle Démo du Gâtinais <span>Gestion sinistres</span></div>
+  <nav class="onglets" aria-label="Modules de l'outil"><span>Sociétaires</span><span>Contrats</span><span class="actif">Sinistres</span><span>Comptabilité</span></nav>
+  <span class="agent">Plateau sinistres, Nemours</span>
+</div></header>
+
+<div id="ecran-cle" class="connexion" hidden>
+  <div class="panneau"><div class="panneau-tete"><h2>Raccordement à ClaimAI</h2></div>
+  <form class="panneau-corps" id="form-cle"><p class="muet">L'outil s'identifie auprès de ClaimAI avec la clé de la compagnie. Elle est déjà enregistrée si vous êtes connecté à la console sur cet appareil.</p>
+    <label class="champ">Adresse du service<input class="saisie" id="k-base"></label>
+    <label class="champ">Clé d'accès de la compagnie<input class="saisie" id="k-cle" type="password" placeholder="clm_…"></label>
+    <button class="btn cie" type="submit">Raccorder</button><p class="muet petit" id="k-err" role="alert"></p></form></div>
+</div>
+
+<main id="ecran-outil" hidden>
+  <div>
+    <section class="panneau">
+      <div class="panneau-tete"><h2>Nouvelle déclaration</h2><span class="muet petit">Prise au téléphone</span></div>
+      <form class="panneau-corps" id="form-decl" novalidate>
+        <div><div class="sous-titre muet petit" style="margin-bottom:6px">Appels types</div><div class="modeles" id="modeles"></div></div>
+        <div class="grille-2"><label class="champ">N° de contrat<input class="saisie" id="o-contrat" list="o-contrats"></label>
+          <label class="champ">Nature<select class="saisie" id="o-theme"><option value="BRIS_GLACE">Bris de glace</option><option value="PERTE_CONTROLE_OBSTACLE_FIXE">Perte de contrôle</option><option value="VANDALISME">Vandalisme</option><option value="GARANTIE_ACCIDENT">Garantie Accident</option><option value="AUTRE">Autre</option></select></label></div>
+        <datalist id="o-contrats"><option value="AUTO-2025-0001"><option value="AUTO-2025-0004"><option value="GA-2024-0005"><option value="GA-2025-0006"></datalist>
+        <div class="grille-2"><label class="champ">Survenu le<input class="saisie" id="o-date" type="date"></label><label class="champ">Code postal<input class="saisie" id="o-cp" maxlength="5" inputmode="numeric"></label></div>
+        <div class="grille-2" id="o-ga" hidden><label class="champ">Âge de la victime<input class="saisie" id="o-age" type="number"></label><label class="champ">Lien<select class="saisie" id="o-lien"><option value="societaire">Sociétaire</option><option value="conjoint">Conjoint</option><option value="enfant_mineur">Enfant mineur</option></select></label></div>
+        <label class="champ">Ce que dit le sociétaire<textarea class="saisie" id="o-recit" rows="4"></textarea></label>
+        <button class="btn cie" id="o-envoyer" type="submit">Enregistrer le sinistre</button>
+        <div id="o-res" hidden></div>
+      </form>
+    </section>
+    <section class="panneau">
+      <div class="panneau-tete"><h2>Messages reçus de ClaimAI</h2><span class="direct"><i></i>En direct</span></div>
+      <ul class="journal-cie" id="journal"></ul>
+    </section>
+  </div>
+  <section class="panneau">
+    <div class="panneau-tete"><h2>Portefeuille sinistres</h2><span class="muet petit" id="maj"></span></div>
+    <p class="muet petit" style="padding:12px 16px 0">Chaque ligne est tenue à jour par les messages signés de ClaimAI, sans ressaisie. Une ligne surlignée vient de changer.</p>
+    <div class="table-wrap"><table><thead><tr><th>N° ClaimAI</th><th>Notre réf.</th><th>Nature</th><th>Situation</th><th>Intervenants</th><th>Pièces manquantes</th><th>Règlement</th></tr></thead><tbody id="porte"></tbody></table></div>
+  </section>
+</main>
+<div id="toast" class="toast" hidden role="status"></div>
+
+<script src="commun.js"></script>
+<script>
+(function () {
+"use strict";
+var C = window.CA, $ = C.$, esc = C.esc, eur = C.eur;
+var S = C.lireSession() || {}, api, apiOutil, vus = {}, premier = true;
+
+var SITUATION = {
+  recu: ["Ouvert", ""], analyse: ["Ouvert", ""], contrat_verifie: ["Garanti", ""], hors_perimetre: ["Chez un gestionnaire", "att"],
+  decision_a_valider: ["Décision à prendre", "att"], refuse: ["Refusé", "ko"], mission_envoyee: ["Missionné", ""], attente_pieces: ["Pièces attendues", ""],
+  expertise_recue: ["Retour reçu", ""], anomalie_gestionnaire: ["Anomalie", "att"], prereglement_a_valider: ["Règlement à valider", "att"],
+  reglement_envoye: ["Virement ordonné", ""], clos: ["Soldé", "ok"], classe_sans_suite: ["Classé", ""]
+};
+var TYPES = { mission_expert: "expert", expertise: "Expert", reparation: "Garage", expertise_medicale: "Médecin" };
+var APPELS = [
+  ["Pare-brise", { numero_contrat: "AUTO-2025-0001", theme: "BRIS_GLACE", code_postal: "77140", recit: "Le sociétaire signale un impact devenu fissure sur le pare-brise après un gravillon sur l'A6. Rien d'autre d'abîmé." }],
+  ["Poteau", { numero_contrat: "AUTO-2025-0004", theme: "PERTE_CONTROLE_OBSTACLE_FIXE", code_postal: "77300", recit: "Le sociétaire a percuté un poteau en sortant de son garage, seul en cause. Aile avant gauche et phare endommagés." }],
+  ["Vandalisme", { numero_contrat: "AUTO-2025-0001", theme: "VANDALISME", code_postal: "77140", recit: "Véhicule rayé à la clé sur les deux portières côté conducteur pendant la nuit, sur le parking de la résidence. Plainte déposée à la gendarmerie de Nemours." }],
+  ["Chute, coude", { numero_contrat: "GA-2025-0006", theme: "GARANTIE_ACCIDENT", code_postal: "77140", victime: { age: 63, lien: "societaire" }, recit: "Le sociétaire a glissé dans sa salle de bain. Fracture simple de l'olécrâne droit, plâtre pendant cinq semaines, pas d'opération." }],
+  ["Accident de scooter", { numero_contrat: "GA-2024-0005", theme: "GARANTIE_ACCIDENT", code_postal: "45200", victime: { age: 19, lien: "enfant_etudiant" }, recit: "Le fils du sociétaire, étudiant, est tombé en scooter sur une plaque d'huile. Fractures du fémur et du bassin, opéré à Montargis. Aucun autre véhicule en cause." }]
+];
+
+function demarrer() {
+  api = C.client(S.base, S.cle);
+  apiOutil = C.client(S.base.replace(/\/claimai\/?$/, "/assureur-demo"), S.cle);
+  $("ecran-cle").hidden = true; $("ecran-outil").hidden = false;
+  var d = new Date(); d.setDate(d.getDate() - 1); $("o-date").value = d.toISOString().slice(0, 10);
+  $("modeles").innerHTML = APPELS.map(function (a, i) { return '<button type="button" class="btn petit" data-a="' + i + '">' + esc(a[0]) + "</button>"; }).join("");
+  document.querySelectorAll("[data-a]").forEach(function (b) {
+    b.onclick = function () {
+      var x = APPELS[b.dataset.a][1];
+      $("o-contrat").value = x.numero_contrat; $("o-theme").value = x.theme; $("o-cp").value = x.code_postal; $("o-recit").value = x.recit;
+      if (x.victime) { $("o-age").value = x.victime.age; $("o-lien").value = x.victime.lien; }
+      $("o-ga").hidden = x.theme !== "GARANTIE_ACCIDENT";
+    };
+  });
+  $("o-theme").onchange = function () { $("o-ga").hidden = this.value !== "GARANTIE_ACCIDENT"; };
+  $("form-decl").addEventListener("submit", declarer);
+  rafraichir(); setInterval(rafraichir, 4000);
+}
+
+function declarer(e) {
+  e.preventDefault();
+  var ref = "SIN-" + new Date().getFullYear() + "-" + String(Math.floor(Math.random() * 90000) + 10000);
+  var corps = { ref_externe: ref, numero_contrat: $("o-contrat").value.trim(), theme: $("o-theme").value, date_sinistre: $("o-date").value,
+    code_postal: $("o-cp").value.trim(), recit: $("o-recit").value.trim() };
+  if (corps.theme === "GARANTIE_ACCIDENT") corps.victime = { age: Number($("o-age").value) || null, lien: $("o-lien").value };
+  if (!corps.numero_contrat || !/^\d{5}$/.test(corps.code_postal) || corps.recit.length < 10) { C.toast("Contrat, code postal et récit sont nécessaires.", true); return; }
+  var b = $("o-envoyer"), r = $("o-res"); C.occupe(b, true, "Transmission à ClaimAI"); r.hidden = true;
+  api("declarer", { body: corps }).then(function (f) {
+    r.hidden = false; r.className = "resultat";
+    r.innerHTML = "Sinistre <b>" + esc(ref) + "</b> transmis. ClaimAI l'a enregistré sous <b>" + esc(f.numero) + "</b> : " + esc((SITUATION[f.statut] || [f.statut])[0].toLowerCase()) + ". " +
+      '<a href="index.html#/dossier/' + esc(f.numero) + '">Voir dans la console</a>';
+    rafraichir();
+  }).catch(function (x) { r.hidden = false; r.className = "resultat ko"; r.textContent = x.message; })
+    .finally(function () { C.occupe(b, false); });
+}
+
+function rafraichir() {
+  apiOutil("etat").then(function (e) {
+    var ds = e.dossiers || [], ev = e.evenements || [];
+    $("maj").textContent = ds.length + " sinistre" + (ds.length > 1 ? "s" : "") + ", mis à jour à " + new Date().toLocaleTimeString("fr-FR");
+    $("porte").innerHTML = ds.length ? ds.map(function (d) {
+      var neuf = !premier && vus[d.numero] !== d.sequence; vus[d.numero] = d.sequence;
+      var s = SITUATION[d.statut] || [d.statut, ""], r = d.reglement;
+      return '<tr class="' + (neuf ? "neuf" : "") + '"><td class="nw"><a href="index.html#/dossier/' + esc(d.numero) + '">' + esc(d.numero) + '</a></td><td class="nw">' + esc(d.ref_externe || "") + "</td><td>" + esc(C.theme(d.theme)) +
+        '</td><td><span class="etat-cie ' + s[1] + '">' + esc(s[0]) + "</span>" + (d.motif && s[1] === "att" ? '<div class="muet petit">' + esc(C.motif(d.motif)) + "</div>" : "") + "</td><td>" +
+        (d.prestataires || []).map(function (p) { return "<div>" + esc(p.nom.split(",")[0]) + '<div class="muet petit">' + esc((TYPES[p.type] || p.type) + (p.statut === "terminee" ? ", a répondu" : ", attendu")) + "</div></div>"; }).join("") +
+        "</td><td>" + ((d.pieces_manquantes || []).map(function (p) { return esc(C.PIECES[p] || p); }).join(", ") || '<span class="muet">Aucune</span>') +
+        "</td><td>" + (r ? esc(eur(r.montant_net)) + '<div class="muet petit">' + esc({ propose: "à valider", envoye: "virement ordonné", confirme: "payé " + (r.ref_virement || ""), annule: "annulé" }[r.statut] || r.statut) + "</div>" : "") + "</td></tr>";
+    }).join("") : '<tr><td colspan="7"><div class="vide">Aucun sinistre reçu pour l\'instant. Enregistrez une déclaration à gauche.</div></td></tr>';
+    premier = false;
+    $("journal").innerHTML = ev.length ? ev.slice(0, 40).map(function (x) {
+      var c = x.corps || {};
+      var quoi = x.evenement === "dossier_cree" ? "Nouveau dossier " + (x.numero || "") : x.evenement === "test" ? "Message d'essai" : (x.numero || "") + " : " + ((SITUATION[x.statut] || [x.statut || ""])[0] || "").toLowerCase();
+      return '<li><span class="h">' + esc(new Date(x.recu_le).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit", second: "2-digit" })) + "</span><span>" + esc(quoi) + (c.statut_precedent ? '<span class="muet">, était ' + esc(((SITUATION[c.statut_precedent] || [c.statut_precedent])[0] || "").toLowerCase()) + "</span>" : "") +
+        '</span><span class="sig' + (x.signature_ok ? "" : " ko") + '">' + (x.signature_ok ? "Signature valide" : "Signature invalide") + "</span></li>";
+    }).join("") : '<li style="display:block"><div class="vide">Aucun message reçu.</div></li>';
+  }).catch(function (x) { $("maj").textContent = "Liaison interrompue : " + x.message; });
+}
+
+$("k-base").value = S.base || C.API_DEFAUT;
+$("form-cle").addEventListener("submit", function (e) {
+  e.preventDefault(); var base = $("k-base").value.trim(), cle = $("k-cle").value.trim();
+  C.client(base, cle)("indicateurs").then(function () { S = { base: base, cle: cle, gest: S.gest || "" }; C.ecrireSession(S); demarrer(); })
+    .catch(function (x) { $("k-err").textContent = x.status === 401 ? "Clé refusée." : x.message; });
+});
+if (S.base && S.cle) demarrer(); else $("ecran-cle").hidden = false;
+})();
+</script>
+</body>
+</html>

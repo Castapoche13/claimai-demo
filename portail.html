@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Espace sécurisé sinistres</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<style>
+body { background: var(--papier); }
+.haut { background: var(--feuille); border-bottom: 1px solid var(--trait); }
+.haut-in { max-width: 760px; margin: 0 auto; padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.haut .cie { font-weight: 700; font-size: 17px; }
+.haut .cie small { display: block; font-weight: 400; font-size: 13px; color: var(--gris); }
+.cadenas { display: inline-flex; gap: 6px; align-items: center; font-size: 13px; color: var(--vert); font-weight: 600; }
+main { max-width: 760px; margin: 0 auto; padding: 28px 20px 64px; }
+.carte { background: var(--feuille); border: 1px solid var(--trait); border-radius: 10px; }
+.carte + .carte { margin-top: 18px; }
+.carte-in { padding: 22px 24px; }
+.carte h1 { font-size: 24px; }
+.carte h2 { font-size: 18px; margin-bottom: 4px; }
+.intro { color: var(--encre-2); margin-top: 8px; max-width: 62ch; }
+.resume { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 14px 20px; border-top: 1px solid var(--trait); padding: 18px 24px; }
+.resume div { font-size: 13px; color: var(--gris); }
+.resume b { display: block; color: var(--encre); font-size: 15px; font-weight: 600; margin-top: 2px; }
+.recit { font-size: 14.5px; line-height: 1.6; color: var(--encre-2); border-top: 1px solid var(--trait); padding: 16px 24px; }
+.recit span { display: block; font-size: 13px; color: var(--gris); margin-bottom: 4px; }
+form.carte-in { display: grid; gap: 18px; }
+.indice { font-size: 13.5px; padding: 10px 12px; border-radius: 6px; background: var(--feuille-2); border: 1px solid var(--trait); color: var(--encre-2); }
+.indice.ko { background: var(--rouge-pale); border-color: transparent; color: var(--rouge); }
+.indice.ok { background: var(--vert-pale); border-color: transparent; color: var(--vert); }
+.piece { display: grid; grid-template-columns: 1fr auto; gap: 8px 16px; align-items: center; padding: 14px 0; border-top: 1px solid var(--trait); }
+.piece:first-of-type { border-top: 0; }
+.piece input[type=file] { font-size: 13px; color: var(--gris); max-width: 240px; }
+.piece.recue { color: var(--gris); }
+.envoyer { display: flex; gap: 14px; align-items: center; flex-wrap: wrap; }
+.etat { text-align: center; padding: 48px 24px; }
+.etat .rond { width: 56px; height: 56px; border-radius: 50%; margin: 0 auto 18px; display: grid; place-items: center; background: var(--vert-pale); color: var(--vert); }
+.etat .rond.attente { background: var(--jaune-pale); color: var(--jaune-texte); }
+.etat .rond.ko { background: var(--rouge-pale); color: var(--rouge); }
+.etat h1 { font-size: 22px; }
+.etat p { color: var(--encre-2); margin: 10px auto 0; max-width: 52ch; }
+.pied { font-size: 12.5px; color: var(--gris); margin-top: 24px; line-height: 1.6; }
+</style>
+</head>
+<body>
+<header class="haut"><div class="haut-in"><div class="cie" id="cie">Service sinistres<small>Espace sécurisé</small></div>
+  <span class="cadenas"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><rect x="2.5" y="6" width="9" height="6.5" rx="1.5" fill="currentColor"/><path d="M4.5 6V4.5a2.5 2.5 0 015 0V6" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>Lien personnel</span></div></header>
+<main id="main"><div class="carte"><div class="etat"><span class="tourne" style="display:inline-block;color:var(--bleu)"></span></div></div></main>
+<div id="toast" class="toast" hidden role="status"></div>
+<script src="commun.js"></script>
+<script>
+(function () {
+"use strict";
+var C = window.CA, $ = C.$, esc = C.esc, eur = C.eur;
+var qs = new URLSearchParams(location.search);
+var jeton = qs.get("t") || "", base = qs.get("api") || C.API_DEFAUT;
+var api = C.client(base, null);
+var ICONE_OK = '<svg width="26" height="26" viewBox="0 0 26 26" aria-hidden="true"><path d="M7 13.5l4 4 8-9" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+var ICONE_ATT = '<svg width="26" height="26" viewBox="0 0 26 26" aria-hidden="true"><circle cx="13" cy="13" r="8" fill="none" stroke="currentColor" stroke-width="2.2"/><path d="M13 9v4.5l3 2" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>';
+var ICONE_KO = '<svg width="26" height="26" viewBox="0 0 26 26" aria-hidden="true"><path d="M9 9l8 8M17 9l-8 8" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>';
+
+function etat(icone, cls, titre, texte) {
+  $("main").innerHTML = '<div class="carte"><div class="etat"><div class="rond ' + cls + '">' + icone + "</div><h1>" + esc(titre) + "</h1><p>" + texte + "</p></div></div>" + pied();
+}
+function pied() {
+  return '<p class="pied">Ce lien vous est personnel et reste valable 90 jours. Les informations saisies sont transmises au service sinistres et conservées dans le dossier, conformément au RGPD. Pour toute question, répondez simplement à l\'email reçu.</p>';
+}
+
+if (!/^[0-9a-f]{64}$/.test(jeton)) {
+  etat(ICONE_KO, "ko", "Ce lien n'est pas valide", "Ouvrez le lien directement depuis l'email reçu, sans le modifier. S'il a plus de 90 jours, répondez à l'email pour en recevoir un nouveau.");
+  return;
+}
+
+function charger() {
+  api("portail?t=" + jeton).then(afficher).catch(function (x) {
+    etat(ICONE_KO, "ko", "Ce lien n'est plus valide", esc(x.message) + ". Répondez à l'email reçu pour obtenir un nouveau lien.");
+  });
+}
+
+var TITRES = {
+  expert_auto: ["Rapport d'expertise", "Indiquez vos conclusions. Le règlement au réparateur sera calculé sur le montant que vous retenez."],
+  expert_medical: ["Conclusions médicales", "Indiquez uniquement vos conclusions. Conformément au secret médical, aucun compte rendu détaillé n'est demandé."],
+  garage: ["Facture et délégation de paiement", "Après réparation, transmettez la facture et la délégation signée par l'assuré : le règlement vous est versé directement, franchise déduite."],
+  assure: ["Pièces à nous transmettre", "Ces documents nous permettent d'avancer sur votre dossier. Vous pouvez les envoyer en plusieurs fois."]
+};
+
+function afficher(c) {
+  $("cie").innerHTML = esc(c.assureur || "Service sinistres") + "<small>Service sinistres, espace sécurisé</small>";
+  document.title = "Dossier " + c.numero + ", " + (c.assureur || "service sinistres");
+  var t = TITRES[c.role] || ["Votre dossier", ""];
+  var h = '<div class="carte"><div class="carte-in"><span class="muet petit">' + esc(C.ROLES[c.role] || "") + "</span><h1>Dossier " + esc(c.numero) + '</h1><p class="intro">' + esc(t[1]) + "</p></div>" +
+    '<div class="resume"><div>Type<b>' + esc(C.theme(c.theme)) + "</b></div><div>Date du sinistre<b>" + esc(C.dateFr(c.date_sinistre)) + "</b></div>" +
+    "<div>Lieu<b>" + esc([c.lieu && c.lieu.ville, c.lieu && c.lieu.code_postal].filter(Boolean).join(" ") || "Non précisé") + "</b></div>" +
+    (c.vehicule ? "<div>Véhicule<b>" + esc(c.vehicule) + "</b></div>" : "") +
+    (c.age_victime != null ? "<div>Âge de la victime<b>" + esc(c.age_victime) + " ans</b></div>" : "") +
+    (c.expertise_retenue ? "<div>Retenu par l'expert<b>" + esc(eur(c.expertise_retenue.ttc)) + " TTC</b></div>" : "") + "</div>" +
+    (c.recit ? '<div class="recit"><span>Circonstances déclarées</span>' + esc(c.recit) + "</div>" : "") + "</div>";
+
+  if (!c.reponse_attendue) {
+    var fini = ["clos", "refuse", "classe_sans_suite"].indexOf(c.statut) >= 0;
+    h += '<div class="carte"><div class="etat"><div class="rond">' + ICONE_OK + "</div><h1>" + (fini ? "Ce dossier est terminé" : "Nous avons tout ce qu'il nous faut") +
+      "</h1><p>" + (fini ? "Aucune action n'est attendue de votre part." : "Votre réponse a bien été reçue. Vous serez informé par email de la suite du dossier.") + "</p></div></div>";
+    $("main").innerHTML = h + pied(); return;
+  }
+  if (c.role === "garage" && c.expertise_requise) {
+    h += '<div class="carte"><div class="etat"><div class="rond attente">' + ICONE_ATT + "</div><h1>En attente du passage de l'expert</h1><p>N'engagez pas les travaux avant son rapport. Vous recevrez un email dès qu'il sera rendu, et ce même lien vous permettra d'envoyer la facture.</p></div></div>";
+    $("main").innerHTML = h + pied(); return;
+  }
+  h += '<div class="carte"><form class="carte-in" id="form" novalidate><h2>' + esc(t[0]) + "</h2>" + formulaire(c) +
+    '<div class="envoyer"><button class="btn primaire" id="b-envoyer" type="submit">Envoyer au service sinistres</button><span class="muet petit">Vous pourrez vérifier votre envoi juste après.</span></div></form></div>';
+  $("main").innerHTML = h + pied();
+  brancher(c);
+}
+
+function num(id, lib, aide, attrs) {
+  return '<label class="champ">' + esc(lib) + (aide ? ' <span class="aide">' + esc(aide) + "</span>" : "") + '<input class="saisie" id="' + id + '" type="number" inputmode="decimal" step="0.01" min="0" ' + (attrs || "") + "></label>";
+}
+
+function formulaire(c) {
+  if (c.role === "expert_auto") return '<div class="grille-2">' + num("f-devis", "Devis du réparateur", "TTC, en €") + num("f-ttc", "Montant retenu", "TTC, en €", "required") + "</div>" +
+    '<div class="grille-3">' + num("f-taux", "Taux horaire", "€ HT") + num("f-heures", "Main-d'œuvre", "en heures") + num("f-pieces", "Pièces", "HT, en €") + "</div>" +
+    '<div class="grille-2">' + num("f-ht", "Montant retenu", "HT, en €") + "<div></div></div>" +
+    '<p class="indice" id="f-coherence">Renseignez le détail du chiffrage pour vérifier sa cohérence.</p>' +
+    '<label class="case"><input type="checkbox" id="f-vei"> Véhicule économiquement irréparable (VEI)</label>' +
+    '<label class="case"><input type="checkbox" id="f-direct" checked> J\'accorde le règlement direct au réparateur</label>' +
+    '<label class="champ">Observations <span class="aide">facultatif</span><textarea class="saisie" id="f-conclusion" rows="3"></textarea></label>';
+  if (c.role === "expert_medical") return '<div class="grille-2">' + num("f-aipp", "Taux d'AIPP", "en %", 'required max="100" step="0.5"') +
+    '<label class="champ">Date de consolidation<input class="saisie" id="f-conso" type="date" required></label></div>' +
+    '<label class="case"><input type="checkbox" id="f-dep"> La victime est en situation de dépendance totale</label>' +
+    '<label class="champ">Conclusion <span class="aide">facultatif, sans données médicales détaillées</span><textarea class="saisie" id="f-conclusion" rows="3"></textarea></label>';
+  if (c.role === "garage") {
+    var manque = (c.pieces_attendues || []).filter(function (p) { return !p.recue; }).map(function (p) { return p.code; });
+    var fac = manque.indexOf("FACTURE") >= 0;
+    return (fac ? '<div class="grille-2">' + num("f-ttc", "Montant de la facture", "TTC, en €", "required") + num("f-ht", "Montant de la facture", "HT, en €") + "</div>" +
+      (c.expertise_retenue ? '<p class="indice" id="f-ecart">Montant retenu par l\'expert : ' + esc(eur(c.expertise_retenue.ttc)) + " TTC.</p>" : "") : '<p class="indice ok">Facture reçue. Il reste la délégation de paiement.</p>') +
+      '<label class="case"><input type="checkbox" id="f-deleg"' + (manque.indexOf("DELEGATION_PAIEMENT") < 0 ? " checked disabled" : "") + "> Je joins la délégation de paiement signée par l'assuré</label>" +
+      (fac ? '<label class="champ">Nature des travaux <span class="aide">facultatif</span><textarea class="saisie" id="f-conclusion" rows="2"></textarea></label>' : "");
+  }
+  return (c.pieces_attendues || []).map(function (p) {
+    return '<div class="piece' + (p.recue ? " recue" : "") + '"><label class="case"><input type="checkbox" name="piece" value="' + esc(p.code) + '"' + (p.recue ? " checked disabled" : "") + "> <span><b>" + esc(C.PIECES[p.code] || p.libelle) + "</b>" +
+      (p.recue ? '<br><span class="muet petit">Déjà reçue</span>' : "") + "</span></label>" + (p.recue ? "<span></span>" : '<input type="file" aria-label="Fichier ' + esc(p.libelle) + '" accept=".pdf,.jpg,.jpeg,.png">') + "</div>";
+  }).join("") + '<p class="muet petit">Démonstration : seul l\'envoi de chaque pièce est enregistré, les fichiers ne sont pas conservés.</p>';
+}
+
+function val(id) { var e = $(id); if (!e || e.value === "") return undefined; return Number(e.value); }
+
+function brancher(c) {
+  var coh = $("f-coherence");
+  if (coh) ["f-taux", "f-heures", "f-pieces", "f-ht", "f-ttc"].forEach(function (id) {
+    $(id).addEventListener("input", function () {
+      var t = val("f-taux"), h = val("f-heures"), p = val("f-pieces"), ht = val("f-ht") || (val("f-ttc") ? val("f-ttc") / 1.2 : undefined);
+      if (t == null || h == null || p == null || !ht) { coh.className = "indice"; coh.textContent = "Renseignez le détail du chiffrage pour vérifier sa cohérence."; return; }
+      var calc = t * h + p, ecart = Math.abs(calc - ht) / ht * 100;
+      coh.className = "indice " + (ecart > 10 ? "ko" : "ok");
+      coh.textContent = "Main-d'œuvre et pièces : " + eur(calc) + " HT pour " + eur(ht) + " HT retenus" + (ecart > 10 ? ". L'écart dépasse 10 % : le dossier sera revu par un gestionnaire." : ", chiffrage cohérent.");
+    });
+  });
+  var ec = $("f-ecart");
+  if (ec && c.expertise_retenue) $("f-ttc").addEventListener("input", function () {
+    var v = val("f-ttc"), r = Number(c.expertise_retenue.ttc); if (!v) return;
+    var e = (v - r) / r * 100;
+    ec.className = "indice " + (e > 5 ? "ko" : "ok");
+    ec.textContent = "Montant retenu par l'expert : " + eur(r) + " TTC. " + (e > 5 ? "Votre facture le dépasse de " + C.nombre(e, 1) + " % : elle sera examinée avant règlement." : "Facture conforme à l'expertise.");
+  });
+
+  $("form").addEventListener("submit", function (e) {
+    e.preventDefault();
+    var r = {};
+    if (c.role === "expert_auto") {
+      r = { montant_devis_ttc: val("f-devis"), montant_ttc: val("f-ttc"), montant_ht: val("f-ht"), taux_horaire: val("f-taux"), heures: val("f-heures"),
+        montant_pieces_ht: val("f-pieces"), vei: $("f-vei").checked, reglement_direct_autorise: $("f-direct").checked, conclusion: $("f-conclusion").value.trim() || undefined };
+      if (!r.montant_ttc) return C.toast("Indiquez le montant retenu TTC.", true);
+    } else if (c.role === "expert_medical") {
+      r = { aipp_pct: val("f-aipp"), date_consolidation: $("f-conso").value || undefined, dependance_totale: $("f-dep").checked, conclusion: $("f-conclusion").value.trim() || undefined };
+      if (r.aipp_pct == null || r.aipp_pct > 100) return C.toast("Indiquez un taux d'AIPP entre 0 et 100 %.", true);
+    } else if (c.role === "garage") {
+      r = { delegation_paiement: $("f-deleg").checked };
+      if ($("f-ttc")) { r.montant_ttc = val("f-ttc"); r.montant_ht = val("f-ht"); r.conclusion = ($("f-conclusion").value || "").trim() || undefined; if (!r.montant_ttc) return C.toast("Indiquez le montant TTC de la facture.", true); }
+      else if (!r.delegation_paiement) return C.toast("Cochez la délégation de paiement pour l'envoyer.", true);
+    } else {
+      r.pieces = Array.prototype.map.call(document.querySelectorAll('input[name=piece]:checked:not(:disabled)'), function (x) { return x.value; });
+      if (!r.pieces.length) return C.toast("Cochez au moins une pièce à envoyer.", true);
+    }
+    r.t = jeton;
+    var b = $("b-envoyer"); C.occupe(b, true, "Envoi");
+    api("portail", { body: r }).then(function () {
+      etat(ICONE_OK, "", "Merci, c'est transmis", "Le service sinistres a bien reçu votre réponse pour le dossier " + esc(c.numero) + ". Vous serez informé par email de la suite.");
+    }).catch(function (x) { C.occupe(b, false); C.toast(x.message, true); });
+  });
+}
+
+charger();
+})();
+</script>
+</body>
+</html>

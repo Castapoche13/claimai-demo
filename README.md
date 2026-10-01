@@ -1,7 +1,7 @@
-# ClaimAI Gestion
+# ClaimAI, démonstration
 
-Poste du gestionnaire sinistres ClaimAI : file des dossiers à traiter, fiche complète, validations signées, indicateurs et raccordement de l'outil de l'assureur (API et notifications signées).
+- `index.html` : console du gestionnaire sinistres (file de travail, fiches dossier, boîtes mail de test, pilotage, raccordement).
+- `portail.html` : espace en ligne de l'expert, du garage, du médecin expert ou de l'assuré, ouvert par le lien personnel de chaque courrier.
+- `outil-assureur.html` : simulation de l'outil interne de la compagnie, qui déclare les sinistres à ClaimAI et reçoit chaque étape par webhook signé.
 
-En ligne : https://castapoche13.github.io/claimai-demo/
-
-La page ne contient aucune clé : chaque compagnie se connecte avec sa propre clé d'accès.
+La clé d'accès de la compagnie n'est jamais stockée dans ce dépôt : elle est saisie à la connexion.
