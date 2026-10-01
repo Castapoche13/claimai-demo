@@ -69,7 +69,7 @@ tr.neuf td { animation: neuf 2.4s ease-out; }
 
 <div id="ecran-cle" class="connexion" hidden>
   <div class="panneau"><div class="panneau-tete"><h2>Raccordement à ClaimAI</h2></div>
-  <form class="panneau-corps" id="form-cle"><p class="muet">L'outil s'identifie auprès de ClaimAI avec la clé de la compagnie. Elle est déjà enregistrée si vous êtes connecté à la console sur cet appareil.</p>
+  <form class="panneau-corps" id="form-cle"><p class="muet">L'outil de la compagnie s'identifie auprès de ClaimAI avec la clé de la compagnie, comme le ferait son logiciel en production. Les gestionnaires, eux, se connectent à la console avec leur compte.</p>
     <label class="champ">Adresse du service<input class="saisie" id="k-base"></label>
     <label class="champ">Clé d'accès de la compagnie<input class="saisie" id="k-cle" type="password" placeholder="clm_…"></label>
     <button class="btn cie" type="submit">Raccorder</button><p class="muet petit" id="k-err" role="alert"></p></form></div>
@@ -97,7 +97,8 @@ tr.neuf td { animation: neuf 2.4s ease-out; }
     </section>
   </div>
   <section class="panneau">
-    <div class="panneau-tete"><h2>Portefeuille sinistres</h2><span class="muet petit" id="maj"></span></div>
+    <div class="panneau-tete"><h2>Portefeuille sinistres</h2><span style="display:flex;gap:12px;align-items:center"><span class="muet petit" id="maj"></span><button class="btn petit" id="b-panne" type="button">Simuler une panne de l'outil</button></span></div>
+    <p class="resultat ko" id="panne-info" hidden style="margin:12px 16px 0">Panne simulée : l'outil refuse les messages de ClaimAI. Ils restent en file chez ClaimAI et seront renvoyés automatiquement, une fois l'outil rétabli.</p>
     <p class="muet petit" style="padding:12px 16px 0">Chaque ligne est tenue à jour par les messages signés de ClaimAI, sans ressaisie. Une ligne surlignée vient de changer.</p>
     <div class="table-wrap"><table><thead><tr><th>N° ClaimAI</th><th>Notre réf.</th><th>Nature</th><th>Situation</th><th>Intervenants</th><th>Pièces manquantes</th><th>Règlement</th></tr></thead><tbody id="porte"></tbody></table></div>
   </section>
@@ -109,7 +110,9 @@ tr.neuf td { animation: neuf 2.4s ease-out; }
 (function () {
 "use strict";
 var C = window.CA, $ = C.$, esc = C.esc, eur = C.eur;
-var S = C.lireSession() || {}, api, apiOutil, vus = {}, premier = true;
+var MEMO = "claimai-outil-v1";
+function lire() { try { return JSON.parse(localStorage.getItem(MEMO) || "null"); } catch (e) { return null; } }
+var S = lire() || {}, api, apiOutil, vus = {}, premier = true, panne = false;
 
 var SITUATION = {
   recu: ["Ouvert", ""], analyse: ["Ouvert", ""], contrat_verifie: ["Garanti", ""], hors_perimetre: ["Chez un gestionnaire", "att"],
@@ -142,6 +145,11 @@ function demarrer() {
   });
   $("o-theme").onchange = function () { $("o-ga").hidden = this.value !== "GARANTIE_ACCIDENT"; };
   $("form-decl").addEventListener("submit", declarer);
+  $("b-panne").onclick = function () {
+    var b = this; C.occupe(b, true, "");
+    apiOutil("panne", { body: { active: !panne } }).then(function (r) { panne = r.panne === true; majPanne(); rafraichir(); })
+      .catch(function (x) { C.toast(x.message, true); }).finally(function () { C.occupe(b, false); majPanne(); });
+  };
   rafraichir(); setInterval(rafraichir, 4000);
 }
 
@@ -162,8 +170,10 @@ function declarer(e) {
     .finally(function () { C.occupe(b, false); });
 }
 
+function majPanne() { $("b-panne").textContent = panne ? "Rétablir l'outil" : "Simuler une panne de l'outil"; $("panne-info").hidden = !panne; }
 function rafraichir() {
   apiOutil("etat").then(function (e) {
+    panne = e.panne === true; majPanne();
     var ds = e.dossiers || [], ev = e.evenements || [];
     $("maj").textContent = ds.length + " sinistre" + (ds.length > 1 ? "s" : "") + ", mis à jour à " + new Date().toLocaleTimeString("fr-FR");
     $("porte").innerHTML = ds.length ? ds.map(function (d) {
@@ -178,6 +188,7 @@ function rafraichir() {
     premier = false;
     $("journal").innerHTML = ev.length ? ev.slice(0, 40).map(function (x) {
       var c = x.corps || {};
+      if (x.doublon) return '<li><span class="h">' + esc(new Date(x.recu_le).toLocaleTimeString("fr-FR")) + '</span><span class="muet">Doublon ignoré (' + esc(x.numero || "") + ')</span><span></span></li>';
       var quoi = x.evenement === "dossier_cree" ? "Nouveau dossier " + (x.numero || "") : x.evenement === "test" ? "Message d'essai" : (x.numero || "") + " : " + ((SITUATION[x.statut] || [x.statut || ""])[0] || "").toLowerCase();
       return '<li><span class="h">' + esc(new Date(x.recu_le).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit", second: "2-digit" })) + "</span><span>" + esc(quoi) + (c.statut_precedent ? '<span class="muet">, était ' + esc(((SITUATION[c.statut_precedent] || [c.statut_precedent])[0] || "").toLowerCase()) + "</span>" : "") +
         '</span><span class="sig' + (x.signature_ok ? "" : " ko") + '">' + (x.signature_ok ? "Signature valide" : "Signature invalide") + "</span></li>";
@@ -188,7 +199,7 @@ function rafraichir() {
 $("k-base").value = S.base || C.API_DEFAUT;
 $("form-cle").addEventListener("submit", function (e) {
   e.preventDefault(); var base = $("k-base").value.trim(), cle = $("k-cle").value.trim();
-  C.client(base, cle)("indicateurs").then(function () { S = { base: base, cle: cle, gest: S.gest || "" }; C.ecrireSession(S); demarrer(); })
+  C.client(base, cle)("indicateurs").then(function () { S = { base: base, cle: cle }; try { localStorage.setItem(MEMO, JSON.stringify(S)); } catch (e) { } demarrer(); })
     .catch(function (x) { $("k-err").textContent = x.status === 401 ? "Clé refusée." : x.message; });
 });
 if (S.base && S.cle) demarrer(); else $("ecran-cle").hidden = false;

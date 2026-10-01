@@ -2,6 +2,9 @@
 (function (g) {
   "use strict";
   var API_DEFAUT = "https://okugbnabvlotasdsokco.supabase.co/functions/v1/claimai";
+  // Adresse et clé publique du service de connexion : faites pour être visibles dans le navigateur
+  var SUPABASE_URL = "https://okugbnabvlotasdsokco.supabase.co";
+  var CLE_PUBLIQUE = "sb_publishable_ybKkc2FMkcVCBkJI50RAIQ_X6sCEPe4";
 
   var STATUTS = {
     recu: ["Reçu", "encours"], analyse: ["Analysé", "encours"], contrat_verifie: ["Contrat vérifié", "encours"],
@@ -104,21 +107,27 @@
     else { btn.disabled = false; if (btn.dataset.l) btn.innerHTML = btn.dataset.l; }
   }
 
-  function client(base, cle) {
+  // auth : la clé de la compagnie (outil de l'assureur) ou une fonction qui rend le jeton de session du gestionnaire
+  function client(base, auth) {
     return function (chemin, opts) {
       opts = opts || {};
-      var h = {}; if (cle) h["x-claimai-key"] = cle;
-      if (opts.body !== undefined) h["Content-Type"] = "application/json";
-      return fetch(String(base).replace(/\/+$/, "") + "/" + chemin, {
-        method: opts.method || (opts.body !== undefined ? "POST" : "GET"), headers: h,
-        body: opts.body !== undefined ? JSON.stringify(opts.body) : undefined
-      }).then(function (r) {
-        return r.text().then(function (t) {
-          var d = null; try { d = t ? JSON.parse(t) : null; } catch (e) { }
-          if (!r.ok) { var err = new Error((d && d.erreur) || ("Erreur " + r.status)); err.status = r.status; throw err; }
-          return d;
-        });
-      }, function () { throw new Error("Service injoignable. Vérifiez votre connexion."); });
+      var jeton = typeof auth === "function" ? Promise.resolve(auth()) : Promise.resolve(null);
+      return jeton.then(function (j) {
+        var h = {};
+        if (typeof auth === "string" && auth) h["x-claimai-key"] = auth;
+        if (j) h["Authorization"] = "Bearer " + j;
+        if (opts.body !== undefined) h["Content-Type"] = "application/json";
+        return fetch(String(base).replace(/\/+$/, "") + "/" + chemin, {
+          method: opts.method || (opts.body !== undefined ? "POST" : "GET"), headers: h,
+          body: opts.body !== undefined ? JSON.stringify(opts.body) : undefined
+        }).then(function (r) {
+          return r.text().then(function (t) {
+            var d = null; try { d = t ? JSON.parse(t) : null; } catch (e) { }
+            if (!r.ok) { var err = new Error((d && d.erreur) || ("Erreur " + r.status)); err.status = r.status; throw err; }
+            return d;
+          });
+        }, function () { throw new Error("Service injoignable. Vérifiez votre connexion."); });
+      });
     };
   }
 
@@ -130,7 +139,7 @@
   var LOGO = '<svg width="24" height="24" viewBox="0 0 26 26" aria-hidden="true"><rect x="1" y="1" width="24" height="24" rx="6" fill="#2563EB"/><path d="M7.5 9h11M7.5 13h11M7.5 17h6.5" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg>';
 
   g.CA = {
-    API_DEFAUT: API_DEFAUT, STATUTS: STATUTS, THEMES: THEMES, MOTIFS: MOTIFS, ANOMALIES: ANOMALIES, COURRIERS: COURRIERS,
+    API_DEFAUT: API_DEFAUT, SUPABASE_URL: SUPABASE_URL, CLE_PUBLIQUE: CLE_PUBLIQUE, STATUTS: STATUTS, THEMES: THEMES, MOTIFS: MOTIFS, ANOMALIES: ANOMALIES, COURRIERS: COURRIERS,
     ROLES: ROLES, PIECES: PIECES, LIENS: LIENS, CLASSES: CLASSES, LOGO: LOGO,
     $: $, esc: esc, eur: eur, nombre: nombre, dateFr: dateFr, dateCourte: dateCourte, heure: heure, depuis: depuis,
     statut: statut, theme: theme, motif: motif, attendVous: attendVous, toast: toast, occupe: occupe, client: client,

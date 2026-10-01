@@ -265,18 +265,28 @@ textarea.saisie.code-saisie { font-family: ui-monospace, Menlo, Consolas, monosp
     <div class="marque" id="logo-c"></div>
     <form id="form-connexion" novalidate>
       <div><h2>Connexion</h2><p class="muet petit" style="margin-top:4px">Console de gestion des sinistres</p></div>
-      <label class="champ">Adresse du service
-        <input class="saisie" id="c-base" type="url" autocomplete="off" required>
+      <label class="champ">Adresse email professionnelle
+        <input class="saisie" id="c-email" type="email" autocomplete="username" required>
       </label>
-      <label class="champ">Clé d'accès de la compagnie
-        <input class="saisie" id="c-cle" type="password" autocomplete="off" placeholder="clm_…" required>
+      <label class="champ">Mot de passe
+        <input class="saisie" id="c-mdp" type="password" autocomplete="current-password" required>
       </label>
-      <label class="champ">Identifiant <span class="aide">Il signe vos validations.</span>
-        <input class="saisie" id="c-gest" type="text" autocomplete="username" placeholder="ex. c.lecland" required>
-      </label>
-      <label class="case"><input type="checkbox" id="c-memo" checked> Rester connecté sur cet appareil</label>
+      <details class="petit muet"><summary style="cursor:pointer">Réglage avancé</summary>
+        <label class="champ" style="margin-top:10px">Adresse du service<input class="saisie" id="c-base" type="url" autocomplete="off"></label>
+      </details>
       <p class="erreur-form" id="c-err" role="alert"></p>
       <button class="btn primaire" id="c-btn" type="submit">Se connecter</button>
+    </form>
+    <form id="form-mdp" novalidate hidden>
+      <div><h2>Choisissez votre mot de passe</h2><p class="muet petit" style="margin-top:4px">Le mot de passe provisoire qui vous a été remis ne servira plus.</p></div>
+      <label class="champ">Nouveau mot de passe <span class="aide">12 caractères minimum</span>
+        <input class="saisie" id="m-mdp" type="password" autocomplete="new-password" required minlength="12">
+      </label>
+      <label class="champ">Confirmation
+        <input class="saisie" id="m-mdp2" type="password" autocomplete="new-password" required>
+      </label>
+      <p class="erreur-form" id="m-err" role="alert"></p>
+      <button class="btn primaire" id="m-btn" type="submit">Enregistrer et continuer</button>
     </form>
     <p class="pied-connexion">Aucun refus ni paiement ne part sans la validation d'un gestionnaire. Chaque action est enregistrée au journal du dossier.</p>
   </div>
@@ -294,9 +304,10 @@ textarea.saisie.code-saisie { font-family: ui-monospace, Menlo, Consolas, monosp
       <li><a href="#/boites" data-vue="boites"><svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><rect x="2.5" y="4" width="13" height="10" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M3 5l6 5 6-5" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>Boîtes mail de test</a></li>
       <li><a href="#/pilotage" data-vue="pilotage"><svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path d="M3.5 14.5V9M9 14.5V4M14.5 14.5v-7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>Pilotage</a></li>
       <li><a href="#/raccordement" data-vue="raccordement"><svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path d="M7 11l4-4M6 8.5L4.5 10a2.5 2.5 0 003.5 3.5L9.5 12M12 9.5L13.5 8A2.5 2.5 0 0010 4.5L8.5 6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>Raccordement</a></li>
+      <li id="n-equipe" hidden><a href="#/equipe" data-vue="equipe"><svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><circle cx="7" cy="6.5" r="2.5" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M2.5 14.5c.6-2.4 2.4-3.5 4.5-3.5s3.9 1.1 4.5 3.5M12 4.5a2.3 2.3 0 010 4.5M13.5 11.3c1.2.5 1.8 1.6 2 3.2" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>Équipe</a></li>
     </ul>
     <div class="nav-bas">
-      <a href="outil-assureur.html" style="color:var(--nav-fort)">Ouvrir l'outil de la compagnie (démo)</a>
+      <a href="outil-assureur.html">Ouvrir l'outil de la compagnie (démo)</a>
       <button type="button" id="b-theme">Changer de thème</button>
       <button type="button" id="b-deco">Se déconnecter</button>
     </div>
@@ -318,6 +329,7 @@ textarea.saisie.code-saisie { font-family: ui-monospace, Menlo, Consolas, monosp
 
 <div id="toast" class="toast" hidden role="status"></div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script src="commun.js"></script>
 <script>
 (function () {
@@ -341,34 +353,59 @@ $("b-theme").addEventListener("click", function () {
   var t = sombre ? "light" : "dark"; appliquerTheme(t); try { localStorage.setItem(THEME, t); } catch (e) { }
 });
 
-/* ---------------- Connexion ---------------- */
+/* ---------------- Connexion : compte nominatif ---------------- */
+var sb = window.supabase.createClient(C.SUPABASE_URL, C.CLE_PUBLIQUE, { auth: { persistSession: true, storageKey: "claimai-auth", autoRefreshToken: true } });
+function jeton() { return sb.auth.getSession().then(function (r) { return r.data.session ? r.data.session.access_token : null; }); }
+
 $("form-connexion").addEventListener("submit", function (e) {
   e.preventDefault();
-  var base = $("c-base").value.trim(), cle = $("c-cle").value.trim(), gest = $("c-gest").value.trim(), err = $("c-err");
+  var email = $("c-email").value.trim(), mdp = $("c-mdp").value, err = $("c-err");
   err.textContent = "";
-  if (!/^https:\/\/.+/.test(base)) { err.textContent = "L'adresse du service commence par https://"; return; }
-  if (cle.length < 20) { err.textContent = "Saisissez la clé d'accès fournie à votre compagnie."; return; }
-  if (!gest) { err.textContent = "Saisissez votre identifiant : il signe vos validations."; return; }
+  if (!email || !mdp) { err.textContent = "Saisissez votre email et votre mot de passe."; return; }
   var b = $("c-btn"); C.occupe(b, true, "Connexion");
-  connecter(base, cle, gest).then(function () {
-    if ($("c-memo").checked) C.ecrireSession({ base: base, cle: cle, gest: gest });
-  }).catch(function (x) {
-    err.textContent = x.status === 401 ? "Clé refusée. Vérifiez la clé d'accès de votre compagnie." : x.message;
-  }).finally(function () { C.occupe(b, false); });
+  sb.auth.signInWithPassword({ email: email, password: mdp }).then(function (r) {
+    if (r.error) throw new Error(/invalid/i.test(r.error.message) ? "Email ou mot de passe incorrect." : r.error.message);
+    return entrer(r.data.session);
+  }).catch(function (x) { err.textContent = x.message; }).finally(function () { C.occupe(b, false); });
 });
 
-function connecter(base, cle, gest) {
-  S.base = base; S.cle = cle; S.gest = gest; api = C.client(base, cle);
-  return api("indicateurs").then(function (ind) {
-    S.assureur = ind && ind.assureur || "";
-    $("n-assureur").textContent = S.assureur; $("n-gest").textContent = gest; $("n-avatar").textContent = gest.replace(/[^a-zA-Z]/g, "").slice(0, 2);
+$("form-mdp").addEventListener("submit", function (e) {
+  e.preventDefault();
+  var m1 = $("m-mdp").value, m2 = $("m-mdp2").value, err = $("m-err");
+  err.textContent = "";
+  if (m1.length < 12) { err.textContent = "12 caractères minimum."; return; }
+  if (m1 !== m2) { err.textContent = "Les deux saisies sont différentes."; return; }
+  var b = $("m-btn"); C.occupe(b, true, "Enregistrement");
+  sb.auth.updateUser({ password: m1, data: { mdp_provisoire: false } }).then(function (r) {
+    if (r.error) throw new Error(r.error.message);
+    return sb.auth.getSession().then(function (s) { return entrer(s.data.session); });
+  }).catch(function (x) { err.textContent = x.message; }).finally(function () { C.occupe(b, false); });
+});
+
+function entrer(session) {
+  if (!session) return Promise.resolve();
+  var base = ($("c-base").value || "").trim() || C.API_DEFAUT;
+  S.base = base; api = C.client(base, jeton);
+  if (session.user && session.user.user_metadata && session.user.user_metadata.mdp_provisoire) {
+    $("form-connexion").hidden = true; $("form-mdp").hidden = false; $("m-mdp").focus();
+    return Promise.resolve();
+  }
+  return api("moi").then(function (moi) {
+    if (!moi || moi.type !== "gestionnaire") throw new Error("Ce compte n'a pas accès à la console.");
+    S.moi = moi; S.gest = moi.email; S.assureur = moi.assureur;
+    $("n-assureur").textContent = S.assureur; $("n-gest").textContent = moi.nom;
+    $("n-avatar").textContent = moi.nom.split(/\s+/).map(function (x) { return x[0]; }).join("").slice(0, 2);
+    $("n-equipe").hidden = moi.role !== "admin";
     $("ecran-connexion").hidden = true; $("ecran-app").hidden = false;
-    compter(ind);
+    rafraichirCompteur();
     if (!location.hash || location.hash === "#") location.hash = "#/file"; else router();
+  }).catch(function (x) {
+    sb.auth.signOut(); $("form-mdp").hidden = true; $("form-connexion").hidden = false;
+    $("c-err").textContent = x.status === 401 ? "Ce compte n'a pas accès à la console." : x.message;
   });
 }
 
-$("b-deco").addEventListener("click", function () { C.oublierSession(); location.hash = ""; location.reload(); });
+$("b-deco").addEventListener("click", function () { sb.auth.signOut().finally(function () { location.hash = ""; location.reload(); }); });
 
 function compter(ind) {
   var n = ind && ind.a_traiter || 0, c = $("n-compteur");
@@ -388,7 +425,7 @@ function router() {
   var v = $("vue"); v.innerHTML = '<div class="vide"><span class="tourne" style="display:inline-block"></span></div>';
   window.scrollTo(0, 0);
   var f = { file: vueFile, dossiers: vueDossiers, dossier: function () { vueDossier(decodeURIComponent(h[1] || "")); },
-    declarer: vueDeclarer, boites: vueBoites, pilotage: vuePilotage, raccordement: vueRaccordement }[vue] || vueFile;
+    declarer: vueDeclarer, boites: vueBoites, pilotage: vuePilotage, raccordement: vueRaccordement, equipe: vueEquipe }[vue] || vueFile;
   f();
 }
 function erreurVue(x) { $("vue").innerHTML = '<div class="bloc"><div class="vide"><b>Impossible de charger cette page</b>' + esc(x.message) + '<p style="margin-top:14px"><button class="btn" onclick="location.reload()">Recharger</button></p></div></div>'; }
@@ -574,7 +611,7 @@ function propoValidation(f) { return (f.validations_en_attente || []).slice(-1)[
 function carteAction(f) {
   var v = propoValidation(f);
   if (v) {
-    var p = v.proposition || {}, titre, expl, oui, non, corps = "", loi = "";
+    var p = v.proposition || {}, titre, expl, oui, non, corps = "", loi = "", horsPlafond = false;
     if (v.etape === "decision" && p.decision === "classement_sans_indemnite") {
       titre = "Classer sans indemnité ?";
       expl = p.explication || "Atteinte estimée sous le seuil de 10 % de la garantie invalidité.";
@@ -597,6 +634,10 @@ function carteAction(f) {
         '<span class="total">' + (p.beneficiaire === "assure" ? "Versé à l'assuré" : "Versé au réparateur") + '</span><span class="total nb">' + esc(eur(p.montant_net)) + "</span></div>";
       oui = "Valider le règlement"; non = "Rejeter";
       loi = "Aucun paiement ne part sans pré-règlement validé par un salarié.";
+      if (S.moi && S.moi.plafond_eur != null && Number(p.montant_net) > Number(S.moi.plafond_eur)) {
+        horsPlafond = true;
+        corps += '<div class="alerte"><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M8 4.5v4M8 10.8v.6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg><span>Ce montant dépasse votre plafond de ' + esc(eur(S.moi.plafond_eur)) + ' : un superviseur doit le valider. Vous pouvez le rejeter avec un commentaire.</span></div>';
+      }
     } else {
       var an = p.anomalies || (p.code ? [p] : []);
       titre = an.length > 1 ? an.length + " écarts relevés" : (C.ANOMALIES[(an[0] || {}).code] || "Anomalie à examiner");
@@ -609,7 +650,7 @@ function carteAction(f) {
     return '<section class="decision" id="carte-decision"><div class="decision-entete">Décision requise</div><div class="decision-corps"><h2>' + esc(titre) + "</h2>" +
       (expl ? '<p class="explication">' + esc(expl) + "</p>" : "") + corps +
       '<label class="champ">Commentaire <span class="aide">Obligatoire si vous écartez la proposition.</span><textarea class="saisie" id="d-com" rows="2" style="min-height:64px"></textarea></label>' +
-      '<div class="decision-actions"><button class="btn primaire" id="d-oui" data-v="' + esc(v.id) + '">' + esc(oui) + '</button><button class="btn danger" id="d-non" data-v="' + esc(v.id) + '">' + esc(non) + "</button></div>" +
+      '<div class="decision-actions"><button class="btn primaire" id="d-oui" data-v="' + esc(v.id) + '"' + (horsPlafond ? " disabled" : "") + '>' + esc(oui) + '</button><button class="btn danger" id="d-non" data-v="' + esc(v.id) + '">' + esc(non) + "</button></div>" +
       (loi ? '<p class="loi">' + esc(loi) + "</p>" : "") + '</div><div class="tampon" id="tampon" aria-hidden="true"></div></section>';
   }
   if (f.statut === "hors_perimetre") {
@@ -776,10 +817,7 @@ function brancherFiche(f) {
     var com = $("d-com").value.trim();
     if (resultat === "rejete" && !com) { C.toast("Ajoutez un commentaire pour écarter la proposition.", true); $("d-com").focus(); return; }
     C.occupe(btn, true, "Enregistrement");
-    api("valider", { body: { validation_id: btn.dataset.v, resultat: resultat, valide_par: S.gest, commentaire: com || null } }).then(function (r) {
-      var t = $("tampon"); t.className = "tampon" + (resultat === "rejete" ? " ko" : "");
-      t.innerHTML = (resultat === "rejete" ? "Écarté" : "Validé") + "<small>" + esc(S.gest) + ", " + new Date().toLocaleDateString("fr-FR") + "</small>";
-      void t.offsetWidth; t.classList.add("pose"); $("carte-decision").classList.add("signee");
+    api("valider", { body: { validation_id: btn.dataset.v, resultat: resultat, commentaire: com || null } }).then(function (r) {
       C.toast("Dossier " + f.numero + " : " + ((C.STATUTS[r.statut] || [r.statut])[0]));
       rafraichirCompteur();
       vueDossier(f.numero);
@@ -791,14 +829,14 @@ function brancherFiche(f) {
   var pr = $("r-prendre"), cl = $("r-classer"), ra = $("r-reanalyser");
   if (pr) pr.addEventListener("click", function () {
     C.occupe(pr, true, "Reprise");
-    api("reprendre", { body: { numero: f.numero, action: "prendre_en_charge", par: S.gest, theme: $("r-theme").value, commentaire: $("r-com").value.trim() || null } })
+    api("reprendre", { body: { numero: f.numero, action: "prendre_en_charge", theme: $("r-theme").value, commentaire: $("r-com").value.trim() || null } })
       .then(function (r) { C.toast("Repris dans le circuit : " + (C.STATUTS[r.statut] || [r.statut])[0]); rafraichirCompteur(); afficherDossier(r); })
       .catch(function (x) { C.occupe(pr, false); C.toast(x.message, true); });
   });
   if (cl) cl.addEventListener("click", function () {
     var c = $("r-com").value.trim(); if (!c) { C.toast("Indiquez le motif du classement.", true); $("r-com").focus(); return; }
     C.occupe(cl, true, "Classement");
-    api("reprendre", { body: { numero: f.numero, action: "classer", par: S.gest, commentaire: c } })
+    api("reprendre", { body: { numero: f.numero, action: "classer", commentaire: c } })
       .then(function (r) { C.toast("Dossier classé"); rafraichirCompteur(); afficherDossier(r); })
       .catch(function (x) { C.occupe(cl, false); C.toast(x.message, true); });
   });
@@ -946,6 +984,52 @@ function barres(o, lib, vous) {
   }).join("") || '<p class="muet">Aucune donnée.</p>';
 }
 
+/* ---------------- Vue : Équipe ---------------- */
+var ROLES_G = { gestionnaire: "Gestionnaire", superviseur: "Superviseur", admin: "Administrateur" };
+function vueEquipe() {
+  api("equipe").then(function (l) {
+    var h = '<div class="entete-vue"><div><h1>Équipe</h1><p>Chaque personne a son propre compte. Son plafond limite les règlements qu\'elle peut valider seule ; au-delà, un superviseur valide.</p></div></div>';
+    h += '<section class="bloc"><div class="bloc-tete"><h2>Comptes<span class="compte">' + l.length + '</span></h2></div><div class="tableau-wrap"><table class="tableau"><thead><tr><th>Nom</th><th>Email</th><th>Rôle</th><th class="nb">Plafond de règlement</th><th>Dernière connexion</th><th>État</th><th></th></tr></thead><tbody>' +
+      l.map(function (g) {
+        return '<tr style="cursor:default"><td>' + esc(g.nom) + '</td><td class="muet">' + esc(g.email) + '</td><td><select class="saisie" data-role="' + g.id + '" style="min-width:150px">' +
+          Object.keys(ROLES_G).map(function (k) { return '<option value="' + k + '"' + (k === g.role ? " selected" : "") + ">" + ROLES_G[k] + "</option>"; }).join("") + '</select></td>' +
+          '<td class="nb"><input class="saisie" data-plafond="' + g.id + '" type="number" min="0" step="100" placeholder="Sans plafond" value="' + (g.plafond_eur == null ? "" : esc(g.plafond_eur)) + '" style="max-width:140px;text-align:right"></td>' +
+          '<td class="muet">' + esc(g.derniere_connexion ? C.depuis(g.derniere_connexion) : "Jamais") + '</td><td>' + (g.actif ? '<span class="statut ok">Actif</span>' : '<span class="statut neutre">Désactivé</span>') + '</td>' +
+          '<td class="nb"><button class="btn petit" data-enreg="' + g.id + '">Enregistrer</button> <button class="btn petit discret" data-actif="' + g.id + '" data-val="' + (!g.actif) + '">' + (g.actif ? "Désactiver" : "Réactiver") + "</button></td></tr>";
+      }).join("") + "</tbody></table></div></section>";
+    h += '<section class="bloc"><div class="bloc-tete"><h2>Ajouter une personne</h2></div><form class="bloc-corps pile" id="form-equipe" novalidate><div class="grille-3">' +
+      '<label class="champ">Nom<input class="saisie" id="e-nom" required></label><label class="champ">Email professionnel<input class="saisie" id="e-email" type="email" required></label>' +
+      '<label class="champ">Rôle<select class="saisie" id="e-role">' + Object.keys(ROLES_G).map(function (k) { return '<option value="' + k + '">' + ROLES_G[k] + "</option>"; }).join("") + '</select></label></div>' +
+      '<div class="grille-3"><label class="champ">Plafond de règlement <span class="aide">en €, vide = sans plafond</span><input class="saisie" id="e-plafond" type="number" min="0" step="100" value="1500"></label></div>' +
+      '<div class="decision-actions"><button class="btn primaire" id="e-ok" type="submit">Créer le compte</button></div><div id="e-res"></div></form></section>';
+    $("vue").innerHTML = h;
+    document.querySelectorAll("[data-enreg]").forEach(function (b) {
+      b.onclick = function () {
+        var id = b.dataset.enreg, pl = document.querySelector('[data-plafond="' + id + '"]').value;
+        C.occupe(b, true, "");
+        api("equipe", { body: { id: id, role: document.querySelector('[data-role="' + id + '"]').value, plafond_eur: pl === "" ? null : Number(pl) } })
+          .then(function () { C.toast("Compte mis à jour"); vueEquipe(); }).catch(function (x) { C.occupe(b, false); C.toast(x.message, true); });
+      };
+    });
+    document.querySelectorAll("[data-actif]").forEach(function (b) {
+      b.onclick = function () {
+        api("equipe", { body: { id: b.dataset.actif, actif: b.dataset.val === "true" } })
+          .then(function () { C.toast(b.dataset.val === "true" ? "Compte réactivé" : "Compte désactivé"); vueEquipe(); }).catch(function (x) { C.toast(x.message, true); });
+      };
+    });
+    $("form-equipe").addEventListener("submit", function (e) {
+      e.preventDefault();
+      var b = $("e-ok"), pl = $("e-plafond").value;
+      C.occupe(b, true, "Création");
+      api("equipe", { body: { nom: $("e-nom").value.trim(), email: $("e-email").value.trim(), role: $("e-role").value, plafond_eur: pl === "" ? null : Number(pl) } }).then(function (r) {
+        C.occupe(b, false);
+        $("e-res").innerHTML = '<div class="alerte"><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.5" fill="none" stroke="currentColor" stroke-width="1.5"/></svg><span>Compte créé pour <b>' + esc(r.cree.email) + "</b>. Mot de passe provisoire, à transmettre en main propre : <b>" + esc(r.cree.mot_de_passe_provisoire) + "</b>. Il sera changé à la première connexion et n'est plus affiché ensuite.</span></div>";
+        api("equipe").then(function () { });
+      }).catch(function (x) { C.occupe(b, false); C.toast(x.message, true); });
+    });
+  }).catch(function (x) { erreurVue(x.status === 403 ? new Error("Réservé aux administrateurs.") : x); });
+}
+
 /* ---------------- Vue : Raccordement ---------------- */
 var EX_RESEAU = { experts: [{ nom: "Cabinet Expertise Loing", email: "expert.loing@exemple.fr", specialite: "auto", departements: ["77", "45"], lat: 48.27, lon: 2.69 }],
   garages: [{ nom: "Carrosserie du Loing", email: "carrosserie.loing@exemple.fr", code_postal: "77140", specialites: ["carrosserie", "vitrage"], taux_horaire_eur: 68, lat: 48.26, lon: 2.70 }] };
@@ -955,7 +1039,7 @@ var EX_CONTRATS = { contrats: [{ numero_contrat: "AUTO-2026-0100", assure_ref: "
 function vueRaccordement() {
   api("parametres").then(function (p) {
     var url = S.base.replace(/\/+$/, "");
-    var h = '<div class="entete-vue"><div><h1>Raccordement</h1><p>Ce qui relie ClaimAI à l\'outil de ' + esc(p.assureur) + " : arrivée des dossiers, retour des étapes, emails, réseau agréé et règles de contrôle.</p></div></div>";
+    var h = '<div class="entete-vue"><div><h1>Raccordement</h1><p>Ce qui relie ClaimAI à l\'outil de ' + esc(p.assureur) + " : arrivée des dossiers, retour des étapes, emails, réseau agréé et règles de contrôle." + (S.moi && S.moi.role !== "admin" ? " Lecture seule : seuls les administrateurs modifient ces réglages." : "") + "</p></div></div>";
     h += '<div class="bloc reglages">';
     h += '<div class="reglage"><div class="expl"><h3>Recevoir les nouveaux sinistres</h3><p>Votre outil envoie chaque déclaration à cette adresse avec la clé de la compagnie. Le dossier est créé, lu et orienté en quelques secondes.</p></div><div class="zone">' +
       '<pre class="code">POST ' + esc(url) + '/declarer\nx-claimai-key: (clé de la compagnie)\n\n{ "numero_contrat": "AUTO-2025-0001", "theme": "BRIS_GLACE",\n  "date_sinistre": "2026-09-28", "code_postal": "77140",\n  "recit": "…", "ref_externe": "SIN-2026-10433" }</pre>' +
@@ -965,10 +1049,7 @@ function vueRaccordement() {
       '<div class="decision-actions"><button class="btn primaire" id="w-ok">Enregistrer</button><button class="btn" id="w-test">Envoyer un essai</button><button class="btn discret" id="w-secret">Changer le secret</button></div>' +
       '<p class="muet petit">Secret de signature : ' + (p.webhook_secret_defini ? "défini" : "pas encore créé") + ". Il n'est affiché qu'une fois, à sa création.</p>" +
       '<p id="w-secret-val"></p>' +
-      ((p.derniers_envois || []).length ? '<div><div class="sous-titre">Derniers envois</div><ul class="envois">' + p.derniers_envois.slice(0, 8).map(function (e) {
-        var ev = String(e.evenement || ""), st = ev.split(":")[1], lib = ev.indexOf("dossier_cree") === 0 ? "Nouveau dossier" : ev.indexOf("test") === 0 ? "Message d'essai" : "Passe à " + ((C.STATUTS[st] || [st || ev])[0]).toLowerCase();
-        return "<li><span>" + esc(lib) + '</span><span class="' + (e.statut === "ok" ? "" : "statut ko") + '">' + esc(C.heure(e.quand)) + "</span></li>";
-      }).join("") + "</ul></div>" : "") + "</div></div>";
+      blocEnvois(p.webhooks) + "</div></div>";
     h += '<div class="reglage"><div class="expl"><h3>Emails</h3><p>En mode test, tous les courriers partent vers une seule adresse, avec le vrai destinataire dans l\'objet. Personne d\'autre ne les reçoit.</p></div><div class="zone">' +
       '<label class="champ">Adresse qui reçoit les essais<input class="saisie" id="m-test" type="email" value="' + esc(p.email_test || "") + '" placeholder="vous@exemple.fr"></label>' +
       '<label class="case"><input type="radio" name="m-mode" value="test"' + (p.email_mode !== "reel" ? " checked" : "") + '> Mode test : tout part vers l\'adresse ci-dessus</label>' +
@@ -996,6 +1077,18 @@ function vueRaccordement() {
     brancherRaccordement();
   }).catch(erreurVue);
 }
+var ETAT_ENVOI = { livre: ["Livré", "ok"], en_attente: ["Nouvelle tentative prévue", "vous"], en_cours: ["En cours", "encours"], echec: ["Échec", "ko"] };
+function blocEnvois(w) {
+  if (!w) return "";
+  var r = w.resume || {}, l = (w.envois || []).slice(0, 10);
+  return '<div><div class="sous-titre">Messages envoyés à votre outil</div><p class="petit" style="margin-bottom:8px">' + (r.livres || 0) + " livrés, " + (r.en_attente || 0) + " en attente, " + (r.echecs || 0) + " en échec. Un message non reçu est renvoyé automatiquement pendant 8 heures.</p>" +
+    (l.length ? '<ul class="envois">' + l.map(function (e) {
+      var x = ETAT_ENVOI[e.statut] || [e.statut, ""];
+      var quoi = e.evenement === "dossier_cree" ? "Nouveau dossier" : e.evenement === "test" ? "Message d'essai" : "Passe à " + ((C.STATUTS[e.statut_dossier] || [e.statut_dossier || ""])[0] || "").toLowerCase();
+      return "<li><span>" + esc((e.numero ? e.numero + " : " : "") + quoi) + (e.erreur && e.statut !== "livre" ? ' <span class="muet">(' + esc(e.erreur) + ")</span>" : "") + '</span><span class="statut ' + x[1] + '">' + esc(x[0]) + "</span></li>";
+    }).join("") + "</ul>" : "") +
+    ((r.echecs || 0) > 0 ? '<p style="margin-top:10px"><button class="btn petit" id="w-rejouer">Renvoyer les messages en échec</button></p>' : "") + "</div>";
+}
 function champNum(id, lib, unite, v) { return '<label class="champ">' + esc(lib) + ' <span class="aide">en ' + unite + '</span><input class="saisie" id="' + id + '" type="number" step="any" value="' + esc(v) + '"></label>'; }
 function brancherRaccordement() {
   function envoyer(btn, chemin, corps, msg, ensuite) {
@@ -1004,6 +1097,10 @@ function brancherRaccordement() {
       .catch(function (x) { C.toast(x.message, true); }).finally(function () { C.occupe(btn, false); });
   }
   function montrerSecret(r) { if (r && r.webhook_secret) $("w-secret-val").innerHTML = '<span class="alerte" style="display:grid"><span></span><span>Nouveau secret, à copier dans votre outil maintenant : <b style="overflow-wrap:anywhere">' + esc(r.webhook_secret) + "</b></span></span>"; }
+  if ($("w-rejouer")) $("w-rejouer").onclick = function () { envoyer(this, "rejouer-envois", {}, function (r) { return r.relances + " message(s) renvoyé(s)"; }, function () { vueRaccordement(); }); };
+  if (!S.moi || S.moi.role !== "admin") {
+    document.querySelectorAll("#vue .reglage .zone button, #vue .reglage .zone input, #vue .reglage .zone textarea").forEach(function (x) { if (x.id !== "w-rejouer") x.disabled = true; });
+  }
   $("w-ok").onclick = function () { envoyer(this, "parametres", { webhook_url: $("w-url").value.trim() }, "Adresse enregistrée", montrerSecret); };
   $("w-test").onclick = function () { envoyer(this, "tester-webhook", {}, "Essai envoyé à votre outil"); };
   $("w-secret").onclick = function () { envoyer(this, "nouveau-secret", {}, "Secret changé", montrerSecret); };
@@ -1025,11 +1122,7 @@ function brancherRaccordement() {
 }
 
 /* ---------------- Démarrage ---------------- */
-var memo = C.lireSession();
-if (memo && memo.base && memo.cle) {
-  $("c-base").value = memo.base; $("c-cle").value = memo.cle; $("c-gest").value = memo.gest || "";
-  connecter(memo.base, memo.cle, memo.gest || "gestionnaire").catch(function (x) { $("c-err").textContent = x.message; });
-}
+sb.auth.getSession().then(function (r) { if (r.data.session) entrer(r.data.session); });
 })();
 </script>
 </body>
