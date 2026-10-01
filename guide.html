@@ -1,0 +1,506 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Guide d'intégration ClaimAI</title>
+<meta name="description" content="Brancher l'outil de gestion des sinistres d'une compagnie sur ClaimAI : clés, déclarations, messages signés, recette.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<style>
+.haut { border-bottom: 1px solid var(--trait); background: var(--feuille); position: sticky; top: 0; z-index: 10; }
+.haut-in { max-width: 1180px; margin: 0 auto; padding: 12px 32px; display: flex; align-items: center; gap: 16px; }
+.haut-in .sep { color: var(--trait-fort); }
+.haut-in .titre { font-size: 14px; color: var(--gris); font-weight: 500; }
+.haut-in nav { margin-left: auto; display: flex; gap: 16px; font-size: 13px; }
+.cadre { max-width: 1180px; margin: 0 auto; padding: 0 32px; display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 48px; }
+.sommaire { position: sticky; top: 60px; align-self: start; padding: 28px 0; max-height: calc(100vh - 60px); overflow-y: auto; }
+.sommaire ol { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; counter-reset: s; }
+.sommaire a { display: block; padding: 5px 8px; border-radius: 6px; color: var(--encre-2); font-size: 13px; }
+.sommaire a:hover { background: var(--survol); text-decoration: none; }
+.sommaire a.actif { background: var(--survol); color: var(--encre); font-weight: 500; }
+.sommaire .groupe { font-size: 11.5px; font-weight: 600; color: var(--gris); text-transform: uppercase; letter-spacing: .04em; padding: 14px 8px 4px; }
+main { padding: 32px 0 96px; min-width: 0; }
+main > section { padding-top: 8px; scroll-margin-top: 72px; }
+main > section + section { margin-top: 44px; border-top: 1px solid var(--trait); padding-top: 36px; }
+main h1 { font-size: 28px; letter-spacing: -.02em; }
+main h2 { font-size: 20px; margin-bottom: 10px; }
+main h3 { font-size: 15px; margin: 24px 0 8px; }
+main p, main li { color: var(--encre-2); max-width: 78ch; }
+main p + p { margin-top: 10px; }
+main ul, main ol.etapes { padding-left: 20px; display: grid; gap: 6px; margin: 10px 0; }
+.chapeau { font-size: 15.5px; color: var(--gris); margin-top: 8px; max-width: 70ch; }
+code, .mono { font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace; font-size: 12.5px; }
+p code, li code, td code { background: var(--feuille-2); border: 1px solid var(--trait); border-radius: 4px; padding: 1px 5px; color: var(--encre); }
+pre { font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace; font-size: 12.5px; line-height: 1.55; background: var(--feuille-2); border: 1px solid var(--trait); border-radius: 8px; padding: 14px 16px; overflow-x: auto; margin: 12px 0; color: var(--encre); }
+.tab-code { border: 1px solid var(--trait); border-radius: 8px; margin: 12px 0; overflow: hidden; }
+.tab-code .langs { display: flex; gap: 2px; background: var(--feuille-2); border-bottom: 1px solid var(--trait); padding: 4px; overflow-x: auto; }
+.tab-code .langs button { border: 0; background: none; padding: 5px 10px; border-radius: 5px; font-size: 12.5px; font-weight: 500; color: var(--gris); cursor: pointer; white-space: nowrap; }
+.tab-code .langs button[aria-selected="true"] { background: var(--feuille); color: var(--encre); box-shadow: 0 0 0 1px var(--trait); }
+.tab-code pre { margin: 0; border: 0; border-radius: 0; background: var(--feuille); }
+table.doc { width: 100%; border-collapse: collapse; font-size: 13.5px; margin: 12px 0; }
+table.doc th { text-align: left; font-weight: 500; color: var(--gris); font-size: 12.5px; padding: 8px 12px; border-bottom: 1px solid var(--trait); background: var(--feuille-2); }
+table.doc td { padding: 9px 12px; border-bottom: 1px solid var(--trait); vertical-align: top; color: var(--encre-2); }
+table.doc td:first-child { white-space: nowrap; }
+.tableau-defil { overflow-x: auto; border: 1px solid var(--trait); border-radius: 8px; }
+.tableau-defil table.doc { margin: 0; }
+.tableau-defil table.doc tr:last-child td { border-bottom: 0; }
+.oblig { font-size: 11.5px; color: var(--orange-texte); font-weight: 500; margin-left: 4px; }
+.note { border: 1px solid var(--trait); border-left: 3px solid var(--bleu); border-radius: 6px; padding: 12px 14px; background: var(--feuille-2); margin: 14px 0; font-size: 13.5px; color: var(--encre-2); max-width: 78ch; }
+.note.attention { border-left-color: var(--orange); }
+.note b { color: var(--encre); }
+.schema { display: grid; grid-template-columns: 1fr auto 1fr; gap: 12px; align-items: center; margin: 18px 0; max-width: 760px; }
+.schema .boite-s { border: 1px solid var(--trait-fort); border-radius: 8px; padding: 14px; background: var(--feuille); }
+.schema .boite-s b { display: block; font-size: 14px; }
+.schema .boite-s span { font-size: 12.5px; color: var(--gris); }
+.schema .fleches { display: grid; gap: 10px; font-size: 12px; color: var(--encre-2); text-align: center; }
+.schema .fleches div { border-top: 1.5px solid var(--encre-2); padding-top: 4px; position: relative; min-width: 170px; }
+.schema .fleches div::after { content: ""; position: absolute; top: -5px; width: 8px; height: 8px; border-top: 1.5px solid var(--encre-2); border-right: 1.5px solid var(--encre-2); }
+.schema .fleches .d::after { right: 0; transform: rotate(45deg); }
+.schema .fleches .g::after { left: 0; transform: rotate(-135deg); }
+@media (max-width: 640px) { .schema { grid-template-columns: 1fr; } .schema .fleches div { min-width: 0; } }
+.recette { list-style: none; padding: 0 !important; counter-reset: r; }
+.recette li { counter-increment: r; display: grid; grid-template-columns: 26px 1fr; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--trait); max-width: none; }
+.recette li::before { content: counter(r); width: 22px; height: 22px; border-radius: 50%; border: 1.5px solid var(--trait-fort); display: grid; place-items: center; font-size: 12px; font-weight: 600; color: var(--encre-2); }
+.recette b { color: var(--encre); font-weight: 500; }
+@media (max-width: 900px) {
+  .cadre { grid-template-columns: minmax(0, 1fr); gap: 0; padding: 0 16px; }
+  .sommaire { position: static; max-height: none; padding: 16px 0 0; border-bottom: 1px solid var(--trait); }
+  .sommaire ol { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .haut-in { padding: 12px 16px; }
+  .haut-in .titre, .haut-in .sep { display: none; }
+}
+</style>
+</head>
+<body>
+<header class="haut">
+  <div class="haut-in">
+    <a class="marque" href="index.html" id="logo" style="color:inherit;text-decoration:none"></a>
+    <span class="sep">/</span><span class="titre">Guide d'intégration</span>
+    <nav><a href="index.html">Console</a><a href="index.html#/raccordement/verification">Vérifier mon raccordement</a></nav>
+  </div>
+</header>
+
+<div class="cadre">
+  <aside class="sommaire" aria-label="Sommaire">
+    <ol>
+      <li class="groupe">Commencer</li>
+      <li><a href="#principe">Principe</a></li>
+      <li><a href="#environnements">Essai et production</a></li>
+      <li><a href="#demarrage">Démarrage en 6 étapes</a></li>
+      <li><a href="#authentification">Authentification</a></li>
+      <li class="groupe">Envoyer à ClaimAI</li>
+      <li><a href="#declarer">Déclarer un sinistre</a></li>
+      <li><a href="#suivre">Lire un dossier</a></li>
+      <li><a href="#agir">Agir depuis votre outil</a></li>
+      <li><a href="#referentiels">Contrats et réseau</a></li>
+      <li class="groupe">Recevoir de ClaimAI</li>
+      <li><a href="#messages">Messages signés</a></li>
+      <li><a href="#signature">Vérifier la signature</a></li>
+      <li><a href="#fiabilite">Ordre, doublons, reprises</a></li>
+      <li class="groupe">Exploiter</li>
+      <li><a href="#erreurs">Erreurs</a></li>
+      <li><a href="#securite">Sécurité et données</a></li>
+      <li><a href="#recette">Recette avant production</a></li>
+    </ol>
+  </aside>
+
+  <main>
+    <section id="principe">
+      <h1>Brancher votre outil sur ClaimAI</h1>
+      <p class="chapeau">Ce guide s'adresse à l'équipe informatique de la compagnie. ClaimAI ne remplace pas votre outil de gestion : il s'y branche par deux canaux, dans les deux sens, et votre outil reste la référence.</p>
+      <div class="schema" role="img" aria-label="Votre outil envoie les déclarations à ClaimAI ; ClaimAI renvoie chaque étape à votre outil par un message signé.">
+        <div class="boite-s"><b>Votre outil sinistres</b><span>Déclarations, contrats, réseau agréé, décisions</span></div>
+        <div class="fleches"><div class="d">API : POST /declarer…</div><div class="g">Messages signés à chaque étape</div></div>
+        <div class="boite-s"><b>ClaimAI</b><span>Analyse, contrôle de garantie, missions, calcul, propositions</span></div>
+      </div>
+      <p><b>Vers ClaimAI</b> : votre outil appelle l'API REST (JSON sur HTTPS) pour déclarer un sinistre, transmettre les contrats et le réseau, et enregistrer les décisions prises chez vous.</p>
+      <p><b>Vers votre outil</b> : à chaque changement d'étape, ClaimAI envoie un message signé (webhook) à une adresse HTTPS que vous lui donnez. Votre outil met sa fiche à jour.</p>
+      <div class="note"><b>Aucun refus ni aucun paiement ne part sans validation humaine.</b> ClaimAI propose ; un gestionnaire décide, dans la console ClaimAI ou dans votre outil par <code>POST /valider</code>. Chaque action est tracée au journal du dossier.</div>
+    </section>
+
+    <section id="environnements">
+      <h2>Essai et production</h2>
+      <p>Chaque compagnie dispose de deux environnements <b>complètement séparés</b> : données, clés, adresse de réception, secret de signature et règles de contrôle.</p>
+      <div class="tableau-defil"><table class="doc">
+        <thead><tr><th></th><th>Essai</th><th>Production</th></tr></thead>
+        <tbody>
+          <tr><td>Clé API</td><td><code>clm_test_…</code></td><td><code>clm_live_…</code></td></tr>
+          <tr><td>Numéro des dossiers</td><td><code>ESS-2026-000123</code></td><td><code>CLM-2026-000123</code></td></tr>
+          <tr><td>Contrats</td><td>Quatre contrats fictifs fournis, ou les vôtres anonymisés</td><td>Vos contrats réels</td></tr>
+          <tr><td>Emails</td><td>Toujours redirigés vers votre adresse de test, jamais aux vrais destinataires</td><td>Mode test ou réel, au choix de l'administrateur</td></tr>
+          <tr><td>Champ <code>environnement</code> des messages</td><td><code>"test"</code></td><td><code>"production"</code></td></tr>
+        </tbody>
+      </table></div>
+      <p>L'adresse de l'API est la même pour les deux : <b>c'est la clé qui choisit l'environnement</b>. Votre serveur de recette utilise une clé d'essai, votre production une clé de production.</p>
+      <pre id="base-url">https://okugbnabvlotasdsokco.supabase.co/functions/v1/claimai</pre>
+      <p>Contrats fictifs de l'environnement d'essai :</p>
+      <div class="tableau-defil"><table class="doc">
+        <thead><tr><th>Contrat</th><th>Situation</th><th>Pour tester</th></tr></thead>
+        <tbody>
+          <tr><td><code>ESSAI-AUTO-0001</code></td><td>Actif : bris de glace, dommages tous accidents, vol et vandalisme</td><td>Circuit complet auto</td></tr>
+          <tr><td><code>ESSAI-AUTO-0002</code></td><td>Actif : bris de glace seul</td><td>Garantie non souscrite (perte de contrôle, vandalisme)</td></tr>
+          <tr><td><code>ESSAI-AUTO-0003</code></td><td>Résilié le 30 juin 2025</td><td>Contrat non actif à la date du sinistre</td></tr>
+          <tr><td><code>ESSAI-GA-0004</code></td><td>Garantie Accident, option 9</td><td>Accidents corporels et calcul au barème</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <section id="demarrage">
+      <h2>Démarrage en 6 étapes</h2>
+      <ol class="etapes">
+        <li>Un administrateur de la compagnie se connecte à la console, bascule sur <b>Essai</b> (en haut de l'écran), ouvre <b>Raccordement › Clés et messages</b> et crée une clé d'essai. Elle n'est affichée qu'une fois : rangez-la dans votre coffre à secrets.</li>
+        <li>Vérifiez la clé depuis votre serveur : <code>GET /moi</code> doit répondre <code>"environnement": "test"</code>.</li>
+        <li>Renseignez l'adresse HTTPS de réception de votre outil. ClaimAI crée alors le secret de signature et l'affiche une fois.</li>
+        <li>Envoyez une déclaration d'essai par <code>POST /declarer</code> avec le contrat <code>ESSAI-AUTO-0001</code>.</li>
+        <li>Faites vérifier la signature par votre outil, puis lancez <b>Tester la signature</b> dans la console.</li>
+        <li>Ouvrez <b>Raccordement › Vérification</b> : chaque contrôle se coche seul. Quand tout est vert, refaites les mêmes étapes en production.</li>
+      </ol>
+<pre>curl https://okugbnabvlotasdsokco.supabase.co/functions/v1/claimai/moi \
+  -H "x-claimai-key: $CLAIMAI_CLE"
+
+{
+  "type": "outil",
+  "compagnie": "Mutuelle Démo du Gâtinais",
+  "environnement": "test",
+  "cle": "clm_test_f621ed6…",
+  "message": "Connexion réussie : votre clé est reconnue."
+}</pre>
+    </section>
+
+    <section id="authentification">
+      <h2>Authentification</h2>
+      <p>Chaque appel porte l'en-tête <code>x-claimai-key</code>. Les clés sont créées et révoquées par un administrateur de la compagnie dans la console, jamais par l'API. Une clé révoquée est refusée immédiatement.</p>
+      <ul>
+        <li>Une clé par serveur ou par usage (« Outil sinistres, production », « Batch contrats nocturne »), pour pouvoir en révoquer une sans couper les autres.</li>
+        <li>Rotation : créez la nouvelle clé, déployez-la, vérifiez sa date de dernière utilisation dans la console, puis révoquez l'ancienne.</li>
+        <li>ClaimAI ne conserve qu'une empreinte SHA-256 de la clé : elle ne peut pas être réaffichée. Perdue, elle se remplace.</li>
+      </ul>
+      <p>Chaque réponse porte l'en-tête <code>x-claimai-requete</code> : un identifiant unique de l'appel, repris dans le journal de la console. Donnez-le au support pour toute question sur un appel précis.</p>
+    </section>
+
+    <section id="declarer">
+      <h2>Déclarer un sinistre</h2>
+      <p><code>POST /declarer</code> crée le dossier, le fait analyser, vérifie le contrat et lance la suite (mission d'expert, demande de pièces, ou retour vers un gestionnaire). La réponse arrive en quelques secondes avec la fiche complète.</p>
+      <div class="tableau-defil"><table class="doc">
+        <thead><tr><th>Champ</th><th>Type</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td><code>numero_contrat</code><span class="oblig">obligatoire</span></td><td>texte</td><td>Numéro du contrat tel que connu de ClaimAI (voir <a href="#referentiels">Contrats</a>).</td></tr>
+          <tr><td><code>date_sinistre</code><span class="oblig">obligatoire</span></td><td>AAAA-MM-JJ</td><td>Pas dans le futur.</td></tr>
+          <tr><td><code>code_postal</code><span class="oblig">obligatoire</span></td><td>5 chiffres</td><td>Lieu du sinistre : sert à choisir l'expert et le réparateur les plus proches.</td></tr>
+          <tr><td><code>recit</code><span class="oblig">obligatoire</span></td><td>texte</td><td>Récit de l'assuré, 10 caractères au moins. C'est lui que l'IA qualifie.</td></tr>
+          <tr><td><code>ref_externe</code></td><td>texte</td><td>Votre référence de sinistre. <b>Fortement recommandée</b> : elle rend le renvoi sans risque (voir plus bas) et figure dans chaque message.</td></tr>
+          <tr><td><code>theme</code></td><td>texte</td><td>Type choisi par l'assuré : <code>BRIS_GLACE</code>, <code>PERTE_CONTROLE_OBSTACLE_FIXE</code>, <code>VANDALISME</code>, <code>GARANTIE_ACCIDENT</code>, <code>AUTRE</code>. ClaimAI le compare au récit.</td></tr>
+          <tr><td><code>ville</code></td><td>texte</td><td>Commune, pour situer le lieu plus précisément.</td></tr>
+          <tr><td><code>tiers_implique</code></td><td>booléen</td><td>Si votre outil le sait déjà.</td></tr>
+          <tr><td><code>victime</code></td><td>objet</td><td>Garantie Accident : <code>{"age": 35, "lien": "societaire"}</code>. <code>lien</code> parmi <code>societaire</code>, <code>conjoint</code>, <code>enfant_mineur</code>, <code>enfant_etudiant</code>, <code>enfant_handicape</code>, <code>personne_a_charge</code>, <code>conducteur_tiers</code>. Ni nom ni numéro de sécurité sociale.</td></tr>
+        </tbody>
+      </table></div>
+<pre>curl -X POST https://okugbnabvlotasdsokco.supabase.co/functions/v1/claimai/declarer \
+  -H "x-claimai-key: $CLAIMAI_CLE" -H "Content-Type: application/json" \
+  -d '{
+    "numero_contrat": "ESSAI-AUTO-0001",
+    "ref_externe": "SIN-2026-10433",
+    "theme": "BRIS_GLACE",
+    "date_sinistre": "2026-09-28",
+    "code_postal": "77140",
+    "ville": "Nemours",
+    "recit": "Un gravillon projeté sur l'A6 a fissuré le pare-brise. Aucun autre dégât."
+  }'</pre>
+      <div class="tableau-defil"><table class="doc">
+        <thead><tr><th>Réponse</th><th>Sens</th></tr></thead>
+        <tbody>
+          <tr><td><code>201</code></td><td>Dossier créé. Le corps est la fiche complète : <code>numero</code>, <code>statut</code>, <code>theme</code>, <code>decision</code>, <code>motif</code>…</td></tr>
+          <tr><td><code>200</code> + <code>"deja_recu": true</code></td><td>Cette <code>ref_externe</code> existe déjà : ClaimAI rend le dossier existant sans en créer un second. Vous pouvez donc renvoyer une déclaration après un délai dépassé sans risque de doublon.</td></tr>
+          <tr><td><code>400</code></td><td>Champ manquant ou mal formé : le message dit lequel.</td></tr>
+          <tr><td><code>422</code></td><td>Règle métier refusée (date dans le futur, récit trop court…).</td></tr>
+        </tbody>
+      </table></div>
+      <div class="note">Un contrat inconnu, une garantie absente ou un tiers impliqué <b>ne font pas échouer l'appel</b> : le dossier est créé et part vers un gestionnaire avec le motif. Seules les données inexploitables sont refusées.</div>
+    </section>
+
+    <section id="suivre">
+      <h2>Lire un dossier</h2>
+      <p>Les messages signés suffisent à tenir votre outil à jour. Ces lectures servent à se resynchroniser après un incident, ou à afficher la fiche ClaimAI dans votre outil.</p>
+      <div class="tableau-defil"><table class="doc">
+        <thead><tr><th>Appel</th><th>Rend</th></tr></thead>
+        <tbody>
+          <tr><td><code>GET /dossier?numero=CLM-2026-000123</code></td><td>Fiche complète : analyse, contrat, missions, pièces, expertises, règlement, courriers, journal.</td></tr>
+          <tr><td><code>GET /dossiers?statut=&amp;q=&amp;limite=</code></td><td>Liste, filtrée par statut ou recherche (numéro, contrat, immatriculation, référence).</td></tr>
+          <tr><td><code>GET /a-traiter</code></td><td>Dossiers qui attendent une décision humaine.</td></tr>
+          <tr><td><code>GET /indicateurs</code></td><td>Chiffres de pilotage.</td></tr>
+          <tr><td><code>GET /verification</code></td><td>État du raccordement, contrôle par contrôle (le même que dans la console).</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <section id="agir">
+      <h2>Agir depuis votre outil</h2>
+      <p>Si vos gestionnaires travaillent dans votre outil plutôt que dans la console, ces appels portent leurs décisions. Le champ <code>par</code> (ou <code>valide_par</code>) identifie la personne : il est inscrit au journal sous la forme <code>outil:identifiant</code>.</p>
+      <div class="tableau-defil"><table class="doc">
+        <thead><tr><th>Appel</th><th>Corps</th><th>Effet</th></tr></thead>
+        <tbody>
+          <tr><td><code>POST /valider</code></td><td><code>{"validation_id", "resultat": "valide"|"rejete", "valide_par", "commentaire"}</code></td><td>Décision sur une proposition (refus, règlement…). L'identifiant vient de la fiche, rubrique des validations en attente.</td></tr>
+          <tr><td><code>POST /virement</code></td><td><code>{"numero", "ref_virement"}</code></td><td>Paiement exécuté par votre outil : le dossier est clos.</td></tr>
+          <tr><td><code>POST /pieces</code></td><td><code>{"numero", "pieces": ["DEPOT_PLAINTE"]}</code></td><td>Pièce reçue en agence. Codes : <code>FACTURE</code>, <code>DELEGATION_PAIEMENT</code>, <code>RAPPORT_EXPERTISE</code>, <code>DEPOT_PLAINTE</code>, <code>CMI</code>, <code>FICHE_RENSEIGNEMENTS</code>, <code>RIB</code>, <code>RAPPORT_MEDICAL</code>.</td></tr>
+          <tr><td><code>POST /retour</code></td><td>Rapport d'expert ou facture : <code>{"numero", "montant_ttc", …}</code></td><td>Quand l'expert vous répond hors de ClaimAI. Champs selon le cas : <code>heures</code>, <code>taux_horaire</code>, <code>montant_pieces_ht</code>, <code>vei</code>, <code>aipp_pct</code>, <code>date_consolidation</code>…</td></tr>
+          <tr><td><code>POST /reprendre</code></td><td><code>{"numero", "action", "par", "commentaire"}</code></td><td>Reprise d'un dossier sorti du circuit, ou classement.</td></tr>
+        </tbody>
+      </table></div>
+      <p>Un règlement au-dessus du plafond du gestionnaire est refusé en <code>422</code> quand la décision vient de la console ; si la décision vient de votre outil, appliquez vos propres délégations avant d'appeler <code>/valider</code>.</p>
+    </section>
+
+    <section id="referentiels">
+      <h2>Contrats et réseau</h2>
+      <p>ClaimAI vérifie la garantie à partir des contrats que vous lui transmettez, et ne missionne que votre réseau agréé. Les deux imports sont des mises à jour : un même numéro de contrat, ou un même email d'expert ou de garage, remplace la fiche existante.</p>
+<pre>POST /contrats
+{ "contrats": [ {
+    "numero_contrat": "AUTO-2026-0100", "assure_ref": "SOC-20100",
+    "assure_email": "assure@exemple.fr", "date_effet": "2026-01-01", "date_fin": null,
+    "statut": "actif", "vehicule_immat": "GH-512-KL",
+    "garanties": [ { "code": "BRIS_GLACE", "franchise_eur": 0 },
+                   { "code": "DOMMAGES_TOUS_ACCIDENTS", "franchise_eur": 300 },
+                   { "code": "GARANTIE_ACCIDENT", "option": 9 } ] } ] }
+
+POST /reseau
+{ "experts": [ { "nom": "Cabinet Expertise Loing", "email": "expert@exemple.fr",
+                 "specialite": "auto", "departements": ["77", "45"] } ],
+  "garages": [ { "nom": "Carrosserie du Loing", "email": "garage@exemple.fr", "code_postal": "77140",
+                 "specialites": ["carrosserie", "vitrage"], "taux_horaire_eur": 68 } ] }</pre>
+      <p>Codes de garantie : <code>BRIS_GLACE</code>, <code>DOMMAGES_TOUS_ACCIDENTS</code>, <code>VOL_VANDALISME</code>, <code>GARANTIE_ACCIDENT</code>. Ne transmettez que ce qui sert à la gestion : pas de données de santé, de RIB ni de pièce d'identité dans ces imports.</p>
+    </section>
+
+    <section id="messages">
+      <h2>Messages signés vers votre outil</h2>
+      <p>À chaque étape, ClaimAI envoie un <code>POST</code> JSON à votre adresse de réception. Répondez <b>2xx en moins de 10 secondes</b> : enregistrez le message, traitez-le ensuite.</p>
+      <div class="tableau-defil"><table class="doc">
+        <thead><tr><th>En-tête</th><th>Contenu</th></tr></thead>
+        <tbody>
+          <tr><td><code>x-claimai-signature</code></td><td>HMAC-SHA256 du corps brut avec votre secret, en hexadécimal minuscule.</td></tr>
+          <tr><td><code>x-claimai-evenement</code></td><td>Type d'événement, comme le champ <code>evenement</code>.</td></tr>
+          <tr><td><code>x-claimai-evenement-id</code></td><td>Identifiant unique du message, comme le champ <code>evenement_id</code>.</td></tr>
+        </tbody>
+      </table></div>
+      <div class="tableau-defil"><table class="doc">
+        <thead><tr><th>Événement</th><th>Quand</th></tr></thead>
+        <tbody>
+          <tr><td><code>dossier_cree</code></td><td>Le dossier vient d'être créé (<code>numero</code>, <code>ref_externe</code>, <code>statut</code>).</td></tr>
+          <tr><td><code>changement_statut</code></td><td>Le dossier change d'étape. Le message porte l'état complet : statut, décision, motif, prestataires, pièces manquantes, règlement.</td></tr>
+          <tr><td><code>test</code></td><td>Bouton « Envoyer un message de test ».</td></tr>
+          <tr><td><code>test_signature</code></td><td>Bouton « Tester la signature » : deux messages, l'un bien signé (<code>"attendu": "accepter"</code>, répondez 2xx), l'autre volontairement mal signé (<code>"attendu": "refuser"</code>, répondez 401).</td></tr>
+        </tbody>
+      </table></div>
+<pre>{
+  "evenement": "changement_statut",
+  "evenement_id": "9e3310dc-3d7d-4a4e-829c-acd4628845c8",
+  "sequence": 40,
+  "envoye_le": "2026-10-01T14:01:31.288438+00:00",
+  "environnement": "production",
+  "numero": "CLM-2026-000019",
+  "ref_externe": "SIN-2026-10440",
+  "theme": "PERTE_CONTROLE_OBSTACLE_FIXE",
+  "statut": "clos",
+  "statut_precedent": "reglement_envoye",
+  "decision": "garanti",
+  "prestataires": [
+    { "type": "expertise", "nom": "Cabinet Expertise du Loing", "statut": "terminee" },
+    { "type": "reparation", "nom": "Carrosserie du Loing", "statut": "terminee" }
+  ],
+  "pieces_manquantes": [],
+  "reglement": { "montant_net": 2200.00, "statut": "confirme",
+                 "beneficiaire": "reparateur", "ref_virement": "VIR-2026-000431" }
+}</pre>
+      <h3>Statuts d'un dossier</h3>
+      <div class="tableau-defil"><table class="doc" id="statuts">
+        <thead><tr><th>Code</th><th>Libellé</th><th>Qui agit</th></tr></thead><tbody></tbody>
+      </table></div>
+    </section>
+
+    <section id="signature">
+      <h2>Vérifier la signature</h2>
+      <p>Calculez l'HMAC-SHA256 du <b>corps brut, tel que reçu</b>, avant tout décodage JSON, avec le secret de l'environnement. Comparez au contenu de <code>x-claimai-signature</code> en temps constant. Différent : répondez <code>401</code> et n'enregistrez rien.</p>
+      <div class="note attention"><b>Piège courant :</b> recalculer la signature sur un JSON relu puis réécrit. L'ordre des champs ou les espaces changent, la signature ne correspond plus. Signez toujours les octets reçus.</div>
+      <div class="tab-code" data-onglets>
+        <div class="langs" role="tablist">
+          <button role="tab" aria-selected="true">Node.js</button><button role="tab" aria-selected="false">Python</button><button role="tab" aria-selected="false">Java</button><button role="tab" aria-selected="false">C#</button><button role="tab" aria-selected="false">PHP</button>
+        </div>
+<pre>// Express : le corps doit rester brut sur cette route
+import crypto from "node:crypto";
+import express from "express";
+
+const app = express();
+app.post("/claimai", express.raw({ type: "application/json" }), (req, res) => {
+  const attendu = crypto.createHmac("sha256", process.env.CLAIMAI_SECRET).update(req.body).digest("hex");
+  const recu = req.get("x-claimai-signature") || "";
+  const ok = recu.length === attendu.length && crypto.timingSafeEqual(Buffer.from(recu), Buffer.from(attendu));
+  if (!ok) return res.sendStatus(401);
+
+  const message = JSON.parse(req.body.toString("utf8"));
+  file.ajouter(message);          // traitement après la réponse
+  res.sendStatus(200);
+});</pre>
+<pre hidden># Flask
+import hashlib, hmac, os
+from flask import Flask, abort, request
+
+app = Flask(__name__)
+SECRET = os.environ["CLAIMAI_SECRET"].encode()
+
+@app.post("/claimai")
+def recevoir():
+    brut = request.get_data()                      # octets reçus, avant tout décodage
+    attendu = hmac.new(SECRET, brut, hashlib.sha256).hexdigest()
+    if not hmac.compare_digest(attendu, request.headers.get("x-claimai-signature", "")):
+        abort(401)
+    message = request.get_json()
+    file.ajouter(message)                          # traitement après la réponse
+    return "", 200</pre>
+<pre hidden>// corpsBrut : byte[] du corps tel que reçu (ex. Spring : @RequestBody byte[] corpsBrut)
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.util.HexFormat;
+import javax.crypto.Mac;
+import javax.crypto.spec.SecretKeySpec;
+
+Mac mac = Mac.getInstance("HmacSHA256");
+mac.init(new SecretKeySpec(secret.getBytes(StandardCharsets.UTF_8), "HmacSHA256"));
+String attendu = HexFormat.of().formatHex(mac.doFinal(corpsBrut));
+String recu = signature == null ? "" : signature;   // en-tête x-claimai-signature
+if (!MessageDigest.isEqual(attendu.getBytes(StandardCharsets.UTF_8), recu.getBytes(StandardCharsets.UTF_8))) {
+    return ResponseEntity.status(401).build();
+}</pre>
+<pre hidden>// ASP.NET Core : lire le corps brut avant toute désérialisation
+using System.Security.Cryptography;
+using System.Text;
+
+app.MapPost("/claimai", async (HttpRequest req) => {
+    using var ms = new MemoryStream();
+    await req.Body.CopyToAsync(ms);
+    var corpsBrut = ms.ToArray();
+    using var hmac = new HMACSHA256(Encoding.UTF8.GetBytes(secret));
+    var attendu = Convert.ToHexString(hmac.ComputeHash(corpsBrut)).ToLowerInvariant();
+    var recu = req.Headers["x-claimai-signature"].ToString();
+    if (!CryptographicOperations.FixedTimeEquals(Encoding.UTF8.GetBytes(attendu), Encoding.UTF8.GetBytes(recu)))
+        return Results.Unauthorized();
+    file.Ajouter(Encoding.UTF8.GetString(corpsBrut));
+    return Results.Ok();
+});</pre>
+<pre hidden>&lt;?php
+$brut = file_get_contents('php://input');            // corps brut
+$attendu = hash_hmac('sha256', $brut, getenv('CLAIMAI_SECRET'));
+$recu = $_SERVER['HTTP_X_CLAIMAI_SIGNATURE'] ?? '';
+if (!hash_equals($attendu, $recu)) {
+    http_response_code(401);
+    exit;
+}
+$message = json_decode($brut, true);
+file_ajouter($message);                                // traitement après la réponse
+http_response_code(200);</pre>
+      </div>
+      <h3>Vecteur de test</h3>
+      <p>Pour valider votre implémentation hors ligne : avec le secret <code>whs_exemple</code> et le corps exact ci-dessous (espaces compris), la signature attendue est :</p>
+<pre>corps     : {"evenement": "test", "numero": "ESS-2026-000001"}
+signature : 8e9de53ea776ae18b78919fb25074e994a2c1942d0e809367580a7ba62b2e450</pre>
+    </section>
+
+    <section id="fiabilite">
+      <h2>Ordre, doublons, reprises</h2>
+      <h3>Reprises automatiques</h3>
+      <p>Si votre outil ne répond pas 2xx dans les 10 secondes (coupure, maintenance, erreur 5xx), ClaimAI garde le message et le renvoie : 1, 2, 5, 15, 30, 60 puis 120 minutes après l'échec précédent, soit 8 tentatives sur environ 4 heures. Au-delà, le message passe « en échec » et la console le signale ; un administrateur peut le renvoyer en un clic après correction.</p>
+      <h3>Doublons</h3>
+      <p>Un même message peut arriver deux fois (votre outil l'a enregistré mais la réponse s'est perdue). Gardez les <code>evenement_id</code> déjà traités et ignorez un message déjà vu, en répondant quand même 2xx.</p>
+      <h3>Ordre</h3>
+      <p>Les messages peuvent arriver dans le désordre, surtout après une reprise. Chaque message porte une <code>sequence</code> croissante : pour un dossier donné, n'appliquez un message que si sa <code>sequence</code> est supérieure à la dernière enregistrée. Comme chaque <code>changement_statut</code> porte l'état complet, le dernier message suffit à remettre la fiche d'aplomb.</p>
+<pre>// Pseudo-code côté outil
+si deja_traite(message.evenement_id) : répondre 200
+enregistrer(message.evenement_id)
+fiche = fiche_par_numero(message.numero)
+si message.sequence &gt; fiche.derniere_sequence :
+    mettre à jour la fiche (statut, prestataires, pièces, règlement)
+    fiche.derniere_sequence = message.sequence
+répondre 200</pre>
+    </section>
+
+    <section id="erreurs">
+      <h2>Erreurs</h2>
+      <p>Toute erreur rend un corps <code>{"erreur": "message lisible", "requete": "identifiant"}</code>. Le message est écrit pour être affiché tel quel à un utilisateur de votre outil.</p>
+      <div class="tableau-defil"><table class="doc">
+        <thead><tr><th>Code</th><th>Cause</th><th>Que faire</th></tr></thead>
+        <tbody>
+          <tr><td><code>400</code></td><td>Champ manquant ou mal formé, JSON invalide</td><td>Corriger la requête ; inutile de la renvoyer telle quelle.</td></tr>
+          <tr><td><code>401</code></td><td>Clé absente, inconnue ou révoquée</td><td>Vérifier la clé et l'environnement ; en demander une à l'administrateur.</td></tr>
+          <tr><td><code>403</code></td><td>Action réservée à un administrateur connecté</td><td>Passer par la console.</td></tr>
+          <tr><td><code>404</code></td><td>Dossier ou adresse inconnus</td><td>Vérifier le numéro et l'environnement (un dossier ESS- n'existe pas en production).</td></tr>
+          <tr><td><code>422</code></td><td>Règle métier refusée</td><td>Afficher le message au gestionnaire.</td></tr>
+          <tr><td><code>500</code></td><td>Erreur interne</td><td>Renvoyer plus tard ; pour <code>/declarer</code>, avec la même <code>ref_externe</code>. Donner l'identifiant <code>requete</code> au support.</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <section id="securite">
+      <h2>Sécurité et données</h2>
+      <ul>
+        <li>HTTPS uniquement, dans les deux sens. Votre adresse de réception doit commencer par <code>https://</code>.</li>
+        <li>Clés et secrets affichés une seule fois ; les clés ne sont conservées que sous forme d'empreinte.</li>
+        <li>Minimisation : l'analyse par IA ne reçoit que le type déclaré, la date et le récit, plus l'âge et le lien de la victime pour un accident corporel. Ni nom, ni contrat, ni coordonnées.</li>
+        <li>Les décisions défavorables et les paiements exigent toujours la validation d'une personne identifiée (RGPD, article 22).</li>
+        <li>Journal des appels conservé 90 jours ; journal de chaque dossier conservé avec le dossier.</li>
+        <li>L'environnement d'essai ne doit contenir que des données fictives ou anonymisées.</li>
+      </ul>
+      <div class="note">Hébergement, sous-traitance, réversibilité et clauses DORA (article 30) sont traités dans le dossier de conformité remis avec le contrat, pas dans ce guide technique.</div>
+    </section>
+
+    <section id="recette">
+      <h2>Recette avant production</h2>
+      <p>Cette liste est celle de l'écran <b>Raccordement › Vérification</b>, qui la coche automatiquement à partir de ce que votre outil fait réellement. Faites-la en essai, puis en production.</p>
+      <ol class="recette">
+        <li><span><b>Votre outil se connecte avec sa clé.</b> Un appel authentifié, par exemple <code>GET /moi</code>.</span></li>
+        <li><span><b>Les contrats sont disponibles.</b> Fournis en essai ; en production, premier envoi par <code>POST /contrats</code>.</span></li>
+        <li><span><b>Le réseau d'experts et de garages est en place.</b> <code>POST /reseau</code>.</span></li>
+        <li><span><b>Une déclaration de sinistre est arrivée.</b> <code>POST /declarer</code> réussi.</span></li>
+        <li><span><b>L'adresse de réception est renseignée.</b> Dans la console.</span></li>
+        <li><span><b>Votre outil reçoit les messages.</b> Au moins un message accepté (2xx).</span></li>
+        <li><span><b>Votre outil vérifie la signature.</b> Message bien signé accepté, message mal signé refusé par 401.</span></li>
+        <li><span><b>Aucun message perdu après une coupure</b> (recommandé). Coupez votre point de réception quelques minutes pendant un essai, puis rétablissez-le : le message doit arriver à la reprise.</span></li>
+        <li><span><b>Aucun message abandonné ces 7 derniers jours</b> (recommandé).</span></li>
+        <li><span><b>Votre outil sait relire un dossier</b> (recommandé). <code>GET /dossier</code>.</span></li>
+      </ol>
+      <p style="margin-top:16px">Deux contrôles restent de votre côté, car ClaimAI ne peut pas les voir : un message reçu deux fois ne crée qu'une mise à jour, et un message plus ancien n'écrase pas un plus récent (voir <a href="#fiabilite">Ordre, doublons, reprises</a>).</p>
+    </section>
+  </main>
+</div>
+
+<script src="commun.js"></script>
+<script>
+(function () {
+  "use strict";
+  var C = window.CA;
+  document.getElementById("logo").innerHTML = C.LOGO + "<span>ClaimAI</span>";
+  var QUI = { vous: "Gestionnaire", ok: "Terminé", ko: "Terminé", neutre: "Terminé", encours: "ClaimAI, expert ou assuré" };
+  document.querySelector("#statuts tbody").innerHTML = Object.keys(C.STATUTS).map(function (k) {
+    var s = C.STATUTS[k];
+    return "<tr><td><code>" + C.esc(k) + "</code></td><td>" + C.esc(s[0]) + "</td><td>" + C.esc(QUI[s[1]] || "") + "</td></tr>";
+  }).join("");
+  document.querySelectorAll("[data-onglets]").forEach(function (bloc) {
+    var boutons = bloc.querySelectorAll("[role=tab]"), pres = bloc.querySelectorAll("pre");
+    boutons.forEach(function (b, i) {
+      b.addEventListener("click", function () {
+        boutons.forEach(function (x, j) { x.setAttribute("aria-selected", String(i === j)); });
+        pres.forEach(function (p, j) { p.hidden = i !== j; });
+      });
+    });
+  });
+  var liens = Array.prototype.slice.call(document.querySelectorAll(".sommaire a"));
+  var sections = liens.map(function (a) { return document.querySelector(a.getAttribute("href")); });
+  function suivre() {
+    var y = window.scrollY + 90, actif = 0;
+    sections.forEach(function (s, i) { if (s && s.offsetTop <= y) actif = i; });
+    liens.forEach(function (a, i) { a.classList.toggle("actif", i === actif); });
+  }
+  window.addEventListener("scroll", suivre, { passive: true }); suivre();
+})();
+</script>
+</body>
+</html>

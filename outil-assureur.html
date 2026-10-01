@@ -57,6 +57,9 @@ tr.neuf td { animation: neuf 2.4s ease-out; }
 .sig.ko { color: var(--rouge); }
 .vide { padding: 28px 16px; text-align: center; color: var(--gris); }
 .connexion { max-width: 440px; margin: 60px auto; }
+.env-badge { display: inline-block; font-size: 11.5px; font-weight: 600; padding: 2px 8px; border-radius: 10px; margin-right: 8px; background: rgba(255,255,255,.18); color: #fff; }
+.env-badge.essai { background: #FFF7ED; color: #C2410C; }
+.lien-cle { background: none; border: 0; color: inherit; opacity: .8; text-decoration: underline; cursor: pointer; font: inherit; font-size: 12px; margin-left: 8px; padding: 0; }
 </style>
 </head>
 <body>
@@ -64,14 +67,14 @@ tr.neuf td { animation: neuf 2.4s ease-out; }
 <header class="entete"><div class="entete-in">
   <div class="cie-nom"><svg width="22" height="22" viewBox="0 0 22 22" aria-hidden="true"><path d="M11 2l8 3.5v5c0 5-3.6 8.5-8 9.5-4.4-1-8-4.5-8-9.5v-5z" fill="#fff" opacity=".95"/><path d="M7.5 11l2.5 2.5 4.5-5" fill="none" stroke="#0F5C4D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Mutuelle Démo du Gâtinais <span>Gestion sinistres</span></div>
   <nav class="onglets" aria-label="Modules de l'outil"><span>Sociétaires</span><span>Contrats</span><span class="actif">Sinistres</span><span>Comptabilité</span></nav>
-  <span class="agent">Plateau sinistres, Nemours</span>
+  <span class="agent"><span id="env-outil"></span> Plateau sinistres, Nemours <button type="button" id="b-cle" class="lien-cle" hidden>Changer de clé</button></span>
 </div></header>
 
 <div id="ecran-cle" class="connexion" hidden>
   <div class="panneau"><div class="panneau-tete"><h2>Raccordement à ClaimAI</h2></div>
   <form class="panneau-corps" id="form-cle"><p class="muet">L'outil de la compagnie s'identifie auprès de ClaimAI avec la clé de la compagnie, comme le ferait son logiciel en production. Les gestionnaires, eux, se connectent à la console avec leur compte.</p>
     <label class="champ">Adresse du service<input class="saisie" id="k-base"></label>
-    <label class="champ">Clé d'accès de la compagnie<input class="saisie" id="k-cle" type="password" placeholder="clm_…"></label>
+    <label class="champ">Clé d'accès de la compagnie <span class="aide">clm_test_… pour la recette, clm_live_… pour la production</span><input class="saisie" id="k-cle" type="password" placeholder="clm_…"></label>
     <button class="btn cie" type="submit">Raccorder</button><p class="muet petit" id="k-err" role="alert"></p></form></div>
 </div>
 
@@ -83,7 +86,7 @@ tr.neuf td { animation: neuf 2.4s ease-out; }
         <div><div class="sous-titre muet petit" style="margin-bottom:6px">Appels types</div><div class="modeles" id="modeles"></div></div>
         <div class="grille-2"><label class="champ">N° de contrat<input class="saisie" id="o-contrat" list="o-contrats"></label>
           <label class="champ">Nature<select class="saisie" id="o-theme"><option value="BRIS_GLACE">Bris de glace</option><option value="PERTE_CONTROLE_OBSTACLE_FIXE">Perte de contrôle</option><option value="VANDALISME">Vandalisme</option><option value="GARANTIE_ACCIDENT">Garantie Accident</option><option value="AUTRE">Autre</option></select></label></div>
-        <datalist id="o-contrats"><option value="AUTO-2025-0001"><option value="AUTO-2025-0004"><option value="GA-2024-0005"><option value="GA-2025-0006"></datalist>
+        <datalist id="o-contrats"></datalist>
         <div class="grille-2"><label class="champ">Survenu le<input class="saisie" id="o-date" type="date"></label><label class="champ">Code postal<input class="saisie" id="o-cp" maxlength="5" inputmode="numeric"></label></div>
         <div class="grille-2" id="o-ga" hidden><label class="champ">Âge de la victime<input class="saisie" id="o-age" type="number"></label><label class="champ">Lien<select class="saisie" id="o-lien"><option value="societaire">Sociétaire</option><option value="conjoint">Conjoint</option><option value="enfant_mineur">Enfant mineur</option></select></label></div>
         <label class="champ">Ce que dit le sociétaire<textarea class="saisie" id="o-recit" rows="4"></textarea></label>
@@ -129,8 +132,17 @@ var APPELS = [
   ["Accident de scooter", { numero_contrat: "GA-2024-0005", theme: "GARANTIE_ACCIDENT", code_postal: "45200", victime: { age: 19, lien: "enfant_etudiant" }, recit: "Le fils du sociétaire, étudiant, est tombé en scooter sur une plaque d'huile. Fractures du fémur et du bassin, opéré à Montargis. Aucun autre véhicule en cause." }]
 ];
 
+var CONTRAT_ESSAI = { "AUTO-2025-0001": "ESSAI-AUTO-0001", "AUTO-2025-0004": "ESSAI-AUTO-0001", "GA-2024-0005": "ESSAI-GA-0004", "GA-2025-0006": "ESSAI-GA-0004" };
+function essai() { return S.env === "test"; }
+function contrat(n) { return essai() ? (CONTRAT_ESSAI[n] || n) : n; }
 function demarrer() {
   api = C.client(S.base, S.cle);
+  $("env-outil").className = "env-badge" + (essai() ? " essai" : "");
+  $("env-outil").textContent = essai() ? "Recette" : "Production";
+  $("b-cle").hidden = false;
+  $("b-cle").onclick = function () { try { localStorage.removeItem(MEMO); } catch (e) { } location.reload(); };
+  $("o-contrats").innerHTML = (essai() ? ["ESSAI-AUTO-0001", "ESSAI-AUTO-0002", "ESSAI-AUTO-0003", "ESSAI-GA-0004"] : ["AUTO-2025-0001", "AUTO-2025-0004", "GA-2024-0005", "GA-2025-0006"])
+    .map(function (n) { return '<option value="' + n + '">'; }).join("");
   apiOutil = C.client(S.base.replace(/\/claimai\/?$/, "/assureur-demo"), S.cle);
   $("ecran-cle").hidden = true; $("ecran-outil").hidden = false;
   var d = new Date(); d.setDate(d.getDate() - 1); $("o-date").value = d.toISOString().slice(0, 10);
@@ -138,7 +150,7 @@ function demarrer() {
   document.querySelectorAll("[data-a]").forEach(function (b) {
     b.onclick = function () {
       var x = APPELS[b.dataset.a][1];
-      $("o-contrat").value = x.numero_contrat; $("o-theme").value = x.theme; $("o-cp").value = x.code_postal; $("o-recit").value = x.recit;
+      $("o-contrat").value = contrat(x.numero_contrat); $("o-theme").value = x.theme; $("o-cp").value = x.code_postal; $("o-recit").value = x.recit;
       if (x.victime) { $("o-age").value = x.victime.age; $("o-lien").value = x.victime.lien; }
       $("o-ga").hidden = x.theme !== "GARANTIE_ACCIDENT";
     };
@@ -174,7 +186,9 @@ function majPanne() { $("b-panne").textContent = panne ? "Rétablir l'outil" : "
 function rafraichir() {
   apiOutil("etat").then(function (e) {
     panne = e.panne === true; majPanne();
-    var ds = e.dossiers || [], ev = e.evenements || [];
+    var env = S.env || "production";
+    function duBonEnv(x) { return (x.environnement || "production") === env; }
+    var ds = (e.dossiers || []).filter(duBonEnv), ev = (e.evenements || []).filter(duBonEnv);
     $("maj").textContent = ds.length + " sinistre" + (ds.length > 1 ? "s" : "") + ", mis à jour à " + new Date().toLocaleTimeString("fr-FR");
     $("porte").innerHTML = ds.length ? ds.map(function (d) {
       var neuf = !premier && vus[d.numero] !== d.sequence; vus[d.numero] = d.sequence;
@@ -189,7 +203,12 @@ function rafraichir() {
     $("journal").innerHTML = ev.length ? ev.slice(0, 40).map(function (x) {
       var c = x.corps || {};
       if (x.doublon) return '<li><span class="h">' + esc(new Date(x.recu_le).toLocaleTimeString("fr-FR")) + '</span><span class="muet">Doublon ignoré (' + esc(x.numero || "") + ')</span><span></span></li>';
-      var quoi = x.evenement === "dossier_cree" ? "Nouveau dossier " + (x.numero || "") : x.evenement === "test" ? "Message d'essai" : (x.numero || "") + " : " + ((SITUATION[x.statut] || [x.statut || ""])[0] || "").toLowerCase();
+      if (x.evenement === "test_signature") {
+        var attendu = c.attendu === "refuser", bon = attendu ? !x.signature_ok : x.signature_ok;
+        return '<li><span class="h">' + esc(new Date(x.recu_le).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit", second: "2-digit" })) + "</span><span>Test de signature" +
+          '<span class="muet">, message ' + (attendu ? "volontairement mal signé" : "bien signé") + '</span></span><span class="sig' + (bon ? "" : " ko") + '">' + (attendu ? (bon ? "Bien refusé" : "Accepté à tort") : (bon ? "Signature valide" : "Refusé à tort")) + "</span></li>";
+      }
+      var quoi = x.evenement === "dossier_cree" ? "Nouveau dossier " + (x.numero || "") : x.evenement === "test" ? "Message de test" : (x.numero || "") + " : " + ((SITUATION[x.statut] || [x.statut || ""])[0] || "").toLowerCase();
       return '<li><span class="h">' + esc(new Date(x.recu_le).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit", second: "2-digit" })) + "</span><span>" + esc(quoi) + (c.statut_precedent ? '<span class="muet">, était ' + esc(((SITUATION[c.statut_precedent] || [c.statut_precedent])[0] || "").toLowerCase()) + "</span>" : "") +
         '</span><span class="sig' + (x.signature_ok ? "" : " ko") + '">' + (x.signature_ok ? "Signature valide" : "Signature invalide") + "</span></li>";
     }).join("") : '<li style="display:block"><div class="vide">Aucun message reçu.</div></li>';
@@ -199,10 +218,14 @@ function rafraichir() {
 $("k-base").value = S.base || C.API_DEFAUT;
 $("form-cle").addEventListener("submit", function (e) {
   e.preventDefault(); var base = $("k-base").value.trim(), cle = $("k-cle").value.trim();
-  C.client(base, cle)("indicateurs").then(function () { S = { base: base, cle: cle }; try { localStorage.setItem(MEMO, JSON.stringify(S)); } catch (e) { } demarrer(); })
+  C.client(base, cle)("moi").then(function (m) { S = { base: base, cle: cle, env: m && m.environnement === "test" ? "test" : "production" }; try { localStorage.setItem(MEMO, JSON.stringify(S)); } catch (e) { } demarrer(); })
     .catch(function (x) { $("k-err").textContent = x.status === 401 ? "Clé refusée." : x.message; });
 });
-if (S.base && S.cle) demarrer(); else $("ecran-cle").hidden = false;
+if (S.base && S.cle) {
+  // Clé déjà enregistrée : on relit l'environnement qu'elle ouvre
+  C.client(S.base, S.cle)("moi").then(function (m) { S.env = m && m.environnement === "test" ? "test" : "production"; demarrer(); })
+    .catch(function () { $("ecran-cle").hidden = false; $("k-err").textContent = "La clé enregistrée n'est plus acceptée : saisissez-en une autre."; });
+} else $("ecran-cle").hidden = false;
 })();
 </script>
 </body>

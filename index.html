@@ -255,6 +255,57 @@ textarea.saisie.code-saisie { font-family: ui-monospace, Menlo, Consolas, monosp
 .routes { width: 100%; border-collapse: collapse; font-size: 13px; }
 .routes td { padding: 7px 10px; border-bottom: 1px solid var(--trait); vertical-align: top; }
 .routes td:first-child { white-space: nowrap; font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 12px; color: var(--encre-2); }
+.mono { font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace; font-size: 12px; }
+
+/* ---------- Environnement : production / essai ---------- */
+.env { display: inline-flex; border: 1px solid var(--trait-fort); border-radius: 6px; padding: 2px; background: var(--feuille-2); flex: none; }
+.env button { border: 0; background: none; padding: 4px 10px; border-radius: 4px; font-size: 12.5px; font-weight: 500; color: var(--gris); cursor: pointer; }
+.env button[aria-pressed="true"] { background: var(--feuille); color: var(--encre); box-shadow: 0 0 0 1px var(--trait); }
+.env button.essai[aria-pressed="true"] { color: var(--orange-texte); }
+.bandeau-essai { background: var(--jaune-pale); color: var(--orange-texte); border-bottom: 1px solid var(--trait); font-size: 12.5px; font-weight: 500; }
+.bandeau-essai div { max-width: 1240px; margin: 0 auto; padding: 6px 32px; display: flex; gap: 8px; align-items: center; }
+.bandeau-essai div::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--orange); flex: none; }
+@media (max-width: 960px) { .bandeau-essai div { padding: 6px 16px; } }
+
+/* ---------- Onglets internes ---------- */
+.onglets { display: flex; gap: 2px; border-bottom: 1px solid var(--trait); margin-bottom: 20px; overflow-x: auto; }
+.onglets a { padding: 9px 12px; font-size: 13.5px; font-weight: 500; color: var(--gris); border-bottom: 2px solid transparent; margin-bottom: -1px; white-space: nowrap; }
+.onglets a:hover { color: var(--encre); text-decoration: none; }
+.onglets a[aria-current="page"] { color: var(--encre); border-bottom-color: var(--encre); }
+
+/* ---------- Vérification du raccordement ---------- */
+.verif-tete { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px 20px; align-items: center; padding: 16px; border-bottom: 1px solid var(--trait); }
+.verif-tete h2 { font-size: 15px; }
+.verif-tete p { color: var(--gris); font-size: 13px; margin-top: 2px; }
+.progression { grid-column: 1 / -1; display: block; height: 6px; border-radius: 3px; background: var(--survol); overflow: hidden; }
+.progression span { display: block; height: 100%; background: var(--vert); border-radius: 3px; }
+@media (max-width: 640px) { .verif-tete { grid-template-columns: 1fr; } }
+.controles { list-style: none; margin: 0; padding: 0; }
+.controles li { display: grid; grid-template-columns: 20px minmax(0, 1fr) auto; gap: 4px 12px; padding: 12px 16px; align-items: start; }
+.controles li + li { border-top: 1px solid var(--trait); }
+.controles .lib { font-size: 13.5px; font-weight: 500; }
+.controles .det { font-size: 13px; color: var(--encre-2); grid-column: 2; overflow-wrap: anywhere; }
+.controles .aide { font-size: 12.5px; color: var(--gris); grid-column: 2; }
+.controles .quand { font-size: 12px; color: var(--gris); white-space: nowrap; text-align: right; }
+.controles .fac { font-size: 11.5px; color: var(--gris); font-weight: 400; margin-left: 6px; }
+@media (max-width: 640px) { .controles li { grid-template-columns: 20px minmax(0, 1fr); } .controles .quand { grid-column: 2; text-align: left; } }
+.pastille { width: 18px; height: 18px; border-radius: 50%; display: grid; place-items: center; margin-top: 1px; border: 1.5px solid var(--trait-fort); }
+.pastille.ok { background: var(--vert); border-color: var(--vert); }
+.pastille.ok::after { content: ""; width: 4px; height: 8px; border: solid #fff; border-width: 0 1.8px 1.8px 0; transform: translateY(-1px) rotate(45deg); }
+.pastille.ko { background: var(--rouge); border-color: var(--rouge); }
+.pastille.ko::after { content: "×"; color: #fff; font-size: 14px; line-height: 1; font-weight: 600; }
+.pastille.attention { background: var(--orange); border-color: var(--orange); }
+.pastille.attention::after { content: "!"; color: #fff; font-size: 12px; line-height: 1; font-weight: 700; }
+.pastille.en_cours { border-color: var(--bleu); border-right-color: transparent; animation: tourne .8s linear infinite; }
+.cle-neuve { display: grid; gap: 8px; padding: 12px 14px; border: 1px solid var(--orange); border-radius: 6px; background: var(--jaune-pale); }
+.cle-neuve .mono { font-size: 12.5px; overflow-wrap: anywhere; color: var(--encre); }
+.code-http { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 12px; font-weight: 600; }
+.code-http.ok { color: var(--vert-texte); }
+.code-http.ko { color: var(--rouge-texte); }
+.code-http.attention { color: var(--orange-texte); }
+.tableau.fixe tbody tr { cursor: default; }
+.tableau.fixe tbody tr:hover { background: none; }
+.tableau.fixe td:first-child { white-space: nowrap; }
 </style>
 </head>
 <body>
@@ -315,11 +366,16 @@ textarea.saisie.code-saisie { font-family: ui-monospace, Menlo, Consolas, monosp
 
   <div class="principal">
     <header class="barre">
+      <div class="bandeau-essai" id="bandeau-essai" hidden><div>Environnement d'essai : données fictives, séparées de la production. Aucun email ne part aux vrais destinataires.</div></div>
       <div class="barre-in">
         <form class="recherche" id="form-recherche" role="search">
           <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><circle cx="7" cy="7" r="4.5" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M10.5 10.5L14 14" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
           <input class="saisie" id="q" type="search" placeholder="Dossier, contrat, immatriculation, référence" aria-label="Rechercher un dossier">
         </form>
+        <div class="env" role="group" aria-label="Environnement">
+          <button type="button" id="env-prod" aria-pressed="true">Production</button>
+          <button type="button" id="env-essai" class="essai" aria-pressed="false">Essai</button>
+        </div>
         <div class="gestionnaire"><span class="avatar" id="n-avatar"></span><b id="n-gest"></b></div>
       </div>
     </header>
@@ -382,10 +438,39 @@ $("form-mdp").addEventListener("submit", function (e) {
   }).catch(function (x) { err.textContent = x.message; }).finally(function () { C.occupe(b, false); });
 });
 
+/* ---------------- Environnement : production ou essai ---------------- */
+var ENV = "claimai-environnement";
+S.env = "production";
+try { if (localStorage.getItem(ENV) === "test") S.env = "test"; } catch (e) { }
+function entetesEnv() { return S.env === "test" ? { "x-claimai-environnement": "test" } : {}; }
+function afficherEnv() {
+  var essai = S.env === "test";
+  $("env-prod").setAttribute("aria-pressed", String(!essai));
+  $("env-essai").setAttribute("aria-pressed", String(essai));
+  $("bandeau-essai").hidden = !essai;
+  document.title = (essai ? "[Essai] " : "") + "Console sinistres ClaimAI";
+}
+function changerEnv(env) {
+  if (env === S.env) return;
+  S.env = env; try { localStorage.setItem(ENV, env); } catch (e) { }
+  afficherEnv(); etat.boites = null; etat.boite = null; etat.msg = null;
+  rafraichirCompteur();
+  var vue = location.hash.replace(/^#\/?/, "").split("/")[0];
+  if (vue === "dossier") location.hash = "#/file"; else router();
+  C.toast(env === "test" ? "Environnement d'essai" : "Production");
+}
+$("env-prod").addEventListener("click", function () { changerEnv("production"); });
+$("env-essai").addEventListener("click", function () { changerEnv("test"); });
+afficherEnv();
+// Contrats fictifs de l'environnement d'essai, à la place des contrats de démonstration
+var CONTRAT_ESSAI = { "AUTO-2025-0001": "ESSAI-AUTO-0001", "AUTO-2025-0004": "ESSAI-AUTO-0001", "AUTO-2025-0002": "ESSAI-AUTO-0002",
+  "AUTO-2024-0003": "ESSAI-AUTO-0003", "GA-2024-0005": "ESSAI-GA-0004", "GA-2025-0006": "ESSAI-GA-0004" };
+function contrat(n) { return S.env === "test" ? (CONTRAT_ESSAI[n] || n) : n; }
+
 function entrer(session) {
   if (!session) return Promise.resolve();
   var base = ($("c-base").value || "").trim() || C.API_DEFAUT;
-  S.base = base; api = C.client(base, jeton);
+  S.base = base; api = C.client(base, jeton, entetesEnv);
   if (session.user && session.user.user_metadata && session.user.user_metadata.mdp_provisoire) {
     $("form-connexion").hidden = true; $("form-mdp").hidden = false; $("m-mdp").focus();
     return Promise.resolve();
@@ -425,7 +510,7 @@ function router() {
   var v = $("vue"); v.innerHTML = '<div class="vide"><span class="tourne" style="display:inline-block"></span></div>';
   window.scrollTo(0, 0);
   var f = { file: vueFile, dossiers: vueDossiers, dossier: function () { vueDossier(decodeURIComponent(h[1] || "")); },
-    declarer: vueDeclarer, boites: vueBoites, pilotage: vuePilotage, raccordement: vueRaccordement, equipe: vueEquipe }[vue] || vueFile;
+    declarer: vueDeclarer, boites: vueBoites, pilotage: vuePilotage, raccordement: function () { vueRaccordement(h[1]); }, equipe: vueEquipe }[vue] || vueFile;
   f();
 }
 function erreurVue(x) { $("vue").innerHTML = '<div class="bloc"><div class="vide"><b>Impossible de charger cette page</b>' + esc(x.message) + '<p style="margin-top:14px"><button class="btn" onclick="location.reload()">Recharger</button></p></div></div>'; }
@@ -433,7 +518,7 @@ function ouvrirDossier(n) { location.hash = "#/dossier/" + encodeURIComponent(n)
 
 $("form-recherche").addEventListener("submit", function (e) {
   e.preventDefault(); var q = $("q").value.trim(); if (!q) return;
-  if (/^CLM-\d{4}-\d{6}$/i.test(q)) { ouvrirDossier(q.toUpperCase()); return; }
+  if (/^(CLM|ESS)-\d{4}-\d{6}$/i.test(q)) { ouvrirDossier(q.toUpperCase()); return; }
   location.hash = "#/dossiers/" + encodeURIComponent(q);
 });
 
@@ -872,13 +957,13 @@ var MODELES = [
 function vueDeclarer() {
   var auj = new Date(); auj.setDate(auj.getDate() - 1);
   var h = '<div class="entete-vue"><div><h1>Déclarer un sinistre</h1><p>En production, les déclarations arrivent directement de votre outil par l\'API. Cette saisie sert aux déclarations prises au téléphone et aux essais.</p></div></div>' +
-    '<section class="bloc"><div class="bloc-tete"><h2>Partir d\'un exemple</h2><span class="muet petit">Contrats de démonstration</span></div><div class="bloc-corps" style="display:flex;gap:8px;flex-wrap:wrap">' +
+    '<section class="bloc"><div class="bloc-tete"><h2>Partir d\'un exemple</h2><span class="muet petit">' + (S.env === "test" ? "Contrats fictifs de l\'essai" : "Contrats de démonstration") + '</span></div><div class="bloc-corps" style="display:flex;gap:8px;flex-wrap:wrap">' +
     MODELES.map(function (m, i) { return '<button class="btn petit" data-m="' + i + '">' + esc(m.n) + "</button>"; }).join("") + "</div></section>" +
     '<section class="bloc"><form class="bloc-corps pile" id="form-decl" novalidate style="gap:18px">' +
     '<div class="grille-3"><label class="champ">Numéro de contrat<input class="saisie" id="d-contrat" list="contrats" required></label>' +
     '<label class="champ">Type déclaré<select class="saisie" id="d-theme"><option value="BRIS_GLACE">Bris de glace</option><option value="PERTE_CONTROLE_OBSTACLE_FIXE">Perte de contrôle</option><option value="VANDALISME">Vandalisme</option><option value="GARANTIE_ACCIDENT">Garantie Accident</option><option value="AUTRE">Autre</option></select></label>' +
     '<label class="champ">Date du sinistre<input class="saisie" id="d-date" type="date" required value="' + auj.toISOString().slice(0, 10) + '"></label></div>' +
-    '<datalist id="contrats"><option value="AUTO-2025-0001"><option value="AUTO-2025-0002"><option value="AUTO-2024-0003"><option value="AUTO-2025-0004"><option value="GA-2024-0005"><option value="GA-2025-0006"></datalist>' +
+    '<datalist id="contrats">' + (S.env === "test" ? ["ESSAI-AUTO-0001", "ESSAI-AUTO-0002", "ESSAI-AUTO-0003", "ESSAI-GA-0004"] : ["AUTO-2025-0001", "AUTO-2025-0002", "AUTO-2024-0003", "AUTO-2025-0004", "GA-2024-0005", "GA-2025-0006"]).map(function (n) { return '<option value="' + n + '">'; }).join("") + '</datalist>' +
     '<div class="grille-3"><label class="champ">Code postal du lieu<input class="saisie" id="d-cp" inputmode="numeric" maxlength="5" required></label><label class="champ">Commune<input class="saisie" id="d-ville"></label>' +
     '<label class="champ">Votre référence <span class="aide">facultatif</span><input class="saisie" id="d-ref"></label></div>' +
     '<div class="grille-3" id="d-ga" hidden><label class="champ">Âge de la victime<input class="saisie" id="d-age" type="number" min="0" max="120"></label>' +
@@ -891,7 +976,7 @@ function vueDeclarer() {
   document.querySelectorAll("[data-m]").forEach(function (b) {
     b.addEventListener("click", function () {
       var m = MODELES[b.dataset.m].d;
-      $("d-contrat").value = m.numero_contrat; $("d-theme").value = m.theme; $("d-cp").value = m.code_postal; $("d-ville").value = m.ville; $("d-recit").value = m.recit;
+      $("d-contrat").value = contrat(m.numero_contrat); $("d-theme").value = m.theme; $("d-cp").value = m.code_postal; $("d-ville").value = m.ville; $("d-recit").value = m.recit;
       if (m.victime) { $("d-age").value = m.victime.age; $("d-lien").value = m.victime.lien; }
       majGA();
     });
@@ -1035,90 +1120,212 @@ var EX_RESEAU = { experts: [{ nom: "Cabinet Expertise Loing", email: "expert.loi
   garages: [{ nom: "Carrosserie du Loing", email: "carrosserie.loing@exemple.fr", code_postal: "77140", specialites: ["carrosserie", "vitrage"], taux_horaire_eur: 68, lat: 48.26, lon: 2.70 }] };
 var EX_CONTRATS = { contrats: [{ numero_contrat: "AUTO-2026-0100", assure_ref: "SOC-20100", assure_email: "assure.100@exemple.fr", date_effet: "2026-01-01", vehicule_immat: "GH-512-KL",
   garanties: [{ code: "BRIS_GLACE", franchise_eur: 0 }, { code: "DOMMAGES_TOUS_ACCIDENTS", franchise_eur: 300 }, { code: "VOL_VANDALISME", franchise_eur: 150 }] }] };
+var ONGLETS_R = [["verification", "Vérification"], ["connexion", "Clés et messages"], ["donnees", "Réseau, contrats et règles"]];
+var minuterieVerif = null;
 
-function vueRaccordement() {
+function vueRaccordement(onglet) {
+  clearTimeout(minuterieVerif);
+  if (!ONGLETS_R.some(function (o) { return o[0] === onglet; })) onglet = "verification";
+  var admin = !!(S.moi && S.moi.role === "admin"), essai = S.env === "test";
+  var tete = '<div class="entete-vue"><div><h1>Raccordement</h1><p>' +
+    (essai ? "Environnement d'essai : branchez ici le serveur de recette de votre outil, avec une clé <span class=\"mono\">clm_test_</span>. Rien de ce qui se passe ici ne touche la production."
+           : "Production : ce qui relie ClaimAI à l'outil de la compagnie. Faites d'abord les contrôles dans l'environnement d'essai.") +
+    (admin ? "" : " Lecture seule : seuls les administrateurs modifient ces réglages.") +
+    '</p></div><a class="btn" href="guide.html" target="_blank" rel="noopener">Guide d\'intégration</a></div>' +
+    '<nav class="onglets" aria-label="Rubriques du raccordement">' + ONGLETS_R.map(function (o) {
+      return '<a href="#/raccordement/' + o[0] + '"' + (o[0] === onglet ? ' aria-current="page"' : "") + ">" + o[1] + "</a>";
+    }).join("") + "</nav>";
+  if (onglet === "verification") { vueVerification(tete, 0); return; }
   api("parametres").then(function (p) {
-    var url = S.base.replace(/\/+$/, "");
-    var h = '<div class="entete-vue"><div><h1>Raccordement</h1><p>Ce qui relie ClaimAI à l\'outil de ' + esc(p.assureur) + " : arrivée des dossiers, retour des étapes, emails, réseau agréé et règles de contrôle." + (S.moi && S.moi.role !== "admin" ? " Lecture seule : seuls les administrateurs modifient ces réglages." : "") + "</p></div></div>";
-    h += '<div class="bloc reglages">';
-    h += '<div class="reglage"><div class="expl"><h3>Recevoir les nouveaux sinistres</h3><p>Votre outil envoie chaque déclaration à cette adresse avec la clé de la compagnie. Le dossier est créé, lu et orienté en quelques secondes.</p></div><div class="zone">' +
-      '<pre class="code">POST ' + esc(url) + '/declarer\nx-claimai-key: (clé de la compagnie)\n\n{ "numero_contrat": "AUTO-2025-0001", "theme": "BRIS_GLACE",\n  "date_sinistre": "2026-09-28", "code_postal": "77140",\n  "recit": "…", "ref_externe": "SIN-2026-10433" }</pre>' +
-      '<p class="muet petit">Pour un accident corporel, ajoutez <b>"victime": { "age": 35, "lien": "societaire" }</b>.</p></div></div>';
-    h += '<div class="reglage"><div class="expl"><h3>Tenir votre outil à jour</h3><p>À chaque étape, ClaimAI envoie le nouvel état du dossier à votre outil, signé avec un secret propre à la compagnie.</p></div><div class="zone">' +
-      '<label class="champ">Adresse de réception de votre outil<input class="saisie" id="w-url" type="url" value="' + esc(p.webhook_url || "") + '" placeholder="https://"></label>' +
-      '<div class="decision-actions"><button class="btn primaire" id="w-ok">Enregistrer</button><button class="btn" id="w-test">Envoyer un essai</button><button class="btn discret" id="w-secret">Changer le secret</button></div>' +
-      '<p class="muet petit">Secret de signature : ' + (p.webhook_secret_defini ? "défini" : "pas encore créé") + ". Il n'est affiché qu'une fois, à sa création.</p>" +
-      '<p id="w-secret-val"></p>' +
-      blocEnvois(p.webhooks) + "</div></div>";
-    h += '<div class="reglage"><div class="expl"><h3>Emails</h3><p>En mode test, tous les courriers partent vers une seule adresse, avec le vrai destinataire dans l\'objet. Personne d\'autre ne les reçoit.</p></div><div class="zone">' +
-      '<label class="champ">Adresse qui reçoit les essais<input class="saisie" id="m-test" type="email" value="' + esc(p.email_test || "") + '" placeholder="vous@exemple.fr"></label>' +
-      '<label class="case"><input type="radio" name="m-mode" value="test"' + (p.email_mode !== "reel" ? " checked" : "") + '> Mode test : tout part vers l\'adresse ci-dessus</label>' +
-      '<label class="case"><input type="radio" name="m-mode" value="reel"' + (p.email_mode === "reel" ? " checked" : "") + '> Mode réel : chaque courrier part à son destinataire</label>' +
-      '<div class="decision-actions"><button class="btn primaire" id="m-ok">Enregistrer</button><button class="btn" id="m-envoyer">Envoyer les courriers en attente</button></div></div></div>';
-    h += '<div class="reglage"><div class="expl"><h3>Réseau agréé et contrats</h3><p>ClaimAI missionne uniquement vos experts et garages, selon le lieu du sinistre. Votre outil les tient à jour ici ; un même email met à jour la fiche existante.</p></div><div class="zone">' +
-      '<p><b>' + p.reseau.experts + "</b> experts, <b>" + p.reseau.garages + "</b> garages et <b>" + p.reseau.contrats + "</b> contrats connus.</p>" +
-      '<label class="champ">Experts et garages (format JSON)<textarea class="saisie code-saisie" id="i-reseau">' + esc(JSON.stringify(EX_RESEAU, null, 2)) + "</textarea></label>" +
-      '<div class="decision-actions"><button class="btn" id="i-reseau-ok">Importer le réseau</button></div>' +
-      '<label class="champ">Contrats et garanties (format JSON)<textarea class="saisie code-saisie" id="i-contrats">' + esc(JSON.stringify(EX_CONTRATS, null, 2)) + "</textarea></label>" +
-      '<div class="decision-actions"><button class="btn" id="i-contrats-ok">Importer les contrats</button></div></div></div>';
-    h += '<div class="reglage"><div class="expl"><h3>Règles de contrôle</h3><p>Au-delà de ces seuils, le circuit s\'arrête et le dossier vous revient.</p></div><div class="zone"><div class="grille-2">' +
-      champNum("s-ecart", "Écart devis et expertise", "%", p.seuil_ecart_prix_pct) + champNum("s-fact", "Écart facture et expertise", "%", p.ecart_facture_expertise_pct) +
-      champNum("s-taux", "Taux horaire maximum", "€", p.taux_horaire_max_eur) + champNum("s-bg", "Bris de glace sans expert, jusqu'à", "€", p.bris_glace_sans_expert_max) +
-      champNum("s-relance", "Relance sans réponse après", "jours", p.delai_relance_jours) + champNum("s-aipp", "Écart AIPP et barème toléré", "points", p.ga_ecart_aipp_points) +
-      '</div><p class="muet petit">Unité de compte de la Garantie Accident : ' + esc(eur(p.uc_eur)) + '.</p><div class="decision-actions"><button class="btn primaire" id="s-ok">Enregistrer les règles</button></div></div></div>';
-    h += '<div class="reglage"><div class="expl"><h3>Adresses de l\'API</h3><p>Toutes demandent l\'en-tête <b>x-claimai-key</b>, sauf l\'espace en ligne, ouvert par le lien personnel de chaque courrier.</p></div><div class="zone"><table class="routes">' +
-      [["POST /declarer", "Nouveau sinistre"], ["GET /dossier?numero=", "Fiche complète d'un dossier"], ["GET /dossiers", "Liste, filtres statut et q"], ["GET /a-traiter", "Dossiers qui attendent un humain"],
-       ["POST /valider", "Décision d'un gestionnaire"], ["POST /virement", "Paiement confirmé, clôture"], ["POST /pieces", "Pièce reçue en agence"], ["POST /retour", "Rapport ou facture saisi par la compagnie"],
-       ["POST /reprendre", "Reprise ou classement"], ["POST /reseau", "Import des experts et garages"], ["POST /contrats", "Import des contrats"], ["GET /indicateurs", "Pilotage"],
-       ["GET|POST /portail?t=", "Espace expert, garage ou assuré"]].map(function (r) { return "<tr><td>" + esc(r[0]) + "</td><td>" + esc(r[1]) + "</td></tr>"; }).join("") +
-      "</table><p class=\"muet petit\">Clés actives : " + (p.cles || []).filter(function (k) { return k.actif; }).map(function (k) { return esc(k.libelle) + " (" + esc(k.prefixe) + "…)"; }).join(", ") + "</p></div></div>";
-    h += "</div>";
+    var h = tete + '<div class="bloc reglages">' + (onglet === "connexion" ? ongletConnexion(p, admin) : ongletDonnees(p)) + "</div>";
     $("vue").innerHTML = h;
-    brancherRaccordement();
+    brancherRaccordement(admin);
   }).catch(erreurVue);
 }
+
+/* Vérification : contrôles qui se cochent seuls */
+var ETAT_CTL = { ok: "Fait", a_faire: "À faire", ko: "En erreur", attention: "À surveiller", en_cours: "En cours" };
+function vueVerification(tete, essais) {
+  api("verification").then(function (v) {
+    if (!/^#\/raccordement(\/verification)?$/.test(location.hash)) return;
+    var obl = v.controles.filter(function (c) { return c.obligatoire; });
+    var faits = obl.filter(function (c) { return c.statut === "ok"; }).length;
+    var essai = v.environnement === "test";
+    var titre = v.pret ? (essai ? "Raccordement d'essai validé" : "Raccordement de production validé")
+                       : faits + " contrôle" + (faits > 1 ? "s" : "") + " obligatoire" + (faits > 1 ? "s" : "") + " sur " + obl.length;
+    var sous = v.pret ? (essai ? "Votre outil et ClaimAI échangent correctement. Refaites ces contrôles en production avec une clé clm_live_ avant la mise en service."
+                               : "Votre outil et ClaimAI échangent correctement en production.")
+                      : "Chaque ligne se coche seule dès que votre outil fait l'action attendue. Rien à déclarer à la main.";
+    var h = tete + '<section class="bloc"><div class="verif-tete"><div><h2>' + esc(titre) + "</h2><p>" + esc(sous) + "</p></div>" +
+      '<div class="decision-actions"><button class="btn" id="v-sig">Tester la signature</button><button class="btn" id="v-msg">Envoyer un message de test</button><button class="btn discret" id="v-maj">Actualiser</button></div>' +
+      '<span class="progression" role="progressbar" aria-valuemin="0" aria-valuemax="' + obl.length + '" aria-valuenow="' + faits + '"><span style="width:' + Math.round(100 * faits / Math.max(obl.length, 1)) + '%"></span></span></div>' +
+      '<ul class="controles">' + v.controles.map(ligneControle).join("") + "</ul></section>";
+    var a24 = v.appels_24h || { total: 0, erreurs: 0 };
+    h += '<section class="bloc"><div class="bloc-tete"><h2>Derniers appels reçus de votre outil<span class="compte">' + a24.total + " sur 24 h" + (a24.erreurs ? ", dont " + a24.erreurs + " en erreur" : "") + "</span></h2></div>" + tableAppels(v.appels || []) + "</section>";
+    $("vue").innerHTML = h;
+    $("v-maj").onclick = function () { vueVerification(tete, 0); };
+    $("v-sig").onclick = function () {
+      var b = this; C.occupe(b, true, "Envoi");
+      api("tester-signature", { body: {} }).then(function () { C.toast("Deux messages envoyés à votre outil, résultat dans quelques secondes"); vueVerification(tete, 0); })
+        .catch(function (x) { C.occupe(b, false); C.toast(x.message, true); });
+    };
+    $("v-msg").onclick = function () {
+      var b = this; C.occupe(b, true, "Envoi");
+      api("tester-webhook", { body: {} }).then(function () { C.toast("Message de test envoyé"); setTimeout(function () { vueVerification(tete, 0); }, 3500); })
+        .catch(function (x) { C.occupe(b, false); C.toast(x.message, true); });
+    };
+    if (v.controles.some(function (c) { return c.statut === "en_cours"; }) && essais < 10) {
+      minuterieVerif = setTimeout(function () { vueVerification(tete, essais + 1); }, 3000);
+    }
+  }).catch(erreurVue);
+}
+function ligneControle(c) {
+  return '<li><span class="pastille ' + esc(c.statut) + '" role="img" aria-label="' + esc(ETAT_CTL[c.statut] || c.statut) + '"></span>' +
+    '<span class="lib">' + esc(c.libelle) + (c.obligatoire ? "" : '<span class="fac">Recommandé</span>') + "</span>" +
+    '<span class="quand">' + (c.date ? esc(C.heure(c.date)) : "") + "</span>" +
+    '<span class="det">' + esc(c.detail || "") + "</span>" + (c.aide ? '<span class="aide">' + esc(c.aide) + "</span>" : "") + "</li>";
+}
+function classeCode(n) { return n < 300 ? "ok" : n === 401 || n === 403 || n >= 500 ? "ko" : "attention"; }
+function tableAppels(a) {
+  if (!a.length) return '<div class="vide"><b>Aucun appel reçu pour l\'instant</b>Premier essai depuis votre outil : <span class="mono">GET /moi</span> avec l\'en-tête <span class="mono">x-claimai-key</span>.</div>';
+  return '<div class="tableau-wrap"><table class="tableau fixe"><thead><tr><th>Heure</th><th>Appel</th><th>Réponse</th><th class="nb">Durée</th><th>Dossier</th><th>Clé</th><th>N° de requête</th></tr></thead><tbody>' +
+    a.map(function (x) {
+      return "<tr><td>" + esc(C.heure(x.created_at)) + '</td><td class="mono">' + esc(x.methode + " /" + (x.route || "")) + "</td>" +
+        '<td><span class="code-http ' + classeCode(x.code_http) + '">' + x.code_http + "</span>" + (x.erreur ? '<div class="muet petit" style="max-width:36ch">' + esc(x.erreur) + "</div>" : "") + "</td>" +
+        '<td class="nb">' + (x.duree_ms != null ? esc(C.nombre(x.duree_ms, 0)) + " ms" : "") + "</td><td>" + (x.ref ? esc(x.ref) : '<span class="muet">—</span>') + "</td>" +
+        '<td class="mono">' + esc((x.cle_prefixe || "") + "…") + '</td><td class="mono muet" title="' + esc(x.requete_id) + '">' + esc(String(x.requete_id).slice(0, 8)) + "</td></tr>";
+    }).join("") + "</tbody></table></div>";
+}
+
+/* Clés API */
+function blocCles(cles, admin) {
+  var essai = S.env === "test", h = "";
+  if (S.cleNeuve) {
+    h += '<div class="cle-neuve" role="alert"><b>Copiez cette clé maintenant : elle ne sera plus jamais affichée.</b><span class="mono" id="k-valeur">' + esc(S.cleNeuve) + '</span>' +
+      '<div class="decision-actions"><button class="btn petit" id="k-copier">Copier la clé</button><span class="muet petit">Rangez-la dans le coffre à secrets de votre outil, jamais dans un email ni dans le code.</span></div></div>';
+    S.cleNeuve = null;
+  }
+  h += cles.length ? '<div class="tableau-wrap" style="border:1px solid var(--trait);border-radius:6px"><table class="tableau fixe"><thead><tr><th>Nom</th><th>Clé</th><th>Dernière utilisation</th><th>Statut</th>' + (admin ? "<th></th>" : "") + "</tr></thead><tbody>" +
+    cles.map(function (k) {
+      return "<tr><td>" + esc(k.libelle) + '<div class="muet petit">Créée le ' + esc(C.dateCourte(k.creee_le)) + '</div></td><td class="mono">' + esc(k.prefixe) + "…</td>" +
+        "<td>" + (k.derniere_utilisation ? esc(C.heure(k.derniere_utilisation)) : '<span class="muet">Jamais</span>') + "</td>" +
+        "<td>" + (k.actif ? '<span class="statut ok">Active</span>' : '<span class="statut neutre">Révoquée le ' + esc(C.dateCourte(k.revoquee_le)) + "</span>") + "</td>" +
+        (admin ? '<td class="nb">' + (k.actif ? '<button class="btn petit danger" data-revoquer="' + esc(k.id) + '" data-nom="' + esc(k.libelle) + '">Révoquer</button>' : "") + "</td>" : "") + "</tr>";
+    }).join("") + "</tbody></table></div>" : '<p class="muet">Aucune clé pour cet environnement.</p>';
+  if (admin) h += '<div class="decision-actions"><input class="saisie" id="k-nom" maxlength="80" placeholder="' + (essai ? "Ex. Outil sinistres, serveur de recette" : "Ex. Outil sinistres, production") + '" style="flex:1;min-width:220px" aria-label="Nom de la nouvelle clé"><button class="btn primaire" id="k-creer">Créer une clé ' + (essai ? "d'essai" : "de production") + "</button></div>";
+  return h;
+}
+
+function ongletConnexion(p, admin) {
+  var essai = p.environnement === "test", url = S.base.replace(/\/+$/, "");
+  var h = '<div class="reglage"><div class="expl"><h3>Clés API</h3><p>' +
+    (essai ? "Les clés <span class=\"mono\">clm_test_</span> n'ouvrent que l'environnement d'essai : contrats fictifs, emails redirigés."
+           : "Les clés <span class=\"mono\">clm_live_</span> ouvrent les vrais dossiers. Une clé par serveur ; révoquez celle d'un serveur retiré, effet immédiat.") +
+    '</p></div><div class="zone" id="zone-cles">' + blocCles(p.cles || [], admin) + "</div></div>";
+  h += '<div class="reglage"><div class="expl"><h3>Recevoir les nouveaux sinistres</h3><p>Votre outil envoie chaque déclaration à cette adresse avec sa clé. Le dossier est créé, lu et orienté en quelques secondes. Renvoyer la même <span class="mono">ref_externe</span> rend le dossier existant, sans doublon.</p></div><div class="zone">' +
+    '<pre class="code">POST ' + esc(url) + '/declarer\nx-claimai-key: ' + (essai ? "clm_test_…" : "clm_live_…") + '\n\n{ "numero_contrat": "' + (essai ? "ESSAI-AUTO-0001" : "AUTO-2025-0001") + '", "theme": "BRIS_GLACE",\n  "date_sinistre": "2026-09-28", "code_postal": "77140",\n  "recit": "…", "ref_externe": "SIN-2026-10433" }</pre>' +
+    '<p class="muet petit">Pour un accident corporel, ajoutez <b>"victime": { "age": 35, "lien": "societaire" }</b>. Détail des champs dans le <a href="guide.html#declarer" target="_blank" rel="noopener">guide d\'intégration</a>.</p></div></div>';
+  h += '<div class="reglage"><div class="expl"><h3>Tenir votre outil à jour</h3><p>À chaque étape, ClaimAI envoie le nouvel état du dossier à votre outil, signé avec un secret propre à cet environnement.</p></div><div class="zone">' +
+    '<label class="champ">Adresse de réception de votre outil<input class="saisie" id="w-url" type="url" value="' + esc(p.webhook_url || "") + '" placeholder="https://"></label>' +
+    '<div class="decision-actions"><button class="btn primaire" id="w-ok">Enregistrer</button><button class="btn" id="w-test">Envoyer un message de test</button><button class="btn discret" id="w-secret">Changer le secret</button></div>' +
+    '<p class="muet petit">Secret de signature : ' + (p.webhook_secret_defini ? "défini" : "pas encore créé") + ". Il n'est affiché qu'une fois, à sa création.</p>" +
+    '<p id="w-secret-val"></p>' + blocEnvois(p.webhooks) + "</div></div>";
+  h += '<div class="reglage"><div class="expl"><h3>Emails</h3><p>' + (essai ? "En essai, tous les courriers partent vers l'adresse ci-dessous, avec le vrai destinataire dans l'objet. Le mode réel n'existe qu'en production."
+      : "En mode test, tous les courriers partent vers une seule adresse, avec le vrai destinataire dans l'objet. Personne d'autre ne les reçoit.") + '</p></div><div class="zone">' +
+    '<label class="champ">Adresse qui reçoit les essais<input class="saisie" id="m-test" type="email" value="' + esc(p.email_test || "") + '" placeholder="vous@exemple.fr"></label>' +
+    '<label class="case"><input type="radio" name="m-mode" value="test"' + (p.email_mode !== "reel" ? " checked" : "") + "> Mode test : tout part vers l'adresse ci-dessus</label>" +
+    '<label class="case"' + (essai ? ' style="opacity:.55"' : "") + '><input type="radio" name="m-mode" value="reel"' + (p.email_mode === "reel" ? " checked" : "") + (essai ? " disabled" : "") + "> Mode réel : chaque courrier part à son destinataire" + (essai ? " (production uniquement)" : "") + "</label>" +
+    '<div class="decision-actions"><button class="btn primaire" id="m-ok">Enregistrer</button><button class="btn" id="m-envoyer">Envoyer les courriers en attente</button></div></div></div>';
+  return h;
+}
+
+function ongletDonnees(p) {
+  var essai = p.environnement === "test";
+  var h = '<div class="reglage"><div class="expl"><h3>Réseau agréé et contrats</h3><p>ClaimAI missionne uniquement vos experts et garages, selon le lieu du sinistre. Votre outil les tient à jour ici ; un même email met à jour la fiche existante.' +
+    (essai ? " L'essai contient quatre contrats fictifs (ESSAI-AUTO-0001 à 0003, ESSAI-GA-0004)." : "") + '</p></div><div class="zone">' +
+    "<p><b>" + p.reseau.experts + "</b> experts, <b>" + p.reseau.garages + "</b> garages et <b>" + p.reseau.contrats + "</b> contrats connus.</p>" +
+    '<label class="champ">Experts et garages (format JSON)<textarea class="saisie code-saisie" id="i-reseau">' + esc(JSON.stringify(EX_RESEAU, null, 2)) + "</textarea></label>" +
+    '<div class="decision-actions"><button class="btn" id="i-reseau-ok">Importer le réseau</button></div>' +
+    '<label class="champ">Contrats et garanties (format JSON)<textarea class="saisie code-saisie" id="i-contrats">' + esc(JSON.stringify(EX_CONTRATS, null, 2)) + "</textarea></label>" +
+    '<div class="decision-actions"><button class="btn" id="i-contrats-ok">Importer les contrats</button></div></div></div>';
+  h += '<div class="reglage"><div class="expl"><h3>Règles de contrôle</h3><p>Au-delà de ces seuils, le circuit s\'arrête et le dossier vous revient. Chaque environnement a ses propres règles : testez un réglage en essai avant de le reporter en production.</p></div><div class="zone"><div class="grille-2">' +
+    champNum("s-ecart", "Écart devis et expertise", "%", p.seuil_ecart_prix_pct) + champNum("s-fact", "Écart facture et expertise", "%", p.ecart_facture_expertise_pct) +
+    champNum("s-taux", "Taux horaire maximum", "€", p.taux_horaire_max_eur) + champNum("s-bg", "Bris de glace sans expert, jusqu'à", "€", p.bris_glace_sans_expert_max) +
+    champNum("s-relance", "Relance sans réponse après", "jours", p.delai_relance_jours) + champNum("s-aipp", "Écart AIPP et barème toléré", "points", p.ga_ecart_aipp_points) +
+    '</div><p class="muet petit">Unité de compte de la Garantie Accident : ' + esc(eur(p.uc_eur)) + '.</p><div class="decision-actions"><button class="btn primaire" id="s-ok">Enregistrer les règles</button></div></div></div>';
+  h += '<div class="reglage"><div class="expl"><h3>Adresses de l\'API</h3><p>Toutes demandent l\'en-tête <b>x-claimai-key</b>, sauf l\'espace en ligne, ouvert par le lien personnel de chaque courrier. Exemples complets dans le <a href="guide.html" target="_blank" rel="noopener">guide</a>.</p></div><div class="zone"><table class="routes">' +
+    [["GET /moi", "Vérifier la clé et l'environnement"], ["POST /declarer", "Nouveau sinistre"], ["GET /dossier?numero=", "Fiche complète d'un dossier"], ["GET /dossiers", "Liste, filtres statut et q"], ["GET /a-traiter", "Dossiers qui attendent un humain"],
+     ["POST /valider", "Décision d'un gestionnaire"], ["POST /virement", "Paiement confirmé, clôture"], ["POST /pieces", "Pièce reçue en agence"], ["POST /retour", "Rapport ou facture saisi par la compagnie"],
+     ["POST /reprendre", "Reprise ou classement"], ["POST /reseau", "Import des experts et garages"], ["POST /contrats", "Import des contrats"], ["GET /indicateurs", "Pilotage"],
+     ["GET /verification", "État du raccordement"], ["GET|POST /portail?t=", "Espace expert, garage ou assuré"]].map(function (r) { return "<tr><td>" + esc(r[0]) + "</td><td>" + esc(r[1]) + "</td></tr>"; }).join("") +
+    "</table></div></div>";
+  return h;
+}
+
 var ETAT_ENVOI = { livre: ["Livré", "ok"], en_attente: ["Nouvelle tentative prévue", "vous"], en_cours: ["En cours", "encours"], echec: ["Échec", "ko"] };
 function blocEnvois(w) {
   if (!w) return "";
   var r = w.resume || {}, l = (w.envois || []).slice(0, 10);
-  return '<div><div class="sous-titre">Messages envoyés à votre outil</div><p class="petit" style="margin-bottom:8px">' + (r.livres || 0) + " livrés, " + (r.en_attente || 0) + " en attente, " + (r.echecs || 0) + " en échec. Un message non reçu est renvoyé automatiquement pendant 8 heures.</p>" +
+  return '<div><div class="sous-titre">Messages envoyés à votre outil</div><p class="petit" style="margin-bottom:8px">' + (r.livres || 0) + " livrés, " + (r.en_attente || 0) + " en attente, " + (r.echecs || 0) + " en échec. Un message non reçu est renvoyé automatiquement, 8 tentatives sur environ 4 heures.</p>" +
     (l.length ? '<ul class="envois">' + l.map(function (e) {
       var x = ETAT_ENVOI[e.statut] || [e.statut, ""];
-      var quoi = e.evenement === "dossier_cree" ? "Nouveau dossier" : e.evenement === "test" ? "Message d'essai" : "Passe à " + ((C.STATUTS[e.statut_dossier] || [e.statut_dossier || ""])[0] || "").toLowerCase();
+      var quoi = e.evenement === "dossier_cree" ? "Nouveau dossier" : e.evenement === "test" ? "Message de test" : "Passe à " + ((C.STATUTS[e.statut_dossier] || [e.statut_dossier || ""])[0] || "").toLowerCase();
       return "<li><span>" + esc((e.numero ? e.numero + " : " : "") + quoi) + (e.erreur && e.statut !== "livre" ? ' <span class="muet">(' + esc(e.erreur) + ")</span>" : "") + '</span><span class="statut ' + x[1] + '">' + esc(x[0]) + "</span></li>";
     }).join("") + "</ul>" : "") +
     ((r.echecs || 0) > 0 ? '<p style="margin-top:10px"><button class="btn petit" id="w-rejouer">Renvoyer les messages en échec</button></p>' : "") + "</div>";
 }
 function champNum(id, lib, unite, v) { return '<label class="champ">' + esc(lib) + ' <span class="aide">en ' + unite + '</span><input class="saisie" id="' + id + '" type="number" step="any" value="' + esc(v) + '"></label>'; }
-function brancherRaccordement() {
+function brancherRaccordement(admin) {
+  var onglet = location.hash.split("/")[2];
+  function recharger() { vueRaccordement(onglet); }
   function envoyer(btn, chemin, corps, msg, ensuite) {
     C.occupe(btn, true, "Envoi");
     return api(chemin, { body: corps }).then(function (r) { C.toast(typeof msg === "function" ? msg(r) : msg); if (ensuite) ensuite(r); })
       .catch(function (x) { C.toast(x.message, true); }).finally(function () { C.occupe(btn, false); });
   }
-  function montrerSecret(r) { if (r && r.webhook_secret) $("w-secret-val").innerHTML = '<span class="alerte" style="display:grid"><span></span><span>Nouveau secret, à copier dans votre outil maintenant : <b style="overflow-wrap:anywhere">' + esc(r.webhook_secret) + "</b></span></span>"; }
-  if ($("w-rejouer")) $("w-rejouer").onclick = function () { envoyer(this, "rejouer-envois", {}, function (r) { return r.relances + " message(s) renvoyé(s)"; }, function () { vueRaccordement(); }); };
-  if (!S.moi || S.moi.role !== "admin") {
-    document.querySelectorAll("#vue .reglage .zone button, #vue .reglage .zone input, #vue .reglage .zone textarea").forEach(function (x) { if (x.id !== "w-rejouer") x.disabled = true; });
+  function lier(id, fn) { var el = $(id); if (el) el.onclick = fn; }
+  function montrerSecret(r) { if (r && r.webhook_secret) $("w-secret-val").innerHTML = '<span class="cle-neuve" style="display:grid"><b>Nouveau secret, à copier dans votre outil maintenant :</b><span class="mono">' + esc(r.webhook_secret) + "</span></span>"; }
+  lier("w-rejouer", function () { envoyer(this, "rejouer-envois", {}, function (r) { return r.relances + " message(s) renvoyé(s)"; }, recharger); });
+  if (!admin) {
+    document.querySelectorAll("#vue .reglage .zone button, #vue .reglage .zone input, #vue .reglage .zone textarea").forEach(function (x) { if (x.id !== "w-rejouer" && x.id !== "w-test") x.disabled = true; });
   }
-  $("w-ok").onclick = function () { envoyer(this, "parametres", { webhook_url: $("w-url").value.trim() }, "Adresse enregistrée", montrerSecret); };
-  $("w-test").onclick = function () { envoyer(this, "tester-webhook", {}, "Essai envoyé à votre outil"); };
-  $("w-secret").onclick = function () { envoyer(this, "nouveau-secret", {}, "Secret changé", montrerSecret); };
-  $("m-ok").onclick = function () {
+  lier("k-copier", function () {
+    var v = $("k-valeur").textContent, b = this;
+    (navigator.clipboard ? navigator.clipboard.writeText(v) : Promise.reject()).then(function () { b.textContent = "Copiée"; }, function () { C.toast("Copie impossible : sélectionnez la clé à la main", true); });
+  });
+  lier("k-creer", function () {
+    var nom = $("k-nom").value.trim();
+    if (!nom) { C.toast("Donnez un nom à la clé : le serveur ou l'usage qu'elle sert.", true); $("k-nom").focus(); return; }
+    if (S.env !== "test" && !confirm("Créer une clé de production ? Elle donne accès aux vrais dossiers de la compagnie.")) return;
+    envoyer(this, "cles", { libelle: nom }, "Clé créée", function (r) { S.cleNeuve = r.cle; $("zone-cles").innerHTML = blocCles(r.cles, admin); brancherRaccordement(admin); });
+  });
+  document.querySelectorAll("[data-revoquer]").forEach(function (b) {
+    b.onclick = function () {
+      if (!confirm("Révoquer la clé « " + b.dataset.nom + " » ? Les appels qui l'utilisent seront refusés immédiatement.")) return;
+      envoyer(b, "revoquer-cle", { id: b.dataset.revoquer }, "Clé révoquée", function (cles) { $("zone-cles").innerHTML = blocCles(cles, admin); brancherRaccordement(admin); });
+    };
+  });
+  lier("w-ok", function () { envoyer(this, "parametres", { webhook_url: $("w-url").value.trim() }, "Adresse enregistrée", montrerSecret); });
+  lier("w-test", function () { envoyer(this, "tester-webhook", {}, "Message de test envoyé à votre outil", function () { setTimeout(recharger, 3000); }); });
+  lier("w-secret", function () {
+    if (!confirm("Changer le secret ? Votre outil refusera les messages tant que le nouveau secret n'y est pas enregistré.")) return;
+    envoyer(this, "nouveau-secret", {}, "Secret changé", montrerSecret);
+  });
+  lier("m-ok", function () {
     var mode = (document.querySelector('input[name="m-mode"]:checked') || {}).value || "test";
     envoyer(this, "parametres", { email_test: $("m-test").value.trim(), email_mode: mode }, "Réglages des emails enregistrés");
-  };
-  $("m-envoyer").onclick = function () { envoyer(this, "envoyer", {}, function (r) { return r.info ? "Envoi par email pas encore activé : clé Resend absente" : r.envoyes + " courrier(s) envoyé(s), " + r.erreurs + " échec(s)"; }); };
+  });
+  lier("m-envoyer", function () { envoyer(this, "envoyer", {}, function (r) { return r.info ? "Envoi par email pas encore activé : clé Resend absente" : r.envoyes + " courrier(s) envoyé(s), " + r.erreurs + " échec(s)"; }); });
   function importer(btn, id, chemin, msg) {
     var j; try { j = JSON.parse($(id).value); } catch (e) { C.toast("Le JSON n'est pas valide : " + e.message, true); return; }
-    envoyer(btn, chemin, j, msg, function () { vueRaccordement(); });
+    envoyer(btn, chemin, j, msg, recharger);
   }
-  $("i-reseau-ok").onclick = function () { importer(this, "i-reseau", "reseau", function (r) { return r.experts + " expert(s) et " + r.garages + " garage(s) à jour"; }); };
-  $("i-contrats-ok").onclick = function () { importer(this, "i-contrats", "contrats", function (r) { return r.contrats + " contrat(s) à jour"; }); };
-  $("s-ok").onclick = function () {
+  lier("i-reseau-ok", function () { importer(this, "i-reseau", "reseau", function (r) { return r.experts + " expert(s) et " + r.garages + " garage(s) à jour"; }); });
+  lier("i-contrats-ok", function () { importer(this, "i-contrats", "contrats", function (r) { return r.contrats + " contrat(s) à jour"; }); });
+  lier("s-ok", function () {
     envoyer(this, "parametres", { seuil_ecart_prix_pct: Number($("s-ecart").value), ecart_facture_expertise_pct: Number($("s-fact").value), taux_horaire_max_eur: Number($("s-taux").value),
       bris_glace_sans_expert_max: Number($("s-bg").value), delai_relance_jours: Number($("s-relance").value), ga_ecart_aipp_points: Number($("s-aipp").value) }, "Règles enregistrées");
-  };
+  });
 }
 
 /* ---------------- Démarrage ---------------- */

@@ -108,12 +108,14 @@
   }
 
   // auth : la clé de la compagnie (outil de l'assureur) ou une fonction qui rend le jeton de session du gestionnaire
-  function client(base, auth) {
+  // auth : clé API (texte) ou fonction qui rend le jeton de session ;
+  // entetes : fonction facultative qui rend des en-têtes en plus (ex. environnement d'essai)
+  function client(base, auth, entetes) {
     return function (chemin, opts) {
       opts = opts || {};
       var jeton = typeof auth === "function" ? Promise.resolve(auth()) : Promise.resolve(null);
       return jeton.then(function (j) {
-        var h = {};
+        var h = typeof entetes === "function" ? (entetes() || {}) : {};
         if (typeof auth === "string" && auth) h["x-claimai-key"] = auth;
         if (j) h["Authorization"] = "Bearer " + j;
         if (opts.body !== undefined) h["Content-Type"] = "application/json";
@@ -123,7 +125,7 @@
         }).then(function (r) {
           return r.text().then(function (t) {
             var d = null; try { d = t ? JSON.parse(t) : null; } catch (e) { }
-            if (!r.ok) { var err = new Error((d && d.erreur) || ("Erreur " + r.status)); err.status = r.status; throw err; }
+            if (!r.ok) { var err = new Error((d && d.erreur) || ("Erreur " + r.status)); err.status = r.status; err.requete = d && d.requete; throw err; }
             return d;
           });
         }, function () { throw new Error("Service injoignable. Vérifiez votre connexion."); });
