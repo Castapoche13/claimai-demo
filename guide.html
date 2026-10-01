@@ -95,6 +95,7 @@ table.doc td:first-child { white-space: nowrap; }
       <li><a href="#declarer">Déclarer un sinistre</a></li>
       <li><a href="#suivre">Lire un dossier</a></li>
       <li><a href="#agir">Agir depuis votre outil</a></li>
+      <li><a href="#documents">Envoyer un document</a></li>
       <li><a href="#referentiels">Contrats et réseau</a></li>
       <li class="groupe">Recevoir de Klerio</li>
       <li><a href="#messages">Messages signés</a></li>
@@ -250,6 +251,29 @@ table.doc td:first-child { white-space: nowrap; }
         </tbody>
       </table></div>
       <p>Un règlement au-dessus du plafond du gestionnaire est refusé en <code>422</code> quand la décision vient de la console ; si la décision vient de votre outil, appliquez vos propres délégations avant d'appeler <code>/valider</code>.</p>
+    </section>
+
+    <section id="documents">
+      <h2>Envoyer un document</h2>
+      <p>Quand un rapport d'expert, une facture ou des conclusions médicales vous arrivent hors de Klerio, transmettez le fichier tel quel : Klerio le lit, en extrait les valeurs utiles, les contrôle et fait avancer le dossier. Les experts et garages peuvent aussi déposer leur document directement dans l'espace en ligne reçu par email.</p>
+<pre>POST /document
+{ "numero": "CLM-2026-000123",
+  "nom_fichier": "rapport-expertise.pdf",
+  "type_mime": "application/pdf",          // ou image/jpeg, image/png, image/webp
+  "contenu_base64": "JVBERi0xLjcK…",       // 8 Mo au maximum
+  "par": "jdupont",                         // personne qui transmet, dans votre outil
+  "appliquer": true }                       // false : lire seulement, sans rien appliquer</pre>
+      <div class="tableau-defil"><table class="doc">
+        <thead><tr><th>Réponse <code>statut</code></th><th>Sens</th></tr></thead>
+        <tbody>
+          <tr><td><code>applique</code></td><td>Lecture sûre et tous les contrôles passés : les valeurs sont enregistrées comme si l'expert ou le garage les avait saisies, et le circuit continue (contrôles de chiffrage, calcul, proposition de règlement à valider).</td></tr>
+          <tr><td><code>a_verifier</code></td><td>Un contrôle a échoué (nature inattendue, immatriculation ou numéro de dossier différents, montant absent, lecture peu sûre) : rien n'est appliqué, le dossier remonte dans la file d'un gestionnaire avec le motif.</td></tr>
+          <tr><td><code>aide_saisie</code></td><td>Lecture seule (<code>"appliquer": false</code>).</td></tr>
+        </tbody>
+      </table></div>
+      <p>Une décision sur un document mis de côté se transmet par <code>POST /appliquer-document</code> <code>{"id", "par", "corrections": {…}}</code> ou <code>POST /ecarter-document</code> <code>{"id", "par", "commentaire"}</code>. Un document conservé se récupère par <code>GET /document?id=</code>, qui rend un lien valable 5 minutes.</p>
+      <div class="note"><b>Documents médicaux : jamais conservés.</b> Tout document d'un dossier Garantie Accident, et tout document reconnu comme médical, est lu en mémoire puis abandonné. Klerio n'enregistre que le taux d'AIPP, la date de consolidation et la mention de dépendance totale. Ni diagnostic, ni antécédent, ni compte rendu. L'original reste dans votre outil. Les autres documents sont rangés dans un espace privé, accessible uniquement par lien temporaire.</div>
+      <p>Le contenu réel du fichier est vérifié : un fichier dont le contenu ne correspond pas au type annoncé (par exemple un exécutable renommé en .pdf) est refusé en <code>400</code>.</p>
     </section>
 
     <section id="referentiels">
@@ -445,6 +469,7 @@ répondre 200</pre>
         <li>HTTPS uniquement, dans les deux sens. Votre adresse de réception doit commencer par <code>https://</code>.</li>
         <li>Clés et secrets affichés une seule fois ; les clés ne sont conservées que sous forme d'empreinte.</li>
         <li>Minimisation : l'analyse par IA ne reçoit que le type déclaré, la date et le récit, plus l'âge et le lien de la victime pour un accident corporel. Ni nom, ni contrat, ni coordonnées.</li>
+        <li>Documents médicaux lus en mémoire puis abandonnés : seuls le taux d'AIPP, la date de consolidation et la mention de dépendance sont enregistrés.</li>
         <li>Les décisions défavorables et les paiements exigent toujours la validation d'une personne identifiée (RGPD, article 22).</li>
         <li>Journal des appels conservé 90 jours ; journal de chaque dossier conservé avec le dossier.</li>
         <li>L'environnement d'essai ne doit contenir que des données fictives ou anonymisées.</li>

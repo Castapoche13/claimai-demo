@@ -179,6 +179,8 @@ table.tableau { width: 100%; border-collapse: collapse; font-size: 13.5px; }
 .chiffrage div { font-size: 12.5px; color: var(--gris); }
 .chiffrage b { display: block; font-size: 15px; color: var(--encre); font-weight: 500; margin-top: 2px; }
 .formule { font-size: 13px; padding: 10px 12px; background: var(--feuille-2); border: 1px solid var(--trait); border-radius: 6px; color: var(--encre-2); line-height: 1.55; }
+.document + .document { border-top: 1px solid var(--trait); padding-top: 16px; }
+.document.a-verifier { border-left: 3px solid var(--orange); padding-left: 12px; }
 .expertise + .expertise { border-top: 1px solid var(--trait); padding-top: 16px; margin-top: 16px; }
 .expertise-tete { display: flex; justify-content: space-between; gap: 10px; align-items: baseline; margin-bottom: 10px; }
 
@@ -532,6 +534,7 @@ function attente(d) {
     var a = (p.anomalies || [])[0]; return [a ? (C.ANOMALIES[a.code] || a.code) : (C.ANOMALIES[p.code] || "Anomalie à examiner"), a ? a.detail : C.motif(d.motif)];
   }
   if (d.statut === "hors_perimetre") return ["Dossier sorti du circuit automatique", C.motif(d.motif)];
+  if (d.document_a_verifier) return ["Document à vérifier", "Klerio l'a lu mais ne l'a pas appliqué seul : un contrôle a échoué"];
   return [C.STATUTS[d.statut] ? C.STATUTS[d.statut][0] : d.statut, C.motif(d.motif)];
 }
 
@@ -667,6 +670,7 @@ function afficherDossier(f) {
   h += '<div class="fiche-grille"><div>';
   h += carteAction(f);
   h += blocAnalyse(f, an, d);
+  h += blocDocuments(f);
   h += blocExpertises(f);
   h += blocCourriers(f);
   h += blocJournal(f);
@@ -787,6 +791,50 @@ function blocAnalyse(f, an, d) {
   return h + "</div></section>";
 }
 
+/* Documents lus par Klerio */
+var NATURES_DOC = { rapport_expertise_auto: "Rapport d'expertise", facture: "Facture du réparateur", rapport_medical: "Conclusions médicales", autre: "Document non reconnu" };
+var VALEURS_DOC = [["montant_ttc", "Montant TTC", "eur"], ["montant_ht", "Montant HT", "eur"], ["montant_devis_ttc", "Devis initial TTC", "eur"],
+  ["taux_horaire", "Taux horaire HT", "eur"], ["heures", "Main-d'œuvre", "h"], ["montant_pieces_ht", "Pièces HT", "eur"], ["vei", "VEI", "bool"],
+  ["reglement_direct_autorise", "Règlement direct", "bool"], ["delegation_paiement", "Délégation jointe", "bool"], ["immatriculation", "Immatriculation", "txt"],
+  ["aipp_pct", "AIPP", "pct"], ["date_consolidation", "Consolidation", "date"], ["dependance_totale", "Dépendance totale", "bool"]];
+var ETAT_DOC = { applique: ["Appliqué au dossier", "ok"], a_verifier: ["À vérifier", "vous"], ecarte: ["Écarté", "neutre"], aide_saisie: ["Aide à la saisie", "neutre"] };
+function valeurDoc(v, t) {
+  if (v === undefined || v === null || v === "") return null;
+  if (t === "eur") return eur(v); if (t === "pct") return C.nombre(v, 1) + " %"; if (t === "h") return C.nombre(v, 1) + " h";
+  if (t === "bool") return v ? "Oui" : "Non"; if (t === "date") return C.dateCourte(v); return String(v);
+}
+function sourceDoc(s) {
+  s = String(s || ""); if (s.indexOf("portail:") === 0) return (C.ROLES[s.slice(8)] || "Espace en ligne") + ", espace en ligne";
+  if (s.indexOf("humain:") === 0) return s.slice(7); if (s.indexOf("outil") === 0) return "Outil de la compagnie"; return s;
+}
+function blocDocuments(f) {
+  var l = f.documents_lus || [];
+  if (!l.length) return "";
+  return '<section class="bloc"><div class="bloc-tete"><h2>Documents lus par Klerio<span class="compte">' + l.length + "</span></h2>" +
+    '<span class="muet petit">Les documents médicaux ne sont jamais conservés</span></div><div class="bloc-corps pile">' + l.map(function (d) {
+      var e = ETAT_DOC[d.statut] || [d.statut, ""], x = d.extraction || {};
+      var vals = VALEURS_DOC.map(function (k) { var v = valeurDoc(x[k[0]], k[2]); return v === null ? "" : "<div>" + esc(k[1]) + "<b>" + esc(v) + "</b></div>"; }).join("");
+      var ctl = (d.controles || []).filter(function (c) { return c.niveau !== "info"; });
+      var h = '<div class="document' + (d.statut === "a_verifier" ? " a-verifier" : "") + '"><div class="expertise-tete"><h3>' + esc(NATURES_DOC[d.nature] || d.nature) + "</h3>" +
+        '<span class="statut ' + e[1] + '">' + esc(e[0]) + "</span></div>" +
+        '<p class="muet petit" style="margin-bottom:10px">' + esc(sourceDoc(d.source)) + " · " + esc(C.heure(d.cree_le)) + " · lecture sûre à " + Math.round((d.confiance || 0) * 100) + " %" +
+        (d.conserve ? ' · <button class="btn discret petit" data-ouvrir-doc="' + esc(d.id) + '">Ouvrir le document</button>' : " · document non conservé") + "</p>" +
+        (vals ? '<div class="chiffrage">' + vals + "</div>" : "") +
+        (x.resume ? '<p class="formule" style="margin-top:10px">' + esc(x.resume) + "</p>" : "") +
+        (ctl.length ? '<div class="pile" style="margin-top:10px">' + ctl.map(function (c) {
+          return '<div class="alerte' + (c.niveau === "ko" ? " ko" : "") + '"><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M8 4.5v4M8 10.8v.6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg><span>' + esc(c.detail || c.code) + "</span></div>";
+        }).join("") + "</div>" : "");
+      if (d.statut === "a_verifier") {
+        h += '<div class="decision-actions" style="margin-top:12px"><button class="btn primaire" data-appliquer-doc="' + esc(d.id) + '">Appliquer ces valeurs</button>' +
+          '<input class="saisie" id="ec-' + esc(d.id) + '" placeholder="Motif si vous écartez le document" style="flex:1;min-width:200px">' +
+          '<button class="btn" data-ecarter-doc="' + esc(d.id) + '">Écarter</button></div>' +
+          '<p class="muet petit" style="margin-top:6px">Appliquer revient à valider les valeurs ci-dessus comme si l\'expert ou le garage les avait saisies. Les contrôles habituels du circuit s\'appliquent ensuite.</p>';
+      }
+      if (d.statut === "ecarte" && d.commentaire) h += '<p class="muet petit" style="margin-top:8px">Écarté par ' + esc(d.traite_par || "") + " : " + esc(d.commentaire) + "</p>";
+      return h + "</div>";
+    }).join("") + "</div></section>";
+}
+
 function blocExpertises(f) {
   var ex = f.expertises || [], regl = f.reglements || [];
   if (!ex.length && !regl.length) return "";
@@ -876,10 +924,12 @@ function blocCourriers(f) {
 
 var ACTIONS = { creation_dossier: "Dossier créé à partir de la déclaration", analyse_declaration: "Déclaration lue et qualifiée", controle_expertise: "Contrôle automatique du chiffrage",
   reprise_analyse: "Analyse relancée", reprise_gestionnaire: "Repris par un gestionnaire", classement_sans_suite: "Classé par un gestionnaire",
-  pieces_recues: "Pièces reçues", reponse_portail: "Réponse reçue par l'espace en ligne", archivage_jeu_test: "Archivé" };
+  pieces_recues: "Pièces reçues", reponse_portail: "Réponse reçue par l'espace en ligne", lecture_document: "Document lu par Klerio", document_applique: "Document validé par un gestionnaire", document_ecarte: "Document écarté", archivage_jeu_test: "Archivé" };
 function acteur(a) {
   a = a || "";
   if (a === "ia") return '<span class="acteur ia">Claude</span>';
+  if (a === "ia:lecture") return '<span class="acteur ia">Claude, lecture du document</span>';
+  if (a.indexOf("outil") === 0) return '<span class="acteur">Outil de la compagnie</span>';
   if (a.indexOf("humain:") === 0) return '<span class="acteur humain">' + esc(a.slice(7)) + "</span>";
   if (a.indexOf("portail:") === 0) return '<span class="acteur partenaire">' + esc(C.ROLES[a.slice(8)] || a.slice(8)) + "</span>";
   return '<span class="acteur">Klerio</span>';
@@ -897,6 +947,29 @@ function blocJournal(f) {
 }
 
 function brancherFiche(f) {
+  document.querySelectorAll("[data-ouvrir-doc]").forEach(function (b) {
+    b.onclick = function () {
+      var w = window.open("", "_blank");
+      api("document?id=" + encodeURIComponent(b.dataset.ouvrirDoc)).then(function (r) { if (w) w.location = r.url; else location.href = r.url; })
+        .catch(function (x) { if (w) w.close(); C.toast(x.message, true); });
+    };
+  });
+  document.querySelectorAll("[data-appliquer-doc]").forEach(function (b) {
+    b.onclick = function () {
+      C.occupe(b, true, "Application");
+      api("appliquer-document", { body: { id: b.dataset.appliquerDoc } }).then(function () { C.toast("Valeurs appliquées, le dossier repart"); rafraichirCompteur(); vueDossier(f.numero); })
+        .catch(function (x) { C.occupe(b, false); C.toast(x.message, true); });
+    };
+  });
+  document.querySelectorAll("[data-ecarter-doc]").forEach(function (b) {
+    b.onclick = function () {
+      var c = $("ec-" + b.dataset.ecarterDoc).value.trim();
+      if (!c) { C.toast("Indiquez pourquoi vous écartez ce document.", true); $("ec-" + b.dataset.ecarterDoc).focus(); return; }
+      C.occupe(b, true, "");
+      api("ecarter-document", { body: { id: b.dataset.ecarterDoc, commentaire: c } }).then(function () { C.toast("Document écarté"); rafraichirCompteur(); vueDossier(f.numero); })
+        .catch(function (x) { C.occupe(b, false); C.toast(x.message, true); });
+    };
+  });
   var oui = $("d-oui"), non = $("d-non");
   function decider(resultat, btn) {
     var com = $("d-com").value.trim();

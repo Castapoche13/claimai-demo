@@ -43,6 +43,14 @@ form.carte-in { display: grid; gap: 18px; }
 .etat .rond.ko { background: var(--rouge-pale); color: var(--rouge); }
 .etat h1 { font-size: 22px; }
 .etat p { color: var(--encre-2); margin: 10px auto 0; max-width: 52ch; }
+.depot { display: grid; gap: 8px; padding: 16px; border: 1.5px dashed var(--trait-fort); border-radius: 8px; background: var(--feuille-2); }
+.depot.survol { border-color: var(--bleu); background: var(--bleu-pale); }
+.depot b { font-size: 14.5px; }
+.depot p { font-size: 13px; color: var(--encre-2); }
+.depot label.btn { justify-self: start; }
+.depot input[type=file] { position: absolute; width: 1px; height: 1px; opacity: 0; }
+.saisie.lu { border-color: var(--bleu); background: var(--bleu-pale); }
+.lu-note { font-size: 12.5px; color: var(--bleu-fonce); }
 .pied { font-size: 12.5px; color: var(--gris); margin-top: 24px; line-height: 1.6; }
 </style>
 </head>
@@ -110,10 +118,21 @@ function afficher(c) {
     h += '<div class="carte"><div class="etat"><div class="rond attente">' + ICONE_ATT + "</div><h1>En attente du passage de l'expert</h1><p>N'engagez pas les travaux avant son rapport. Vous recevrez un email dès qu'il sera rendu, et ce même lien vous permettra d'envoyer la facture.</p></div></div>";
     $("main").innerHTML = h + pied(); return;
   }
-  h += '<div class="carte"><form class="carte-in" id="form" novalidate><h2>' + esc(t[0]) + "</h2>" + formulaire(c) +
+  h += '<div class="carte"><form class="carte-in" id="form" novalidate><h2>' + esc(t[0]) + "</h2>" + zoneDepot(c) + formulaire(c) +
     '<div class="envoyer"><button class="btn primaire" id="b-envoyer" type="submit">Envoyer au service sinistres</button><span class="muet petit">Vous pourrez vérifier votre envoi juste après.</span></div></form></div>';
   $("main").innerHTML = h + pied();
   brancher(c);
+}
+
+function zoneDepot(c) {
+  var fac = c.role === "garage" && (c.pieces_attendues || []).some(function (p) { return p.code === "FACTURE" && !p.recue; });
+  if (c.role !== "expert_auto" && c.role !== "expert_medical" && !fac) return "";
+  var quoi = c.role === "expert_auto" ? "votre rapport d'expertise" : c.role === "expert_medical" ? "vos conclusions médicales" : "votre facture";
+  return '<div class="depot" id="depot"><b>Gagnez du temps : déposez ' + quoi + "</b>" +
+    "<p>PDF ou photo, 8 Mo au maximum. Le formulaire se remplit tout seul ; vous vérifiez chaque valeur avant d'envoyer.</p>" +
+    (c.role === "expert_medical" ? "<p><b>Secret médical :</b> le document est lu puis supprimé aussitôt. Seuls le taux d'AIPP, la date de consolidation et la mention de dépendance sont conservés.</p>" : "") +
+    '<label class="btn" for="f-fichier">Choisir un fichier</label><input type="file" id="f-fichier" accept="application/pdf,image/jpeg,image/png,image/webp">' +
+    '<p class="petit muet" id="depot-etat" role="status"></p></div>';
 }
 
 function num(id, lib, aide, attrs) {
@@ -148,7 +167,54 @@ function formulaire(c) {
 
 function val(id) { var e = $(id); if (!e || e.value === "") return undefined; return Number(e.value); }
 
+// Champs du formulaire remplis par la lecture du document
+var CHAMPS_LUS = {
+  expert_auto: [["f-devis", "montant_devis_ttc"], ["f-ttc", "montant_ttc"], ["f-ht", "montant_ht"], ["f-taux", "taux_horaire"], ["f-heures", "heures"],
+    ["f-pieces", "montant_pieces_ht"], ["f-vei", "vei"], ["f-direct", "reglement_direct_autorise"], ["f-conclusion", "conclusion"]],
+  expert_medical: [["f-aipp", "aipp_pct"], ["f-conso", "date_consolidation"], ["f-dep", "dependance_totale"]],
+  garage: [["f-ttc", "montant_ttc"], ["f-ht", "montant_ht"], ["f-deleg", "delegation_paiement"], ["f-conclusion", "conclusion"]]
+};
+function brancherDepot(c) {
+  var inp = $("f-fichier"), zone = $("depot"), etatD = $("depot-etat");
+  if (!inp) return;
+  function lire(fichier) {
+    if (!fichier) return;
+    if (["application/pdf", "image/jpeg", "image/png", "image/webp"].indexOf(fichier.type) < 0) { etatD.textContent = "Format non accepté : PDF, JPEG, PNG ou WebP."; return; }
+    if (fichier.size > 8 * 1024 * 1024) { etatD.textContent = "Fichier trop lourd : 8 Mo au maximum."; return; }
+    etatD.innerHTML = '<span class="tourne" style="vertical-align:-2px"></span> Lecture de « ' + esc(fichier.name) + " »…";
+    var lr = new FileReader();
+    lr.onload = function () {
+      var b64 = String(lr.result).split(",")[1] || "";
+      api("portail/lire?t=" + jeton, { body: { nom_fichier: fichier.name, type_mime: fichier.type, contenu_base64: b64 } }).then(function (r) {
+        var v = r.valeurs || {}, n = 0;
+        (CHAMPS_LUS[c.role] || []).forEach(function (k) {
+          var el = $(k[0]); if (!el || v[k[1]] === undefined || el.disabled) return;
+          if (el.type === "checkbox") { if (k[0] === "f-deleg" && v[k[1]] !== true) return; el.checked = !!v[k[1]]; }
+          else el.value = v[k[1]];
+          el.classList.add("lu"); n++;
+          el.dispatchEvent(new Event("input", { bubbles: true }));
+        });
+        var ko = (r.controles || []).filter(function (x) { return x.niveau === "ko" && x.code !== "LECTURE_INCERTAINE"; });
+        var h = n ? "<b>" + n + " valeur" + (n > 1 ? "s" : "") + " lue" + (n > 1 ? "s" : "") + " dans le document</b>, surlignée" + (n > 1 ? "s" : "") + " en bleu. Vérifiez-les avant d'envoyer."
+                  : "<b>Aucune valeur exploitable trouvée</b> : complétez le formulaire à la main.";
+        if (r.confiance != null && r.confiance < 0.8) h += "<br>Lecture peu sûre (document flou ou incomplet) : contrôlez chaque valeur.";
+        ko.forEach(function (x) { h += "<br>Attention : " + esc(x.detail); });
+        h += r.medical ? "<br>Le document a été lu puis supprimé." : "";
+        etatD.innerHTML = h;
+      }).catch(function (x) { etatD.textContent = x.message; });
+    };
+    lr.onerror = function () { etatD.textContent = "Impossible de lire ce fichier sur votre appareil."; };
+    lr.readAsDataURL(fichier);
+  }
+  inp.addEventListener("change", function () { lire(inp.files[0]); inp.value = ""; });
+  ["dragenter", "dragover"].forEach(function (ev) { zone.addEventListener(ev, function (e) { e.preventDefault(); zone.classList.add("survol"); }); });
+  ["dragleave", "drop"].forEach(function (ev) { zone.addEventListener(ev, function (e) { e.preventDefault(); zone.classList.remove("survol"); }); });
+  zone.addEventListener("drop", function (e) { lire(e.dataTransfer && e.dataTransfer.files[0]); });
+  document.querySelectorAll("#form .saisie").forEach(function (el) { el.addEventListener("input", function (e) { if (e.isTrusted) el.classList.remove("lu"); }); });
+}
+
 function brancher(c) {
+  brancherDepot(c);
   var coh = $("f-coherence");
   if (coh) ["f-taux", "f-heures", "f-pieces", "f-ht", "f-ttc"].forEach(function (id) {
     $(id).addEventListener("input", function () {
