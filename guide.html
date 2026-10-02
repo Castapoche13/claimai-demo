@@ -95,6 +95,7 @@ table.doc td:first-child { white-space: nowrap; }
       <li><a href="#declarer">Déclarer un sinistre</a></li>
       <li><a href="#suivre">Lire un dossier</a></li>
       <li><a href="#agir">Agir depuis votre outil</a></li>
+      <li><a href="#paiement">Paiement des garages</a></li>
       <li><a href="#documents">Envoyer un document</a></li>
       <li><a href="#informations">Appels et mails reçus</a></li>
       <li><a href="#cloture">Clôture, archive, effacement</a></li>
@@ -254,6 +255,17 @@ table.doc td:first-child { white-space: nowrap; }
         </tbody>
       </table></div>
       <p>Un règlement au-dessus du plafond du gestionnaire est refusé en <code>422</code> quand la décision vient de la console ; si la décision vient de votre outil, appliquez vos propres délégations avant d'appeler <code>/valider</code>.</p>
+    </section>
+
+    <section id="paiement">
+      <h2>Paiement des garages</h2>
+      <p>Avec l'option <b>paiement direct des garages partenaires</b> (Raccordement, règles), un règlement à un garage du réseau est validé sans clic dès que l'expert a fixé le montant et que la facture est reçue, quel que soit le montant. Le service comptable reçoit alors un <b>bon à payer</b> par mail, pour ce règlement comme pour tout autre règlement validé.</p>
+      <ul>
+        <li>Le mail donne le montant, le bénéficiaire, le libellé du virement (<code>SINISTRE ESS-2026-000032</code>) et un lien sécurisé. L'IBAN n'est jamais écrit dans le mail : il est sur la page, tiré du référentiel des garages (champ <code>iban</code> de <code>POST /reseau</code>), jamais d'une facture.</li>
+        <li>Une fois le virement fait, le comptable saisit sa référence sur la page : le règlement passe à confirmé et le dossier est clos, comme avec <code>POST /virement</code>.</li>
+        <li>Restent chez un gestionnaire : une facture au-dessus du montant de l'expert (au-delà de l'écart toléré), une facture dont le numéro a déjà été présenté par le même garage sur un autre dossier (<code>DOUBLON_FACTURE</code>), un garage hors réseau, la Garantie Accident.</li>
+        <li>Si vos paiements partent de votre outil, laissez l'adresse du service comptable vide : vous recevez le règlement validé par message signé et vous confirmez par <code>POST /virement</code>.</li>
+      </ul>
     </section>
 
     <section id="documents">

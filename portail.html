@@ -51,6 +51,17 @@ form.carte-in { display: grid; gap: 18px; }
 .depot input[type=file] { position: absolute; width: 1px; height: 1px; opacity: 0; }
 .saisie.lu { border-color: var(--bleu); background: var(--bleu-pale); }
 .lu-note { font-size: 12.5px; color: var(--bleu-fonce); }
+.payer { display: grid; gap: 0; border-top: 1px solid var(--trait); }
+.payer-l { display: grid; grid-template-columns: 170px 1fr auto; gap: 6px 16px; align-items: center; padding: 13px 24px; border-bottom: 1px solid var(--trait); }
+.payer-l:last-child { border-bottom: 0; }
+.payer-l > span:first-child { font-size: 13px; color: var(--gris); }
+.payer-l b { font-weight: 600; }
+.payer-l .grand { font-size: 26px; font-weight: 600; letter-spacing: -.01em; }
+.payer-l .iban { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 15.5px; letter-spacing: .02em; word-break: normal; overflow-wrap: anywhere; }
+.payer-l .sous { display: block; font-size: 12.5px; color: var(--gris); font-weight: 400; margin-top: 2px; }
+.paye { display: flex; gap: 12px; align-items: end; flex-wrap: wrap; }
+.paye .champ { flex: 1 1 240px; }
+@media (max-width: 560px) { .payer-l { grid-template-columns: 1fr auto; } .payer-l > span:first-child { grid-column: 1 / -1; } }
 .pied { font-size: 12.5px; color: var(--gris); margin-top: 24px; line-height: 1.6; }
 </style>
 </head>
@@ -96,9 +107,76 @@ var TITRES = {
   assure: ["Pièces à nous transmettre", "Ces documents nous permettent d'avancer sur votre dossier. Vous pouvez les envoyer en plusieurs fois."]
 };
 
+// Service comptable : bon à payer, puis confirmation du virement qui clôt le dossier
+function groupes(iban) { return String(iban || "").replace(/(.{4})/g, "$1 ").trim(); }
+function boutonCopier(id, valeur, lib) {
+  return '<button type="button" class="btn petit" data-copier="' + esc(valeur) + '" id="' + id + '">' + esc(lib || "Copier") + "</button>";
+}
+function origineValidation(r) {
+  var p = r.valide_par || "";
+  if (p === "automatique:garage_partenaire") return ["Payable sans autre validation", "Montant retenu par l'expert, garage partenaire"];
+  if (p === "automatique:reglement_sous_seuil") return ["Validé automatiquement", "Sous le seuil de règlement automatique de votre compagnie"];
+  if (p.indexOf("automatique:") === 0) return ["Validé automatiquement", ""];
+  return ["Validé par un gestionnaire", p.replace(/^humain:|^outil:/, "")];
+}
+function afficherComptable(c) {
+  var r = c.reglement || {}, b = c.beneficiaire || {}, f = c.facture, o = origineValidation(r);
+  var recent = b.iban_maj_le && (Date.now() - new Date(b.iban_maj_le).getTime()) < 30 * 864e5;
+  var h = '<div class="carte"><div class="carte-in"><span class="muet petit">Service comptable</span><h1>Bon à payer, dossier ' + esc(c.numero) + "</h1>" +
+    '<p class="intro">' + (c.reponse_attendue ? "Le règlement est validé : il ne reste que le virement. Indiquez sa référence en bas de page une fois qu'il est fait, le dossier se clôturera tout seul."
+      : "Ce règlement est payé. Rien d'autre n'est attendu de votre part.") + "</p></div>" +
+    '<div class="payer">' +
+      '<div class="payer-l"><span>Montant à virer</span><span class="grand">' + esc(eur(r.montant_net)) +
+        '<span class="sous">' + esc(eur(r.montant_base)) + " TTC" + (Number(r.franchise) ? ", franchise de " + esc(eur(r.franchise)) + " déduite" : "") + "</span></span>" + boutonCopier("cp-montant", String(r.montant_net), "Copier") + "</div>" +
+      '<div class="payer-l"><span>Bénéficiaire</span><b>' + esc(b.titulaire || b.nom || "") + (b.type === "garage" ? '<span class="sous">' + (b.partenaire ? "Garage partenaire" : "Garage") + "</span>" : "") + "</b><span></span></div>" +
+      '<div class="payer-l"><span>IBAN</span>' + (b.iban ? '<span class="iban">' + esc(groupes(b.iban)) + "</span>" + boutonCopier("cp-iban", b.iban)
+        : '<span class="muet">' + esc(b.note || "IBAN absent du référentiel des garages : prenez celui de votre fichier fournisseurs.") + "</span><span></span>") + "</div>" +
+      '<div class="payer-l"><span>Libellé du virement</span><b>' + esc(r.libelle_virement || "") + "</b>" + boutonCopier("cp-libelle", r.libelle_virement || "") + "</div>" +
+      (f ? '<div class="payer-l"><span>Facture</span><b>' + (f.numero ? "N° " + esc(f.numero) : "Facture du garage") + '<span class="sous">' + esc(eur(f.montant_ttc)) + " TTC, reçue le " + esc(C.dateFr(f.recue_le)) + "</span></b>" +
+        (f.document_id ? '<button type="button" class="btn petit" id="b-facture" data-doc="' + esc(f.document_id) + '">Ouvrir la facture</button>' : "<span></span>") + "</div>" : "") +
+      '<div class="payer-l"><span>Validation</span><b>' + esc(o[0]) + '<span class="sous">' + esc([o[1], r.valide_le ? "le " + C.dateFr(r.valide_le) : ""].filter(Boolean).join(", ")) + "</span></b><span></span></div>" +
+    "</div>" +
+    (recent && c.reponse_attendue ? '<div class="carte-in" style="padding-top:0"><p class="indice ko">L\'IBAN de ce garage a été modifié le ' + esc(C.dateFr(b.iban_maj_le)) + " : en cas de doute, confirmez-le par téléphone avec le garage avant de payer.</p></div>" : "") +
+    "</div>";
+  if (c.reponse_attendue) {
+    h += '<div class="carte"><form class="carte-in" id="form" novalidate><h2>Virement effectué</h2>' +
+      '<div class="paye"><label class="champ">Référence du virement <span class="aide">celle de votre banque ou de votre logiciel</span><input class="saisie" id="f-ref" maxlength="80" autocomplete="off" required></label>' +
+      '<button class="btn primaire" id="b-envoyer" type="submit">Confirmer le paiement</button></div></form></div>';
+  } else {
+    h += '<div class="carte"><div class="etat"><div class="rond">' + ICONE_OK + "</div><h1>Payé" + (r.confirme_le ? " le " + esc(C.dateFr(r.confirme_le)) : "") + "</h1><p>" +
+      (r.ref_virement ? "Référence du virement : " + esc(r.ref_virement) + ". " : "") + "Le dossier est clôturé.</p></div></div>";
+  }
+  $("main").innerHTML = h + pied();
+  document.querySelectorAll("[data-copier]").forEach(function (bt) {
+    bt.addEventListener("click", function () {
+      var v = bt.getAttribute("data-copier");
+      (navigator.clipboard ? navigator.clipboard.writeText(v) : Promise.reject()).then(function () { bt.textContent = "Copié"; setTimeout(function () { bt.textContent = "Copier"; }, 1600); },
+        function () { C.toast("Copie impossible : sélectionnez la valeur à la main", true); });
+    });
+  });
+  var bf = $("b-facture");
+  if (bf) bf.addEventListener("click", function () {
+    C.occupe(bf, true, "Ouverture");
+    api("portail/document?t=" + jeton + "&id=" + encodeURIComponent(bf.getAttribute("data-doc"))).then(function (x) {
+      C.occupe(bf, false); window.open(x.url, "_blank", "noopener");
+    }).catch(function (x) { C.occupe(bf, false); C.toast(x.message, true); });
+  });
+  var fm = $("form");
+  if (fm) fm.addEventListener("submit", function (e) {
+    e.preventDefault();
+    var ref = $("f-ref").value.trim();
+    if (!ref) return C.toast("Indiquez la référence du virement.", true);
+    var bt = $("b-envoyer"); C.occupe(bt, true, "Envoi");
+    api("portail", { body: { t: jeton, ref_virement: ref } }).then(function () {
+      etat(ICONE_OK, "", "Paiement confirmé", "Le dossier " + esc(c.numero) + " est clôturé. Merci.");
+    }).catch(function (x) { C.occupe(bt, false); C.toast(x.message, true); });
+  });
+}
+
 function afficher(c) {
   $("cie").innerHTML = esc(c.assureur || "Service sinistres") + "<small>Service sinistres, espace sécurisé</small>";
   document.title = "Dossier " + c.numero + ", " + (c.assureur || "service sinistres");
+  if (c.role === "comptable") { document.title = "Bon à payer " + c.numero; return afficherComptable(c); }
   var t = TITRES[c.role] || ["Votre dossier", ""];
   var h = '<div class="carte"><div class="carte-in"><span class="muet petit">' + esc(C.ROLES[c.role] || "") + "</span><h1>Dossier " + esc(c.numero) + '</h1><p class="intro">' + esc(t[1]) + "</p></div>" +
     '<div class="resume"><div>Type<b>' + esc(C.theme(c.theme)) + "</b></div><div>Date du sinistre<b>" + esc(C.dateFr(c.date_sinistre)) + "</b></div>" +
@@ -161,6 +239,7 @@ function formulaire(c) {
     var manque = (c.pieces_attendues || []).filter(function (p) { return !p.recue; }).map(function (p) { return p.code; });
     var fac = manque.indexOf("FACTURE") >= 0;
     return (fac ? '<div class="grille-2">' + num("f-ttc", "Montant de la facture", "TTC, en €", "required") + num("f-ht", "Montant de la facture", "HT, en €") + "</div>" +
+      '<div class="grille-2"><label class="champ">Numéro de facture <span class="aide">tel qu\'il figure sur la facture</span><input class="saisie" id="f-num" maxlength="40" autocomplete="off"></label><div></div></div>' +
       (c.expertise_retenue ? '<p class="indice" id="f-ecart">Montant retenu par l\'expert : ' + esc(eur(c.expertise_retenue.ttc)) + " TTC.</p>" : "") : '<p class="indice ok">Facture reçue. Il reste la délégation de paiement.</p>') +
       '<label class="case"><input type="checkbox" id="f-deleg"' + (manque.indexOf("DELEGATION_PAIEMENT") < 0 ? " checked disabled" : "") + "> Je joins la délégation de paiement signée par l'assuré</label>" +
       (fac ? '<label class="champ">Nature des travaux <span class="aide">facultatif</span><textarea class="saisie" id="f-conclusion" rows="2"></textarea></label>' : "");
@@ -178,7 +257,7 @@ var CHAMPS_LUS = {
   expert_auto: [["f-devis", "montant_devis_ttc"], ["f-ttc", "montant_ttc"], ["f-ht", "montant_ht"], ["f-taux", "taux_horaire"], ["f-heures", "heures"],
     ["f-pieces", "montant_pieces_ht"], ["f-vei", "vei"], ["f-direct", "reglement_direct_autorise"], ["f-conclusion", "conclusion"]],
   expert_medical: [["f-aipp", "aipp_pct"], ["f-conso", "date_consolidation"], ["f-dep", "dependance_totale"]],
-  garage: [["f-ttc", "montant_ttc"], ["f-ht", "montant_ht"], ["f-deleg", "delegation_paiement"], ["f-conclusion", "conclusion"]]
+  garage: [["f-ttc", "montant_ttc"], ["f-ht", "montant_ht"], ["f-num", "numero_facture"], ["f-deleg", "delegation_paiement"], ["f-conclusion", "conclusion"]]
 };
 function brancherDepot(c) {
   var inp = $("f-fichier"), zone = $("depot"), etatD = $("depot-etat");
@@ -251,7 +330,7 @@ function brancher(c) {
       if (r.aipp_pct == null || r.aipp_pct > 100) return C.toast("Indiquez un taux d'AIPP entre 0 et 100 %.", true);
     } else if (c.role === "garage") {
       r = { delegation_paiement: $("f-deleg").checked };
-      if ($("f-ttc")) { r.montant_ttc = val("f-ttc"); r.montant_ht = val("f-ht"); r.conclusion = ($("f-conclusion").value || "").trim() || undefined; if (!r.montant_ttc) return C.toast("Indiquez le montant TTC de la facture.", true); }
+      if ($("f-ttc")) { r.montant_ttc = val("f-ttc"); r.montant_ht = val("f-ht"); r.conclusion = ($("f-conclusion").value || "").trim() || undefined; r.numero_facture = ($("f-num").value || "").trim() || undefined; if (!r.montant_ttc) return C.toast("Indiquez le montant TTC de la facture.", true); }
       else if (!r.delegation_paiement) return C.toast("Cochez la délégation de paiement pour l'envoyer.", true);
     } else {
       r.pieces = Array.prototype.map.call(document.querySelectorAll('input[name=piece]:checked:not(:disabled)'), function (x) { return x.value; });

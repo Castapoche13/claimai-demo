@@ -58,7 +58,7 @@
     REGLEMENT_DIRECT_REFUSE: "L'expert n'accorde pas le règlement direct au réparateur",
     TAUX_HORAIRE: "Taux horaire au-dessus du maximum", ECART_DEVIS: "Écart entre le devis et le montant retenu",
     PLAFOND_DEPASSE: "Plafond de garantie dépassé", SEUIL_SANS_EXPERT: "Montant au-dessus du seuil sans expertise",
-    INCOHERENCE_CHIFFRAGE: "Chiffrage incohérent", ECART_FACTURE_EXPERTISE: "Facture au-dessus du montant de l'expert",
+    INCOHERENCE_CHIFFRAGE: "Chiffrage incohérent", ECART_FACTURE_EXPERTISE: "Facture au-dessus du montant de l'expert", DOUBLON_FACTURE: "Facture déjà présentée sur un autre dossier",
     ECART_BAREME: "AIPP éloignée du barème", CONSOLIDATION_MANQUANTE: "Date de consolidation absente",
     CONSOLIDATION_INCOHERENTE: "Date de consolidation incohérente", DEPENDANCE_TOTALE: "Dépendance totale signalée",
     AUCUN_REPARATEUR: "Aucun réparateur agréé trouvé", AUCUN_EXPERT: "Aucun expert trouvé",
@@ -67,9 +67,9 @@
   var COURRIERS = {
     accuse_reception: "Prise en charge", refus: "Refus", mission_expert: "Mission d'expertise",
     prise_en_charge_garage: "Ordre de réparation", demande_pieces: "Demande de pièces", relance: "Relance",
-    avis_reglement: "Avis de règlement", information: "Information", classement: "Classement"
+    avis_reglement: "Avis de règlement", information: "Information", classement: "Classement", bon_a_payer: "Bon à payer"
   };
-  var ROLES = { assure: "Assuré", expert: "Expert", garage: "Réparateur", expert_auto: "Expert automobile", expert_medical: "Médecin expert" };
+  var ROLES = { assure: "Assuré", expert: "Expert", garage: "Réparateur", expert_auto: "Expert automobile", expert_medical: "Médecin expert", comptable: "Service comptable", comptabilite: "Service comptable" };
   var PIECES = {
     FACTURE: "Facture", DELEGATION_PAIEMENT: "Délégation de paiement", RAPPORT_EXPERTISE: "Rapport d'expertise",
     DEPOT_PLAINTE: "Récépissé de plainte", CMI: "Certificat médical initial", FICHE_RENSEIGNEMENTS: "Fiche de renseignements",

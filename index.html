@@ -1609,7 +1609,8 @@ function vueEquipe() {
 
 /* ---------------- Vue : Raccordement ---------------- */
 var EX_RESEAU = { experts: [{ nom: "Cabinet Expertise Loing", email: "expert.loing@exemple.fr", specialite: "auto", departements: ["77", "45"], lat: 48.27, lon: 2.69 }],
-  garages: [{ nom: "Carrosserie du Loing", email: "carrosserie.loing@exemple.fr", code_postal: "77140", specialites: ["carrosserie", "vitrage"], taux_horaire_eur: 68, lat: 48.26, lon: 2.70 }] };
+  garages: [{ nom: "Carrosserie du Loing", email: "carrosserie.loing@exemple.fr", code_postal: "77140", specialites: ["carrosserie", "vitrage"], taux_horaire_eur: 68, lat: 48.26, lon: 2.70,
+    iban: "FR5699999000010000100000200", titulaire_compte: "Carrosserie du Loing SARL" }] };
 var EX_CONTRATS = { contrats: [{ numero_contrat: "AUTO-2026-0100", assure_ref: "SOC-20100", assure_email: "assure.100@exemple.fr", date_effet: "2026-01-01", vehicule_immat: "GH-512-KL",
   garanties: [{ code: "BRIS_GLACE", franchise_eur: 0 }, { code: "DOMMAGES_TOUS_ACCIDENTS", franchise_eur: 300 }, { code: "VOL_VANDALISME", franchise_eur: 150 }] }] };
 var ONGLETS_R = [["verification", "Vérification"], ["connexion", "Clés et messages"], ["donnees", "Réseau, contrats et règles"]];
@@ -1735,7 +1736,8 @@ function ongletDonnees(p) {
   var essai = p.environnement === "test";
   var h = '<div class="reglage"><div class="expl"><h3>Réseau agréé et contrats</h3><p>Klerio missionne uniquement vos experts et garages, selon le lieu du sinistre. Votre outil les tient à jour ici ; un même email met à jour la fiche existante.' +
     (essai ? " L'essai contient quatre contrats fictifs (ESSAI-AUTO-0001 à 0003, ESSAI-GA-0004)." : "") + '</p></div><div class="zone">' +
-    "<p><b>" + p.reseau.experts + "</b> experts, <b>" + p.reseau.garages + "</b> garages et <b>" + p.reseau.contrats + "</b> contrats connus.</p>" +
+    "<p><b>" + p.reseau.experts + "</b> experts, <b>" + p.reseau.garages + "</b> garages" + (p.reseau.garages_sans_iban ? " (dont " + p.reseau.garages_sans_iban + " sans IBAN)" : "") + " et <b>" + p.reseau.contrats + "</b> contrats connus.</p>" +
+    '<p class="muet petit">L\'IBAN de chaque garage partenaire sert au paiement direct : seul ce référentiel fait foi, jamais un IBAN écrit sur une facture. Son contrôle de clé est vérifié à l\'import.</p>' +
     '<label class="champ">Experts et garages (format JSON)<textarea class="saisie code-saisie" id="i-reseau">' + esc(JSON.stringify(EX_RESEAU, null, 2)) + "</textarea></label>" +
     '<div class="decision-actions"><button class="btn" id="i-reseau-ok">Importer le réseau</button></div>' +
     '<label class="champ">Contrats et garanties (format JSON)<textarea class="saisie code-saisie" id="i-contrats">' + esc(JSON.stringify(EX_CONTRATS, null, 2)) + "</textarea></label>" +
@@ -1750,6 +1752,10 @@ function ongletDonnees(p) {
     '<div class="grille-2"><label class="champ">Règlement automatique jusqu\'à <span class="aide">en €, vide = tout faire valider</span><input class="saisie" id="s-auto" type="number" min="0" step="100" value="' + esc(p.reglement_auto_max_eur == null ? "" : p.reglement_auto_max_eur) + '"></label></div>' +
     '<label class="case"><input type="checkbox" id="s-refus"' + (p.refus_automatique ? " checked" : "") + '> Refus automatique des cas contractuels évidents (contrat non en vigueur, garantie non souscrite)</label>' +
     '<p class="muet petit">Le courrier indique que la réponse est automatique et que l\'assuré peut demander un réexamen par un gestionnaire (RGPD, article 22). À valider avec votre délégué à la protection des données avant la production. Les règlements corporels restent toujours validés par un humain.</p></div></div>';
+  h += '<div class="reglage"><div class="expl"><h3>Paiement des garages</h3><p>Dès que l\'expert a fixé le montant et que le garage partenaire a envoyé sa facture, le règlement part au service comptable, sans autre validation.</p></div><div class="zone pile">' +
+    '<label class="case"><input type="checkbox" id="s-garage"' + (p.paiement_garage_auto ? " checked" : "") + '> Payer directement les garages partenaires sur le montant de l\'expert, quel que soit le montant</label>' +
+    '<div class="grille-2"><label class="champ">Service comptable <span class="aide">reçoit chaque bon à payer</span><input class="saisie" id="s-compta" type="email" value="' + esc(p.email_comptabilite || "") + '" placeholder="comptabilite@votre-compagnie.fr"></label></div>' +
+    '<p class="muet petit">Le comptable reçoit un mail par règlement validé (garage ou assuré), avec un lien sécurisé : montant, IBAN du référentiel, facture, puis un champ pour la référence du virement qui clôt le dossier. Restent toujours chez un gestionnaire : une facture au-dessus du montant de l\'expert, une facture déjà présentée sur un autre dossier, un garage hors réseau.</p></div></div>';
   h += '<div class="reglage"><div class="expl"><h3>Organisation de l\'équipe</h3><p>Qui traite les dossiers qui demandent une décision.</p></div><div class="zone pile">' +
     '<label class="case"><input type="radio" name="s-mode" value="corbeille"' + (p.mode_repartition !== "repartition" ? " checked" : "") + '> File commune : chaque gestionnaire prend ses dossiers. Un dossier pris doit être traité, ou renvoyé au responsable avec un motif.</label>' +
     '<label class="case"><input type="radio" name="s-mode" value="repartition"' + (p.mode_repartition === "repartition" ? " checked" : "") + '> Répartition automatique : chaque dossier va au gestionnaire du bon service qui en a le moins.</label></div></div>';
@@ -1760,7 +1766,7 @@ function ongletDonnees(p) {
     '<div class="decision-actions"><button class="btn primaire" id="s-ok2">Enregistrer ces choix</button></div></div></div>';
   h += '<div class="reglage"><div class="expl"><h3>Adresses de l\'API</h3><p>Toutes demandent l\'en-tête <b>x-klerio-key</b>, sauf l\'espace en ligne, ouvert par le lien personnel de chaque courrier. Exemples complets dans le <a href="guide.html" target="_blank" rel="noopener">guide</a>.</p></div><div class="zone"><table class="routes">' +
     [["GET /moi", "Vérifier la clé et l'environnement"], ["POST /declarer", "Nouveau sinistre"], ["GET /dossier?numero=", "Fiche complète d'un dossier"], ["GET /dossiers", "Liste, filtres statut et q"], ["GET /a-traiter", "Dossiers qui attendent un humain"],
-     ["POST /valider", "Décision d'un gestionnaire"], ["POST /virement", "Paiement confirmé, clôture"], ["POST /pieces", "Pièce reçue en agence"], ["POST /retour", "Rapport ou facture saisi par la compagnie"],
+     ["POST /valider", "Décision d'un gestionnaire"], ["POST /virement", "Paiement confirmé, clôture (ou par le comptable, depuis son lien)"], ["POST /pieces", "Pièce reçue en agence"], ["POST /retour", "Rapport ou facture saisi par la compagnie"],
      ["POST /reprendre", "Reprise ou classement"], ["POST /note", "Information reçue par téléphone ou mail"], ["POST /rouvrir", "Rouvrir un dossier terminé"],
      ["GET /archive?numero=", "Dossier complet à archiver"], ["GET /recapitulatif?numero=", "Récapitulatif PDF"], ["POST /reseau", "Import des experts et garages"], ["POST /contrats", "Import des contrats"], ["GET /indicateurs", "Pilotage"],
      ["GET /verification", "État du raccordement"], ["GET|POST /portail?t=", "Espace expert, garage ou assuré"]].map(function (r) { return "<tr><td>" + esc(r[0]) + "</td><td>" + esc(r[1]) + "</td></tr>"; }).join("") +
@@ -1835,6 +1841,7 @@ function brancherRaccordement(admin) {
   lier("s-ok2", function () {
     var auto = $("s-auto").value, m = document.querySelector('[name="s-mode"]:checked'), c = document.querySelector('[name="s-cons"]:checked');
     envoyer(this, "parametres", { reglement_auto_max_eur: auto === "" ? null : Number(auto), refus_automatique: $("s-refus").checked,
+      paiement_garage_auto: $("s-garage").checked, email_comptabilite: $("s-compta").value.trim(),
       mode_repartition: m ? m.value : "corbeille", conservation: c ? c.value : "conserver", delai_effacement_jours: Number($("s-effacement").value) }, "Choix enregistrés");
   });
 }
