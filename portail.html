@@ -140,6 +140,12 @@ function num(id, lib, aide, attrs) {
 }
 
 function formulaire(c) {
+  // Vol du véhicule : l'expert ne chiffre pas de réparation, il évalue la valeur de remplacement
+  if (c.role === "expert_auto" && c.evaluation_vol) return '<div class="grille-2">' + num("f-ttc", "Valeur de remplacement à dire d'expert (VRADE)", "TTC, en €", "required") + "</div>" +
+    '<div hidden>' + num("f-devis", "", "") + num("f-taux", "", "") + num("f-heures", "", "") + num("f-pieces", "", "") + num("f-ht", "", "") +
+    '<p id="f-coherence"></p><input type="checkbox" id="f-vei" checked><input type="checkbox" id="f-direct" checked></div>' +
+    '<p class="indice">Véhicule déclaré volé : indiquez sa valeur au jour du vol. L\'assuré sera indemnisé sur cette base s\'il n\'est pas retrouvé.</p>' +
+    '<label class="champ">Observations <span class="aide">facultatif</span><textarea class="saisie" id="f-conclusion" rows="3"></textarea></label>';
   if (c.role === "expert_auto") return '<div class="grille-2">' + num("f-devis", "Devis du réparateur", "TTC, en €") + num("f-ttc", "Montant retenu", "TTC, en €", "required") + "</div>" +
     '<div class="grille-3">' + num("f-taux", "Taux horaire", "€ HT") + num("f-heures", "Main-d'œuvre", "en heures") + num("f-pieces", "Pièces", "HT, en €") + "</div>" +
     '<div class="grille-2">' + num("f-ht", "Montant retenu", "HT, en €") + "<div></div></div>" +

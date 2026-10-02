@@ -195,7 +195,8 @@ table.doc td:first-child { white-space: nowrap; }
           <tr><td><code>code_postal</code><span class="oblig">obligatoire</span></td><td>5 chiffres</td><td>Lieu du sinistre : sert à choisir l'expert et le réparateur les plus proches.</td></tr>
           <tr><td><code>recit</code><span class="oblig">obligatoire</span></td><td>texte</td><td>Récit de l'assuré, 10 caractères au moins. C'est lui que l'IA qualifie.</td></tr>
           <tr><td><code>ref_externe</code></td><td>texte</td><td>Votre référence de sinistre. <b>Fortement recommandée</b> : elle rend le renvoi sans risque (voir plus bas) et figure dans chaque message.</td></tr>
-          <tr><td><code>theme</code></td><td>texte</td><td>Type choisi par l'assuré : <code>BRIS_GLACE</code>, <code>PERTE_CONTROLE_OBSTACLE_FIXE</code>, <code>VANDALISME</code>, <code>GARANTIE_ACCIDENT</code>, <code>AUTRE</code>. Klerio le compare au récit.</td></tr>
+          <tr><td><code>theme</code></td><td>texte</td><td>Type choisi par l'assuré. Matériel : <code>BRIS_GLACE</code>, <code>PERTE_CONTROLE_OBSTACLE_FIXE</code>, <code>VANDALISME</code>, <code>TENTATIVE_VOL</code>, <code>VOL</code>, <code>INCENDIE</code>, <code>EVENEMENT_CLIMATIQUE</code> (grêle, tempête), <code>CATASTROPHE_NATURELLE</code>. Corporel : <code>GARANTIE_ACCIDENT</code>. Sinon <code>AUTRE</code>. Klerio le compare au récit.</td></tr>
+          <tr><td><code>arrete_catnat</code></td><td>texte</td><td>Catastrophe naturelle : référence de l'arrêté (date et Journal officiel). Sans arrêté, le dossier revient à un gestionnaire ; la franchise légale s'applique.</td></tr>
           <tr><td><code>ville</code></td><td>texte</td><td>Commune, pour situer le lieu plus précisément.</td></tr>
           <tr><td><code>tiers_implique</code></td><td>booléen</td><td>Si votre outil le sait déjà.</td></tr>
           <tr><td><code>victime</code></td><td>objet</td><td>Garantie Accident : <code>{"age": 35, "lien": "societaire"}</code>. <code>lien</code> parmi <code>societaire</code>, <code>conjoint</code>, <code>enfant_mineur</code>, <code>enfant_etudiant</code>, <code>enfant_handicape</code>, <code>personne_a_charge</code>, <code>conducteur_tiers</code>. Ni nom ni numéro de sécurité sociale.</td></tr>
@@ -326,7 +327,7 @@ POST /reseau
                  "specialite": "auto", "departements": ["77", "45"] } ],
   "garages": [ { "nom": "Carrosserie du Loing", "email": "garage@exemple.fr", "code_postal": "77140",
                  "specialites": ["carrosserie", "vitrage"], "taux_horaire_eur": 68 } ] }</pre>
-      <p>Codes de garantie : <code>BRIS_GLACE</code>, <code>DOMMAGES_TOUS_ACCIDENTS</code>, <code>VOL_VANDALISME</code>, <code>GARANTIE_ACCIDENT</code>. Ne transmettez que ce qui sert à la gestion : pas de données de santé, de RIB ni de pièce d'identité dans ces imports.</p>
+      <p>Codes de garantie : <code>BRIS_GLACE</code>, <code>DOMMAGES_TOUS_ACCIDENTS</code>, <code>VOL_VANDALISME</code>, <code>VOL</code>, <code>INCENDIE</code>, <code>EVENEMENTS_CLIMATIQUES</code>, <code>CATASTROPHES_NATURELLES</code>, <code>GARANTIE_ACCIDENT</code>. Un vol se règle à l'assuré sur la valeur fixée par l'expert, après le délai de recherche du contrat (30 jours par défaut). Ne transmettez que ce qui sert à la gestion : pas de données de santé, de RIB ni de pièce d'identité dans ces imports.</p>
     </section>
 
     <section id="messages">
@@ -504,7 +505,7 @@ répondre 200</pre>
         <li>Clés et secrets affichés une seule fois ; les clés ne sont conservées que sous forme d'empreinte.</li>
         <li>Minimisation : l'analyse par IA ne reçoit que le type déclaré, la date et le récit, plus l'âge et le lien de la victime pour un accident corporel. Ni nom, ni contrat, ni coordonnées.</li>
         <li>Documents médicaux lus en mémoire puis abandonnés : seuls le taux d'AIPP, la date de consolidation et la mention de dépendance sont enregistrés.</li>
-        <li>Les décisions défavorables et les paiements exigent toujours la validation d'une personne identifiée (RGPD, article 22).</li>
+        <li>Automatisation réglable par la compagnie : règlements matériels sous un seuil validés sans clic, refus des cas contractuels évidents envoyés automatiquement avec possibilité de réexamen humain (RGPD, article 22). Désactivés, tout passe par une personne identifiée. Les règlements corporels restent toujours validés par un humain.</li>
         <li>Journal des appels conservé 90 jours. Contenu personnel des dossiers terminés effacé après le délai convenu, une fois l'archive remise à votre outil ; le journal d'audit ne garde que des codes et des décisions.</li>
         <li>L'environnement d'essai ne doit contenir que des données fictives ou anonymisées.</li>
       </ul>

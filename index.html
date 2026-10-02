@@ -274,6 +274,34 @@ textarea.saisie.code-saisie { font-family: ui-monospace, Menlo, Consolas, monosp
 .mono { font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace; font-size: 12px; }
 
 /* ---------- Environnement : production / essai ---------- */
+.espaces { display: grid; grid-template-columns: 1fr 1fr; gap: 2px; margin: 0 4px; padding: 3px; border-radius: 8px; background: var(--survol); }
+.espaces button { border: 0; background: none; padding: 7px 6px; border-radius: 6px; font-size: 13px; font-weight: 500; color: var(--gris); cursor: pointer; }
+.espaces button[aria-pressed="true"] { background: var(--feuille); color: var(--encre); box-shadow: 0 1px 2px rgba(0,0,0,.08); font-weight: 600; }
+.espaces[hidden] { display: none; }
+.espace-seul { margin: 0 8px; font-size: 12.5px; color: var(--gris); }
+.espace-seul b { color: var(--encre); font-weight: 600; }
+.bandeau-corporel { border: 1px solid var(--trait); border-left: 3px solid var(--orange); border-radius: 6px; padding: 10px 14px; font-size: 13px; color: var(--encre-2); margin-bottom: 16px; background: var(--feuille-2); }
+.accueil-tete { display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; margin-bottom: 18px; flex-wrap: wrap; }
+.accueil-tete h1 { font-size: 22px; letter-spacing: -.02em; }
+.accueil-tete p { color: var(--gris); font-size: 13.5px; margin-top: 4px; }
+.tuiles { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-bottom: 18px; }
+.tuile { border: 1px solid var(--trait); border-radius: var(--rayon); padding: 14px 16px; background: var(--feuille); text-decoration: none; color: inherit; display: block; }
+a.tuile:hover { border-color: var(--trait-fort); text-decoration: none; }
+.tuile .val { font-size: 26px; font-weight: 600; letter-spacing: -.02em; line-height: 1.1; }
+.tuile .lib { font-size: 12.5px; color: var(--gris); margin-top: 6px; }
+.tuile.vous .val { color: var(--orange-texte); }
+.tuile .sous { font-size: 12px; color: var(--orange-texte); margin-top: 2px; }
+@media (max-width: 900px) { .tuiles { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.filtre-file { display: inline-flex; gap: 2px; padding: 3px; border-radius: 8px; background: var(--survol); }
+.filtre-file button { border: 0; background: none; padding: 5px 10px; border-radius: 6px; font-size: 12.5px; font-weight: 500; color: var(--gris); cursor: pointer; }
+.filtre-file button[aria-pressed="true"] { background: var(--feuille); color: var(--encre); box-shadow: 0 1px 2px rgba(0,0,0,.08); }
+.filtre-file .n { margin-left: 4px; color: var(--gris); font-weight: 400; }
+.prio { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--orange); margin-right: 6px; vertical-align: 1px; }
+.ligne .titulaire { display: block; font-size: 12px; color: var(--gris); margin-top: 2px; }
+.lien-prendre { border: 0; background: none; padding: 0; color: var(--bleu); font: inherit; font-weight: 500; cursor: pointer; }
+.lien-prendre:hover { text-decoration: underline; }
+.titulaire-barre { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; border: 1px solid var(--trait); border-radius: var(--rayon); padding: 10px 14px; margin-bottom: 16px; font-size: 13.5px; background: var(--feuille-2); }
+.titulaire-barre .actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
 .env { display: inline-flex; border: 1px solid var(--trait-fort); border-radius: 6px; padding: 2px; background: var(--feuille-2); flex: none; }
 .env button { border: 0; background: none; padding: 4px 10px; border-radius: 4px; font-size: 12.5px; font-weight: 500; color: var(--gris); cursor: pointer; }
 .env button[aria-pressed="true"] { background: var(--feuille); color: var(--encre); box-shadow: 0 0 0 1px var(--trait); }
@@ -364,9 +392,15 @@ textarea.saisie.code-saisie { font-family: ui-monospace, Menlo, Consolas, monosp
   <nav class="nav" aria-label="Navigation principale">
     <div class="marque" id="logo-n"></div>
     <div class="nav-assureur">Compagnie<b id="n-assureur"></b></div>
+    <div class="espaces" id="n-espaces" role="group" aria-label="Espace de travail">
+      <button type="button" data-esp="materiel" aria-pressed="true">Matériel</button>
+      <button type="button" data-esp="corporel" aria-pressed="false">Corporel</button>
+    </div>
+    <div class="espace-seul" id="n-espace-seul" hidden></div>
     <ul>
-      <li><a href="#/file" data-vue="file"><svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path d="M3 4h12M3 9h12M3 14h7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>À traiter<span class="compteur" id="n-compteur" hidden></span></a></li>
-      <li><a href="#/dossiers" data-vue="dossiers"><svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path d="M2.5 5.5v8a1 1 0 001 1h11a1 1 0 001-1v-6a1 1 0 00-1-1H8.5L7 4.5H3.5a1 1 0 00-1 1z" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>Tous les dossiers</a></li>
+      <li><a href="#/file" data-vue="file"><svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path d="M3 4h12M3 9h12M3 14h7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>Accueil<span class="compteur" id="n-compteur" hidden></span></a></li>
+      <li><a href="#/dossiers" data-vue="dossiers"><svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path d="M2.5 5.5v8a1 1 0 001 1h11a1 1 0 001-1v-6a1 1 0 00-1-1H8.5L7 4.5H3.5a1 1 0 00-1 1z" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>Dossiers en cours</a></li>
+      <li><a href="#/archives" data-vue="archives"><svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><rect x="2.5" y="3.5" width="13" height="3.5" rx="1" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M3.5 7v6.5a1 1 0 001 1h9a1 1 0 001-1V7M7.5 10h3" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>Archives</a></li>
       <li><a href="#/declarer" data-vue="declarer"><svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path d="M9 3.5v11M3.5 9h11" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>Déclarer un sinistre</a></li>
       <li><a href="#/boites" data-vue="boites"><svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><rect x="2.5" y="4" width="13" height="10" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M3 5l6 5 6-5" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>Boîtes mail de test</a></li>
       <li><a href="#/pilotage" data-vue="pilotage"><svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path d="M3.5 14.5V9M9 14.5V4M14.5 14.5v-7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>Pilotage</a></li>
@@ -483,6 +517,33 @@ var CONTRAT_ESSAI = { "AUTO-2025-0001": "ESSAI-AUTO-0001", "AUTO-2025-0004": "ES
   "AUTO-2024-0003": "ESSAI-AUTO-0003", "GA-2024-0005": "ESSAI-GA-0004", "GA-2025-0006": "ESSAI-GA-0004" };
 function contrat(n) { return S.env === "test" ? (CONTRAT_ESSAI[n] || n) : n; }
 
+/* ---------------- Espace : matériel (contractuel) ou corporel ---------------- */
+var ESP = "klerio-espace";
+S.branche = "materiel";
+try { if (localStorage.getItem(ESP) === "corporel") S.branche = "corporel"; } catch (e) { }
+function qb(prefixe) { return (prefixe || "?") + "branche=" + S.branche; }
+function afficherEspace() {
+  var seul = S.moi && S.moi.service && S.moi.service !== "tous";
+  if (seul) S.branche = S.moi.service;
+  $("n-espaces").hidden = !!seul;
+  $("n-espace-seul").hidden = !seul;
+  if (seul) $("n-espace-seul").innerHTML = "Espace <b>" + esc(C.ESPACES[S.branche].nom) + "</b>";
+  document.querySelectorAll("[data-esp]").forEach(function (b) { b.setAttribute("aria-pressed", String(b.dataset.esp === S.branche)); });
+}
+document.querySelectorAll("[data-esp]").forEach(function (b) {
+  b.addEventListener("click", function () {
+    if (b.dataset.esp === S.branche) return;
+    S.branche = b.dataset.esp; try { localStorage.setItem(ESP, S.branche); } catch (e) { }
+    afficherEspace(); vus = null; rafraichirCompteur();
+    var vue = location.hash.replace(/^#\/?/, "").split("/")[0];
+    if (vue === "dossier") location.hash = "#/file"; else router();
+  });
+});
+function estResponsable() { return S.moi && (S.moi.role === "superviseur" || S.moi.role === "admin"); }
+function bandeauCorporel() {
+  return S.branche === "corporel" ? '<div class="bandeau-corporel"><b>Espace corporel.</b> Ouvert sous réserve de la validation de votre compagnie : secret médical, accès réservés et hébergement des données de santé. Les pièces médicales ne sont jamais lues ni conservées par Klerio.</div>' : "";
+}
+
 function entrer(session) {
   if (!session) return Promise.resolve();
   var base = ($("c-base").value || "").trim() || C.API_DEFAUT;
@@ -497,6 +558,7 @@ function entrer(session) {
     $("n-assureur").textContent = S.assureur; $("n-gest").textContent = moi.nom;
     $("n-avatar").textContent = moi.nom.split(/\s+/).map(function (x) { return x[0]; }).join("").slice(0, 2);
     $("n-equipe").hidden = moi.role !== "admin";
+    afficherEspace(); surveiller();
     $("ecran-connexion").hidden = true; $("ecran-app").hidden = false;
     rafraichirCompteur();
     if (!location.hash || location.hash === "#") location.hash = "#/file"; else router();
@@ -512,7 +574,22 @@ function compter(ind) {
   var n = ind && ind.a_traiter || 0, c = $("n-compteur");
   c.textContent = n; c.hidden = !n;
 }
-function rafraichirCompteur() { api("indicateurs").then(compter).catch(function () { }); }
+function rafraichirCompteur() { api("indicateurs" + qb()).then(compter).catch(function () { }); }
+// Alerte : un nouveau dossier prioritaire apparaît (vérifié toutes les 2 minutes)
+var vus = null, minuterie = null;
+function verifierPriorites() {
+  if (!api) return;
+  api("a-traiter" + qb()).then(function (l) {
+    var hauts = (l || []).filter(function (d) { return d.priorite === "haute" && (!d.gestionnaire || (S.moi && d.gestionnaire.id === S.moi.id)); }).map(function (d) { return d.numero; });
+    if (vus) {
+      var neufs = hauts.filter(function (n) { return vus.indexOf(n) < 0; });
+      if (neufs.length) C.toast(neufs.length > 1 ? neufs.length + " nouveaux dossiers prioritaires : " + neufs.slice(0, 3).join(", ") : "Nouveau dossier prioritaire : " + neufs[0]);
+    }
+    vus = hauts;
+    document.title = (hauts.length ? "(" + hauts.length + ") " : "") + (S.env === "test" ? "[Essai] " : "") + "Console sinistres Klerio";
+  }).catch(function () { });
+}
+function surveiller() { verifierPriorites(); clearInterval(minuterie); minuterie = setInterval(verifierPriorites, 120000); }
 
 /* ---------------- Routage ---------------- */
 window.addEventListener("hashchange", router);
@@ -526,7 +603,7 @@ function router() {
   var v = $("vue"); v.innerHTML = '<div class="vide"><span class="tourne" style="display:inline-block"></span></div>';
   window.scrollTo(0, 0);
   var f = { file: vueFile, dossiers: vueDossiers, dossier: function () { vueDossier(decodeURIComponent(h[1] || "")); },
-    declarer: vueDeclarer, boites: vueBoites, pilotage: vuePilotage, raccordement: function () { vueRaccordement(h[1]); }, equipe: vueEquipe }[vue] || vueFile;
+    archives: vueArchives, declarer: vueDeclarer, boites: vueBoites, pilotage: vuePilotage, raccordement: function () { vueRaccordement(h[1]); }, equipe: vueEquipe }[vue] || vueFile;
   f();
 }
 function erreurVue(x) { $("vue").innerHTML = '<div class="bloc"><div class="vide"><b>Impossible de charger cette page</b>' + esc(x.message) + '<p style="margin-top:14px"><button class="btn" onclick="location.reload()">Recharger</button></p></div></div>'; }
@@ -543,7 +620,7 @@ function attente(d) {
   var v = d.validation, p = v && v.proposition || {};
   if (v && v.etape === "decision" && p.decision === "classement_sans_indemnite") return ["Classement sans indemnité à confirmer", "AIPP estimée " + C.nombre(p.aipp_estimee != null ? p.aipp_estimee : p.aipp) + " %"];
   if (v && v.etape === "decision") return ["Refus proposé, à confirmer ou écarter", C.motif(p.motif)];
-  if (v && v.etape === "prereglement") return ["Règlement de " + eur(p.montant_net) + " à valider", p.beneficiaire === "assure" ? "Capital invalidité versé à l'assuré" : "Versé au réparateur, franchise déduite"];
+  if (v && v.etape === "prereglement") return ["Règlement de " + eur(p.montant_net) + " à valider", d.theme === "VOL" ? "Indemnité vol versée à l'assuré, franchise déduite" : p.beneficiaire === "assure" ? "Capital invalidité versé à l'assuré" : "Versé au réparateur, franchise déduite"];
   if (v && v.etape === "anomalie") {
     var a = (p.anomalies || [])[0]; return [a ? (C.ANOMALIES[a.code] || a.code) : (C.ANOMALIES[p.code] || "Anomalie à examiner"), a ? a.detail : C.motif(d.motif)];
   }
@@ -553,36 +630,80 @@ function attente(d) {
   return [C.STATUTS[d.statut] ? C.STATUTS[d.statut][0] : d.statut, C.motif(d.motif)];
 }
 
-/* ---------------- Vue : À traiter ---------------- */
+/* ---------------- Vue : Accueil ---------------- */
+var FILTRE_FILE = "klerio-filtre-file";
 function vueFile() {
-  Promise.all([api("a-traiter"), api("dossiers?limite=300")]).then(function (r) {
-    var file = r[0] || [], tous = r[1] || [];
-    var tiers = tous.filter(function (d) { return d.statut === "mission_envoyee" || d.statut === "attente_pieces" || d.statut === "reglement_envoye"; });
-    var recents = tous.filter(function (d) { return ["clos", "refuse", "classe_sans_suite"].indexOf(d.statut) >= 0; }).slice(0, 5);
-    compter({ a_traiter: file.length });
-    var h = '<div class="entete-vue"><div><h1>À traiter</h1><p>' +
-      (file.length ? file.length + " dossier" + (file.length > 1 ? "s attendent" : " attend") + " votre décision. Le reste avance seul." : "Aucune décision en attente. Les dossiers en cours avancent seuls.") +
-      '</p></div><a class="btn primaire" href="#/declarer">Déclarer un sinistre</a></div>';
-    h += '<section class="bloc"><div class="bloc-tete"><h2>Attendent votre décision<span class="compte">' + file.length + '</span></h2><span class="muet petit">Du plus ancien au plus récent</span></div>';
-    h += file.length ? '<ul class="file">' + file.map(function (d) {
-      var a = attente(d);
-      return '<li><a class="ligne vous" href="#/dossier/' + esc(d.numero) + '"><span class="repere"></span>' +
-        '<span class="num">' + esc(d.numero) + '<small>' + esc(C.theme(d.theme)) + (d.contrat ? ", " + esc(d.contrat) : "") + '</small></span>' +
-        '<span class="quoi">' + esc(a[0]) + (a[1] ? '<small>' + esc(a[1]) + '</small>' : "") + '</span>' +
-        '<span class="droite">' + C.statut(d.statut) + '<span>' + esc(C.depuis(d.depuis)) + '</span></span></a></li>';
-    }).join("") + "</ul>" : '<div class="vide"><b>Rien à décider pour l\'instant</b>Les nouveaux dossiers apparaîtront ici dès qu\'une décision humaine sera nécessaire.</div>';
-    h += "</section>";
-    h += '<section class="bloc"><div class="bloc-tete"><h2>Attendent un expert, un réparateur ou l\'assuré<span class="compte">' + tiers.length + '</span></h2><span class="muet petit">Relances automatiques tous les 7 jours</span></div>';
-    h += tiers.length ? listeSimple(tiers) : '<div class="vide">Aucun dossier en attente d\'un tiers.</div>';
-    h += "</section>";
-    if (recents.length) h += '<section class="bloc"><div class="bloc-tete"><h2>Terminés récemment</h2><a class="btn discret" href="#/dossiers">Voir tous les dossiers</a></div>' + listeSimple(recents) + "</section>";
+  Promise.all([api("a-traiter" + qb()), api("dossiers?limite=300&termines=0" + qb("&")), api("indicateurs" + qb())]).then(function (r) {
+    var file = r[0] || [], encours = r[1] || [], ind = r[2] || {};
+    compter(ind);
+    var moi = S.moi || {}, resp = estResponsable();
+    var aMoi = file.filter(function (d) { return d.gestionnaire && d.gestionnaire.id === moi.id; });
+    var libres = file.filter(function (d) { return !d.gestionnaire; });
+    var autres = file.filter(function (d) { return d.gestionnaire && d.gestionnaire.id !== moi.id; });
+    var renvoyes = file.filter(function (d) { return d.renvoye_manager; });
+    var tiers = encours.filter(function (d) { return d.statut === "mission_envoyee" || d.statut === "attente_pieces" || d.statut === "reglement_envoye"; });
+    var prio = file.filter(function (d) { return d.priorite === "haute"; }).length;
+    var filtres = [["moi", "À moi", aMoi], ["libres", "À prendre", libres]];
+    if (resp || autres.length) filtres.push(["equipe", "Toute l'équipe", file]);
+    var choix = "moi";
+    try { choix = localStorage.getItem(FILTRE_FILE) || (aMoi.length ? "moi" : "libres"); } catch (e) { }
+    if (!filtres.some(function (f) { return f[0] === choix; })) choix = "moi";
+
+    var prenom = (moi.nom || "").split(/\s+/)[0];
+    var h = bandeauCorporel() + '<div class="accueil-tete"><div><h1>Bonjour' + (prenom ? " " + esc(prenom) : "") + '</h1><p>Espace ' + esc(C.ESPACES[S.branche].nom.toLowerCase()) +
+      " · " + esc(new Date().toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" })) + '</p></div><a class="btn primaire" href="#/declarer">Déclarer un sinistre</a></div>';
+    h += '<div class="tuiles">' +
+      '<a class="tuile' + (file.length ? " vous" : "") + '" href="#/file"><div class="val">' + file.length + '</div><div class="lib">Attendent une décision</div>' + (prio ? '<div class="sous">dont ' + prio + " prioritaire" + (prio > 1 ? "s" : "") + "</div>" : "") + "</a>" +
+      '<a class="tuile" href="#/dossiers"><div class="val">' + tiers.length + '</div><div class="lib">Chez un expert, un garage ou l\'assuré</div></a>' +
+      '<a class="tuile" href="#/archives"><div class="val">' + (ind.clos_30j || 0) + '</div><div class="lib">Terminés ces 30 derniers jours</div></a>' +
+      '<a class="tuile" href="#/pilotage"><div class="val">' + (ind.taux_sans_intervention != null ? C.nombre(ind.taux_sans_intervention, 0) + " %" : "–") + '</div><div class="lib">Traités sans aucun clic</div></a></div>';
+
+    if (resp && renvoyes.length) {
+      h += '<section class="bloc"><div class="bloc-tete"><h2>Renvoyés par un gestionnaire<span class="compte">' + renvoyes.length + '</span></h2><span class="muet petit">À réaffecter</span></div><ul class="file">' +
+        renvoyes.map(function (d) { return ligneFile(d, '<small>Renvoyé par ' + esc(d.renvoye_manager.par) + " : " + esc(d.renvoye_manager.motif) + "</small>"); }).join("") + "</ul></section>";
+    }
+    h += '<section class="bloc"><div class="bloc-tete"><h2>À traiter</h2><div class="filtre-file" role="group" aria-label="Filtrer">' +
+      filtres.map(function (f) { return '<button type="button" data-filtre="' + f[0] + '" aria-pressed="' + (f[0] === choix) + '">' + esc(f[1]) + '<span class="n">' + f[2].length + "</span></button>"; }).join("") +
+      '</div></div><div id="file-liste"></div></section>';
+    h += '<section class="bloc"><div class="bloc-tete"><h2>Attendent un tiers<span class="compte">' + tiers.length + '</span></h2><span class="muet petit">Relances automatiques, puis retour vers vous après trois relances</span></div>' +
+      (tiers.length ? listeSimple(tiers.slice(0, 8)) + (tiers.length > 8 ? '<div class="bloc-corps"><a href="#/dossiers">Voir les ' + tiers.length + " dossiers en cours</a></div>" : "") : '<div class="vide">Aucun dossier en attente d\'un tiers.</div>') + "</section>";
     $("vue").innerHTML = h;
+
+    function dessiner(cle) {
+      var l = (filtres.filter(function (f) { return f[0] === cle; })[0] || filtres[0])[2];
+      var vide = { moi: "Aucun dossier ne vous attend. Prenez-en un dans « À prendre ».", libres: "La file commune est vide.", equipe: "Aucune décision en attente dans l'équipe." }[cle];
+      $("file-liste").innerHTML = l.length ? '<ul class="file">' + l.map(function (d) { return ligneFile(d); }).join("") + "</ul>" : '<div class="vide"><b>Rien à décider ici</b>' + esc(vide) + "</div>";
+      document.querySelectorAll("[data-prendre]").forEach(function (b) {
+        b.onclick = function (e) {
+          e.preventDefault(); e.stopPropagation();
+          C.occupe(b, true, "");
+          api("prendre", { body: { numero: b.dataset.prendre } }).then(function () { ouvrirDossier(b.dataset.prendre); })
+            .catch(function (x) { C.occupe(b, false); C.toast(x.message, true); });
+        };
+      });
+    }
+    dessiner(choix);
+    document.querySelectorAll("[data-filtre]").forEach(function (b) {
+      b.onclick = function () {
+        document.querySelectorAll("[data-filtre]").forEach(function (x) { x.setAttribute("aria-pressed", String(x === b)); });
+        try { localStorage.setItem(FILTRE_FILE, b.dataset.filtre); } catch (e) { }
+        dessiner(b.dataset.filtre);
+      };
+    });
   }).catch(erreurVue);
+}
+function ligneFile(d, extra) {
+  var a = attente(d), libre = !d.gestionnaire;
+  return '<li><a class="ligne vous" href="#/dossier/' + esc(d.numero) + '"><span class="repere"></span>' +
+    '<span class="num">' + (d.priorite === "haute" ? '<span class="prio" title="Prioritaire"></span>' : "") + esc(d.numero) + '<small>' + esc(C.theme(d.theme)) + (d.contrat ? ", " + esc(d.contrat) : "") + '</small></span>' +
+    '<span class="quoi">' + esc(a[0]) + (a[1] ? '<small>' + esc(a[1]) + '</small>' : "") + (extra || "") +
+    '<span class="titulaire">' + (libre ? 'File commune · <button type="button" class="lien-prendre" data-prendre="' + esc(d.numero) + '">Prendre ce dossier</button>' : "Suivi par " + esc(d.gestionnaire.nom)) + "</span></span>" +
+    '<span class="droite">' + C.statut(d.statut) + '<span>' + esc(C.depuis(d.depuis)) + '</span></span></a></li>';
 }
 function quiAttend(d) {
   if (d.statut === "reglement_envoye") return "Confirmation du virement par la comptabilité";
-  if (d.statut === "mission_envoyee") return d.theme === "GARANTIE_ACCIDENT" ? "Conclusions du médecin expert" : d.theme === "BRIS_GLACE" ? "Facture du réparateur" : "Rapport de l'expert";
-  if (d.statut === "attente_pieces") return (d.pieces_manquantes ? d.pieces_manquantes + " pièce" + (d.pieces_manquantes > 1 ? "s" : "") + " manquante" + (d.pieces_manquantes > 1 ? "s" : "") : "Pièces du dossier");
+  if (d.statut === "mission_envoyee") return d.theme === "GARANTIE_ACCIDENT" ? "Conclusions du médecin expert" : d.theme === "BRIS_GLACE" ? "Facture du réparateur" : d.theme === "VOL" ? "Évaluation de l'expert" : "Rapport de l'expert";
+  if (d.statut === "attente_pieces") return (d.pieces_manquantes ? d.pieces_manquantes + " pièce" + (d.pieces_manquantes > 1 ? "s" : "") + " manquante" + (d.pieces_manquantes > 1 ? "s" : "") : d.theme === "VOL" ? "Délai de recherche du véhicule" : "Pièces du dossier");
   if (d.statut === "clos") return "Réglé : " + eur(d.montant);
   if (d.statut === "refuse") return C.motif(d.motif) || "Refus validé";
   if (d.statut === "classe_sans_suite") return C.motif(d.motif) || "Classé";
@@ -597,24 +718,25 @@ function listeSimple(l) {
   }).join("") + "</ul>";
 }
 
-/* ---------------- Vue : Tous les dossiers ---------------- */
+/* ---------------- Vue : Dossiers en cours ---------------- */
 function vueDossiers() {
   var q = decodeURIComponent((location.hash.split("/")[2] || ""));
-  var h = '<div class="entete-vue"><div><h1>Tous les dossiers</h1><p>Recherche par numéro, contrat, immatriculation ou référence de votre outil.</p></div></div>' +
+  var statuts = Object.keys(C.STATUTS).filter(function (k) { return ["clos", "refuse", "classe_sans_suite"].indexOf(k) < 0; });
+  var h = bandeauCorporel() + '<div class="entete-vue"><div><h1>Dossiers en cours</h1><p>Espace ' + esc(C.ESPACES[S.branche].nom.toLowerCase()) + ". Recherche par numéro, contrat, immatriculation ou référence de votre outil. Les dossiers terminés sont dans les <a href=\"#/archives\">archives</a>.</p></div></div>" +
     '<section class="bloc"><div class="bloc-tete"><div class="filtres"><input class="saisie" id="f-q" type="search" placeholder="Rechercher" value="' + esc(q) + '">' +
     '<select class="saisie" id="f-statut"><option value="">Tous les statuts</option>' +
-    Object.keys(C.STATUTS).map(function (k) { return '<option value="' + k + '">' + esc(C.STATUTS[k][0]) + "</option>"; }).join("") +
+    statuts.map(function (k) { return '<option value="' + k + '">' + esc(C.STATUTS[k][0]) + "</option>"; }).join("") +
     '</select></div><span class="muet petit" id="f-n"></span></div><div class="tableau-wrap" id="f-table"></div></section>';
   $("vue").innerHTML = h;
   var t; function charger() {
     var s = $("f-statut").value, qq = $("f-q").value.trim();
-    api("dossiers?limite=300" + (s ? "&statut=" + s : "") + (qq ? "&q=" + encodeURIComponent(qq) : "")).then(function (l) {
+    api("dossiers?limite=500&termines=0" + qb("&") + (s ? "&statut=" + s : "") + (qq ? "&q=" + encodeURIComponent(qq) : "")).then(function (l) {
       $("f-n").textContent = l.length + " dossier" + (l.length > 1 ? "s" : "");
-      $("f-table").innerHTML = l.length ? '<table class="tableau"><thead><tr><th>Dossier</th><th>Type</th><th>Contrat</th><th>Sinistre</th><th>Statut</th><th class="nb">Montant</th><th>Mis à jour</th></tr></thead><tbody>' +
+      $("f-table").innerHTML = l.length ? '<table class="tableau"><thead><tr><th>Dossier</th><th>Type</th><th>Contrat</th><th>Sinistre</th><th>Statut</th><th>Suivi par</th><th class="nb">Montant</th><th>Mis à jour</th></tr></thead><tbody>' +
         l.map(function (d) {
           return '<tr data-n="' + esc(d.numero) + '" tabindex="0"><td><b>' + esc(d.numero) + '</b>' + (d.ref_externe ? '<div class="muet petit">' + esc(d.ref_externe) + "</div>" : "") + '</td><td>' + esc(C.theme(d.theme)) +
             '</td><td>' + esc(d.contrat || "Inconnu") + (d.immatriculation ? '<div class="muet petit">' + esc(d.immatriculation) + "</div>" : "") + '</td><td>' + esc(C.dateCourte(d.date_sinistre)) +
-            '</td><td>' + C.statut(d.statut) + '</td><td class="nb">' + esc(eur(d.montant)) + '</td><td class="muet">' + esc(C.depuis(d.maj)) + "</td></tr>";
+            '</td><td>' + C.statut(d.statut) + '</td><td class="muet">' + esc(d.gestionnaire || "Automatique") + '</td><td class="nb">' + esc(eur(d.montant)) + '</td><td class="muet">' + esc(C.depuis(d.maj)) + "</td></tr>";
         }).join("") + "</tbody></table>" : '<div class="vide"><b>Aucun dossier ne correspond</b>Modifiez la recherche ou le statut.</div>';
     }).catch(function (x) { C.toast(x.message, true); });
   }
@@ -625,14 +747,53 @@ function vueDossiers() {
   charger();
 }
 
+/* ---------------- Vue : Archives ---------------- */
+function vueArchives() {
+  var h = bandeauCorporel() + '<div class="entete-vue"><div><h1>Archives</h1><p>Tous les dossiers terminés : clos et payés, refusés ou classés. Chacun a aussi été remis complet à votre outil, avec son récapitulatif PDF.</p></div></div>' +
+    '<section class="bloc"><div class="bloc-tete"><div class="filtres"><input class="saisie" id="a-q" type="search" placeholder="Rechercher">' +
+    '<select class="saisie" id="a-statut"><option value="">Toutes les issues</option><option value="clos">Clos et payés</option><option value="refuse">Refusés</option><option value="classe_sans_suite">Classés</option></select>' +
+    '<select class="saisie" id="a-annee"><option value="">Toutes les années</option></select></div><span class="muet petit" id="a-n"></span></div><div class="tableau-wrap" id="a-table"></div></section>';
+  $("vue").innerHTML = h;
+  var tous = [], t;
+  function dessiner() {
+    var an = $("a-annee").value;
+    var l = tous.filter(function (d) { return !an || String(d.clos_le || d.maj).slice(0, 4) === an; });
+    $("a-n").textContent = l.length + " dossier" + (l.length > 1 ? "s" : "");
+    $("a-table").innerHTML = l.length ? '<table class="tableau"><thead><tr><th>Dossier</th><th>Type</th><th>Issue</th><th>Terminé le</th><th class="nb">Montant</th><th>Remis à votre outil</th><th>Données chez Klerio</th></tr></thead><tbody>' +
+      l.map(function (d) {
+        var cons = d.efface_le ? "Effacées le " + C.dateCourte(d.efface_le) : d.effacement_prevu ? "Effacement le " + C.dateCourte(d.effacement_prevu) : "Conservées";
+        return '<tr data-n="' + esc(d.numero) + '" tabindex="0"><td><b>' + esc(d.numero) + '</b>' + (d.ref_externe ? '<div class="muet petit">' + esc(d.ref_externe) + "</div>" : "") + '</td><td>' + esc(C.theme(d.theme)) +
+          '</td><td>' + C.statut(d.statut) + '</td><td>' + esc(C.dateCourte(d.clos_le)) + '</td><td class="nb">' + esc(eur(d.montant)) +
+          '</td><td>' + (d.archive_remise ? '<span class="statut ok">Oui</span>' : '<span class="statut neutre">En attente</span>') + '</td><td class="muet">' + esc(cons) + "</td></tr>";
+      }).join("") + "</tbody></table>" : '<div class="vide"><b>Aucun dossier terminé</b>Les dossiers clos, refusés ou classés apparaîtront ici.</div>';
+  }
+  function charger() {
+    var s = $("a-statut").value, q = $("a-q").value.trim();
+    api("archives?limite=1000" + qb("&") + (s ? "&statut=" + s : "") + (q ? "&q=" + encodeURIComponent(q) : "")).then(function (l) {
+      tous = l || [];
+      var annees = {}; tous.forEach(function (d) { annees[String(d.clos_le || d.maj).slice(0, 4)] = 1; });
+      var sel = $("a-annee"), v = sel.value;
+      sel.innerHTML = '<option value="">Toutes les années</option>' + Object.keys(annees).sort().reverse().map(function (a) { return '<option' + (a === v ? " selected" : "") + ">" + a + "</option>"; }).join("");
+      dessiner();
+    }).catch(function (x) { C.toast(x.message, true); });
+  }
+  $("a-q").addEventListener("input", function () { clearTimeout(t); t = setTimeout(charger, 250); });
+  $("a-statut").addEventListener("change", charger);
+  $("a-annee").addEventListener("change", dessiner);
+  $("a-table").addEventListener("click", function (e) { var tr = e.target.closest("tr[data-n]"); if (tr) ouvrirDossier(tr.dataset.n); });
+  $("a-table").addEventListener("keydown", function (e) { var tr = e.target.closest("tr[data-n]"); if (tr && e.key === "Enter") ouvrirDossier(tr.dataset.n); });
+  charger();
+}
+
 /* ---------------- Vue : Dossier ---------------- */
 var ETAPES = {
   BRIS_GLACE: ["Déclaration", "Analyse", "Contrat", "Réparateur missionné", "Facture", "Règlement validé", "Payé"],
   AUTO: ["Déclaration", "Analyse", "Contrat", "Expert et garage", "Expertise", "Facture et pièces", "Règlement validé", "Payé"],
-  GARANTIE_ACCIDENT: ["Déclaration", "Analyse", "Garantie", "Médecin missionné", "Conclusions médicales", "Pièces", "Capital validé", "Payé"]
+  GARANTIE_ACCIDENT: ["Déclaration", "Analyse", "Garantie", "Médecin missionné", "Conclusions médicales", "Pièces", "Capital validé", "Payé"],
+  VOL: ["Déclaration", "Analyse", "Contrat", "Expert missionné", "Évaluation", "Pièces et délai", "Indemnité validée", "Payé"]
 };
 function parcours(f) {
-  var t = f.theme === "BRIS_GLACE" ? "BRIS_GLACE" : f.theme === "GARANTIE_ACCIDENT" ? "GARANTIE_ACCIDENT" : "AUTO";
+  var t = f.theme === "BRIS_GLACE" ? "BRIS_GLACE" : f.theme === "GARANTIE_ACCIDENT" ? "GARANTIE_ACCIDENT" : f.theme === "VOL" ? "VOL" : "AUTO";
   var noms = ETAPES[t];
   var exp = f.expertises || [], regl = (f.reglements || []).filter(function (r) { return r.statut !== "annule"; });
   var manque = (f.pieces || []).filter(function (p) { return p.obligatoire && !p.recue_le; });
@@ -643,6 +804,7 @@ function parcours(f) {
   var fait;
   if (t === "BRIS_GLACE") fait = [true, a, c, m, has("facture"), valide, paye];
   else if (t === "AUTO") fait = [true, a, c, m, has("expertise_auto"), has("facture") && !manque.length, valide, paye];
+  else if (t === "VOL") fait = [true, a, c, m, has("expertise_auto"), has("expertise_auto") && !manque.length && regl.length > 0, valide, paye];
   else fait = [true, a, c, m, has("expertise_medicale"), m && !manque.length, valide, paye];
   var ici = fait.indexOf(false); if (ici < 0) ici = noms.length;
   var fin = f.statut === "refuse" ? "ko" : f.statut === "classe_sans_suite" ? "neutre" : null;
@@ -666,6 +828,7 @@ function legendeParcours(f) {
   if (C.attendVous(f.statut)) return "Le dossier attend votre décision : rien ne part sans votre validation.";
   var m = (f.pieces || []).filter(function (p) { return p.obligatoire && !p.recue_le; });
   if (f.statut === "mission_envoyee") return "Mission envoyée. Klerio relance automatiquement sans réponse sous 7 jours.";
+  if (f.statut === "attente_pieces" && f.theme === "VOL" && !m.length) return "Pièces reçues. L'indemnité est proposée automatiquement à la fin du délai de recherche du véhicule.";
   if (f.statut === "attente_pieces") return m.length ? "En attente de : " + m.map(function (p) { return p.libelle; }).join(", ") + "." : "En attente de pièces.";
   if (f.statut === "reglement_envoye") return "Virement ordonné. Le dossier se clôt dès la confirmation du paiement.";
   return C.motif(f.motif) || "";
@@ -682,6 +845,7 @@ function afficherDossier(f) {
     '<span>Sinistre du ' + esc(C.dateFr(f.date_sinistre)) + "</span>" + (f.ref_externe ? "<span>Réf. compagnie " + esc(f.ref_externe) + "</span>" : "") + "</div></div>" +
     '<div class="muet petit" style="text-align:right">Ouvert ' + esc(C.depuis(f.cree)) + "<br>Mis à jour " + esc(C.depuis(f.maj)) + "</div></div>";
   h += '<section class="parcours" aria-label="Parcours du dossier">' + parcours(f) + '<p class="parcours-legende">' + esc(legendeParcours(f)) + "</p></section>";
+  h += barreTitulaire(f);
 
   h += '<div class="fiche-grille"><div>';
   h += carteAction(f);
@@ -703,7 +867,7 @@ function afficherDossier(f) {
     (ctr.numero ? '<dl class="info-liste"><dt>Numéro</dt><dd>' + esc(ctr.numero) + "</dd>" + (ctr.immatriculation ? "<dt>Véhicule</dt><dd>" + esc(ctr.immatriculation) + "</dd>" : "") +
       "<dt>Assuré</dt><dd>" + esc(ctr.assure_ref) + "</dd><dt>Effet</dt><dd>" + esc(C.dateCourte(ctr.date_effet)) + (ctr.date_fin ? " au " + esc(C.dateCourte(ctr.date_fin)) : "") + "</dd>" +
       "<dt>Garanties</dt><dd>" + ((ctr.garanties || []).map(function (g) {
-        return esc({ BRIS_GLACE: "Bris de glace", DOMMAGES_TOUS_ACCIDENTS: "Dommages tous accidents", VOL_VANDALISME: "Vol et vandalisme", GARANTIE_ACCIDENT: "Garantie Accident" }[g.code] || g.code) +
+        return esc(C.GARANTIES[g.code] || g.code) +
           '<span class="muet">' + (g.option ? ", option " + g.option : ", franchise " + eur(g.franchise)) + "</span>";
       }).join("<br>") || "Aucune") + "</dd></dl>" : '<p class="muet">Aucun contrat rattaché.</p>') + "</div></section>";
   h += blocPrestataires(f);
@@ -711,6 +875,19 @@ function afficherDossier(f) {
   h += "</aside></div>";
   $("vue").innerHTML = h;
   brancherFiche(f);
+}
+
+/* Qui suit le dossier : prise en charge, renvoi au responsable, réaffectation */
+function barreTitulaire(f) {
+  if (FINIS.indexOf(f.statut) >= 0 && !f.gestionnaire) return "";
+  var moi = S.moi || {}, g = f.gestionnaire, mien = g && g.id === moi.id, resp = estResponsable();
+  var txt = g ? (mien ? "Vous suivez ce dossier" : "Suivi par <b>" + esc(g.nom) + "</b>") + (f.pris_le ? '<span class="muet"> depuis ' + esc(C.depuis(f.pris_le).replace("il y a ", "")) + "</span>" : "")
+              : "Dossier dans la file commune" + (f.renvoye_manager ? '<span class="muet"> : renvoyé par ' + esc(f.renvoye_manager.par) + ", « " + esc(f.renvoye_manager.motif) + " »</span>" : "");
+  var b = "";
+  if (!g && FINIS.indexOf(f.statut) < 0) b += '<button class="btn petit primaire" id="t-prendre">Prendre le dossier</button>';
+  if (mien) b += '<button class="btn petit" id="t-renvoyer">Renvoyer au responsable</button>';
+  if (resp) b += '<button class="btn petit discret" id="t-reaffecter">Réaffecter</button><span id="t-choix"></span>';
+  return '<div class="titulaire-barre"><span>' + txt + '</span><span class="actions">' + b + "</span></div>";
 }
 
 function propoValidation(f) { return (f.validations_en_attente || []).slice(-1)[0]; }
@@ -731,10 +908,11 @@ function carteAction(f) {
       oui = "Confirmer le refus"; non = "Écarter et prendre en charge";
       loi = "Aucun refus n'est notifié sans votre validation (RGPD, article 22). Votre identifiant est enregistré au journal.";
     } else if (v.etape === "prereglement") {
-      titre = p.beneficiaire === "assure" ? "Valider le versement du capital invalidité" : "Valider le règlement au réparateur";
-      expl = p.beneficiaire === "assure" ? "Calcul fait sur la base des conclusions du médecin expert et du barème de la garantie." : "Calcul fait sur la base de la facture contrôlée, après déduction de la franchise du contrat.";
+      var vol = f.theme === "VOL";
+      titre = vol ? "Valider l'indemnité pour le vol du véhicule" : p.beneficiaire === "assure" ? "Valider le versement du capital invalidité" : "Valider le règlement au réparateur";
+      expl = vol ? "Valeur de remplacement fixée par l'expert, véhicule non retrouvé dans le délai du contrat, franchise déduite." : p.beneficiaire === "assure" ? "Calcul fait sur la base des conclusions du médecin expert et du barème de la garantie." : "Calcul fait sur la base de la facture contrôlée, après déduction de la franchise du contrat.";
       if (p.formule) corps = '<p class="formule">' + esc(frNum(p.formule)) + "</p>";
-      corps += '<div class="decompte">' + (p.beneficiaire === "assure" ?
+      corps += '<div class="decompte">' + (p.beneficiaire === "assure" && !vol ?
         "<span>Capital brut</span><span class='nb'>" + esc(eur(p.capital_brut)) + "</span><span>Prestations CPAM déduites</span><span class='nb'>" + esc(eur(-(p.deduction_cpam || 0))) + "</span>" +
         (Number(p.capital_net) > Number(p.capital_brut) - Number(p.deduction_cpam || 0) ? "<span class='muet petit' style='grid-column:1/-1'>Plancher de 50 % du capital appliqué (accident de la vie privée).</span>" : "") :
         "<span>Montant retenu" + (p.tva_recuperable ? " HT" : " TTC") + "</span><span class='nb'>" + esc(eur(p.montant_base)) + "</span><span>Franchise</span><span class='nb'>" + esc(eur(-(p.franchise_eur || 0))) + "</span>") +
@@ -763,8 +941,8 @@ function carteAction(f) {
   if (f.statut === "hors_perimetre") {
     return '<section class="decision"><div class="decision-entete">À reprendre</div><div class="decision-corps"><h2>' + (f.motif === "reouverture" ? "Dossier rouvert" : "Ce dossier sort du circuit automatique") + '</h2><p class="explication">' + esc(C.motif(f.motif)) +
       ". Choisissez le type de sinistre pour le relancer dans le circuit, ou classez-le.</p>" +
-      '<div class="grille-2"><label class="champ">Type retenu<select class="saisie" id="r-theme"><option value="BRIS_GLACE">Bris de glace</option><option value="PERTE_CONTROLE_OBSTACLE_FIXE">Perte de contrôle</option><option value="VANDALISME">Vandalisme</option><option value="GARANTIE_ACCIDENT">Garantie Accident</option></select></label>' +
-      '<label class="champ">Commentaire<input class="saisie" id="r-com" placeholder="Ce que vous avez vérifié"></label></div>' +
+      '<div class="grille-2"><label class="champ">Type retenu<select class="saisie" id="r-theme">' + C.ESPACES.materiel.themes.concat(C.ESPACES.corporel.themes).map(function (k) { return '<option value="' + k + '"' + (k === f.theme ? " selected" : "") + ">" + esc(C.theme(k)) + "</option>"; }).join("") + '</select></label>' +
+      '<label class="champ">Commentaire<input class="saisie" id="r-com" placeholder="' + (f.motif === "arrete_catnat_absent" ? "Référence de l\'arrêté (date et Journal officiel)" : "Ce que vous avez vérifié") + '"></label></div>' +
       '<div class="decision-actions"><button class="btn primaire" id="r-prendre">Reprendre dans le circuit</button><button class="btn" id="r-classer">Classer le dossier</button>' +
       (f.motif === "analyse_ia_en_echec" ? '<button class="btn discret" id="r-reanalyser">Relancer l\'analyse</button>' : "") + "</div></div></section>";
   }
@@ -1019,11 +1197,13 @@ var ACTIONS = { creation_dossier: "Dossier créé à partir de la déclaration",
   reprise_analyse: "Analyse relancée", reprise_gestionnaire: "Repris par un gestionnaire", classement_sans_suite: "Classé par un gestionnaire",
   pieces_recues: "Pièces reçues", reponse_portail: "Réponse reçue par l'espace en ligne", lecture_document: "Document lu par Klerio", document_applique: "Document validé par un gestionnaire", document_ecarte: "Document écarté", archivage_jeu_test: "Archivé",
   information_recue: "Information reçue notée", action_information: "Suite donnée à une information reçue", reouverture: "Dossier rouvert",
-  archive_envoyee: "Dossier complet envoyé à votre outil", archive_recuperee: "Archive téléchargée par votre outil", effacement_donnees: "Données personnelles effacées chez Klerio" };
+  archive_envoyee: "Dossier complet envoyé à votre outil", prise_dossier: "Dossier pris en charge", renvoi_manager: "Renvoyé au responsable",
+  reaffectation: "Dossier réaffecté", attribution: "Dossier attribué automatiquement", archive_recuperee: "Archive téléchargée par votre outil", effacement_donnees: "Données personnelles effacées chez Klerio" };
 function acteur(a) {
   a = a || "";
   if (a === "ia") return '<span class="acteur ia">Claude</span>';
   if (a === "ia:lecture") return '<span class="acteur ia">Claude, lecture du document</span>';
+  if (a.indexOf("automatique:") === 0) return '<span class="acteur ia">Klerio, décision automatique</span>';
   if (a.indexOf("outil") === 0) return '<span class="acteur">Outil de la compagnie</span>';
   if (a.indexOf("humain:") === 0) return '<span class="acteur humain">' + esc(a.slice(7)) + "</span>";
   if (a.indexOf("portail:") === 0) return '<span class="acteur partenaire">' + esc(C.ROLES[a.slice(8)] || a.slice(8)) + "</span>";
@@ -1069,6 +1249,7 @@ function brancherFiche(f) {
     };
   });
   brancherSuivi(f);
+  brancherTitulaire(f);
   var oui = $("d-oui"), non = $("d-non");
   function decider(resultat, btn) {
     var com = $("d-com").value.trim();
@@ -1116,6 +1297,34 @@ function brancherFiche(f) {
         .catch(function (x) { C.occupe(b, false); C.toast(x.message, true); });
     });
   });
+}
+
+function brancherTitulaire(f) {
+  var tp = $("t-prendre"), tr = $("t-renvoyer"), ta = $("t-reaffecter");
+  if (tp) tp.onclick = function () {
+    C.occupe(tp, true, "");
+    api("prendre", { body: { numero: f.numero } }).then(function () { C.toast("Vous suivez ce dossier"); vueDossier(f.numero); })
+      .catch(function (x) { C.occupe(tp, false); C.toast(x.message, true); });
+  };
+  if (tr) tr.onclick = function () {
+    var m = prompt("Pourquoi renvoyez-vous ce dossier à votre responsable ?");
+    if (!m || !m.trim()) return;
+    api("renvoyer", { body: { numero: f.numero, motif: m.trim() } }).then(function () { C.toast("Dossier renvoyé à votre responsable"); location.hash = "#/file"; })
+      .catch(function (x) { C.toast(x.message, true); });
+  };
+  if (ta) ta.onclick = function () {
+    ta.disabled = true;
+    api("pilotage-equipe" + qb()).then(function (p) {
+      var l = (p.gestionnaires || []).filter(function (g) { return g.actif; });
+      $("t-choix").innerHTML = '<select class="saisie" id="t-vers" style="min-width:200px"><option value="">File commune</option>' +
+        l.map(function (g) { return '<option value="' + esc(g.id) + '"' + (f.gestionnaire && f.gestionnaire.id === g.id ? " selected" : "") + ">" + esc(g.nom) + " (" + g.a_traiter + " à traiter)</option>"; }).join("") +
+        '</select> <button class="btn petit primaire" id="t-ok">Valider</button>';
+      $("t-ok").onclick = function () {
+        api("reaffecter", { body: { numero: f.numero, vers: $("t-vers").value || null } }).then(function () { C.toast("Dossier réaffecté"); vueDossier(f.numero); })
+          .catch(function (x) { C.toast(x.message, true); });
+      };
+    }).catch(function (x) { ta.disabled = false; C.toast(x.message, true); });
+  };
 }
 
 function brancherSuivi(f) {
@@ -1182,33 +1391,40 @@ var MODELES = [
   { n: "Pare-brise fissuré", d: { numero_contrat: "AUTO-2025-0001", theme: "BRIS_GLACE", code_postal: "77140", ville: "Nemours", recit: "Un gravillon projeté par un camion sur la N7 a fissuré le pare-brise sur une vingtaine de centimètres. Aucun autre dégât sur le véhicule." } },
   { n: "Choc contre un poteau", d: { numero_contrat: "AUTO-2025-0004", theme: "PERTE_CONTROLE_OBSTACLE_FIXE", code_postal: "77300", ville: "Fontainebleau", recit: "En manœuvrant sur le parking du supermarché, j'ai reculé dans un poteau en béton. Personne d'autre n'est impliqué. Le pare-chocs arrière et le hayon sont enfoncés." } },
   { n: "Voiture vandalisée", d: { numero_contrat: "AUTO-2025-0004", theme: "VANDALISME", code_postal: "77300", ville: "Fontainebleau", recit: "Pendant la nuit, ma voiture garée dans la rue a été rayée sur tout le côté passager et les deux rétroviseurs ont été cassés. J'ai déposé plainte au commissariat ce matin." } },
+  { n: "Tentative de vol", d: { numero_contrat: "AUTO-2025-0001", theme: "TENTATIVE_VOL", code_postal: "77140", ville: "Nemours", recit: "Ce matin, la serrure de la portière conducteur était forcée et le neiman cassé. Le véhicule est toujours là mais ne démarre plus. Plainte déposée au commissariat." } },
+  { n: "Voiture volée", d: { numero_contrat: "AUTO-2025-0001", theme: "VOL", code_postal: "77140", ville: "Nemours", recit: "Ma voiture garée devant chez moi a disparu pendant la nuit. J'ai déposé plainte ce matin, j'ai toujours les deux jeux de clés." } },
+  { n: "Incendie sur parking", d: { numero_contrat: "AUTO-2025-0004", theme: "INCENDIE", code_postal: "77300", ville: "Fontainebleau", recit: "Le véhicule a pris feu dans la nuit sur le parking de la résidence. Les pompiers sont intervenus, l'avant est entièrement brûlé." } },
+  { n: "Grêle", d: { numero_contrat: "AUTO-2025-0004", theme: "EVENEMENT_CLIMATIQUE", code_postal: "77300", ville: "Fontainebleau", recit: "Un orage de grêle a criblé le capot, le toit et le coffre de dizaines d'impacts. Pas de vitre cassée." } },
+  { n: "Inondation (cat nat)", d: { numero_contrat: "AUTO-2025-0001", theme: "CATASTROPHE_NATURELLE", code_postal: "77140", ville: "Nemours", arrete_catnat: "Arrêté du 12/09/2026, JO du 15/09/2026", recit: "La crue du Loing a inondé la rue, ma voiture a été submergée jusqu'aux sièges." } },
   { n: "Entorse, fracture simple", d: { numero_contrat: "GA-2025-0006", theme: "GARANTIE_ACCIDENT", code_postal: "77140", ville: "Nemours", victime: { age: 28, lien: "conjoint" }, recit: "Mon conjoint a chuté en randonnée dans les gorges de Franchard. Fracture simple de la malléole externe (fibula) non déplacée, traitée par une botte pendant six semaines." } },
   { n: "Fracture du poignet opérée", d: { numero_contrat: "GA-2024-0005", theme: "GARANTIE_ACCIDENT", code_postal: "45200", ville: "Montargis", victime: { age: 52, lien: "societaire" }, recit: "Chute sur le verglas devant mon domicile. Fracture du poignet droit (radius) déplacée, opérée avec broches. Rééducation en cours depuis un mois." } }
 ];
 function vueDeclarer() {
   var auj = new Date(); auj.setDate(auj.getDate() - 1);
-  var h = '<div class="entete-vue"><div><h1>Déclarer un sinistre</h1><p>En production, les déclarations arrivent directement de votre outil par l\'API. Cette saisie sert aux déclarations prises au téléphone et aux essais.</p></div></div>' +
+  var h = bandeauCorporel() + '<div class="entete-vue"><div><h1>Déclarer un sinistre</h1><p>En production, les déclarations arrivent directement de votre outil par l\'API. Cette saisie sert aux déclarations prises au téléphone et aux essais.</p></div></div>' +
     '<section class="bloc"><div class="bloc-tete"><h2>Partir d\'un exemple</h2><span class="muet petit">' + (S.env === "test" ? "Contrats fictifs de l\'essai" : "Contrats de démonstration") + '</span></div><div class="bloc-corps" style="display:flex;gap:8px;flex-wrap:wrap">' +
-    MODELES.map(function (m, i) { return '<button class="btn petit" data-m="' + i + '">' + esc(m.n) + "</button>"; }).join("") + "</div></section>" +
+    MODELES.map(function (m, i) { return C.ESPACES[S.branche].themes.indexOf(m.d.theme) < 0 ? "" : '<button class="btn petit" data-m="' + i + '">' + esc(m.n) + "</button>"; }).join("") + "</div></section>" +
     '<section class="bloc"><form class="bloc-corps pile" id="form-decl" novalidate style="gap:18px">' +
     '<div class="grille-3"><label class="champ">Numéro de contrat<input class="saisie" id="d-contrat" list="contrats" required></label>' +
-    '<label class="champ">Type déclaré<select class="saisie" id="d-theme"><option value="BRIS_GLACE">Bris de glace</option><option value="PERTE_CONTROLE_OBSTACLE_FIXE">Perte de contrôle</option><option value="VANDALISME">Vandalisme</option><option value="GARANTIE_ACCIDENT">Garantie Accident</option><option value="AUTRE">Autre</option></select></label>' +
+    '<label class="champ">Type déclaré<select class="saisie" id="d-theme">' + C.ESPACES[S.branche].themes.concat(["AUTRE"]).map(function (k) { return '<option value="' + k + '">' + esc(C.theme(k)) + "</option>"; }).join("") + '</select></label>' +
     '<label class="champ">Date du sinistre<input class="saisie" id="d-date" type="date" required value="' + auj.toISOString().slice(0, 10) + '"></label></div>' +
-    '<datalist id="contrats">' + (S.env === "test" ? ["ESSAI-AUTO-0001", "ESSAI-AUTO-0002", "ESSAI-AUTO-0003", "ESSAI-GA-0004"] : ["AUTO-2025-0001", "AUTO-2025-0002", "AUTO-2024-0003", "AUTO-2025-0004", "GA-2024-0005", "GA-2025-0006"]).map(function (n) { return '<option value="' + n + '">'; }).join("") + '</datalist>' +
+    '<datalist id="contrats">' + (S.branche === "corporel" ? (S.env === "test" ? ["ESSAI-GA-0004"] : ["GA-2024-0005", "GA-2025-0006"]) : (S.env === "test" ? ["ESSAI-AUTO-0001", "ESSAI-AUTO-0002", "ESSAI-AUTO-0003"] : ["AUTO-2025-0001", "AUTO-2025-0002", "AUTO-2024-0003", "AUTO-2025-0004"])).map(function (n) { return '<option value="' + n + '">'; }).join("") + '</datalist>' +
     '<div class="grille-3"><label class="champ">Code postal du lieu<input class="saisie" id="d-cp" inputmode="numeric" maxlength="5" required></label><label class="champ">Commune<input class="saisie" id="d-ville"></label>' +
     '<label class="champ">Votre référence <span class="aide">facultatif</span><input class="saisie" id="d-ref"></label></div>' +
     '<div class="grille-3" id="d-ga" hidden><label class="champ">Âge de la victime<input class="saisie" id="d-age" type="number" min="0" max="120"></label>' +
     '<label class="champ">Lien avec le sociétaire<select class="saisie" id="d-lien">' + Object.keys(C.LIENS).map(function (k) { return '<option value="' + k + '">' + esc(C.LIENS[k]) + "</option>"; }).join("") + "</select></label></div>" +
+    '<div class="grille-3" id="d-cn" hidden><label class="champ" style="grid-column:span 2">Arrêté de catastrophe naturelle <span class="aide">date et Journal officiel ; sans arrêté, le dossier vous revient</span><input class="saisie" id="d-arrete"></label></div>' +
     '<label class="champ">Récit de l\'assuré <span class="aide">Ses mots, tels quels.</span><textarea class="saisie" id="d-recit" rows="5" required></textarea></label>' +
     '<div class="decision-actions"><button class="btn primaire" id="d-envoyer" type="submit">Enregistrer la déclaration</button><span class="muet petit">L\'analyse prend une dizaine de secondes.</span></div></form></section>';
   $("vue").innerHTML = h;
-  function majGA() { $("d-ga").hidden = $("d-theme").value !== "GARANTIE_ACCIDENT"; }
+  function majGA() { $("d-ga").hidden = $("d-theme").value !== "GARANTIE_ACCIDENT"; $("d-cn").hidden = $("d-theme").value !== "CATASTROPHE_NATURELLE"; }
   $("d-theme").addEventListener("change", majGA);
   document.querySelectorAll("[data-m]").forEach(function (b) {
     b.addEventListener("click", function () {
       var m = MODELES[b.dataset.m].d;
       $("d-contrat").value = contrat(m.numero_contrat); $("d-theme").value = m.theme; $("d-cp").value = m.code_postal; $("d-ville").value = m.ville; $("d-recit").value = m.recit;
       if (m.victime) { $("d-age").value = m.victime.age; $("d-lien").value = m.victime.lien; }
+      $("d-arrete").value = m.arrete_catnat || "";
       majGA();
     });
   });
@@ -1217,6 +1433,7 @@ function vueDeclarer() {
     var corps = { numero_contrat: $("d-contrat").value.trim(), theme: $("d-theme").value, date_sinistre: $("d-date").value, code_postal: $("d-cp").value.trim(),
       ville: $("d-ville").value.trim() || undefined, ref_externe: $("d-ref").value.trim() || undefined, recit: $("d-recit").value.trim() };
     if (corps.theme === "GARANTIE_ACCIDENT") corps.victime = { age: Number($("d-age").value) || null, lien: $("d-lien").value };
+    if (corps.theme === "CATASTROPHE_NATURELLE" && $("d-arrete").value.trim()) corps.arrete_catnat = $("d-arrete").value.trim();
     if (!corps.numero_contrat || !corps.date_sinistre || !/^\d{5}$/.test(corps.code_postal) || corps.recit.length < 10) {
       C.toast("Renseignez le contrat, la date, un code postal à 5 chiffres et le récit.", true); return;
     }
@@ -1270,9 +1487,10 @@ function dessinerBoites() {
 
 /* ---------------- Vue : Pilotage ---------------- */
 function vuePilotage() {
-  api("indicateurs").then(function (i) {
+  Promise.all([api("indicateurs" + qb()), estResponsable() ? api("pilotage-equipe" + qb()) : Promise.resolve(null)]).then(function (r) {
+    var i = r[0], eq = r[1];
     compter(i);
-    var h = '<div class="entete-vue"><div><h1>Pilotage</h1><p>Dossiers de ' + esc(i.assureur) + ", hors jeux de test archivés.</p></div></div>";
+    var h = bandeauCorporel() + '<div class="entete-vue"><div><h1>Pilotage</h1><p>Espace ' + esc(C.ESPACES[S.branche].nom.toLowerCase()) + " de " + esc(i.assureur) + ", hors jeux de test archivés.</p></div></div>";
     var delai = i.delai_moyen_cloture_heures;
     h += '<div class="chiffres">' +
       '<div class="chiffre"><div class="val">' + (i.en_cours || 0) + '</div><div class="lib">Dossiers en cours sur ' + (i.total || 0) + "</div></div>" +
@@ -1290,8 +1508,49 @@ function vuePilotage() {
       "<dt>Courriers préparés</dt><dd>" + ((i.courriers || {}).total || 0) + "</dd><dt>Partis par email</dt><dd>" + ((i.courriers || {}).envoyes || 0) + "</dd>" +
       "<dt>Échecs d'envoi</dt><dd>" + ((i.courriers || {}).erreurs || 0) + "</dd><dt>Déclarations lues par Claude</dt><dd>" + (i.analyses_ia || 0) + "</dd>" +
       "<dt>Fiabilité moyenne</dt><dd>" + (i.confiance_moyenne != null ? Math.round(i.confiance_moyenne * 100) + " %" : "–") + "</dd></dl></div></section></div>";
+    if (eq) { var i0 = h.indexOf('<div class="deux">'); h = h.slice(0, i0) + '<div style="margin-top:16px">' + blocEquipePilotage(eq) + "</div>" + h.slice(i0); }
     $("vue").innerHTML = h;
+    brancherEquipePilotage(eq);
   }).catch(erreurVue);
+}
+/* Pilotage de l'équipe : réservé aux superviseurs et administrateurs */
+var SERVICES = { materiel: "Matériel", corporel: "Corporel", tous: "Les deux" };
+function blocEquipePilotage(eq) {
+  var g = eq.gestionnaires || [], auto = eq.decisions_automatiques_30j || 0, hum = eq.decisions_humaines_30j || 0;
+  var h = '<section class="bloc" style="margin-top:0"><div class="bloc-tete"><h2>Équipe</h2><span class="muet petit">' +
+    (eq.mode_repartition === "repartition" ? "Dossiers répartis automatiquement entre les gestionnaires" : "File commune : chacun prend ses dossiers") + "</span></div>" +
+    '<div class="bloc-corps"><div class="tuiles" style="margin-bottom:0">' +
+    '<div class="tuile' + (eq.sans_titulaire ? " vous" : "") + '"><div class="val">' + (eq.sans_titulaire || 0) + '</div><div class="lib">Décisions sans gestionnaire attitré</div></div>' +
+    '<div class="tuile' + ((eq.renvoyes || []).length ? " vous" : "") + '"><div class="val">' + (eq.renvoyes || []).length + '</div><div class="lib">Renvoyés au responsable</div></div>' +
+    '<div class="tuile"><div class="val">' + auto + '</div><div class="lib">Décisions automatiques, 30 jours</div></div>' +
+    '<div class="tuile"><div class="val">' + hum + '</div><div class="lib">Décisions humaines, 30 jours</div></div></div></div>';
+  h += '<div class="tableau-wrap"><table class="tableau"><thead><tr><th>Gestionnaire</th><th>Service</th><th class="nb">Dossiers suivis</th><th class="nb">À traiter</th><th class="nb">Décisions 30 j</th><th class="nb">Montant validé 30 j</th><th class="nb">Terminés 30 j</th><th>Types en cours</th><th>Dernière connexion</th></tr></thead><tbody>' +
+    g.map(function (x) {
+      var types = Object.keys(x.par_type || {}).map(function (k) { return C.theme(k) + " " + x.par_type[k]; }).join(", ");
+      return '<tr style="cursor:default"><td><b>' + esc(x.nom) + '</b><div class="muet petit">' + esc(ROLES_G[x.role] || x.role) + (x.actif ? "" : ", désactivé") + '</div></td><td>' + esc(SERVICES[x.service] || x.service) +
+        '</td><td class="nb">' + x.en_cours + '</td><td class="nb">' + (x.a_traiter ? "<b>" + x.a_traiter + "</b>" : 0) + '</td><td class="nb">' + x.decisions_30j + '</td><td class="nb">' + esc(eur(x.montant_valide_30j)) +
+        '</td><td class="nb">' + x.clos_30j + '</td><td class="muet">' + esc(types || "Aucun") + '</td><td class="muet">' + esc(x.derniere_connexion ? C.depuis(x.derniere_connexion) : "Jamais") + "</td></tr>";
+    }).join("") + "</tbody></table></div>";
+  if ((eq.renvoyes || []).length) {
+    h += '<div class="bloc-corps pile"><h3>Renvoyés au responsable</h3>' + eq.renvoyes.map(function (r) {
+      return '<div class="titulaire-barre" style="margin:0"><span><a href="#/dossier/' + esc(r.numero) + '"><b>' + esc(r.numero) + "</b></a> · " + esc(C.theme(r.theme)) + '<span class="muet"> : ' + esc(r.renvoi.par) + ", « " + esc(r.renvoi.motif) + " »</span></span>" +
+        '<span class="actions"><select class="saisie" style="max-width:220px" data-vers="' + esc(r.numero) + '"><option value="">File commune</option>' +
+        g.filter(function (x) { return x.actif; }).map(function (x) { return '<option value="' + esc(x.id) + '">' + esc(x.nom) + "</option>"; }).join("") +
+        '</select><button class="btn petit primaire" data-reaff="' + esc(r.numero) + '">Réaffecter</button></span></div>';
+    }).join("") + "</div>";
+  }
+  return h + "</section>";
+}
+function brancherEquipePilotage(eq) {
+  if (!eq) return;
+  document.querySelectorAll("[data-reaff]").forEach(function (b) {
+    b.onclick = function () {
+      var n = b.dataset.reaff, v = document.querySelector('[data-vers="' + n + '"]').value;
+      C.occupe(b, true, "");
+      api("reaffecter", { body: { numero: n, vers: v || null } }).then(function () { C.toast("Dossier " + n + " réaffecté"); vuePilotage(); })
+        .catch(function (x) { C.occupe(b, false); C.toast(x.message, true); });
+    };
+  });
 }
 function barres(o, lib, vous) {
   o = o || {}; var k = Object.keys(o).sort(function (a, b) { return o[b] - o[a]; }), max = Math.max.apply(null, k.map(function (x) { return o[x]; }).concat([1]));
@@ -1304,11 +1563,12 @@ function barres(o, lib, vous) {
 var ROLES_G = { gestionnaire: "Gestionnaire", superviseur: "Superviseur", admin: "Administrateur" };
 function vueEquipe() {
   api("equipe").then(function (l) {
-    var h = '<div class="entete-vue"><div><h1>Équipe</h1><p>Chaque personne a son propre compte. Son plafond limite les règlements qu\'elle peut valider seule ; au-delà, un superviseur valide.</p></div></div>';
-    h += '<section class="bloc"><div class="bloc-tete"><h2>Comptes<span class="compte">' + l.length + '</span></h2></div><div class="tableau-wrap"><table class="tableau"><thead><tr><th>Nom</th><th>Email</th><th>Rôle</th><th class="nb">Plafond de règlement</th><th>Dernière connexion</th><th>État</th><th></th></tr></thead><tbody>' +
+    var h = '<div class="entete-vue"><div><h1>Équipe</h1><p>Chaque personne a son propre compte. Son service limite ce qu\'elle voit : matériel, corporel ou les deux. Son plafond limite les règlements qu\'elle peut valider seule ; au-delà, un superviseur valide.</p></div></div>';
+    h += '<section class="bloc"><div class="bloc-tete"><h2>Comptes<span class="compte">' + l.length + '</span></h2></div><div class="tableau-wrap"><table class="tableau"><thead><tr><th>Nom</th><th>Email</th><th>Rôle</th><th>Service</th><th class="nb">Plafond de règlement</th><th>Dernière connexion</th><th>État</th><th></th></tr></thead><tbody>' +
       l.map(function (g) {
         return '<tr style="cursor:default"><td>' + esc(g.nom) + '</td><td class="muet">' + esc(g.email) + '</td><td><select class="saisie" data-role="' + g.id + '" style="min-width:150px">' +
           Object.keys(ROLES_G).map(function (k) { return '<option value="' + k + '"' + (k === g.role ? " selected" : "") + ">" + ROLES_G[k] + "</option>"; }).join("") + '</select></td>' +
+          '<td><select class="saisie" data-service="' + g.id + '" style="min-width:120px">' + Object.keys(SERVICES).map(function (k) { return '<option value="' + k + '"' + (k === g.service ? " selected" : "") + ">" + SERVICES[k] + "</option>"; }).join("") + "</select></td>" +
           '<td class="nb"><input class="saisie" data-plafond="' + g.id + '" type="number" min="0" step="100" placeholder="Sans plafond" value="' + (g.plafond_eur == null ? "" : esc(g.plafond_eur)) + '" style="max-width:140px;text-align:right"></td>' +
           '<td class="muet">' + esc(g.derniere_connexion ? C.depuis(g.derniere_connexion) : "Jamais") + '</td><td>' + (g.actif ? '<span class="statut ok">Actif</span>' : '<span class="statut neutre">Désactivé</span>') + '</td>' +
           '<td class="nb"><button class="btn petit" data-enreg="' + g.id + '">Enregistrer</button> <button class="btn petit discret" data-actif="' + g.id + '" data-val="' + (!g.actif) + '">' + (g.actif ? "Désactiver" : "Réactiver") + "</button></td></tr>";
@@ -1316,14 +1576,15 @@ function vueEquipe() {
     h += '<section class="bloc"><div class="bloc-tete"><h2>Ajouter une personne</h2></div><form class="bloc-corps pile" id="form-equipe" novalidate><div class="grille-3">' +
       '<label class="champ">Nom<input class="saisie" id="e-nom" required></label><label class="champ">Email professionnel<input class="saisie" id="e-email" type="email" required></label>' +
       '<label class="champ">Rôle<select class="saisie" id="e-role">' + Object.keys(ROLES_G).map(function (k) { return '<option value="' + k + '">' + ROLES_G[k] + "</option>"; }).join("") + '</select></label></div>' +
-      '<div class="grille-3"><label class="champ">Plafond de règlement <span class="aide">en €, vide = sans plafond</span><input class="saisie" id="e-plafond" type="number" min="0" step="100" value="1500"></label></div>' +
+      '<div class="grille-3"><label class="champ">Service<select class="saisie" id="e-service">' + Object.keys(SERVICES).map(function (k) { return '<option value="' + k + '">' + SERVICES[k] + "</option>"; }).join("") + '</select></label>' +
+      '<label class="champ">Plafond de règlement <span class="aide">en €, vide = sans plafond</span><input class="saisie" id="e-plafond" type="number" min="0" step="100" value="1500"></label></div>' +
       '<div class="decision-actions"><button class="btn primaire" id="e-ok" type="submit">Créer le compte</button></div><div id="e-res"></div></form></section>';
     $("vue").innerHTML = h;
     document.querySelectorAll("[data-enreg]").forEach(function (b) {
       b.onclick = function () {
         var id = b.dataset.enreg, pl = document.querySelector('[data-plafond="' + id + '"]').value;
         C.occupe(b, true, "");
-        api("equipe", { body: { id: id, role: document.querySelector('[data-role="' + id + '"]').value, plafond_eur: pl === "" ? null : Number(pl) } })
+        api("equipe", { body: { id: id, role: document.querySelector('[data-role="' + id + '"]').value, service: document.querySelector('[data-service="' + id + '"]').value, plafond_eur: pl === "" ? null : Number(pl) } })
           .then(function () { C.toast("Compte mis à jour"); vueEquipe(); }).catch(function (x) { C.occupe(b, false); C.toast(x.message, true); });
       };
     });
@@ -1337,7 +1598,7 @@ function vueEquipe() {
       e.preventDefault();
       var b = $("e-ok"), pl = $("e-plafond").value;
       C.occupe(b, true, "Création");
-      api("equipe", { body: { nom: $("e-nom").value.trim(), email: $("e-email").value.trim(), role: $("e-role").value, plafond_eur: pl === "" ? null : Number(pl) } }).then(function (r) {
+      api("equipe", { body: { nom: $("e-nom").value.trim(), email: $("e-email").value.trim(), role: $("e-role").value, service: $("e-service").value, plafond_eur: pl === "" ? null : Number(pl) } }).then(function (r) {
         C.occupe(b, false);
         $("e-res").innerHTML = '<div class="alerte"><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.5" fill="none" stroke="currentColor" stroke-width="1.5"/></svg><span>Compte créé pour <b>' + esc(r.cree.email) + "</b>. Mot de passe provisoire, à transmettre en main propre : <b>" + esc(r.cree.mot_de_passe_provisoire) + "</b>. Il sera changé à la première connexion et n'est plus affiché ensuite.</span></div>";
         api("equipe").then(function () { });
@@ -1483,8 +1744,20 @@ function ongletDonnees(p) {
     champNum("s-ecart", "Écart devis et expertise", "%", p.seuil_ecart_prix_pct) + champNum("s-fact", "Écart facture et expertise", "%", p.ecart_facture_expertise_pct) +
     champNum("s-taux", "Taux horaire maximum", "€", p.taux_horaire_max_eur) + champNum("s-bg", "Bris de glace sans expert, jusqu'à", "€", p.bris_glace_sans_expert_max) +
     champNum("s-relance", "Relance sans réponse après", "jours", p.delai_relance_jours) + champNum("s-aipp", "Écart AIPP et barème toléré", "points", p.ga_ecart_aipp_points) +
-    champNum("s-effacement", "Effacement chez Klerio après clôture", "jours", p.delai_effacement_jours) +
-    '</div><p class="muet petit">Les données personnelles d\'un dossier terminé sont effacées chez Klerio après ce délai, et seulement une fois le dossier complet remis à votre outil (30 jours minimum en production).</p><p class="muet petit">Unité de compte de la Garantie Accident : ' + esc(eur(p.uc_eur)) + '.</p><div class="decision-actions"><button class="btn primaire" id="s-ok">Enregistrer les règles</button></div></div></div>';
+    champNum("s-vol", "Délai de recherche d'un véhicule volé", "jours", p.delai_vol_jours) + champNum("s-catnat", "Franchise légale catastrophe naturelle", "€", p.franchise_catnat_eur) +
+    '</div><p class="muet petit">Unité de compte de la Garantie Accident : ' + esc(eur(p.uc_eur)) + '.</p><div class="decision-actions"><button class="btn primaire" id="s-ok">Enregistrer les règles</button></div></div></div>';
+  h += '<div class="reglage"><div class="expl"><h3>Automatisation</h3><p>Ce que Klerio fait seul, sans clic. Les cas douteux et les anomalies reviennent toujours à un gestionnaire.</p></div><div class="zone pile">' +
+    '<div class="grille-2"><label class="champ">Règlement automatique jusqu\'à <span class="aide">en €, vide = tout faire valider</span><input class="saisie" id="s-auto" type="number" min="0" step="100" value="' + esc(p.reglement_auto_max_eur == null ? "" : p.reglement_auto_max_eur) + '"></label></div>' +
+    '<label class="case"><input type="checkbox" id="s-refus"' + (p.refus_automatique ? " checked" : "") + '> Refus automatique des cas contractuels évidents (contrat non en vigueur, garantie non souscrite)</label>' +
+    '<p class="muet petit">Le courrier indique que la réponse est automatique et que l\'assuré peut demander un réexamen par un gestionnaire (RGPD, article 22). À valider avec votre délégué à la protection des données avant la production. Les règlements corporels restent toujours validés par un humain.</p></div></div>';
+  h += '<div class="reglage"><div class="expl"><h3>Organisation de l\'équipe</h3><p>Qui traite les dossiers qui demandent une décision.</p></div><div class="zone pile">' +
+    '<label class="case"><input type="radio" name="s-mode" value="corbeille"' + (p.mode_repartition !== "repartition" ? " checked" : "") + '> File commune : chaque gestionnaire prend ses dossiers. Un dossier pris doit être traité, ou renvoyé au responsable avec un motif.</label>' +
+    '<label class="case"><input type="radio" name="s-mode" value="repartition"' + (p.mode_repartition === "repartition" ? " checked" : "") + '> Répartition automatique : chaque dossier va au gestionnaire du bon service qui en a le moins.</label></div></div>';
+  h += '<div class="reglage"><div class="expl"><h3>Conservation des dossiers</h3><p>Chaque dossier terminé est remis complet à votre outil. Klerio peut aussi le garder dans ses archives.</p></div><div class="zone pile">' +
+    '<label class="case"><input type="radio" name="s-cons" value="conserver"' + (p.conservation !== "effacer" ? " checked" : "") + '> Conserver les dossiers terminés dans les archives Klerio</label>' +
+    '<label class="case"><input type="radio" name="s-cons" value="effacer"' + (p.conservation === "effacer" ? " checked" : "") + '> Effacer les données personnelles après un délai, une fois l\'archive remise à votre outil</label>' +
+    '<div class="grille-2">' + champNum("s-effacement", "Délai avant effacement", "jours", p.delai_effacement_jours) + '</div>' +
+    '<div class="decision-actions"><button class="btn primaire" id="s-ok2">Enregistrer ces choix</button></div></div></div>';
   h += '<div class="reglage"><div class="expl"><h3>Adresses de l\'API</h3><p>Toutes demandent l\'en-tête <b>x-klerio-key</b>, sauf l\'espace en ligne, ouvert par le lien personnel de chaque courrier. Exemples complets dans le <a href="guide.html" target="_blank" rel="noopener">guide</a>.</p></div><div class="zone"><table class="routes">' +
     [["GET /moi", "Vérifier la clé et l'environnement"], ["POST /declarer", "Nouveau sinistre"], ["GET /dossier?numero=", "Fiche complète d'un dossier"], ["GET /dossiers", "Liste, filtres statut et q"], ["GET /a-traiter", "Dossiers qui attendent un humain"],
      ["POST /valider", "Décision d'un gestionnaire"], ["POST /virement", "Paiement confirmé, clôture"], ["POST /pieces", "Pièce reçue en agence"], ["POST /retour", "Rapport ou facture saisi par la compagnie"],
@@ -1557,7 +1830,12 @@ function brancherRaccordement(admin) {
   lier("i-contrats-ok", function () { importer(this, "i-contrats", "contrats", function (r) { return r.contrats + " contrat(s) à jour"; }); });
   lier("s-ok", function () {
     envoyer(this, "parametres", { seuil_ecart_prix_pct: Number($("s-ecart").value), ecart_facture_expertise_pct: Number($("s-fact").value), taux_horaire_max_eur: Number($("s-taux").value),
-      bris_glace_sans_expert_max: Number($("s-bg").value), delai_relance_jours: Number($("s-relance").value), ga_ecart_aipp_points: Number($("s-aipp").value), delai_effacement_jours: Number($("s-effacement").value) }, "Règles enregistrées");
+      bris_glace_sans_expert_max: Number($("s-bg").value), delai_relance_jours: Number($("s-relance").value), ga_ecart_aipp_points: Number($("s-aipp").value), delai_vol_jours: Number($("s-vol").value), franchise_catnat_eur: Number($("s-catnat").value) }, "Règles enregistrées");
+  });
+  lier("s-ok2", function () {
+    var auto = $("s-auto").value, m = document.querySelector('[name="s-mode"]:checked'), c = document.querySelector('[name="s-cons"]:checked');
+    envoyer(this, "parametres", { reglement_auto_max_eur: auto === "" ? null : Number(auto), refus_automatique: $("s-refus").checked,
+      mode_repartition: m ? m.value : "corbeille", conservation: c ? c.value : "conserver", delai_effacement_jours: Number($("s-effacement").value) }, "Choix enregistrés");
   });
 }
 

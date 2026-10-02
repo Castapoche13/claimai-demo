@@ -16,6 +16,8 @@
   };
   var THEMES = {
     BRIS_GLACE: "Bris de glace", PERTE_CONTROLE_OBSTACLE_FIXE: "Perte de contrôle", VANDALISME: "Vandalisme",
+    TENTATIVE_VOL: "Tentative de vol", VOL: "Vol du véhicule", INCENDIE: "Incendie", EVENEMENT_CLIMATIQUE: "Grêle, tempête",
+    CATASTROPHE_NATURELLE: "Catastrophe naturelle",
     GARANTIE_ACCIDENT: "Garantie Accident", AUTRE: "Autre sinistre", NON_QUALIFIE: "Non qualifié"
   };
   var MOTIFS = {
@@ -40,6 +42,7 @@
     document_a_verifier: "Document reçu à vérifier",
     information_a_traiter: "Information reçue à examiner",
     reouverture: "Dossier rouvert par un gestionnaire",
+    arrete_catnat_absent: "Arrêté de catastrophe naturelle à référencer",
     relances_sans_reponse: "Trois relances sans réponse",
     qualite_assure_a_verifier: "Âge ou lien de la victime à vérifier",
     aipp_inferieure_10: "Atteinte estimée sous le seuil de 10 %",
@@ -70,10 +73,18 @@
   var PIECES = {
     FACTURE: "Facture", DELEGATION_PAIEMENT: "Délégation de paiement", RAPPORT_EXPERTISE: "Rapport d'expertise",
     DEPOT_PLAINTE: "Récépissé de plainte", CMI: "Certificat médical initial", FICHE_RENSEIGNEMENTS: "Fiche de renseignements",
-    RIB: "RIB", RAPPORT_MEDICAL: "Conclusions médicales"
+    RIB: "RIB", RAPPORT_MEDICAL: "Conclusions médicales", DOUBLES_CLES: "Deux jeux de clés",
+    CERTIFICAT_IMMATRICULATION: "Carte grise", RAPPORT_POMPIERS: "Rapport des pompiers"
   };
   var LIENS = { societaire: "Sociétaire", conjoint: "Conjoint", enfant_mineur: "Enfant mineur", enfant_etudiant: "Enfant étudiant",
     enfant_handicape: "Enfant en situation de handicap", personne_a_charge: "Personne à charge", conducteur_tiers: "Conducteur autorisé" };
+  // Types de sinistre par espace : le matériel (contractuel) et le corporel, séparés dans toute la console
+  var ESPACES = {
+    materiel: { nom: "Matériel", themes: ["BRIS_GLACE", "PERTE_CONTROLE_OBSTACLE_FIXE", "VANDALISME", "TENTATIVE_VOL", "VOL", "INCENDIE", "EVENEMENT_CLIMATIQUE", "CATASTROPHE_NATURELLE"] },
+    corporel: { nom: "Corporel", themes: ["GARANTIE_ACCIDENT"] }
+  };
+  var GARANTIES = { BRIS_GLACE: "Bris de glace", DOMMAGES_TOUS_ACCIDENTS: "Dommages tous accidents", VOL_VANDALISME: "Vol et vandalisme", VOL: "Vol",
+    INCENDIE: "Incendie", EVENEMENTS_CLIMATIQUES: "Événements climatiques", CATASTROPHES_NATURELLES: "Catastrophes naturelles", GARANTIE_ACCIDENT: "Garantie Accident" };
   var CLASSES = { AS: "Vie privée (AS)", AW: "Circulation (AW)", AT: "Travail (AT)" };
 
   function $(id) { return document.getElementById(id); }
@@ -145,7 +156,7 @@
 
   g.CA = {
     API_DEFAUT: API_DEFAUT, SUPABASE_URL: SUPABASE_URL, CLE_PUBLIQUE: CLE_PUBLIQUE, STATUTS: STATUTS, THEMES: THEMES, MOTIFS: MOTIFS, ANOMALIES: ANOMALIES, COURRIERS: COURRIERS,
-    ROLES: ROLES, PIECES: PIECES, LIENS: LIENS, CLASSES: CLASSES, LOGO: LOGO,
+    ROLES: ROLES, PIECES: PIECES, ESPACES: ESPACES, GARANTIES: GARANTIES, LIENS: LIENS, CLASSES: CLASSES, LOGO: LOGO,
     $: $, esc: esc, eur: eur, nombre: nombre, dateFr: dateFr, dateCourte: dateCourte, heure: heure, depuis: depuis,
     statut: statut, theme: theme, motif: motif, attendVous: attendVous, toast: toast, occupe: occupe, client: client,
     lireSession: lireSession, ecrireSession: ecrireSession, oublierSession: oublierSession
