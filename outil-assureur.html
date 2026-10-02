@@ -211,7 +211,7 @@ function rafraichir() {
         return '<li><span class="h">' + esc(new Date(x.recu_le).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit", second: "2-digit" })) + "</span><span>Test de signature" +
           '<span class="muet">, message ' + (attendu ? "volontairement mal signé" : "bien signé") + '</span></span><span class="sig' + (bon ? "" : " ko") + '">' + (attendu ? (bon ? "Bien refusé" : "Accepté à tort") : (bon ? "Signature valide" : "Refusé à tort")) + "</span></li>";
       }
-      var quoi = x.evenement === "dossier_cree" ? "Nouveau dossier " + (x.numero || "") : x.evenement === "test" ? "Message de test" : (x.numero || "") + " : " + ((SITUATION[x.statut] || [x.statut || ""])[0] || "").toLowerCase();
+      var quoi = x.evenement === "dossier_cree" ? "Nouveau dossier " + (x.numero || "") : x.evenement === "dossier_clos" ? "Dossier complet archivé " + (x.numero || "") : x.evenement === "test" ? "Message de test" : (x.numero || "") + " : " + ((SITUATION[x.statut] || [x.statut || ""])[0] || "").toLowerCase();
       return '<li><span class="h">' + esc(new Date(x.recu_le).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit", second: "2-digit" })) + "</span><span>" + esc(quoi) + (c.statut_precedent ? '<span class="muet">, était ' + esc(((SITUATION[c.statut_precedent] || [c.statut_precedent])[0] || "").toLowerCase()) + "</span>" : "") +
         '</span><span class="sig' + (x.signature_ok ? "" : " ko") + '">' + (x.signature_ok ? "Signature valide" : "Signature invalide") + "</span></li>";
     }).join("") : '<li style="display:block"><div class="vide">Aucun message reçu.</div></li>';

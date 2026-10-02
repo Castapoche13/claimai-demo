@@ -96,6 +96,8 @@ table.doc td:first-child { white-space: nowrap; }
       <li><a href="#suivre">Lire un dossier</a></li>
       <li><a href="#agir">Agir depuis votre outil</a></li>
       <li><a href="#documents">Envoyer un document</a></li>
+      <li><a href="#informations">Appels et mails reçus</a></li>
+      <li><a href="#cloture">Clôture, archive, effacement</a></li>
       <li><a href="#referentiels">Contrats et réseau</a></li>
       <li class="groupe">Recevoir de Klerio</li>
       <li><a href="#messages">Messages signés</a></li>
@@ -276,6 +278,37 @@ table.doc td:first-child { white-space: nowrap; }
       <p>Le contenu réel du fichier est vérifié : un fichier dont le contenu ne correspond pas au type annoncé (par exemple un exécutable renommé en .pdf) est refusé en <code>400</code>.</p>
     </section>
 
+    <section id="informations">
+      <h2>Appels et mails reçus</h2>
+      <p>Un assuré, un tiers ou un garage appelle ou écrit directement à votre service : le gestionnaire note ce qui a été dit, Klerio l'analyse et propose les suites. Rien ne change dans le dossier tant que le gestionnaire n'a pas accepté une proposition. Klerio ne décide jamais seul de la garantie, de la responsabilité ou d'un montant.</p>
+<pre>POST /note
+{ "numero": "CLM-2026-000123",
+  "canal": "telephone",          // telephone, email, courrier, accueil, autre
+  "interlocuteur": "assure",     // assure, tiers, garage, expert, avocat, autre
+  "contenu": "L'assuré a déposé plainte hier, il envoie le récépissé par mail.",
+  "par": "jdupont" }</pre>
+      <p>La réponse contient la note avec un résumé, les effets repérés (<code>PIECE_ANNONCEE</code>, <code>CONTESTATION</code>, <code>NOUVEAU_DOMMAGE</code>, <code>TIERS_SIGNALE</code>, <code>BLESSURE_SIGNALEE</code>, <code>RECLAMATION</code>…) et une liste <code>actions</code> de propositions : ajouter une pièce attendue, marquer une pièce reçue, rouvrir le dossier, ou le mettre dans la file « À traiter ». Une information qui peut changer l'appréciation du dossier (contestation, nouveau dommage, tiers, blessure) est toujours proposée à l'examen d'un gestionnaire.</p>
+<pre>POST /note-action   { "note_id": "…", "index": 0, "decision": "faire", "par": "jdupont" }   // ou "ignorer"
+POST /note-traitee  { "note_id": "…", "par": "jdupont" }</pre>
+      <p>Un document joint à un mail se transmet par <code>POST /document</code> (ci-dessus). Les notes figurent dans la fiche du dossier (<code>notes</code>) et dans l'archive de clôture.</p>
+    </section>
+
+    <section id="cloture">
+      <h2>Clôture, archive, effacement</h2>
+      <p>Votre outil reste la mémoire du dossier. Dès qu'un dossier est clos, refusé ou classé, Klerio envoie le message <code>dossier_clos</code> avec le dossier complet : déclaration, décisions et validations, pièces, prestataires, expertises, règlements, documents lus, informations reçues, courriers et journal. Archivez-le tel quel.</p>
+<pre>{ "evenement": "dossier_clos", "numero": "CLM-2026-000123", "statut": "clos",
+  "clos_le": "…", "effacement_prevu": "…",
+  "recapitulatif_pdf": "GET /recapitulatif?numero=CLM-2026-000123",
+  "dossier": { …fiche complète… } }</pre>
+      <ul>
+        <li><code>GET /archive?numero=</code> rend le même dossier complet à la demande. Appelé avec votre clé, il vaut accusé de remise de l'archive.</li>
+        <li><code>GET /recapitulatif?numero=</code> rend un PDF lisible du dossier, à joindre à votre GED.</li>
+        <li><code>GET /document?id=</code> rend un lien de 5 minutes vers chaque document conservé, à copier dans votre outil avant l'effacement.</li>
+        <li><code>POST /rouvrir</code> <code>{"numero", "motif", "par"}</code> rouvre un dossier terminé : il revient dans la file « À traiter » et votre outil reçoit un <code>changement_statut</code>.</li>
+      </ul>
+      <div class="note"><b>Effacement chez Klerio.</b> Passé le délai convenu (90 jours après la clôture par défaut, réglable de 30 jours à 10 ans), et seulement si l'archive a été remise à votre outil (message <code>dossier_clos</code> livré ou <code>GET /archive</code> appelé), Klerio efface le contenu personnel du dossier : récit, analyse, documents et fichiers, notes, courriers, adresses, liens d'accès. Restent le numéro, les références, les dates, les statuts, les montants et le journal d'audit (codes et décisions, sans texte personnel). Un dossier effacé ne peut plus être rouvert dans Klerio.</div>
+    </section>
+
     <section id="referentiels">
       <h2>Contrats et réseau</h2>
       <p>Klerio vérifie la garantie à partir des contrats que vous lui transmettez, et ne missionne que votre réseau agréé. Les deux imports sont des mises à jour : un même numéro de contrat, ou un même email d'expert ou de garage, remplace la fiche existante.</p>
@@ -312,6 +345,7 @@ POST /reseau
         <tbody>
           <tr><td><code>dossier_cree</code></td><td>Le dossier vient d'être créé (<code>numero</code>, <code>ref_externe</code>, <code>statut</code>).</td></tr>
           <tr><td><code>changement_statut</code></td><td>Le dossier change d'étape. Le message porte l'état complet : statut, décision, motif, prestataires, pièces manquantes, règlement.</td></tr>
+          <tr><td><code>dossier_clos</code></td><td>Le dossier est clos, refusé ou classé : le message porte le dossier complet à archiver (voir <a href="#cloture">Clôture</a>).</td></tr>
           <tr><td><code>test</code></td><td>Bouton « Envoyer un message de test ».</td></tr>
           <tr><td><code>test_signature</code></td><td>Bouton « Tester la signature » : deux messages, l'un bien signé (<code>"attendu": "accepter"</code>, répondez 2xx), l'autre volontairement mal signé (<code>"attendu": "refuser"</code>, répondez 401).</td></tr>
         </tbody>
@@ -471,7 +505,7 @@ répondre 200</pre>
         <li>Minimisation : l'analyse par IA ne reçoit que le type déclaré, la date et le récit, plus l'âge et le lien de la victime pour un accident corporel. Ni nom, ni contrat, ni coordonnées.</li>
         <li>Documents médicaux lus en mémoire puis abandonnés : seuls le taux d'AIPP, la date de consolidation et la mention de dépendance sont enregistrés.</li>
         <li>Les décisions défavorables et les paiements exigent toujours la validation d'une personne identifiée (RGPD, article 22).</li>
-        <li>Journal des appels conservé 90 jours ; journal de chaque dossier conservé avec le dossier.</li>
+        <li>Journal des appels conservé 90 jours. Contenu personnel des dossiers terminés effacé après le délai convenu, une fois l'archive remise à votre outil ; le journal d'audit ne garde que des codes et des décisions.</li>
         <li>L'environnement d'essai ne doit contenir que des données fictives ou anonymisées.</li>
       </ul>
       <div class="note">Hébergement, sous-traitance, réversibilité et clauses DORA (article 30) sont traités dans le dossier de conformité remis avec le contrat, pas dans ce guide technique.</div>

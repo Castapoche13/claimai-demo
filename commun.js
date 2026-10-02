@@ -38,6 +38,8 @@
     prereglement_rejete: "Règlement rejeté par un gestionnaire",
     traitement_manuel: "Dossier en traitement manuel",
     document_a_verifier: "Document reçu à vérifier",
+    information_a_traiter: "Information reçue à examiner",
+    reouverture: "Dossier rouvert par un gestionnaire",
     relances_sans_reponse: "Trois relances sans réponse",
     qualite_assure_a_verifier: "Âge ou lien de la victime à vérifier",
     aipp_inferieure_10: "Atteinte estimée sous le seuil de 10 %",
