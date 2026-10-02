@@ -173,6 +173,8 @@ table.tableau { width: 100%; border-collapse: collapse; font-size: 13.5px; }
 .alerte.ko svg { color: var(--rouge); }
 .pile { display: grid; gap: 12px; }
 .sous-titre { font-size: 12.5px; font-weight: 500; color: var(--gris); margin-bottom: 6px; }
+.liste-simple { margin: 0; padding-left: 18px; font-size: 13.5px; display: grid; gap: 4px; }
+.note-garage { margin: -6px 0 16px; }
 .puces { margin: 0; padding-left: 18px; display: grid; gap: 4px; font-size: 13.5px; }
 
 .chiffrage { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px 20px; }
@@ -790,10 +792,12 @@ var ETAPES = {
   BRIS_GLACE: ["Déclaration", "Analyse", "Contrat", "Réparateur missionné", "Facture", "Règlement validé", "Payé"],
   AUTO: ["Déclaration", "Analyse", "Contrat", "Expert et garage", "Expertise", "Facture et pièces", "Règlement validé", "Payé"],
   GARANTIE_ACCIDENT: ["Déclaration", "Analyse", "Garantie", "Médecin missionné", "Conclusions médicales", "Pièces", "Capital validé", "Payé"],
-  VOL: ["Déclaration", "Analyse", "Contrat", "Expert missionné", "Évaluation", "Pièces et délai", "Indemnité validée", "Payé"]
+  VOL: ["Déclaration", "Analyse", "Contrat", "Expert missionné", "Évaluation", "Pièces et délai", "Indemnité validée", "Payé"],
+  VEI: ["Déclaration", "Analyse", "Contrat", "Expert missionné", "Irréparable", "Choix de l'assuré", "Indemnité validée", "Payé"]
 };
 function parcours(f) {
-  var t = f.theme === "BRIS_GLACE" ? "BRIS_GLACE" : f.theme === "GARANTIE_ACCIDENT" ? "GARANTIE_ACCIDENT" : f.theme === "VOL" ? "VOL" : "AUTO";
+  var vei = (f.details || {}).vei;
+  var t = vei ? "VEI" : f.theme === "BRIS_GLACE" ? "BRIS_GLACE" : f.theme === "GARANTIE_ACCIDENT" ? "GARANTIE_ACCIDENT" : f.theme === "VOL" ? "VOL" : "AUTO";
   var noms = ETAPES[t];
   var exp = f.expertises || [], regl = (f.reglements || []).filter(function (r) { return r.statut !== "annule"; });
   var manque = (f.pieces || []).filter(function (p) { return p.obligatoire && !p.recue_le; });
@@ -804,6 +808,7 @@ function parcours(f) {
   var fait;
   if (t === "BRIS_GLACE") fait = [true, a, c, m, has("facture"), valide, paye];
   else if (t === "AUTO") fait = [true, a, c, m, has("expertise_auto"), has("facture") && !manque.length, valide, paye];
+  else if (t === "VEI") fait = [true, a, c, m, true, !!vei.choix && !manque.length, valide, paye];
   else if (t === "VOL") fait = [true, a, c, m, has("expertise_auto"), has("expertise_auto") && !manque.length && regl.length > 0, valide, paye];
   else fait = [true, a, c, m, has("expertise_medicale"), m && !manque.length, valide, paye];
   var ici = fait.indexOf(false); if (ici < 0) ici = noms.length;
@@ -825,6 +830,8 @@ function legendeParcours(f) {
   if (f.statut === "refuse") return "Refus validé par un gestionnaire. L'assuré a reçu le courrier de refus avec les voies de recours.";
   if (f.statut === "classe_sans_suite") return "Dossier classé.";
   if (f.motif === "reouverture") return "Dossier rouvert : choisissez la suite à lui donner.";
+  var dv = (f.details || {}).vei;
+  if (dv && !dv.choix && f.statut === "attente_pieces") return "Véhicule irréparable : l'assuré choisit en ligne avant le " + C.dateFr(dv.echeance) + " entre céder le véhicule (" + eur(dv.offre_cession) + ") et le garder (" + eur(dv.offre_conservation) + "). Sans réponse, il le garde.";
   if (C.attendVous(f.statut)) return "Le dossier attend votre décision : rien ne part sans votre validation.";
   var m = (f.pieces || []).filter(function (p) { return p.obligatoire && !p.recue_le; });
   if (f.statut === "mission_envoyee") return "Mission envoyée. Klerio relance automatiquement sans réponse sous 7 jours.";
@@ -850,6 +857,7 @@ function afficherDossier(f) {
   h += '<div class="fiche-grille"><div>';
   h += carteAction(f);
   h += blocCloture(f);
+  h += blocVehicule(f);
   h += blocSuivi(f);
   h += blocAnalyse(f, an, d);
   h += blocDocuments(f);
@@ -868,13 +876,41 @@ function afficherDossier(f) {
       "<dt>Assuré</dt><dd>" + esc(ctr.assure_ref) + "</dd><dt>Effet</dt><dd>" + esc(C.dateCourte(ctr.date_effet)) + (ctr.date_fin ? " au " + esc(C.dateCourte(ctr.date_fin)) : "") + "</dd>" +
       "<dt>Garanties</dt><dd>" + ((ctr.garanties || []).map(function (g) {
         return esc(C.GARANTIES[g.code] || g.code) +
-          '<span class="muet">' + (g.option ? ", option " + g.option : ", franchise " + eur(g.franchise)) + "</span>";
+          '<span class="muet">' + (g.option ? ", option " + g.option : ", franchise " + eur(g.franchise)) +
+          (g.plafond != null ? ", plafond " + eur(g.plafond) : "") + (g.vetuste_pieces_pct ? ", vétusté pièces " + C.nombre(g.vetuste_pieces_pct) + " %" : "") + "</span>";
       }).join("<br>") || "Aucune") + "</dd></dl>" : '<p class="muet">Aucun contrat rattaché.</p>') + "</div></section>";
   h += blocPrestataires(f);
   h += blocPieces(f);
   h += "</aside></div>";
   $("vue").innerHTML = h;
   brancherFiche(f);
+}
+
+/* Véhicule irréparable, vol retrouvé, garage choisi par l'assuré */
+function blocVehicule(f) {
+  var d = f.details || {}, v = d.vei, vr = d.vol_retrouve, cg = d.choix_garage, h = "";
+  var taches = function (l) { return l && l.length ? '<div class="sous-titre">À faire par votre service</div><ul class="liste-simple">' + l.map(function (x) { return "<li>" + esc(x) + "</li>"; }).join("") + "</ul>" : ""; };
+  if (v) {
+    h += '<section class="bloc"><div class="bloc-tete"><h2>Véhicule économiquement irréparable</h2><span class="statut ' + (v.choix ? "ok" : "vous") + '">' +
+      (v.choix ? (v.choix === "ceder" ? "Cédé à la compagnie" : "Conservé par l'assuré") : "Choix attendu") + '</span></div><div class="bloc-corps pile">' +
+      '<dl class="info-liste"><dt>Réparations</dt><dd>' + esc(eur(v.reparations_ttc)) + "</dd><dt>Valeur de remplacement</dt><dd>" + esc(eur(v.vrade_ttc)) + "</dd>" +
+      "<dt>Valeur de l'épave</dt><dd>" + esc(eur(v.valeur_epave_ttc)) + "</dd><dt>Franchise</dt><dd>" + esc(eur(v.franchise_eur)) + "</dd>" +
+      "<dt>Offre si cession</dt><dd><b>" + esc(eur(v.offre_cession)) + "</b></dd><dt>Offre si conservation</dt><dd><b>" + esc(eur(v.offre_conservation)) + "</b></dd>" +
+      "<dt>" + (v.choix ? "Choix" : "Réponse attendue avant le") + "</dt><dd>" + (v.choix ? esc(v.choix === "ceder" ? "Cession" : "Conservation") + '<span class="muet"> le ' + esc(C.dateFr(v.choisi_le)) +
+        (String(v.choisi_par || "").indexOf("silence") >= 0 ? ", faute de réponse dans le délai" : "") + "</span>" : esc(C.dateFr(v.echeance))) + "</dd></dl>" +
+      taches(v.taches_assureur) + "</div></section>";
+  }
+  if (vr) {
+    h += '<section class="bloc"><div class="bloc-tete"><h2>Véhicule volé retrouvé</h2><span class="statut ' + (vr.apres_indemnisation && !vr.choix ? "vous" : "ok") + '">' +
+      (vr.apres_indemnisation ? (vr.choix ? (vr.choix === "reprendre_vehicule" ? "Repris par l'assuré" : "Laissé à la compagnie") : "Choix attendu") : "Remise en état") + '</span></div><div class="bloc-corps pile">' +
+      '<p class="petit">Retrouvé le ' + esc(C.dateFr(vr.retrouve_le)) + (vr.commentaire ? " : " + esc(vr.commentaire) : "") + ". " +
+      (vr.apres_indemnisation ? "L'indemnité (" + esc(eur(vr.indemnite)) + ") était déjà versée : l'assuré choisit entre la garder ou reprendre son véhicule en la remboursant."
+        : "L'indemnisation n'était pas versée : le dossier est passé en expertise et réparation.") + "</p>" + taches(vr.taches_assureur) + "</div></section>";
+  }
+  if (cg) h += '<p class="note-garage petit muet">Réparateur choisi par l\'assuré : <b>' + esc(cg.garage) + "</b>" + (cg.hors_reseau ? ", hors réseau : son règlement sera validé par un gestionnaire." : ", garage partenaire.") + "</p>";
+  if (f.theme === "VOL" && !vr && ["refuse", "classe_sans_suite"].indexOf(f.statut) < 0)
+    h += '<p><button class="btn petit" id="b-retrouve">Le véhicule a été retrouvé</button> <span class="muet petit">L\'assuré peut aussi le signaler depuis son lien.</span></p>';
+  return h;
 }
 
 /* Qui suit le dossier : prise en charge, renvoi au responsable, réaffectation */
@@ -1166,19 +1202,21 @@ function blocPrestataires(f) {
   return '<section class="bloc"><div class="bloc-tete"><h3>Prestataires missionnés</h3></div><div class="bloc-corps presta">' + m.map(function (x) {
     var nom = x.expert || x.garage, email = x.expert_email || x.garage_email, l = lienEspace(f, email);
     var role = x.type === "expertise_medicale" ? "Médecin expert" : x.type === "expertise" ? "Expert automobile" : "Réparateur agréé" + (x.garage_cp ? ", " + x.garage_cp : "");
-    return '<div class="presta-l"><span class="role">' + esc(role) + '</span><span class="statut ' + (x.statut === "terminee" ? "ok" : "") + '">' + (x.statut === "terminee" ? "A répondu" : "Attendu") + "</span>" +
-      "<b>" + esc(nom) + '</b><span></span><span class="muet petit">' + esc(email) + "</span>" + (l && x.statut !== "terminee" ? '<a href="' + esc(l) + '" target="_blank" rel="noopener">Ouvrir son espace</a>' : "<span></span>") + "</div>";
+    var st = x.statut === "terminee" ? ["ok", "A répondu"] : x.statut === "annulee" ? ["neutre", "Annulée"] : ["", "Attendu"];
+    return '<div class="presta-l"><span class="role">' + esc(role) + '</span><span class="statut ' + st[0] + '">' + st[1] + "</span>" +
+      "<b>" + esc(nom) + '</b><span></span><span class="muet petit">' + esc(email) + "</span>" + (l && x.statut !== "terminee" && x.statut !== "annulee" ? '<a href="' + esc(l) + '" target="_blank" rel="noopener">Ouvrir son espace</a>' : "<span></span>") + "</div>";
   }).join("") + "</div></section>";
 }
 
 function blocPieces(f) {
-  var p = f.pieces || [];
+  // une pièce qui n'est plus attendue (réparation annulée, véhicule retrouvé) disparaît ; le rapport des pompiers reste, facultatif
+  var p = (f.pieces || []).filter(function (x) { return x.recue_le || x.obligatoire || x.code === "RAPPORT_POMPIERS"; });
   if (!p.length) return "";
   var fini = ["clos", "refuse", "classe_sans_suite"].indexOf(f.statut) >= 0;
   var par = { assure: "Assuré", garage: "Réparateur", expert: "Expert", expert_medical: "Médecin expert" };
   return '<section class="bloc"><div class="bloc-tete"><h3>Pièces du dossier</h3><span class="muet petit">' + p.filter(function (x) { return x.recue_le; }).length + " sur " + p.length + '</span></div><div class="bloc-corps"><ul class="pieces">' +
     p.map(function (x) {
-      return '<li><span class="coche ' + (x.recue_le ? "ok" : "") + '"></span><span>' + esc(C.PIECES[x.code] || x.libelle) + "<small>" + esc(par[x.par] || x.par) + (x.recue_le ? ", reçue le " + esc(C.dateCourte(x.recue_le)) : x.obligatoire ? ", attendue" : "") + "</small></span>" +
+      return '<li><span class="coche ' + (x.recue_le ? "ok" : "") + '"></span><span>' + esc(C.PIECES[x.code] || x.libelle) + "<small>" + esc(par[x.par] || x.par) + (x.recue_le ? ", reçue le " + esc(C.dateCourte(x.recue_le)) : x.obligatoire ? ", attendue" : ", facultative") + "</small></span>" +
         (!x.recue_le && !fini && x.par === "assure" ? '<button class="btn petit" data-piece="' + esc(x.code) + '">Reçue en agence</button>' : "<span></span>") + "</li>";
     }).join("") + "</ul></div></section>";
 }
@@ -1198,6 +1236,8 @@ var ACTIONS = { creation_dossier: "Dossier créé à partir de la déclaration",
   pieces_recues: "Pièces reçues", reponse_portail: "Réponse reçue par l'espace en ligne", lecture_document: "Document lu par Klerio", document_applique: "Document validé par un gestionnaire", document_ecarte: "Document écarté", archivage_jeu_test: "Archivé",
   information_recue: "Information reçue notée", action_information: "Suite donnée à une information reçue", reouverture: "Dossier rouvert",
   archive_envoyee: "Dossier complet envoyé à votre outil", prise_dossier: "Dossier pris en charge", renvoi_manager: "Renvoyé au responsable",
+  offre_vei: "Offre véhicule irréparable envoyée à l'assuré", choix_vei: "Choix de l'assuré sur le véhicule irréparable",
+  vehicule_retrouve: "Véhicule volé signalé retrouvé", choix_vol_retrouve: "Choix de l'assuré sur le véhicule retrouvé", choix_garage: "Réparateur choisi par l'assuré",
   reaffectation: "Dossier réaffecté", attribution: "Dossier attribué automatiquement", archive_recuperee: "Archive téléchargée par votre outil", effacement_donnees: "Données personnelles effacées chez Klerio" };
 function acteur(a) {
   a = a || "";
@@ -1225,6 +1265,15 @@ function blocJournal(f) {
 }
 
 function brancherFiche(f) {
+  var br = $("b-retrouve");
+  if (br) br.onclick = function () {
+    var c = prompt("Où et quand le véhicule a-t-il été retrouvé ?", "");
+    if (c === null) return;
+    C.occupe(br, true, "Envoi");
+    api("reprendre", { body: { numero: f.numero, action: "vehicule_retrouve", commentaire: c.trim() || undefined } })
+      .then(function () { C.toast("Véhicule retrouvé : le dossier repart"); vueDossier(f.numero); })
+      .catch(function (x) { C.occupe(br, false); C.toast(x.message, true); });
+  };
   document.querySelectorAll("[data-ouvrir-doc]").forEach(function (b) {
     b.onclick = function () {
       var w = window.open("", "_blank");
@@ -1612,7 +1661,7 @@ var EX_RESEAU = { experts: [{ nom: "Cabinet Expertise Loing", email: "expert.loi
   garages: [{ nom: "Carrosserie du Loing", email: "carrosserie.loing@exemple.fr", code_postal: "77140", specialites: ["carrosserie", "vitrage"], taux_horaire_eur: 68, lat: 48.26, lon: 2.70,
     iban: "FR5699999000010000100000200", titulaire_compte: "Carrosserie du Loing SARL" }] };
 var EX_CONTRATS = { contrats: [{ numero_contrat: "AUTO-2026-0100", assure_ref: "SOC-20100", assure_email: "assure.100@exemple.fr", date_effet: "2026-01-01", vehicule_immat: "GH-512-KL",
-  garanties: [{ code: "BRIS_GLACE", franchise_eur: 0 }, { code: "DOMMAGES_TOUS_ACCIDENTS", franchise_eur: 300 }, { code: "VOL_VANDALISME", franchise_eur: 150 }] }] };
+  garanties: [{ code: "BRIS_GLACE", franchise_eur: 0 }, { code: "DOMMAGES_TOUS_ACCIDENTS", franchise_eur: 300, plafond_eur: 15000, vetuste_pieces_pct: 0 }, { code: "VOL_VANDALISME", franchise_eur: 150 }] }] };
 var ONGLETS_R = [["verification", "Vérification"], ["connexion", "Clés et messages"], ["donnees", "Réseau, contrats et règles"]];
 var minuterieVerif = null;
 
@@ -1756,6 +1805,10 @@ function ongletDonnees(p) {
     '<label class="case"><input type="checkbox" id="s-garage"' + (p.paiement_garage_auto ? " checked" : "") + '> Payer directement les garages partenaires sur le montant de l\'expert, quel que soit le montant</label>' +
     '<div class="grille-2"><label class="champ">Service comptable <span class="aide">reçoit chaque bon à payer</span><input class="saisie" id="s-compta" type="email" value="' + esc(p.email_comptabilite || "") + '" placeholder="comptabilite@votre-compagnie.fr"></label></div>' +
     '<p class="muet petit">Le comptable reçoit un mail par règlement validé (garage ou assuré), avec un lien sécurisé : montant, IBAN du référentiel, facture, puis un champ pour la référence du virement qui clôt le dossier. Restent toujours chez un gestionnaire : une facture au-dessus du montant de l\'expert, une facture déjà présentée sur un autre dossier, un garage hors réseau.</p></div></div>';
+  h += '<div class="reglage"><div class="expl"><h3>Vol et véhicule irréparable</h3><p>L\'expert fixe la valeur du véhicule. Klerio fait l\'offre à l\'assuré, recueille son choix et ses pièces en ligne, puis calcule l\'indemnité.</p></div><div class="zone pile">' +
+    '<label class="case"><input type="checkbox" id="s-indemnite"' + (p.indemnite_expert_auto ? " checked" : "") + '> Verser sans validation les indemnités fixées par l\'expert (vol non retrouvé, véhicule irréparable), quel que soit le montant</label>' +
+    '<div class="grille-2">' + champNum("s-vei", "Délai de réponse de l'assuré à l'offre", "jours", p.delai_reponse_vei_jours) + '</div>' +
+    '<p class="muet petit">Le vol est le sinistre le plus exposé à la fraude : sans cette option, chaque indemnité au-dessus du seuil de règlement automatique est validée par un gestionnaire. Sans réponse de l\'assuré dans le délai, il est réputé conserver son véhicule irréparable, comme le prévoit la procédure.</p></div></div>';
   h += '<div class="reglage"><div class="expl"><h3>Organisation de l\'équipe</h3><p>Qui traite les dossiers qui demandent une décision.</p></div><div class="zone pile">' +
     '<label class="case"><input type="radio" name="s-mode" value="corbeille"' + (p.mode_repartition !== "repartition" ? " checked" : "") + '> File commune : chaque gestionnaire prend ses dossiers. Un dossier pris doit être traité, ou renvoyé au responsable avec un motif.</label>' +
     '<label class="case"><input type="radio" name="s-mode" value="repartition"' + (p.mode_repartition === "repartition" ? " checked" : "") + '> Répartition automatique : chaque dossier va au gestionnaire du bon service qui en a le moins.</label></div></div>';
@@ -1842,6 +1895,7 @@ function brancherRaccordement(admin) {
     var auto = $("s-auto").value, m = document.querySelector('[name="s-mode"]:checked'), c = document.querySelector('[name="s-cons"]:checked');
     envoyer(this, "parametres", { reglement_auto_max_eur: auto === "" ? null : Number(auto), refus_automatique: $("s-refus").checked,
       paiement_garage_auto: $("s-garage").checked, email_comptabilite: $("s-compta").value.trim(),
+      indemnite_expert_auto: $("s-indemnite").checked, delai_reponse_vei_jours: Number($("s-vei").value),
       mode_repartition: m ? m.value : "corbeille", conservation: c ? c.value : "conserver", delai_effacement_jours: Number($("s-effacement").value) }, "Choix enregistrés");
   });
 }

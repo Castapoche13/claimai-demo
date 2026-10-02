@@ -16,7 +16,7 @@
   };
   var THEMES = {
     BRIS_GLACE: "Bris de glace", PERTE_CONTROLE_OBSTACLE_FIXE: "Perte de contrôle", VANDALISME: "Vandalisme",
-    TENTATIVE_VOL: "Tentative de vol", VOL: "Vol du véhicule", INCENDIE: "Incendie", EVENEMENT_CLIMATIQUE: "Grêle, tempête",
+    TENTATIVE_VOL: "Tentative de vol", VOL: "Vol du véhicule", VOL_RETROUVE: "Vol, véhicule retrouvé", INCENDIE: "Incendie", EVENEMENT_CLIMATIQUE: "Grêle, tempête",
     CATASTROPHE_NATURELLE: "Catastrophe naturelle",
     GARANTIE_ACCIDENT: "Garantie Accident", AUTRE: "Autre sinistre", NON_QUALIFIE: "Non qualifié"
   };
@@ -44,6 +44,9 @@
     reouverture: "Dossier rouvert par un gestionnaire",
     arrete_catnat_absent: "Arrêté de catastrophe naturelle à référencer",
     relances_sans_reponse: "Trois relances sans réponse",
+    choix_vei: "Véhicule irréparable : choix de l'assuré attendu",
+    choix_vol_retrouve: "Véhicule retrouvé : choix de l'assuré attendu",
+    vei_sans_valeur: "Véhicule irréparable : valeurs de l'expert manquantes",
     qualite_assure_a_verifier: "Âge ou lien de la victime à vérifier",
     aipp_inferieure_10: "Atteinte estimée sous le seuil de 10 %",
     age_limite_75: "Victime de 75 ans ou plus",
@@ -54,7 +57,7 @@
     TENTATIVE_SUICIDE: "Tentative de suicide", ACTE_THERAPEUTIQUE: "Acte thérapeutique"
   };
   var ANOMALIES = {
-    VEI: "Véhicule économiquement irréparable",
+    VEI: "Véhicule économiquement irréparable", VEI_SANS_VALEUR: "Véhicule irréparable sans valeur de remplacement ou d'épave",
     REGLEMENT_DIRECT_REFUSE: "L'expert n'accorde pas le règlement direct au réparateur",
     TAUX_HORAIRE: "Taux horaire au-dessus du maximum", ECART_DEVIS: "Écart entre le devis et le montant retenu",
     PLAFOND_DEPASSE: "Plafond de garantie dépassé", SEUIL_SANS_EXPERT: "Montant au-dessus du seuil sans expertise",
@@ -74,13 +77,13 @@
     FACTURE: "Facture", DELEGATION_PAIEMENT: "Délégation de paiement", RAPPORT_EXPERTISE: "Rapport d'expertise",
     DEPOT_PLAINTE: "Récépissé de plainte", CMI: "Certificat médical initial", FICHE_RENSEIGNEMENTS: "Fiche de renseignements",
     RIB: "RIB", RAPPORT_MEDICAL: "Conclusions médicales", DOUBLES_CLES: "Deux jeux de clés",
-    CERTIFICAT_IMMATRICULATION: "Carte grise", RAPPORT_POMPIERS: "Rapport des pompiers"
+    CERTIFICAT_IMMATRICULATION: "Carte grise", RAPPORT_POMPIERS: "Rapport des pompiers", CERTIFICAT_CESSION: "Certificat de cession et carte grise barrée"
   };
   var LIENS = { societaire: "Sociétaire", conjoint: "Conjoint", enfant_mineur: "Enfant mineur", enfant_etudiant: "Enfant étudiant",
     enfant_handicape: "Enfant en situation de handicap", personne_a_charge: "Personne à charge", conducteur_tiers: "Conducteur autorisé" };
   // Types de sinistre par espace : le matériel (contractuel) et le corporel, séparés dans toute la console
   var ESPACES = {
-    materiel: { nom: "Matériel", themes: ["BRIS_GLACE", "PERTE_CONTROLE_OBSTACLE_FIXE", "VANDALISME", "TENTATIVE_VOL", "VOL", "INCENDIE", "EVENEMENT_CLIMATIQUE", "CATASTROPHE_NATURELLE"] },
+    materiel: { nom: "Matériel", themes: ["BRIS_GLACE", "PERTE_CONTROLE_OBSTACLE_FIXE", "VANDALISME", "TENTATIVE_VOL", "VOL", "VOL_RETROUVE", "INCENDIE", "EVENEMENT_CLIMATIQUE", "CATASTROPHE_NATURELLE"] },
     corporel: { nom: "Corporel", themes: ["GARANTIE_ACCIDENT"] }
   };
   var GARANTIES = { BRIS_GLACE: "Bris de glace", DOMMAGES_TOUS_ACCIDENTS: "Dommages tous accidents", VOL_VANDALISME: "Vol et vandalisme", VOL: "Vol",

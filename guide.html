@@ -96,6 +96,7 @@ table.doc td:first-child { white-space: nowrap; }
       <li><a href="#suivre">Lire un dossier</a></li>
       <li><a href="#agir">Agir depuis votre outil</a></li>
       <li><a href="#paiement">Paiement des garages</a></li>
+      <li><a href="#vehicule">Véhicule irréparable, vol retrouvé, choix du garage</a></li>
       <li><a href="#documents">Envoyer un document</a></li>
       <li><a href="#informations">Appels et mails reçus</a></li>
       <li><a href="#cloture">Clôture, archive, effacement</a></li>
@@ -322,6 +323,14 @@ POST /note-traitee  { "note_id": "…", "par": "jdupont" }</pre>
       <div class="note"><b>Effacement chez Klerio.</b> Passé le délai convenu (90 jours après la clôture par défaut, réglable de 30 jours à 10 ans), et seulement si l'archive a été remise à votre outil (message <code>dossier_clos</code> livré ou <code>GET /archive</code> appelé), Klerio efface le contenu personnel du dossier : récit, analyse, documents et fichiers, notes, courriers, adresses, liens d'accès. Restent le numéro, les références, les dates, les statuts, les montants et le journal d'audit (codes et décisions, sans texte personnel). Un dossier effacé ne peut plus être rouvert dans Klerio.</div>
     </section>
 
+    <section id="vehicule">
+      <h2>Véhicule irréparable, vol retrouvé, choix du garage</h2>
+      <p><b>Véhicule économiquement irréparable.</b> Quand l'expert coche « irréparable », il indique la valeur de remplacement (<code>vrade_ttc</code>) et la valeur de l'épave (<code>valeur_epave_ttc</code>). Klerio annule la réparation, prévient le garage et envoie aussitôt l'offre à l'assuré, sans attendre les 15 jours dont dispose l'assureur. Il propose deux montants : la valeur de remplacement moins la franchise s'il cède le véhicule, ou la même valeur moins l'épave et la franchise s'il le garde. L'assuré choisit en ligne. Sans réponse dans le délai (30 jours par défaut), il est réputé garder son véhicule. Les pièces sont réclamées automatiquement (certificat de cession et carte grise barrée en cas de cession, RIB), puis l'indemnité est versée. Il reste à faire de votre côté, et la fiche le rappelle : la déclaration d'achat au SIV sous 15 jours et la vente de l'épave à un professionnel, ou le suivi de l'opposition au transfert de la carte grise si l'assuré garde le véhicule.</p>
+      <p><b>Vol, véhicule retrouvé.</b> L'assuré le signale depuis son lien, ou vous l'indiquez avec <code>POST /reprendre {"numero", "action": "vehicule_retrouve", "par", "commentaire"}</code>. Avant l'indemnisation, le dossier devient « vol, véhicule retrouvé » et part en expertise et réparation. Après l'indemnisation, l'assuré choisit en ligne : garder l'indemnité (le véhicule revient à la compagnie) ou le reprendre en la remboursant. Dans ce second cas, le service comptable est prévenu de l'encaissement attendu. Le délai de reprise et la prise en charge des dégâts dépendent de chaque contrat.</p>
+      <p><b>Libre choix du réparateur</b> (article L211-5-1 du Code des assurances). Klerio missionne d'office le garage partenaire le plus proche et rappelle à l'assuré qu'il peut en choisir un autre. Depuis son lien, l'assuré peut prendre un des trois garages partenaires les plus proches, ou un garage hors réseau. L'ancien garage et l'expert sont prévenus. Le règlement d'un garage hors réseau est toujours validé par un gestionnaire, car son RIB ne figure dans aucun référentiel.</p>
+      <p><b>Indemnités fixées par l'expert.</b> L'option « Verser sans validation les indemnités fixées par l'expert » (Raccordement, règles) couvre le vol non retrouvé et le véhicule irréparable. Sans elle, ces indemnités suivent le seuil de règlement automatique.</p>
+    </section>
+
     <section id="referentiels">
       <h2>Contrats et réseau</h2>
       <p>Klerio vérifie la garantie à partir des contrats que vous lui transmettez, et ne missionne que votre réseau agréé. Les deux imports sont des mises à jour : un même numéro de contrat, ou un même email d'expert ou de garage, remplace la fiche existante.</p>
@@ -331,15 +340,17 @@ POST /note-traitee  { "note_id": "…", "par": "jdupont" }</pre>
     "assure_email": "assure@exemple.fr", "date_effet": "2026-01-01", "date_fin": null,
     "statut": "actif", "vehicule_immat": "GH-512-KL",
     "garanties": [ { "code": "BRIS_GLACE", "franchise_eur": 0 },
-                   { "code": "DOMMAGES_TOUS_ACCIDENTS", "franchise_eur": 300 },
+                   { "code": "DOMMAGES_TOUS_ACCIDENTS", "franchise_eur": 300,
+                     "plafond_eur": 15000, "vetuste_pieces_pct": 0 },
                    { "code": "GARANTIE_ACCIDENT", "option": 9 } ] } ] }
 
 POST /reseau
 { "experts": [ { "nom": "Cabinet Expertise Loing", "email": "expert@exemple.fr",
                  "specialite": "auto", "departements": ["77", "45"] } ],
   "garages": [ { "nom": "Carrosserie du Loing", "email": "garage@exemple.fr", "code_postal": "77140",
-                 "specialites": ["carrosserie", "vitrage"], "taux_horaire_eur": 68 } ] }</pre>
-      <p>Codes de garantie : <code>BRIS_GLACE</code>, <code>DOMMAGES_TOUS_ACCIDENTS</code>, <code>VOL_VANDALISME</code>, <code>VOL</code>, <code>INCENDIE</code>, <code>EVENEMENTS_CLIMATIQUES</code>, <code>CATASTROPHES_NATURELLES</code>, <code>GARANTIE_ACCIDENT</code>. Un vol se règle à l'assuré sur la valeur fixée par l'expert, après le délai de recherche du contrat (30 jours par défaut). Ne transmettez que ce qui sert à la gestion : pas de données de santé, de RIB ni de pièce d'identité dans ces imports.</p>
+                 "specialites": ["carrosserie", "vitrage"], "taux_horaire_eur": 68,
+                 "iban": "FR76…", "titulaire_compte": "Carrosserie du Loing SARL" } ] }</pre>
+      <p>Codes de garantie : <code>BRIS_GLACE</code>, <code>DOMMAGES_TOUS_ACCIDENTS</code>, <code>VOL_VANDALISME</code>, <code>VOL</code>, <code>INCENDIE</code>, <code>EVENEMENTS_CLIMATIQUES</code>, <code>CATASTROPHES_NATURELLES</code>, <code>GARANTIE_ACCIDENT</code>. Un vol se règle à l'assuré sur la valeur fixée par l'expert, après le délai de recherche du contrat (30 jours par défaut). Par garantie, deux réglages facultatifs, propres à chaque contrat : <code>plafond_eur</code> (montant maximum versé) et <code>vetuste_pieces_pct</code> (abattement sur les pièces ; une vétusté chiffrée par l'expert dans son rapport passe avant). Ne transmettez que ce qui sert à la gestion : pas de données de santé, de RIB d'assuré ni de pièce d'identité dans ces imports. L'IBAN d'un garage partenaire, lui, sert au paiement direct.</p>
     </section>
 
     <section id="messages">

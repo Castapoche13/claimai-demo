@@ -62,6 +62,15 @@ form.carte-in { display: grid; gap: 18px; }
 .paye { display: flex; gap: 12px; align-items: end; flex-wrap: wrap; }
 .paye .champ { flex: 1 1 240px; }
 @media (max-width: 560px) { .payer-l { grid-template-columns: 1fr auto; } .payer-l > span:first-child { grid-column: 1 / -1; } }
+.choix { display: grid; gap: 10px; }
+.option { display: grid; grid-template-columns: auto 1fr auto; gap: 4px 12px; align-items: start; padding: 14px 16px; border: 1.5px solid var(--trait); border-radius: 8px; cursor: pointer; }
+.option:has(input:checked) { border-color: var(--bleu); background: var(--bleu-pale); }
+.option input { margin-top: 3px; }
+.option b { font-size: 15px; }
+.option .montant { font-size: 18px; font-weight: 600; white-space: nowrap; }
+.option p { grid-column: 2 / -1; font-size: 13.5px; color: var(--encre-2); margin: 0; }
+.encart-lien { background: none; border: 0; padding: 0; color: var(--bleu); font: inherit; font-weight: 600; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
+@media (max-width: 560px) { .option { grid-template-columns: auto 1fr; } .option .montant { grid-column: 2; } }
 .pied { font-size: 12.5px; color: var(--gris); margin-top: 24px; line-height: 1.6; }
 </style>
 </head>
@@ -104,7 +113,7 @@ var TITRES = {
   expert_auto: ["Rapport d'expertise", "Indiquez vos conclusions. Le règlement au réparateur sera calculé sur le montant que vous retenez."],
   expert_medical: ["Conclusions médicales", "Indiquez uniquement vos conclusions. Conformément au secret médical, aucun compte rendu détaillé n'est demandé."],
   garage: ["Facture et délégation de paiement", "Après réparation, transmettez la facture et la délégation signée par l'assuré : le règlement vous est versé directement, franchise déduite."],
-  assure: ["Pièces à nous transmettre", "Ces documents nous permettent d'avancer sur votre dossier. Vous pouvez les envoyer en plusieurs fois."]
+  assure: ["Pièces à nous transmettre", "Retrouvez ici ce que nous attendons de vous pour avancer : documents à envoyer, choix à faire. Vous pouvez répondre en plusieurs fois."]
 };
 
 // Service comptable : bon à payer, puis confirmation du virement qui clôt le dossier
@@ -173,6 +182,95 @@ function afficherComptable(c) {
   });
 }
 
+// Choix de l'assuré : véhicule irréparable, véhicule volé retrouvé, garage
+function envoyerChoix(btn, corps, ok) {
+  C.occupe(btn, true, "Envoi");
+  corps.t = jeton;
+  return api("portail", { body: corps }).then(function () { C.toast(ok); charger(); })
+    .catch(function (x) { C.occupe(btn, false); C.toast(x.message, true); });
+}
+function blocsAssure(c) {
+  var h = "", v = c.vei, vr = c.vol_retrouve, g = c.choix_garage;
+  if (v && !v.choix) {
+    h += '<div class="carte"><form class="carte-in" id="form-vei" novalidate><h2>Votre véhicule est économiquement irréparable</h2>' +
+      '<p class="intro">Les réparations, estimées à ' + esc(eur(v.reparations_ttc)) + ", dépassent la valeur de remplacement de votre véhicule, fixée par l'expert à " + esc(eur(v.vrade_ttc)) +
+      ". Choisissez avant le " + esc(C.dateFr(v.echeance)) + ". Sans réponse, vous serez réputé conserver le véhicule.</p><div class=\"choix\">" +
+      '<label class="option"><input type="radio" name="vei" value="ceder"><b>Je cède le véhicule à mon assureur</b><span class="montant">' + esc(eur(v.offre_cession)) + "</span>" +
+        "<p>Valeur de remplacement, franchise de " + esc(eur(v.franchise_eur)) + " déduite. Nous nous chargeons de l'épave. Il vous faudra le certificat de cession signé et la carte grise barrée.</p></label>" +
+      '<label class="option"><input type="radio" name="vei" value="conserver"><b>Je conserve mon véhicule</b><span class="montant">' + esc(eur(v.offre_conservation)) + "</span>" +
+        "<p>Valeur de remplacement moins la valeur de l'épave (" + esc(eur(v.valeur_epave_ttc)) + ") et la franchise. Vous ne pourrez le vendre qu'à un professionnel, ou le faire réparer sous le contrôle d'un expert.</p></label></div>" +
+      '<p class="petit muet">Vous contestez la valeur retenue ? Répondez à l\'email reçu avec vos justificatifs, ou demandez une contre-expertise.</p>' +
+      '<div class="envoyer"><button class="btn primaire" id="b-vei" type="submit">Valider mon choix</button></div></form></div>';
+  } else if (v && v.choix) {
+    h += '<div class="carte"><div class="carte-in"><h2>Véhicule irréparable</h2><p class="intro">Choix enregistré : ' +
+      (v.choix === "ceder" ? "vous cédez le véhicule à votre assureur, pour " + esc(eur(v.offre_cession)) : "vous conservez votre véhicule, pour " + esc(eur(v.offre_conservation))) + ".</p></div></div>";
+  }
+  if (vr && vr.apres_indemnisation && !vr.choix) {
+    h += '<div class="carte"><form class="carte-in" id="form-vr" novalidate><h2>Votre véhicule a été retrouvé</h2>' +
+      '<p class="intro">Vous avez déjà été indemnisé (' + esc(eur(vr.indemnite)) + "). Selon les conditions de votre contrat, choisissez avant le " + esc(C.dateFr(vr.echeance)) + ".</p><div class=\"choix\">" +
+      '<label class="option"><input type="radio" name="vr" value="garder_indemnite"><b>Je garde l\'indemnité</b><span></span><p>Le véhicule devient la propriété de votre assureur, qui s\'en charge.</p></label>' +
+      '<label class="option"><input type="radio" name="vr" value="reprendre_vehicule"><b>Je reprends mon véhicule</b><span class="montant">' + esc(eur(vr.indemnite)) + "</span><p>Vous remboursez l'indemnité. Les dégâts éventuels sont pris en charge selon votre contrat.</p></label></div>" +
+      '<div class="envoyer"><button class="btn primaire" id="b-vr" type="submit">Valider mon choix</button></div></form></div>';
+  }
+  if (c.peut_signaler_retrouve) {
+    h += '<div class="carte"><form class="carte-in" id="form-retrouve" novalidate><h2>Votre véhicule a été retrouvé ?</h2>' +
+      '<p class="intro">Signalez-le ici : nous organisons son expertise et sa remise en état' + (c.statut === "clos" || c.statut === "reglement_envoye" ? ", ou vous proposons de le reprendre" : "") + ".</p>" +
+      '<label class="champ">Où et quand <span class="aide">facultatif</span><textarea class="saisie" id="f-retrouve" rows="2" maxlength="500" placeholder="Ex. retrouvé par la police à Melun le 2 octobre"></textarea></label>' +
+      '<div class="envoyer"><button class="btn" id="b-retrouve" type="submit">Mon véhicule a été retrouvé</button></div></form></div>';
+  }
+  if (g) {
+    var autres = (g.proposes || []).filter(function (x) { return !g.actuel || x.nom !== g.actuel.nom; });
+    h += '<div class="carte"><div class="carte-in"><h2>Votre réparateur</h2><p class="intro">' +
+      (g.actuel ? "<b>" + esc(g.actuel.nom) + "</b> (" + esc(g.actuel.code_postal) + ")" + (g.actuel.hors_reseau ? ", garage de votre choix hors réseau." : ", garage partenaire.") : "") +
+      " Vous êtes libre de choisir votre réparateur (article L211-5-1 du Code des assurances).</p>" +
+      '<p><button type="button" class="encart-lien" id="b-autre-garage">Choisir un autre garage</button></p>' +
+      '<form id="form-garage" class="choix" hidden novalidate>' +
+      autres.map(function (x, i) {
+        return '<label class="option"><input type="radio" name="gar" value="' + esc(x.id) + '"' + (i ? "" : " checked") + "><b>" + esc(x.nom) + '</b><span class="muet petit">' + (x.distance_km != null ? esc(C.nombre(x.distance_km, 1)) + " km" : "") +
+          "</span><p>Garage partenaire, " + esc(x.code_postal) + ". Aucune avance de frais, hormis la franchise.</p></label>";
+      }).join("") +
+      '<label class="option"><input type="radio" name="gar" value="autre"' + (autres.length ? "" : " checked") + '><b>Un garage hors réseau</b><span></span><p>Votre garage habituel par exemple. La réparation reste prise en charge selon votre contrat, après vérification de sa facture.</p></label>' +
+      '<div class="grille-2" id="gar-autre" hidden><label class="champ">Nom du garage<input class="saisie" id="g-nom" maxlength="120"></label>' +
+      '<label class="champ">Email du garage<input class="saisie" id="g-email" type="email" maxlength="160"></label>' +
+      '<label class="champ">Code postal<input class="saisie" id="g-cp" inputmode="numeric" maxlength="5"></label><div></div></div>' +
+      '<div class="envoyer"><button class="btn primaire" id="b-garage" type="submit">Confirmer ce garage</button><span class="muet petit">Nous prévenons le garage et l\'expert.</span></div></form></div></div>';
+  }
+  return h;
+}
+function brancherAssure() {
+  var fv = $("form-vei");
+  if (fv) fv.addEventListener("submit", function (e) {
+    e.preventDefault(); var x = document.querySelector('input[name="vei"]:checked');
+    if (!x) return C.toast("Choisissez une des deux possibilités.", true);
+    envoyerChoix($("b-vei"), { choix_vei: x.value }, "Choix enregistré");
+  });
+  var fr = $("form-vr");
+  if (fr) fr.addEventListener("submit", function (e) {
+    e.preventDefault(); var x = document.querySelector('input[name="vr"]:checked');
+    if (!x) return C.toast("Choisissez une des deux possibilités.", true);
+    envoyerChoix($("b-vr"), { choix_vol_retrouve: x.value }, "Choix enregistré");
+  });
+  var ft = $("form-retrouve");
+  if (ft) ft.addEventListener("submit", function (e) {
+    e.preventDefault();
+    if (!confirm("Confirmer que votre véhicule a été retrouvé ?")) return;
+    envoyerChoix($("b-retrouve"), { vehicule_retrouve: true, commentaire: $("f-retrouve").value.trim() || undefined }, "Merci, c'est noté");
+  });
+  var ba = $("b-autre-garage"), fg = $("form-garage");
+  if (ba && fg) {
+    ba.addEventListener("click", function () { fg.hidden = !fg.hidden; ba.textContent = fg.hidden ? "Choisir un autre garage" : "Garder ce garage"; });
+    var majAutre = function () { var x = document.querySelector('input[name="gar"]:checked'); $("gar-autre").hidden = !x || x.value !== "autre"; };
+    fg.querySelectorAll('input[name="gar"]').forEach(function (r) { r.addEventListener("change", majAutre); }); majAutre();
+    fg.addEventListener("submit", function (e) {
+      e.preventDefault(); var x = document.querySelector('input[name="gar"]:checked'); if (!x) return;
+      var cg = x.value === "autre" ? { nom: $("g-nom").value.trim(), email: $("g-email").value.trim(), code_postal: $("g-cp").value.trim() } : { garage_id: x.value };
+      if (x.value === "autre" && (!cg.nom || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(cg.email) || !/^\d{5}$/.test(cg.code_postal)))
+        return C.toast("Indiquez le nom, l'email et le code postal du garage.", true);
+      envoyerChoix($("b-garage"), { choix_garage: cg }, "Garage enregistré");
+    });
+  }
+}
+
 function afficher(c) {
   $("cie").innerHTML = esc(c.assureur || "Service sinistres") + "<small>Service sinistres, espace sécurisé</small>";
   document.title = "Dossier " + c.numero + ", " + (c.assureur || "service sinistres");
@@ -186,6 +284,25 @@ function afficher(c) {
     (c.expertise_retenue ? "<div>Retenu par l'expert<b>" + esc(eur(c.expertise_retenue.ttc)) + " TTC</b></div>" : "") + "</div>" +
     (c.recit ? '<div class="recit"><span>Circonstances déclarées</span>' + esc(c.recit) + "</div>" : "") + "</div>";
 
+  if (c.role === "garage" && c.mission_annulee) {
+    h += '<div class="carte"><div class="etat"><div class="rond ko">' + ICONE_KO + "</div><h1>Prise en charge annulée</h1><p>Ce dossier ne vous est plus confié : l'assuré a choisi un autre réparateur, ou le véhicule n'est pas réparable. N'engagez aucun travaux.</p></div></div>";
+    $("main").innerHTML = h + pied(); return;
+  }
+  var extra = c.role === "assure" ? blocsAssure(c) : "";
+  var piecesAssure = c.role === "assure" && (c.pieces_attendues || []).some(function (p) { return !p.recue; });
+  if (c.role === "assure" && (extra || !piecesAssure) && (c.reponse_attendue || extra)) {
+    h += extra;
+    if (piecesAssure) {
+      h += '<div class="carte"><form class="carte-in" id="form" novalidate><h2>' + esc(t[0]) + "</h2>" + formulaire(c) +
+        '<div class="envoyer"><button class="btn primaire" id="b-envoyer" type="submit">Envoyer au service sinistres</button></div></form></div>';
+    } else if (!extra.match(/<form/)) {
+      h += '<div class="carte"><div class="etat"><div class="rond">' + ICONE_OK + "</div><h1>Nous avons tout ce qu'il nous faut</h1><p>Vous serez informé par email de la suite du dossier.</p></div></div>";
+    }
+    $("main").innerHTML = h + pied();
+    brancherAssure();
+    if (piecesAssure) brancher(c);
+    return;
+  }
   if (!c.reponse_attendue) {
     var fini = ["clos", "refuse", "classe_sans_suite"].indexOf(c.statut) >= 0;
     h += '<div class="carte"><div class="etat"><div class="rond">' + ICONE_OK + "</div><h1>" + (fini ? "Ce dossier est terminé" : "Nous avons tout ce qu'il nous faut") +
@@ -228,7 +345,9 @@ function formulaire(c) {
     '<div class="grille-3">' + num("f-taux", "Taux horaire", "€ HT") + num("f-heures", "Main-d'œuvre", "en heures") + num("f-pieces", "Pièces", "HT, en €") + "</div>" +
     '<div class="grille-2">' + num("f-ht", "Montant retenu", "HT, en €") + "<div></div></div>" +
     '<p class="indice" id="f-coherence">Renseignez le détail du chiffrage pour vérifier sa cohérence.</p>' +
-    '<label class="case"><input type="checkbox" id="f-vei"> Véhicule économiquement irréparable (VEI)</label>' +
+    '<div class="grille-2">' + num("f-vet", "Vétusté déduite", "TTC, en €, facultatif") + "<div></div></div>" +
+    '<label class="case"><input type="checkbox" id="f-vei"> Véhicule économiquement irréparable (VEI) : les réparations dépassent sa valeur</label>' +
+    '<div class="grille-2" id="f-vei-bloc" hidden>' + num("f-vrade", "Valeur de remplacement (VRADE)", "TTC, en €", "") + num("f-epave", "Valeur de l\'épave", "TTC, en €", "") + "</div>" +
     '<label class="case"><input type="checkbox" id="f-direct" checked> J\'accorde le règlement direct au réparateur</label>' +
     '<label class="champ">Observations <span class="aide">facultatif</span><textarea class="saisie" id="f-conclusion" rows="3"></textarea></label>';
   if (c.role === "expert_medical") return '<div class="grille-2">' + num("f-aipp", "Taux d'AIPP", "en %", 'required max="100" step="0.5"') +
@@ -300,6 +419,8 @@ function brancherDepot(c) {
 
 function brancher(c) {
   brancherDepot(c);
+  var vei = $("f-vei"), bloc = $("f-vei-bloc");
+  if (vei && bloc) { var maj = function () { bloc.hidden = !vei.checked; }; vei.addEventListener("change", maj); vei.addEventListener("input", maj); maj(); }
   var coh = $("f-coherence");
   if (coh) ["f-taux", "f-heures", "f-pieces", "f-ht", "f-ttc"].forEach(function (id) {
     $(id).addEventListener("input", function () {
@@ -323,8 +444,10 @@ function brancher(c) {
     var r = {};
     if (c.role === "expert_auto") {
       r = { montant_devis_ttc: val("f-devis"), montant_ttc: val("f-ttc"), montant_ht: val("f-ht"), taux_horaire: val("f-taux"), heures: val("f-heures"),
-        montant_pieces_ht: val("f-pieces"), vei: $("f-vei").checked, reglement_direct_autorise: $("f-direct").checked, conclusion: $("f-conclusion").value.trim() || undefined };
+        montant_pieces_ht: val("f-pieces"), vei: $("f-vei").checked, reglement_direct_autorise: $("f-direct").checked, conclusion: $("f-conclusion").value.trim() || undefined,
+        vetuste_ttc: val("f-vet"), vrade_ttc: val("f-vrade"), valeur_epave_ttc: val("f-epave") };
       if (!r.montant_ttc) return C.toast("Indiquez le montant retenu TTC.", true);
+      if (r.vei && !c.evaluation_vol && (!r.vrade_ttc || r.valeur_epave_ttc == null)) return C.toast("Véhicule irréparable : indiquez la valeur de remplacement et la valeur de l'épave.", true);
     } else if (c.role === "expert_medical") {
       r = { aipp_pct: val("f-aipp"), date_consolidation: $("f-conso").value || undefined, dependance_totale: $("f-dep").checked, conclusion: $("f-conclusion").value.trim() || undefined };
       if (r.aipp_pct == null || r.aipp_pct > 100) return C.toast("Indiquez un taux d'AIPP entre 0 et 100 %.", true);
