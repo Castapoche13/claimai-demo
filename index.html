@@ -1106,7 +1106,11 @@ function blocAnalyse(f, an, d) {
   h += '<dl class="info-liste">';
   h += "<dt>Type retenu</dt><dd>" + esc(C.theme(f.theme)) + (an.theme_declare_coherent === false ? ' <span class="statut vous">différent du type déclaré</span>' : "") + "</dd>";
   if (conf != null) h += '<dt>Fiabilité</dt><dd><span class="confiance' + (conf < .7 ? " basse" : "") + '"><span class="piste"><span class="rempli" style="width:' + Math.round(conf * 100) + '%"></span></span>' + Math.round(conf * 100) + " %</span></dd>";
-  if (f.theme !== "GARANTIE_ACCIDENT" && f.tiers_implique != null) h += "<dt>Tiers</dt><dd>" + (f.tiers_implique ? "Oui, un tiers est en cause" : "Aucun") + "</dd>";
+  if (f.theme !== "GARANTIE_ACCIDENT" && f.tiers_implique != null) {
+    // Bris de glace, vol, vandalisme, incendie, intempéries : un tiers éventuel est inconnu et ne change rien à la prise en charge
+    var sansRecours = ["BRIS_GLACE", "VANDALISME", "TENTATIVE_VOL", "VOL", "VOL_RETROUVE", "INCENDIE", "EVENEMENT_CLIMATIQUE", "CATASTROPHE_NATURELLE"].indexOf(f.theme) >= 0;
+    h += "<dt>Tiers</dt><dd>" + (!f.tiers_implique ? "Aucun" : sansRecours ? "Tiers non identifié (sans incidence sur la prise en charge)" : "Oui, un tiers est en cause") + "</dd>";
+  }
   if (f.theme === "GARANTIE_ACCIDENT") {
     if (d.classification) h += "<dt>Nature</dt><dd>" + esc(C.CLASSES[d.classification] || d.classification) + "</dd>";
     if (d.categorie_assure) h += "<dt>Qualité</dt><dd>Catégorie " + esc(d.categorie_assure) + (d.victime ? ", " + esc(C.LIENS[d.victime.lien] || "") : "") + "</dd>";
@@ -1829,7 +1833,10 @@ function ongletDonnees(p) {
   h += '<div class="reglage"><div class="expl"><h3>Paiement des garages</h3><p>Dès que l\'expert a fixé le montant et que le garage partenaire a envoyé sa facture, le règlement part au service comptable, sans autre validation.</p></div><div class="zone pile">' +
     '<label class="case"><input type="checkbox" id="s-garage"' + (p.paiement_garage_auto ? " checked" : "") + '> Payer directement les garages partenaires sur le montant de l\'expert, quel que soit le montant</label>' +
     '<div class="grille-2"><label class="champ">Service comptable <span class="aide">reçoit chaque bon à payer</span><input class="saisie" id="s-compta" type="email" value="' + esc(p.email_comptabilite || "") + '" placeholder="comptabilite@votre-compagnie.fr"></label></div>' +
-    '<p class="muet petit">Le comptable reçoit un mail par règlement validé (garage ou assuré), avec un lien sécurisé : montant, IBAN du référentiel, facture, puis un champ pour la référence du virement qui clôt le dossier. Restent toujours chez un gestionnaire : une facture au-dessus du montant de l\'expert, une facture déjà présentée sur un autre dossier, un garage hors réseau.</p></div></div>';
+    '<div class="grille-2"><label class="champ">Compte qui paie les sinistres <span class="aide">IBAN, pour l\'ordre de virement prérempli</span><input class="saisie mono" id="s-iban-deb" value="' + esc(p.compte_paiement_iban || "") + '" placeholder="FR76 …" autocomplete="off"></label>' +
+    '<label class="champ">BIC <span class="aide">facultatif</span><input class="saisie mono" id="s-bic-deb" value="' + esc(p.compte_paiement_bic || "") + '" placeholder="BNPAFRPPXXX" autocomplete="off"></label></div>' +
+    '<div class="grille-2"><label class="champ">Titulaire du compte<input class="saisie" id="s-tit-deb" value="' + esc(p.compte_paiement_titulaire || "") + '" maxlength="70"></label></div>' +
+    '<p class="muet petit">Le comptable reçoit un mail par règlement validé (garage ou assuré), avec un lien sécurisé : montant, IBAN du référentiel, facture, et un ordre de virement SEPA déjà rempli à importer dans la banque. Il saisit ensuite la référence du virement, ce qui clôt le dossier et prévient l\'assuré et le garage du paiement. Restent toujours chez un gestionnaire : une facture au-dessus du montant de l\'expert, une facture déjà présentée sur un autre dossier, un garage hors réseau.</p></div></div>';
   h += '<div class="reglage"><div class="expl"><h3>Vol et véhicule irréparable</h3><p>L\'expert fixe la valeur du véhicule. Klerio fait l\'offre à l\'assuré, recueille son choix et ses pièces en ligne, puis calcule l\'indemnité.</p></div><div class="zone pile">' +
     '<label class="case"><input type="checkbox" id="s-indemnite"' + (p.indemnite_expert_auto ? " checked" : "") + '> Verser sans validation les indemnités fixées par l\'expert (vol non retrouvé, véhicule irréparable), quel que soit le montant</label>' +
     '<div class="grille-2">' + champNum("s-vei", "Délai de réponse de l'assuré à l'offre", "jours", p.delai_reponse_vei_jours) + '</div>' +
@@ -1920,6 +1927,7 @@ function brancherRaccordement(admin) {
     var auto = $("s-auto").value, m = document.querySelector('[name="s-mode"]:checked'), c = document.querySelector('[name="s-cons"]:checked');
     envoyer(this, "parametres", { reglement_auto_max_eur: auto === "" ? null : Number(auto), refus_automatique: $("s-refus").checked,
       paiement_garage_auto: $("s-garage").checked, email_comptabilite: $("s-compta").value.trim(),
+      compte_paiement_iban: $("s-iban-deb").value.trim(), compte_paiement_bic: $("s-bic-deb").value.trim(), compte_paiement_titulaire: $("s-tit-deb").value.trim(),
       indemnite_expert_auto: $("s-indemnite").checked, delai_reponse_vei_jours: Number($("s-vei").value),
       mode_repartition: m ? m.value : "corbeille", conservation: c ? c.value : "conserver", delai_effacement_jours: Number($("s-effacement").value) }, "Choix enregistrés");
   });

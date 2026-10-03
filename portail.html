@@ -123,10 +123,39 @@ function boutonCopier(id, valeur, lib) {
 }
 function origineValidation(r) {
   var p = r.valide_par || "";
-  if (p === "automatique:garage_partenaire") return ["Payable sans autre validation", "Montant retenu par l'expert, garage partenaire"];
+  if (p === "automatique:garage_partenaire") return ["Payable sans autre validation", "Garage partenaire, montant contrôlé par Klerio"];
   if (p === "automatique:reglement_sous_seuil") return ["Validé automatiquement", "Sous le seuil de règlement automatique de votre compagnie"];
   if (p.indexOf("automatique:") === 0) return ["Validé automatiquement", ""];
   return ["Validé par un gestionnaire", p.replace(/^humain:|^outil:/, "")];
+}
+// Ordre de virement SEPA (pain.001.001.03) : un virement, prêt à importer dans la banque de l'assureur
+function xmlEsc(s) { return String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;"); }
+function sepaTexte(s, max) {
+  // Jeu de caractères SEPA : lettres sans accent, chiffres et ponctuation simple
+  return String(s || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^A-Za-z0-9 \/\-?:().,'+]/g, " ").replace(/\s+/g, " ").trim().slice(0, max);
+}
+function ordreSepa(c) {
+  var r = c.reglement || {}, b = c.beneficiaire || {}, d = c.debiteur || {}, f = c.facture || {};
+  var maintenant = new Date(), iso = maintenant.toISOString().slice(0, 19), jour = iso.slice(0, 10);
+  var id = sepaTexte("KLERIO-" + c.numero + "-" + maintenant.getTime(), 35), montant = Number(r.montant_net).toFixed(2);
+  var libelle = sepaTexte("SINISTRE " + c.numero + (f.numero ? " FACT " + f.numero : ""), 140);
+  var agentDeb = d.bic ? "<BIC>" + xmlEsc(d.bic) + "</BIC>" : "<Othr><Id>NOTPROVIDED</Id></Othr>";
+  return '<?xml version="1.0" encoding="UTF-8"?>\n' +
+    '<Document xmlns="urn:iso:std:iso:20022:tech:xsd:pain.001.001.03" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">\n' +
+    "<CstmrCdtTrfInitn>\n" +
+    "<GrpHdr><MsgId>" + xmlEsc(id) + "</MsgId><CreDtTm>" + iso + "</CreDtTm><NbOfTxs>1</NbOfTxs><CtrlSum>" + montant + "</CtrlSum>" +
+    "<InitgPty><Nm>" + xmlEsc(sepaTexte(d.titulaire || c.assureur, 70)) + "</Nm></InitgPty></GrpHdr>\n" +
+    "<PmtInf><PmtInfId>" + xmlEsc(id) + "</PmtInfId><PmtMtd>TRF</PmtMtd><NbOfTxs>1</NbOfTxs><CtrlSum>" + montant + "</CtrlSum>" +
+    "<PmtTpInf><SvcLvl><Cd>SEPA</Cd></SvcLvl></PmtTpInf><ReqdExctnDt>" + jour + "</ReqdExctnDt>" +
+    "<Dbtr><Nm>" + xmlEsc(sepaTexte(d.titulaire || c.assureur, 70)) + "</Nm></Dbtr>" +
+    "<DbtrAcct><Id><IBAN>" + xmlEsc(String(d.iban || "").replace(/\s/g, "")) + "</IBAN></Id></DbtrAcct>" +
+    "<DbtrAgt><FinInstnId>" + agentDeb + "</FinInstnId></DbtrAgt><ChrgBr>SLEV</ChrgBr>\n" +
+    "<CdtTrfTxInf><PmtId><EndToEndId>" + xmlEsc(sepaTexte(c.numero, 35)) + "</EndToEndId></PmtId>" +
+    '<Amt><InstdAmt Ccy="EUR">' + montant + "</InstdAmt></Amt>" +
+    "<Cdtr><Nm>" + xmlEsc(sepaTexte(b.titulaire || b.nom, 70)) + "</Nm></Cdtr>" +
+    "<CdtrAcct><Id><IBAN>" + xmlEsc(String(b.iban || "").replace(/\s/g, "")) + "</IBAN></Id></CdtrAcct>" +
+    "<RmtInf><Ustrd>" + xmlEsc(libelle) + "</Ustrd></RmtInf></CdtTrfTxInf>\n" +
+    "</PmtInf>\n</CstmrCdtTrfInitn>\n</Document>\n";
 }
 function afficherComptable(c) {
   var r = c.reglement || {}, b = c.beneficiaire || {}, f = c.facture, o = origineValidation(r);
@@ -147,6 +176,15 @@ function afficherComptable(c) {
     "</div>" +
     (recent && c.reponse_attendue ? '<div class="carte-in" style="padding-top:0"><p class="indice ko">L\'IBAN de ce garage a été modifié le ' + esc(C.dateFr(b.iban_maj_le)) + " : en cas de doute, confirmez-le par téléphone avec le garage avant de payer.</p></div>" : "") +
     "</div>";
+  if (c.reponse_attendue && b.iban) {
+    var deb = c.debiteur || {};
+    h += '<div class="carte"><div class="carte-in"><h2>Programmer le virement</h2>' +
+      '<p class="intro">Téléchargez l\'ordre de virement déjà rempli (montant, IBAN du bénéficiaire, libellé, n° de facture) et importez-le dans votre banque ou votre logiciel de paiement : il ne reste qu\'à le signer. Format SEPA standard, accepté par les banques françaises.</p>' +
+      (deb.iban ? '<p class="muet petit">Compte débité : ' + esc(deb.titulaire || "") + " · " + esc(groupes(deb.iban)) + "</p>" +
+        '<p style="margin-top:10px"><button type="button" class="btn primaire" id="b-sepa">Télécharger l\'ordre de virement (SEPA)</button></p>'
+        : '<p class="indice ko">Le compte qui paie les sinistres n\'est pas encore renseigné dans les réglages de Klerio (Raccordement, Paiement des garages) : ajoutez-le pour obtenir l\'ordre de virement prérempli.</p>') +
+      "</div></div>";
+  }
   if (c.reponse_attendue) {
     h += '<div class="carte"><form class="carte-in" id="form" novalidate><h2>Virement effectué</h2>' +
       '<div class="paye"><label class="champ">Référence du virement <span class="aide">celle de votre banque ou de votre logiciel</span><input class="saisie" id="f-ref" maxlength="80" autocomplete="off" required></label>' +
@@ -162,6 +200,14 @@ function afficherComptable(c) {
       (navigator.clipboard ? navigator.clipboard.writeText(v) : Promise.reject()).then(function () { bt.textContent = "Copié"; setTimeout(function () { bt.textContent = "Copier"; }, 1600); },
         function () { C.toast("Copie impossible : sélectionnez la valeur à la main", true); });
     });
+  });
+  var bs = $("b-sepa");
+  if (bs) bs.addEventListener("click", function () {
+    var xml = ordreSepa(c), nom = "virement-" + c.numero + ".xml";
+    var a = document.createElement("a");
+    a.href = URL.createObjectURL(new Blob([xml], { type: "application/xml" })); a.download = nom;
+    document.body.appendChild(a); a.click(); setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+    C.toast("Ordre de virement téléchargé : importez-le dans votre banque");
   });
   var bf = $("b-facture");
   if (bf) bf.addEventListener("click", function () {
