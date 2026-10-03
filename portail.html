@@ -104,7 +104,8 @@ if (!/^[0-9a-f]{64}$/.test(jeton)) {
 }
 
 function charger() {
-  api("portail?t=" + jeton).then(afficher).catch(function (x) {
+  var m = qs.get("m");
+  api("portail?t=" + jeton + (m && /^[0-9a-f]{32}$/.test(m) ? "&m=" + m : "")).then(afficher).catch(function (x) {
     etat(ICONE_KO, "ko", "Ce lien n'est plus valide", esc(x.message) + ". Répondez à l'email reçu pour obtenir un nouveau lien.");
   });
 }
@@ -112,7 +113,7 @@ function charger() {
 var TITRES = {
   expert_auto: ["Rapport d'expertise", "Indiquez vos conclusions. Le règlement au réparateur sera calculé sur le montant que vous retenez."],
   expert_medical: ["Conclusions médicales", "Indiquez uniquement vos conclusions. Conformément au secret médical, aucun compte rendu détaillé n'est demandé."],
-  garage: ["Facture et délégation de paiement", "Après réparation, transmettez la facture et la délégation signée par l'assuré : le règlement vous est versé directement, franchise déduite."],
+  garage: ["Facture", "Après réparation, transmettez la facture, avec votre RIB s'il a changé. Garage partenaire : le règlement vous est versé directement, franchise déduite."],
   assure: ["Pièces à nous transmettre", "Retrouvez ici ce que nous attendons de vous pour avancer : documents à envoyer, choix à faire. Vous pouvez répondre en plusieurs fois."]
 };
 
@@ -329,6 +330,11 @@ function afficher(c) {
     (c.age_victime != null ? "<div>Âge de la victime<b>" + esc(c.age_victime) + " ans</b></div>" : "") +
     (c.expertise_retenue ? "<div>Retenu par l'expert<b>" + esc(eur(c.expertise_retenue.ttc)) + " TTC</b></div>" : "") + "</div>" +
     (c.recit ? '<div class="recit"><span>Circonstances déclarées</span>' + esc(c.recit) + "</div>" : "") + "</div>";
+  // Lien ouvert depuis un ancien message : le dossier a avancé depuis
+  if (c.message && c.message.depasse) {
+    h += '<div class="carte"><div class="carte-in"><p class="indice">Votre dossier a avancé depuis le message du ' + esc(C.dateFr(c.message.message_du)) +
+      ". Dernier message envoyé le " + esc(C.dateFr(c.message.dernier_le)) + " : « " + esc(c.message.dernier_objet) + " ». Cette page montre la situation à jour.</p></div></div>";
+  }
 
   if (c.role === "garage" && c.mission_annulee) {
     h += '<div class="carte"><div class="etat"><div class="rond ko">' + ICONE_KO + "</div><h1>Prise en charge annulée</h1><p>Ce dossier ne vous est plus confié : l'assuré a choisi un autre réparateur, ou le véhicule n'est pas réparable. N'engagez aucun travaux.</p></div></div>";
@@ -405,8 +411,9 @@ function formulaire(c) {
     var fac = manque.indexOf("FACTURE") >= 0;
     return (fac ? '<div class="grille-2">' + num("f-ttc", "Montant de la facture", "TTC, en €", "required") + num("f-ht", "Montant de la facture", "HT, en €") + "</div>" +
       '<div class="grille-2"><label class="champ">Numéro de facture <span class="aide">tel qu\'il figure sur la facture</span><input class="saisie" id="f-num" maxlength="40" autocomplete="off"></label><div></div></div>' +
-      (c.expertise_retenue ? '<p class="indice" id="f-ecart">Montant retenu par l\'expert : ' + esc(eur(c.expertise_retenue.ttc)) + " TTC.</p>" : "") : '<p class="indice ok">Facture reçue. Il reste la délégation de paiement.</p>') +
-      '<label class="case"><input type="checkbox" id="f-deleg"' + (manque.indexOf("DELEGATION_PAIEMENT") < 0 ? " checked disabled" : "") + "> Je joins la délégation de paiement signée par l'assuré</label>" +
+      (c.expertise_retenue ? '<p class="indice" id="f-ecart">Montant retenu par l\'expert : ' + esc(eur(c.expertise_retenue.ttc)) + " TTC.</p>" : "") : '<p class="indice ok">Facture reçue.</p>') +
+      // ancienne délégation de paiement : affichée seulement si un dossier antérieur l'attend encore
+      (manque.indexOf("DELEGATION_PAIEMENT") >= 0 ? '<label class="case"><input type="checkbox" id="f-deleg"> Je joins la délégation de paiement signée par l\'assuré</label>' : "") +
       (fac ? '<label class="champ">Nature des travaux <span class="aide">facultatif</span><textarea class="saisie" id="f-conclusion" rows="2"></textarea></label>' : "");
   }
   return (c.pieces_attendues || []).map(function (p) {
@@ -498,9 +505,9 @@ function brancher(c) {
       r = { aipp_pct: val("f-aipp"), date_consolidation: $("f-conso").value || undefined, dependance_totale: $("f-dep").checked, conclusion: $("f-conclusion").value.trim() || undefined };
       if (r.aipp_pct == null || r.aipp_pct > 100) return C.toast("Indiquez un taux d'AIPP entre 0 et 100 %.", true);
     } else if (c.role === "garage") {
-      r = { delegation_paiement: $("f-deleg").checked };
+      r = { delegation_paiement: $("f-deleg") ? $("f-deleg").checked : false };
       if ($("f-ttc")) { r.montant_ttc = val("f-ttc"); r.montant_ht = val("f-ht"); r.conclusion = ($("f-conclusion").value || "").trim() || undefined; r.numero_facture = ($("f-num").value || "").trim() || undefined; if (!r.montant_ttc) return C.toast("Indiquez le montant TTC de la facture.", true); }
-      else if (!r.delegation_paiement) return C.toast("Cochez la délégation de paiement pour l'envoyer.", true);
+      else if (!r.delegation_paiement) return C.toast($("f-deleg") ? "Cochez la délégation de paiement pour l'envoyer." : "Rien d'autre n'est attendu de votre part.", true);
     } else {
       r.pieces = Array.prototype.map.call(document.querySelectorAll('input[name=piece]:checked:not(:disabled)'), function (x) { return x.value; });
       if (!r.pieces.length) return C.toast("Cochez au moins une pièce à envoyer.", true);

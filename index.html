@@ -296,6 +296,7 @@ button.ligne-mail { width: 100%; background: none; border: 0; font: inherit; col
 .pastille-mail { justify-self: start; align-self: center; font-size: 12px; font-weight: 600; padding: 3px 9px; border-radius: 999px; white-space: nowrap; background: var(--fond-doux, #eef1f6); color: var(--texte-doux, #4a5568); }
 .pastille-mail.ok { background: #e3f4ea; color: #1d6b3f; } .pastille-mail.attente { background: #fff4d6; color: #7a5600; }
 .pastille-mail.alerte { background: #fde6e6; color: #9b1c1c; } .pastille-mail.info { background: #e6effc; color: #1f4f9a; }
+.tableau .actions { display: flex; flex-wrap: wrap; align-items: center; } .txt-ko { color: var(--rouge); }
 .tuiles { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-bottom: 18px; }
 .tuile { border: 1px solid var(--trait); border-radius: var(--rayon); padding: 14px 16px; background: var(--feuille); text-decoration: none; color: inherit; display: block; }
 a.tuile:hover { border-color: var(--trait-fort); text-decoration: none; }
@@ -632,7 +633,7 @@ function attente(d) {
   var v = d.validation, p = v && v.proposition || {};
   if (v && v.etape === "decision" && p.decision === "classement_sans_indemnite") return ["Classement sans indemnité à confirmer", "AIPP estimée " + C.nombre(p.aipp_estimee != null ? p.aipp_estimee : p.aipp) + " %"];
   if (v && v.etape === "decision") return ["Refus proposé, à confirmer ou écarter", C.motif(p.motif)];
-  if (v && v.etape === "prereglement") return ["Règlement de " + eur(p.montant_net) + " à valider", d.theme === "VOL" ? "Indemnité vol versée à l'assuré, franchise déduite" : p.beneficiaire === "assure" ? "Capital invalidité versé à l'assuré" : "Versé au réparateur, franchise déduite"];
+  if (v && v.etape === "prereglement") return ["Règlement de " + eur(p.montant_net) + " à valider", p.remboursement_assure ? "Remboursement de l'assuré, garage hors réseau, franchise déduite" : d.theme === "VOL" ? "Indemnité vol versée à l'assuré, franchise déduite" : p.beneficiaire === "assure" ? "Capital invalidité versé à l'assuré" : "Versé au réparateur, franchise déduite"];
   if (v && v.etape === "anomalie") {
     var a = (p.anomalies || [])[0]; return [a ? (C.ANOMALIES[a.code] || a.code) : (C.ANOMALIES[p.code] || "Anomalie à examiner"), a ? a.detail : C.motif(d.motif)];
   }
@@ -736,7 +737,8 @@ document.addEventListener("click", function (e) {
   var b = e.target.closest && e.target.closest("[data-voir-plus]");
   if (!b) return;
   var ouvert = b.getAttribute("aria-expanded") === "true";
-  document.querySelectorAll("#" + b.dataset.voirPlus + " > li.ancien").forEach(function (li) { li.hidden = ouvert; });
+  var id = "#" + b.dataset.voirPlus;
+  document.querySelectorAll(id + " > li.ancien, " + id + " > tr.ancien").forEach(function (li) { li.hidden = ouvert; });
   b.setAttribute("aria-expanded", String(!ouvert));
   b.textContent = ouvert ? b.dataset.lib : "Réduire";
 });
@@ -971,7 +973,7 @@ function blocPaiement(f) {
   var h = '<section class="bloc"><div class="bloc-tete"><h2>Paiement</h2><span class="pastille-mail ' + etat[1] + '">' + esc(etat[0]) + '</span></div><div class="bloc-corps">' +
     '<div class="paie-resume"><span>' + resume + '</span><button type="button" class="btn petit" id="b-paie" aria-expanded="false" aria-controls="paie-detail">Voir le détail</button></div>' +
     '<dl class="info-liste" id="paie-detail" hidden style="margin-top:14px">';
-  h += ligne("Bénéficiaire", esc(b.nom || "") + (b.type === "garage" ? '<span class="muet"> · ' + (b.partenaire ? "garage partenaire" : "garage hors réseau") + "</span>" : ""));
+  h += ligne("Bénéficiaire", esc(b.nom || "") + (b.type === "garage" ? '<span class="muet"> · ' + (b.partenaire ? "garage partenaire" : "garage hors réseau") + "</span>" : b.motif ? '<span class="muet"> · ' + esc(b.motif) + "</span>" : ""));
   if (b.type === "garage") {
     h += ligne("Titulaire du compte", esc(b.titulaire || ""));
     h += ligne("IBAN", b.iban_present ? '<span class="mono">' + esc(b.iban) + "</span>" + (b.iban_maj_le ? '<span class="muet"> · mis à jour le ' + esc(C.dateCourte(b.iban_maj_le)) + "</span>" : "")
@@ -1055,9 +1057,9 @@ function carteAction(f) {
       oui = "Confirmer le refus"; non = "Écarter et prendre en charge";
       loi = "Aucun refus n'est notifié sans votre validation (RGPD, article 22). Votre identifiant est enregistré au journal.";
     } else if (v.etape === "prereglement") {
-      var vol = f.theme === "VOL";
-      titre = vol ? "Valider l'indemnité pour le vol du véhicule" : p.beneficiaire === "assure" ? "Valider le versement du capital invalidité" : "Valider le règlement au réparateur";
-      expl = vol ? "Valeur de remplacement fixée par l'expert, véhicule non retrouvé dans le délai du contrat, franchise déduite." : p.beneficiaire === "assure" ? "Calcul fait sur la base des conclusions du médecin expert et du barème de la garantie." : "Calcul fait sur la base de la facture contrôlée, après déduction de la franchise du contrat.";
+      var vol = f.theme === "VOL" || p.remboursement_assure;
+      titre = p.remboursement_assure ? "Valider le remboursement de l'assuré" : vol ? "Valider l'indemnité pour le vol du véhicule" : p.beneficiaire === "assure" ? "Valider le versement du capital invalidité" : "Valider le règlement au réparateur";
+      expl = p.remboursement_assure ? "Garage hors réseau : l'assuré a réglé la facture lui-même. Vérifiez la facture acquittée et son RIB, puis validez : il est remboursé sur la base contrôlée, franchise déduite." : vol ? "Valeur de remplacement fixée par l'expert, véhicule non retrouvé dans le délai du contrat, franchise déduite." : p.beneficiaire === "assure" ?"Calcul fait sur la base des conclusions du médecin expert et du barème de la garantie." : "Calcul fait sur la base de la facture contrôlée, après déduction de la franchise du contrat.";
       if (p.formule) corps = '<p class="formule">' + esc(frNum(p.formule)) + "</p>";
       corps += '<div class="decompte">' + (p.beneficiaire === "assure" && !vol ?
         "<span>Capital brut</span><span class='nb'>" + esc(eur(p.capital_brut)) + "</span><span>Prestations CPAM déduites</span><span class='nb'>" + esc(eur(-(p.deduction_cpam || 0))) + "</span>" +
@@ -1668,8 +1670,9 @@ function dessinerBoites() {
 
 /* ---------------- Vue : Pilotage ---------------- */
 function vuePilotage() {
-  Promise.all([api("indicateurs" + qb()), estResponsable() ? api("pilotage-equipe" + qb()) : Promise.resolve(null)]).then(function (r) {
-    var i = r[0], eq = r[1];
+  Promise.all([api("indicateurs" + qb()), estResponsable() ? api("pilotage-equipe" + qb()) : Promise.resolve(null),
+               estResponsable() ? api("missions" + qb()).catch(function () { return null; }) : Promise.resolve(null)]).then(function (r) {
+    var i = r[0], eq = r[1], mi = r[2];
     compter(i);
     var h = bandeauCorporel() + '<div class="entete-vue"><div><h1>Pilotage</h1><p>Espace ' + esc(C.ESPACES[S.branche].nom.toLowerCase()) + " de " + esc(i.assureur) + ", hors jeux de test archivés.</p></div></div>";
     var delai = i.delai_moyen_cloture_heures;
@@ -1689,29 +1692,36 @@ function vuePilotage() {
       "<dt>Courriers préparés</dt><dd>" + ((i.courriers || {}).total || 0) + "</dd><dt>Partis par email</dt><dd>" + ((i.courriers || {}).envoyes || 0) + "</dd>" +
       "<dt>Échecs d'envoi</dt><dd>" + ((i.courriers || {}).erreurs || 0) + "</dd><dt>Déclarations lues par Claude</dt><dd>" + (i.analyses_ia || 0) + "</dd>" +
       "<dt>Fiabilité moyenne</dt><dd>" + (i.confiance_moyenne != null ? Math.round(i.confiance_moyenne * 100) + " %" : "–") + "</dd></dl></div></section></div>";
-    if (eq) { var i0 = h.indexOf('<div class="deux">'); h = h.slice(0, i0) + '<div style="margin-top:16px">' + blocEquipePilotage(eq) + "</div>" + h.slice(i0); }
+    if (eq) { var i0 = h.indexOf('<div class="deux">'); h = h.slice(0, i0) + '<div style="margin-top:16px">' + blocEquipePilotage(eq) + "</div>" + (mi ? blocMissions(mi) : "") + h.slice(i0); }
     $("vue").innerHTML = h;
     brancherEquipePilotage(eq);
+    brancherMissions();
   }).catch(erreurVue);
 }
 /* Pilotage de l'équipe : réservé aux superviseurs et administrateurs */
 var SERVICES = { materiel: "Matériel", corporel: "Corporel", tous: "Les deux" };
 function blocEquipePilotage(eq) {
   var g = eq.gestionnaires || [], auto = eq.decisions_automatiques_30j || 0, hum = eq.decisions_humaines_30j || 0;
+  var presents = g.filter(function (x) { return x.actif && x.disponible && x.role === "gestionnaire"; }).length;
   var h = '<section class="bloc" style="margin-top:0"><div class="bloc-tete"><h2>Équipe</h2><span class="muet petit">' +
-    (eq.mode_repartition === "repartition" ? "Dossiers répartis automatiquement entre les gestionnaires" : "File commune : chacun prend ses dossiers") + "</span></div>" +
+    (eq.mode_repartition === "repartition" ? "Chaque dossier à vérifier part au gestionnaire disponible le moins chargé, dont le service et le plafond conviennent. " + presents + " gestionnaire" + (presents > 1 ? "s" : "") + " disponible" + (presents > 1 ? "s" : "") + "." : "File commune : chacun prend ses dossiers") + "</span>" +
+    (eq.mode_repartition === "repartition" ? '<button type="button" class="btn petit primaire" id="b-repartir" title="Attribue les dossiers sans gestionnaire ou tenus par un absent, puis équilibre la charge">Répartir équitablement</button>' : "") + "</div>" +
     '<div class="bloc-corps"><div class="tuiles" style="margin-bottom:0">' +
     '<div class="tuile' + (eq.sans_titulaire ? " vous" : "") + '"><div class="val">' + (eq.sans_titulaire || 0) + '</div><div class="lib">Décisions sans gestionnaire attitré</div></div>' +
     '<div class="tuile' + ((eq.renvoyes || []).length ? " vous" : "") + '"><div class="val">' + (eq.renvoyes || []).length + '</div><div class="lib">Renvoyés au responsable</div></div>' +
     '<div class="tuile"><div class="val">' + auto + '</div><div class="lib">Décisions automatiques, 30 jours</div></div>' +
     '<div class="tuile"><div class="val">' + hum + '</div><div class="lib">Décisions humaines, 30 jours</div></div></div></div>';
-  h += '<div class="tableau-wrap"><table class="tableau"><thead><tr><th>Gestionnaire</th><th>Service</th><th class="nb">Dossiers suivis</th><th class="nb">À traiter</th><th class="nb">Décisions 30 j</th><th class="nb">Montant validé 30 j</th><th class="nb">Terminés 30 j</th><th>Types en cours</th><th>Dernière connexion</th></tr></thead><tbody>' +
-    g.map(function (x) {
+  // les plus chargés d'abord ; 8 lignes, le reste derrière « voir plus » (équipes de 20 et plus)
+  var tri = g.slice().sort(function (a, b) { return (b.a_traiter - a.a_traiter) || (b.en_cours - a.en_cours); }), plusG = tri.length - 8;
+  h += '<div class="tableau-wrap"><table class="tableau"><thead><tr><th>Gestionnaire</th><th class="nb">Suivis</th><th class="nb">À traiter</th><th class="nb">Décisions 30 j</th><th class="nb">Validé 30 j</th><th class="nb">Terminés 30 j</th><th>Disponibilité</th></tr></thead><tbody id="equipe-l">' +
+    tri.map(function (x, i) {
       var types = Object.keys(x.par_type || {}).map(function (k) { return C.theme(k) + " " + x.par_type[k]; }).join(", ");
-      return '<tr style="cursor:default"><td><b>' + esc(x.nom) + '</b><div class="muet petit">' + esc(ROLES_G[x.role] || x.role) + (x.actif ? "" : ", désactivé") + '</div></td><td>' + esc(SERVICES[x.service] || x.service) +
-        '</td><td class="nb">' + x.en_cours + '</td><td class="nb">' + (x.a_traiter ? "<b>" + x.a_traiter + "</b>" : 0) + '</td><td class="nb">' + x.decisions_30j + '</td><td class="nb">' + esc(eur(x.montant_valide_30j)) +
-        '</td><td class="nb">' + x.clos_30j + '</td><td class="muet">' + esc(types || "Aucun") + '</td><td class="muet">' + esc(x.derniere_connexion ? C.depuis(x.derniere_connexion) : "Jamais") + "</td></tr>";
-    }).join("") + "</tbody></table></div>";
+      return '<tr style="cursor:default"' + (i >= 8 ? ' class="ancien" hidden' : "") + '><td><b>' + esc(x.nom) + '</b><div class="muet petit">' + esc(ROLES_G[x.role] || x.role) + ", " + esc((SERVICES[x.service] || x.service).toLowerCase()) +
+        (x.plafond_eur != null ? ", plafond " + esc(eur(x.plafond_eur)) : "") + " · " + esc(x.derniere_connexion ? "vu " + C.depuis(x.derniere_connexion) : "jamais connecté") + "</div>" +
+        (types ? '<div class="muet petit">' + esc(types) + "</div>" : "") + '</td><td class="nb">' + x.en_cours + '</td><td class="nb">' + (x.a_traiter ? "<b>" + x.a_traiter + "</b>" : 0) + '</td><td class="nb">' + x.decisions_30j + '</td><td class="nb">' + esc(eur(x.montant_valide_30j)) +
+        '</td><td class="nb">' + x.clos_30j + "</td><td>" + celluleDispo(x) + "</td></tr>";
+    }).join("") + "</tbody></table></div>" +
+    (plusG > 0 ? '<div class="bloc-corps" style="padding-top:8px"><button type="button" class="btn petit" data-voir-plus="equipe-l" data-lib="Voir les ' + plusG + ' autres gestionnaires">Voir les ' + plusG + " autres gestionnaires</button></div>" : "");
   if ((eq.renvoyes || []).length) {
     h += '<div class="bloc-corps pile"><h3>Renvoyés au responsable</h3>' + eq.renvoyes.map(function (r) {
       return '<div class="titulaire-barre" style="margin:0"><span><a href="#/dossier/' + esc(r.numero) + '"><b>' + esc(r.numero) + "</b></a> · " + esc(C.theme(r.theme)) + '<span class="muet"> : ' + esc(r.renvoi.par) + ", « " + esc(r.renvoi.motif) + " »</span></span>" +
@@ -1730,6 +1740,86 @@ function brancherEquipePilotage(eq) {
       C.occupe(b, true, "");
       api("reaffecter", { body: { numero: n, vers: v || null } }).then(function () { C.toast("Dossier " + n + " réaffecté"); vuePilotage(); })
         .catch(function (x) { C.occupe(b, false); C.toast(x.message, true); });
+    };
+  });
+  var br = $("b-repartir");
+  if (br) br.onclick = function () {
+    C.occupe(br, true, "Répartition");
+    api("repartir" + qb(), { body: {} }).then(function (r) {
+      C.toast(r.attribues + r.reequilibres ? (r.attribues + " dossier(s) attribué(s), " + r.reequilibres + " déplacé(s) pour équilibrer la charge") : "La charge est déjà équilibrée");
+      vuePilotage();
+    }).catch(function (x) { C.occupe(br, false); C.toast(x.message, true); });
+  };
+  document.querySelectorAll("[data-dispo]").forEach(function (b) {
+    b.onclick = function () {
+      var id = b.dataset.dispo, absent = b.dataset.etat === "absent", d = document.querySelector('[data-jusqu="' + id + '"]');
+      C.occupe(b, true, "");
+      api("disponibilite", { body: { gestionnaire: id, disponible: !absent, jusqu_au: absent && d ? d.value || null : null } }).then(function (r) {
+        C.toast(r.gestionnaire + (r.disponible ? " est de nouveau disponible" : " est absent" + (r.dossiers_redistribues ? " : " + r.dossiers_redistribues + " dossier(s) confié(s) à ses collègues" : "")));
+        vuePilotage();
+      }).catch(function (x) { C.occupe(b, false); C.toast(x.message, true); });
+    };
+  });
+}
+function celluleDispo(x) {
+  if (!x.actif) return '<span class="muet">Compte désactivé</span>';
+  if (!x.disponible) return '<span class="pastille-mail alerte">Absent' + (x.absent_jusqu_au ? " jusqu'au " + esc(C.dateFr(x.absent_jusqu_au)) : "") + "</span> " +
+    '<button type="button" class="btn petit" data-dispo="' + esc(x.id) + '" data-etat="present">De retour</button>';
+  return '<span class="actions" style="gap:6px;flex-wrap:nowrap"><input type="date" class="saisie" style="width:132px;padding:4px 6px;font-size:13px" data-jusqu="' + esc(x.id) + '" aria-label="Absent jusqu\'au" title="Absent jusqu\'au (facultatif)">' +
+    '<button type="button" class="btn petit" data-dispo="' + esc(x.id) + '" data-etat="absent" title="Ses dossiers à traiter sont confiés aux collègues disponibles">Marquer absent</button></span>';
+}
+
+/* Missions expert / garage en cours : relancer ou confier à un autre intervenant */
+var TYPES_MISSION = { expertise: "Expertise", expertise_medicale: "Expertise médicale", reparation: "Réparation" };
+function blocMissions(mi) {
+  var l = mi.missions || [], retard = l.filter(function (m) { return m.en_retard; }).length, dr = mi.delais_retour || {};
+  var h = '<section class="bloc"><div class="bloc-tete"><h2>Missions en cours<span class="compte">' + l.length + '</span></h2><span class="muet petit">Expertises et réparations confiées, sans retour pour l\'instant. En retard au-delà de ' + (mi.delai_relance_jours || 7) + " jours.</span></div>" +
+    '<div class="bloc-corps"><div class="tuiles" style="margin-bottom:0">' +
+    '<div class="tuile' + (retard ? " vous" : "") + '"><div class="val">' + retard + '</div><div class="lib">En retard</div></div>' +
+    '<div class="tuile"><div class="val">' + (dr.expertise != null ? C.nombre(dr.expertise, 1) + " j" : "–") + '</div><div class="lib">Retour moyen des experts, 90 jours</div></div>' +
+    '<div class="tuile"><div class="val">' + (dr.reparation != null ? C.nombre(dr.reparation, 1) + " j" : "–") + '</div><div class="lib">Facture moyenne des garages, 90 jours</div></div>' +
+    '<div class="tuile"><div class="val">' + (mi.par_prestataire || []).length + '</div><div class="lib">Intervenants sollicités</div></div></div></div>';
+  if (!l.length) return h + '<div class="bloc-corps"><p class="muet">Aucune mission en attente de retour.</p></div></section>';
+  var plus = l.length - 8;
+  h += '<div class="tableau-wrap"><table class="tableau"><thead><tr><th>Dossier</th><th>Mission</th><th>Intervenant</th><th class="nb">Depuis</th><th class="nb">Relances</th><th></th></tr></thead><tbody id="missions-l">' +
+    l.map(function (m, i) {
+      return '<tr style="cursor:default"' + (i >= 8 ? ' class="ancien" hidden' : "") + '><td><a href="#/dossier/' + esc(m.numero) + '"><b>' + esc(m.numero) + '</b></a><div class="muet petit">' + esc(C.theme(m.theme)) + "</div></td>" +
+        "<td>" + esc(TYPES_MISSION[m.type] || m.type) + "</td><td>" + esc(m.prestataire || "") + '<div class="muet petit">' + esc(m.email || "") + "</div></td>" +
+        '<td class="nb">' + (m.en_retard ? '<b class="txt-ko">' : "") + C.nombre(m.age_jours, 0) + " j" + (m.en_retard ? "</b>" : "") + "</td>" +
+        '<td class="nb">' + (m.relances || 0) + (m.derniere_relance ? '<div class="muet petit">' + esc(C.depuis(m.derniere_relance)) + "</div>" : "") + "</td>" +
+        '<td><span class="actions" style="gap:6px;justify-content:flex-end"><button type="button" class="btn petit" data-relancer-m="' + esc(m.id) + '">Relancer</button>' +
+        '<button type="button" class="btn petit" data-autre-m="' + esc(m.id) + '">Confier à un autre</button></span><div data-choix-m="' + esc(m.id) + '"></div></td></tr>';
+    }).join("") + "</tbody></table></div>" +
+    (plus > 0 ? '<div class="bloc-corps" style="padding-top:8px"><button type="button" class="btn petit" data-voir-plus="missions-l" data-lib="Voir les ' + plus + ' autres missions">Voir les ' + plus + " autres missions</button></div>" : "");
+  return h + "</section>";
+}
+function brancherMissions() {
+  document.querySelectorAll("[data-relancer-m]").forEach(function (b) {
+    b.onclick = function () {
+      C.occupe(b, true, "");
+      api("relancer-mission", { body: { mission: b.dataset.relancerM } }).then(function (r) { C.toast("Relance envoyée à " + r.prestataire); vuePilotage(); })
+        .catch(function (x) { C.occupe(b, false); C.toast(x.message, true); });
+    };
+  });
+  document.querySelectorAll("[data-autre-m]").forEach(function (b) {
+    b.onclick = function () {
+      var id = b.dataset.autreM, zone = document.querySelector('[data-choix-m="' + id + '"]');
+      C.occupe(b, true, "");
+      api("prestataires-mission?mission=" + encodeURIComponent(id)).then(function (l) {
+        C.occupe(b, false);
+        if (!l || !l.length) { zone.innerHTML = '<p class="muet petit">Aucun autre intervenant dans la zone.</p>'; return; }
+        zone.innerHTML = '<span class="actions" style="gap:6px;margin-top:6px;justify-content:flex-end"><select class="saisie" style="max-width:240px" aria-label="Nouvel intervenant">' +
+          l.map(function (p) { return '<option value="' + esc(p.id) + '">' + esc(p.nom) + (p.distance_km != null ? " (" + C.nombre(p.distance_km, 0) + " km)" : "") + "</option>"; }).join("") +
+          '</select><button type="button" class="btn petit primaire">Confier</button></span>';
+        var ok = zone.querySelector("button"), sel = zone.querySelector("select");
+        ok.onclick = function () {
+          C.occupe(ok, true, "");
+          api("reattribuer-mission", { body: { mission: id, vers: sel.value } }).then(function (r) {
+            C.toast("Mission confiée à " + r.vers + ". " + r.de + " est prévenu, les mails partent tout seuls.");
+            vuePilotage();
+          }).catch(function (x) { C.occupe(ok, false); C.toast(x.message, true); });
+        };
+      }).catch(function (x) { C.occupe(b, false); C.toast(x.message, true); });
     };
   });
 }
