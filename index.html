@@ -286,6 +286,9 @@ textarea.saisie.code-saisie { font-family: ui-monospace, Menlo, Consolas, monosp
 .accueil-tete { display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; margin-bottom: 18px; flex-wrap: wrap; }
 .accueil-tete h1 { font-size: 22px; letter-spacing: -.02em; }
 .accueil-tete p { color: var(--gris); font-size: 13.5px; margin-top: 4px; }
+.pastille-mail { justify-self: start; align-self: center; font-size: 12px; font-weight: 600; padding: 3px 9px; border-radius: 999px; white-space: nowrap; background: var(--fond-doux, #eef1f6); color: var(--texte-doux, #4a5568); }
+.pastille-mail.ok { background: #e3f4ea; color: #1d6b3f; } .pastille-mail.attente { background: #fff4d6; color: #7a5600; }
+.pastille-mail.alerte { background: #fde6e6; color: #9b1c1c; } .pastille-mail.info { background: #e6effc; color: #1f4f9a; }
 .tuiles { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-bottom: 18px; }
 .tuile { border: 1px solid var(--trait); border-radius: var(--rayon); padding: 14px 16px; background: var(--feuille); text-decoration: none; color: inherit; display: block; }
 a.tuile:hover { border-color: var(--trait-fort); text-decoration: none; }
@@ -667,6 +670,7 @@ function vueFile() {
     h += '<section class="bloc"><div class="bloc-tete"><h2>À traiter</h2><div class="filtre-file" role="group" aria-label="Filtrer">' +
       filtres.map(function (f) { return '<button type="button" data-filtre="' + f[0] + '" aria-pressed="' + (f[0] === choix) + '">' + esc(f[1]) + '<span class="n">' + f[2].length + "</span></button>"; }).join("") +
       '</div></div><div id="file-liste"></div></section>';
+    h += blocMailsRecus(ind.mails_recus || []);
     h += '<section class="bloc"><div class="bloc-tete"><h2>Attendent un tiers<span class="compte">' + tiers.length + '</span></h2><span class="muet petit">Relances automatiques, puis retour vers vous après trois relances</span></div>' +
       (tiers.length ? listeSimple(tiers.slice(0, 8)) + (tiers.length > 8 ? '<div class="bloc-corps"><a href="#/dossiers">Voir les ' + tiers.length + " dossiers en cours</a></div>" : "") : '<div class="vide">Aucun dossier en attente d\'un tiers.</div>') + "</section>";
     $("vue").innerHTML = h;
@@ -694,6 +698,27 @@ function vueFile() {
     });
   }).catch(erreurVue);
 }
+// Mails reçus sur la boîte sinistres : chacun apparaît ici dès son arrivée, avec ce que Klerio en a fait
+var MAIL_STATUT = { recu: ["En cours de lecture", "info"], dossier_cree: ["Dossier ouvert", "ok"], rattache: ["Ajouté au dossier", "ok"],
+  demande_infos: ["Infos demandées à l'expéditeur", "attente"], ignore: ["Ignoré", "neutre"], erreur: ["Erreur de lecture", "alerte"] };
+function blocMailsRecus(l) {
+  var h = '<section class="bloc"><div class="bloc-tete"><h2>Mails reçus<span class="compte">' + l.length + '</span></h2><span class="muet petit">Boîte sinistres : chaque mail est lu et traité dès son arrivée</span></div>';
+  if (!l.length) return h + '<div class="vide">Aucun mail reçu pour l\'instant' + (S.env === "test" ? "" : " dans cet environnement") + '.</div></section>';
+  return h + '<ul class="file">' + l.slice(0, 8).map(function (m) {
+    var s = MAIL_STATUT[m.statut] || [m.statut, "neutre"];
+    var lien = m.numero ? ' href="#/dossier/' + esc(m.numero) + '"' : "";
+    return '<li><a class="ligne"' + lien + '><span class="repere"></span>' +
+      '<span class="num">' + esc(m.expediteur || "?") + '<small>Mail reçu</small></span>' +
+      '<span class="quoi">' + esc(m.objet || "(sans objet)") + '<small>' + (m.numero ? esc(m.numero) + " · " + esc(C.theme(m.theme)) : esc(m.precision || "")) + '</small></span>' +
+      '<span class="droite"><span class="pastille-mail ' + s[1] + '">' + esc(s[0]) + '</span><span>' + esc(C.depuis(m.recu_le)) + '</span></span></a></li>';
+  }).join("") + "</ul></section>";
+}
+// L'accueil se met à jour seul toutes les 30 secondes : un mail arrivé apparaît sans recharger
+setInterval(function () {
+  var h = location.hash.replace(/^#\/?/, "").split("/")[0] || "file";
+  var a = document.activeElement;
+  if (api && h === "file" && !document.hidden && !(a && /INPUT|TEXTAREA|SELECT/.test(a.tagName))) vueFile();
+}, 30000);
 function ligneFile(d, extra) {
   var a = attente(d), libre = !d.gestionnaire;
   return '<li><a class="ligne vous" href="#/dossier/' + esc(d.numero) + '"><span class="repere"></span>' +
