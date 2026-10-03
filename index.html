@@ -286,6 +286,13 @@ textarea.saisie.code-saisie { font-family: ui-monospace, Menlo, Consolas, monosp
 .accueil-tete { display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; margin-bottom: 18px; flex-wrap: wrap; }
 .accueil-tete h1 { font-size: 22px; letter-spacing: -.02em; }
 .accueil-tete p { color: var(--gris); font-size: 13.5px; margin-top: 4px; }
+button.ligne-mail { width: 100%; background: none; border: 0; font: inherit; color: inherit; text-align: left; cursor: pointer; }
+.mail-detail { padding: 4px 20px 16px 36px; }
+.mail-texte { white-space: pre-wrap; font: inherit; font-size: 14px; line-height: 1.5; background: var(--fond-doux, #f6f7fa); border: 1px solid var(--trait, #e1e6ef); border-radius: 8px; padding: 12px 14px; margin: 0 0 8px; max-height: 320px; overflow: auto; }
+.mail-actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-top: 8px; }
+.mail-actions .saisie { max-width: 260px; }
+.paie-resume { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+.paie-resume b { font-size: 18px; }
 .pastille-mail { justify-self: start; align-self: center; font-size: 12px; font-weight: 600; padding: 3px 9px; border-radius: 999px; white-space: nowrap; background: var(--fond-doux, #eef1f6); color: var(--texte-doux, #4a5568); }
 .pastille-mail.ok { background: #e3f4ea; color: #1d6b3f; } .pastille-mail.attente { background: #fff4d6; color: #7a5600; }
 .pastille-mail.alerte { background: #fde6e6; color: #9b1c1c; } .pastille-mail.info { background: #e6effc; color: #1f4f9a; }
@@ -689,6 +696,7 @@ function vueFile() {
       });
     }
     dessiner(choix);
+    brancherMails();
     document.querySelectorAll("[data-filtre]").forEach(function (b) {
       b.onclick = function () {
         document.querySelectorAll("[data-filtre]").forEach(function (x) { x.setAttribute("aria-pressed", String(x === b)); });
@@ -702,22 +710,49 @@ function vueFile() {
 var MAIL_STATUT = { recu: ["En cours de lecture", "info"], dossier_cree: ["Dossier ouvert", "ok"], rattache: ["Ajouté au dossier", "ok"],
   demande_infos: ["Infos demandées à l'expéditeur", "attente"], ignore: ["Ignoré", "neutre"], erreur: ["Erreur de lecture", "alerte"] };
 function blocMailsRecus(l) {
-  var h = '<section class="bloc"><div class="bloc-tete"><h2>Mails reçus<span class="compte">' + l.length + '</span></h2><span class="muet petit">Boîte sinistres : chaque mail est lu et traité dès son arrivée</span></div>';
+  var h = '<section class="bloc"><div class="bloc-tete"><h2>Mails reçus<span class="compte">' + l.length + '</span></h2><span class="muet petit">Boîte sinistres : chaque mail est lu et traité dès son arrivée. Cliquez pour lire.</span></div>';
   if (!l.length) return h + '<div class="vide">Aucun mail reçu pour l\'instant' + (S.env === "test" ? "" : " dans cet environnement") + '.</div></section>';
-  return h + '<ul class="file">' + l.slice(0, 8).map(function (m) {
+  return h + '<ul class="file mails">' + l.slice(0, 10).map(function (m) {
     var s = MAIL_STATUT[m.statut] || [m.statut, "neutre"];
-    var lien = m.numero ? ' href="#/dossier/' + esc(m.numero) + '"' : "";
-    return '<li><a class="ligne"' + lien + '><span class="repere"></span>' +
-      '<span class="num">' + esc(m.expediteur || "?") + '<small>Mail reçu</small></span>' +
+    var hesite = ["ignore", "demande_infos", "erreur"].indexOf(m.statut) >= 0 || m.confiance === "inconnu";
+    var pj = (m.pieces || []).map(function (p) { return esc(p.nom); }).join(", ");
+    return '<li><button type="button" class="ligne ligne-mail" data-mail="' + esc(m.id) + '" aria-expanded="false"><span class="repere"></span>' +
+      '<span class="num">' + esc(m.expediteur || "?") + '<small>' + (pj ? "📎 " + (m.pieces.length) + " pièce" + (m.pieces.length > 1 ? "s" : "") : "Mail reçu") + '</small></span>' +
       '<span class="quoi">' + esc(m.objet || "(sans objet)") + '<small>' + (m.numero ? esc(m.numero) + " · " + esc(C.theme(m.theme)) : esc(m.precision || "")) + '</small></span>' +
-      '<span class="droite"><span class="pastille-mail ' + s[1] + '">' + esc(s[0]) + '</span><span>' + esc(C.depuis(m.recu_le)) + '</span></span></a></li>';
+      '<span class="droite"><span class="pastille-mail ' + s[1] + '">' + esc(s[0]) + '</span><span>' + esc(C.depuis(m.recu_le)) + '</span></span></button>' +
+      '<div class="mail-detail" id="md-' + esc(m.id) + '" hidden>' +
+        '<pre class="mail-texte">' + esc(m.contenu || "(texte non disponible pour ce mail)") + '</pre>' +
+        (pj ? '<p class="muet petit">Pièces jointes : ' + pj + "</p>" : "") +
+        (m.precision && m.numero ? '<p class="muet petit">' + esc(m.precision) + "</p>" : "") +
+        '<div class="mail-actions">' + (m.numero ? '<a class="btn petit" href="#/dossier/' + esc(m.numero) + '">Ouvrir le dossier ' + esc(m.numero) + "</a>" : "") +
+        (hesite && m.statut !== "rattache" && m.statut !== "dossier_cree" ? '<input class="saisie mono" id="mr-' + esc(m.id) + '" placeholder="N° de dossier" aria-label="Numéro du dossier">' +
+          '<button type="button" class="btn primaire petit" data-rattacher="' + esc(m.id) + '">Rattacher à ce dossier</button>' : "") + "</div>" +
+      "</div></li>";
   }).join("") + "</ul></section>";
+}
+function brancherMails() {
+  document.querySelectorAll("[data-mail]").forEach(function (b) {
+    b.onclick = function () {
+      var d = $("md-" + b.dataset.mail), ouvert = b.getAttribute("aria-expanded") === "true";
+      b.setAttribute("aria-expanded", String(!ouvert)); d.hidden = ouvert;
+    };
+  });
+  document.querySelectorAll("[data-rattacher]").forEach(function (b) {
+    b.onclick = function () {
+      var n = ($("mr-" + b.dataset.rattacher).value || "").trim().toUpperCase();
+      if (!/^(CLM|ESS)-\d{4}-\d{6}$/.test(n)) return C.toast("Numéro de dossier attendu, ex. ESS-2026-000062", true);
+      C.occupe(b, true, "Rattachement");
+      api("rattacher-mail", { body: { id: b.dataset.rattacher, numero: n } }).then(function () {
+        C.toast("Mail rattaché au dossier " + n + " : Klerio a lu son contenu et ses pièces"); vueFile();
+      }).catch(function (x) { C.occupe(b, false); C.toast(x.message, true); });
+    };
+  });
 }
 // L'accueil se met à jour seul toutes les 30 secondes : un mail arrivé apparaît sans recharger
 setInterval(function () {
   var h = location.hash.replace(/^#\/?/, "").split("/")[0] || "file";
   var a = document.activeElement;
-  if (api && h === "file" && !document.hidden && !(a && /INPUT|TEXTAREA|SELECT/.test(a.tagName))) vueFile();
+  if (api && h === "file" && !document.hidden && !(a && /INPUT|TEXTAREA|SELECT/.test(a.tagName)) && !document.querySelector('[data-mail][aria-expanded="true"]')) vueFile();
 }, 30000);
 function ligneFile(d, extra) {
   var a = attente(d), libre = !d.gestionnaire;
@@ -922,7 +957,10 @@ function blocPaiement(f) {
   var par = (v.par || "").indexOf("automatique:") === 0 ? "Klerio, automatiquement" + ({ "automatique:garage_partenaire": " (garage partenaire)", "automatique:reglement_sous_seuil": " (sous le seuil)", "automatique:indemnite_expert": " (indemnité fixée par l'expert)" }[v.par] || "")
     : (v.par || "").replace(/^humain:|^outil:/, "");
   var ligne = function (lib, val, fort) { return val == null || val === "" ? "" : "<dt>" + esc(lib) + "</dt><dd>" + (fort ? "<b>" + val + "</b>" : val) + "</dd>"; };
-  var h = '<section class="bloc"><div class="bloc-tete"><h2>Paiement</h2><span class="pastille-mail ' + etat[1] + '">' + esc(etat[0]) + '</span></div><div class="bloc-corps"><dl class="info-liste">';
+  var resume = (ca.net != null ? "<b>" + esc(eur(ca.net)) + "</b> " : fa.ttc != null ? "<b>" + esc(eur(fa.ttc)) + "</b> TTC " : "") + '<span class="muet">à ' + esc(b.nom || "") + (p.paye_le ? " · payé le " + esc(C.dateCourte(p.paye_le)) : "") + (b.type === "garage" && !b.iban_present ? " · RIB manquant" : "") + "</span>";
+  var h = '<section class="bloc"><div class="bloc-tete"><h2>Paiement</h2><span class="pastille-mail ' + etat[1] + '">' + esc(etat[0]) + '</span></div><div class="bloc-corps">' +
+    '<div class="paie-resume"><span>' + resume + '</span><button type="button" class="btn petit" id="b-paie" aria-expanded="false" aria-controls="paie-detail">Voir le détail</button></div>' +
+    '<dl class="info-liste" id="paie-detail" hidden style="margin-top:14px">';
   h += ligne("Bénéficiaire", esc(b.nom || "") + (b.type === "garage" ? '<span class="muet"> · ' + (b.partenaire ? "garage partenaire" : "garage hors réseau") + "</span>" : ""));
   if (b.type === "garage") {
     h += ligne("Titulaire du compte", esc(b.titulaire || ""));
@@ -1332,6 +1370,11 @@ function blocJournal(f) {
 }
 
 function brancherFiche(f) {
+  var bp = $("b-paie");
+  if (bp) bp.onclick = function () {
+    var d = $("paie-detail"), ouvert = bp.getAttribute("aria-expanded") === "true";
+    d.hidden = ouvert; bp.setAttribute("aria-expanded", String(!ouvert)); bp.textContent = ouvert ? "Voir le détail" : "Masquer le détail";
+  };
   var br = $("b-retrouve");
   if (br) br.onclick = function () {
     var c = prompt("Où et quand le véhicule a-t-il été retrouvé ?", "");
