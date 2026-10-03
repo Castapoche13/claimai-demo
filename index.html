@@ -1356,7 +1356,10 @@ function acteur(a) {
 }
 function blocJournal(f) {
   var hs = f.historique || [];
-  return '<section class="bloc"><div class="bloc-tete"><h2>Journal</h2><span class="muet petit">Trace non modifiable</span></div><div class="bloc-corps"><ul class="journal">' + hs.map(function (x) {
+  var cache = Math.max(0, hs.length - 3);
+  return '<section class="bloc"><div class="bloc-tete"><h2>Journal</h2><span class="muet petit">Trace non modifiable · ' + hs.length + " événement" + (hs.length > 1 ? "s" : "") + '</span></div><div class="bloc-corps">' +
+    (cache ? '<button type="button" class="btn petit" id="b-journal" aria-expanded="false" style="margin-bottom:10px">Voir tout l\'historique (' + cache + " de plus)</button>" : "") +
+    '<ul class="journal" id="journal">' + hs.map(function (x, i) {
     var d = x.detail || {}, txt;
     if (x.action === "changement_etat") txt = "Passe à <b>" + esc((C.STATUTS[d.statut_apres] || [d.statut_apres])[0]) + "</b>" + (d.motif && d.motif !== "prereglement_a_valider" && d.statut_apres !== d.statut_avant ? '<span class="muet">, ' + esc(C.motif(d.motif)) + "</span>" : "");
     else if (x.action === "courrier_redige") txt = esc(C.COURRIERS[d.type] || d.type) + " préparé pour " + esc((C.ROLES[d.destinataire] || d.destinataire).toLowerCase());
@@ -1365,11 +1368,19 @@ function blocJournal(f) {
       ((d.impacts || []).length ? '<span class="muet"> : ' + esc(d.impacts.map(function (c) { return IMPACTS[c] || c; }).join(", ")) + "</span>" : "");
     else if (x.action === "reouverture") txt = "Dossier rouvert" + (d.statut_avant ? '<span class="muet">, il était ' + esc(((C.STATUTS[d.statut_avant] || [d.statut_avant])[0]).toLowerCase()) + "</span>" : "");
     else txt = esc(ACTIONS[x.action] || x.action);
-    return '<li><span class="t">' + esc(C.heure(x.quand)) + '</span><span class="p"></span><span>' + txt + acteur(x.acteur) + "</span></li>";
+    return "<li" + (i < cache ? ' class="ancien" hidden' : "") + '><span class="t">' + esc(C.heure(x.quand)) + '</span><span class="p"></span><span>' + txt + acteur(x.acteur) + "</span></li>";
   }).join("") + "</ul></div></section>";
 }
 
 function brancherFiche(f) {
+  var bj = $("b-journal");
+  if (bj) bj.onclick = function () {
+    var ouvert = bj.getAttribute("aria-expanded") === "true";
+    document.querySelectorAll("#journal li.ancien").forEach(function (li) { li.hidden = ouvert; });
+    bj.setAttribute("aria-expanded", String(!ouvert));
+    bj.textContent = ouvert ? bj.dataset.lib : "Ne voir que les 3 derniers";
+  };
+  if (bj) bj.dataset.lib = bj.textContent;
   var bp = $("b-paie");
   if (bp) bp.onclick = function () {
     var d = $("paie-detail"), ouvert = bp.getAttribute("aria-expanded") === "true";
