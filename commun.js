@@ -24,6 +24,8 @@
     garantie_non_souscrite: "La garantie nécessaire n'est pas souscrite",
     contrat_non_actif_a_la_date: "Le contrat n'était pas en vigueur à la date du sinistre",
     contrat_introuvable: "Aucun contrat ne correspond au numéro déclaré",
+    contrat_a_verifier: "Déclaré par mail : le contrat ou le véhicule cité ne correspond pas exactement, à vérifier",
+    expediteur_inconnu: "Déclaré par mail par une adresse inconnue du contrat : identité à vérifier",
     theme_non_gere: "Type de sinistre non couvert par le circuit",
     theme_hors_perimetre: "Sinistre hors du circuit automatique",
     tiers_implique: "Un tiers est impliqué : responsabilité à établir",
