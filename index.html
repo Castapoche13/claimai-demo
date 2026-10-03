@@ -712,11 +712,12 @@ var MAIL_STATUT = { recu: ["En cours de lecture", "info"], dossier_cree: ["Dossi
 function blocMailsRecus(l) {
   var h = '<section class="bloc"><div class="bloc-tete"><h2>Mails reçus<span class="compte">' + l.length + '</span></h2><span class="muet petit">Boîte sinistres : chaque mail est lu et traité dès son arrivée. Cliquez pour lire.</span></div>';
   if (!l.length) return h + '<div class="vide">Aucun mail reçu pour l\'instant' + (S.env === "test" ? "" : " dans cet environnement") + '.</div></section>';
-  return h + '<ul class="file mails">' + l.slice(0, 10).map(function (m) {
+  var plus = Math.max(0, l.length - 3);
+  return h + '<ul class="file mails" id="mails-recus">' + l.map(function (m, i) {
     var s = MAIL_STATUT[m.statut] || [m.statut, "neutre"];
     var hesite = ["ignore", "demande_infos", "erreur"].indexOf(m.statut) >= 0 || m.confiance === "inconnu";
     var pj = (m.pieces || []).map(function (p) { return esc(p.nom); }).join(", ");
-    return '<li><button type="button" class="ligne ligne-mail" data-mail="' + esc(m.id) + '" aria-expanded="false"><span class="repere"></span>' +
+    return "<li" + (i >= 3 ? ' class="ancien" hidden' : "") + '><button type="button" class="ligne ligne-mail" data-mail="' + esc(m.id) + '" aria-expanded="false"><span class="repere"></span>' +
       '<span class="num">' + esc(m.expediteur || "?") + '<small>' + (pj ? "📎 " + (m.pieces.length) + " pièce" + (m.pieces.length > 1 ? "s" : "") : "Mail reçu") + '</small></span>' +
       '<span class="quoi">' + esc(m.objet || "(sans objet)") + '<small>' + (m.numero ? esc(m.numero) + " · " + esc(C.theme(m.theme)) : esc(m.precision || "")) + '</small></span>' +
       '<span class="droite"><span class="pastille-mail ' + s[1] + '">' + esc(s[0]) + '</span><span>' + esc(C.depuis(m.recu_le)) + '</span></span></button>' +
@@ -728,8 +729,17 @@ function blocMailsRecus(l) {
         (hesite && m.statut !== "rattache" && m.statut !== "dossier_cree" ? '<input class="saisie mono" id="mr-' + esc(m.id) + '" placeholder="N° de dossier" aria-label="Numéro du dossier">' +
           '<button type="button" class="btn primaire petit" data-rattacher="' + esc(m.id) + '">Rattacher à ce dossier</button>' : "") + "</div>" +
       "</div></li>";
-  }).join("") + "</ul></section>";
+  }).join("") + "</ul>" + (plus ? '<div class="bloc-corps" style="padding-top:8px"><button type="button" class="btn petit" data-voir-plus="mails-recus" data-lib="Voir les ' + plus + ' mails plus anciens">Voir les ' + plus + " mails plus anciens</button></div>" : "") + "</section>";
 }
+// Bouton « voir plus » commun : affiche ou masque les lignes plus anciennes d'une liste
+document.addEventListener("click", function (e) {
+  var b = e.target.closest && e.target.closest("[data-voir-plus]");
+  if (!b) return;
+  var ouvert = b.getAttribute("aria-expanded") === "true";
+  document.querySelectorAll("#" + b.dataset.voirPlus + " > li.ancien").forEach(function (li) { li.hidden = ouvert; });
+  b.setAttribute("aria-expanded", String(!ouvert));
+  b.textContent = ouvert ? b.dataset.lib : "Réduire";
+});
 function brancherMails() {
   document.querySelectorAll("[data-mail]").forEach(function (b) {
     b.onclick = function () {
@@ -752,7 +762,7 @@ function brancherMails() {
 setInterval(function () {
   var h = location.hash.replace(/^#\/?/, "").split("/")[0] || "file";
   var a = document.activeElement;
-  if (api && h === "file" && !document.hidden && !(a && /INPUT|TEXTAREA|SELECT/.test(a.tagName)) && !document.querySelector('[data-mail][aria-expanded="true"]')) vueFile();
+  if (api && h === "file" && !document.hidden && !(a && /INPUT|TEXTAREA|SELECT/.test(a.tagName)) && !document.querySelector('[data-mail][aria-expanded="true"], [data-voir-plus][aria-expanded="true"]')) vueFile();
 }, 30000);
 function ligneFile(d, extra) {
   var a = attente(d), libre = !d.gestionnaire;
@@ -1329,11 +1339,12 @@ function blocPieces(f) {
 function blocCourriers(f) {
   var k = f.courriers || [];
   if (!k.length) return "";
-  return '<section class="bloc"><div class="bloc-tete"><h2>Courriers</h2><a class="btn discret" href="#/boites">Voir les boîtes de test</a></div><ul class="courriers">' + k.slice().reverse().map(function (c) {
+  var plus = Math.max(0, k.length - 3);
+  return '<section class="bloc"><div class="bloc-tete"><h2>Courriers<span class="compte">' + k.length + '</span></h2><a class="btn discret" href="#/boites">Voir les boîtes de test</a></div><ul class="courriers" id="courriers">' + k.slice().reverse().map(function (c, i) {
     var env = c.statut === "envoye" ? '<span class="envoi ok">Envoyé à ' + esc(c.envoye_a) + "</span>" : c.statut === "erreur" ? '<span class="envoi ko">Échec de l\'envoi</span>' : '<span class="envoi">Prêt, dans la boîte de test</span>';
-    return '<li><details><summary><span class="objet">' + esc(c.objet) + '</span>' + env + '<span class="meta">' + esc(C.COURRIERS[c.type] || c.type) + ", à " + esc(C.ROLES[c.destinataire] || c.destinataire) + " (" + esc(c.email || "sans adresse") + ')</span><span class="meta" style="text-align:right">' + esc(C.heure(c.cree_le)) + "</span></summary>" +
+    return "<li" + (i >= 3 ? ' class="ancien" hidden' : "") + '><details><summary><span class="objet">' + esc(c.objet) + '</span>' + env + '<span class="meta">' + esc(C.COURRIERS[c.type] || c.type) + ", à " + esc(C.ROLES[c.destinataire] || c.destinataire) + " (" + esc(c.email || "sans adresse") + ')</span><span class="meta" style="text-align:right">' + esc(C.heure(c.cree_le)) + "</span></summary>" +
       '<div class="corps-courrier">' + esc(c.corps) + "</div></details></li>";
-  }).join("") + "</ul></section>";
+  }).join("") + "</ul>" + (plus ? '<div class="bloc-corps" style="padding-top:8px"><button type="button" class="btn petit" data-voir-plus="courriers" data-lib="Voir les ' + plus + ' courriers plus anciens">Voir les ' + plus + " courriers plus anciens</button></div>" : "") + "</section>";
 }
 
 var ACTIONS = { creation_dossier: "Dossier créé à partir de la déclaration", analyse_declaration: "Déclaration lue et qualifiée", controle_expertise: "Contrôle automatique du chiffrage",
