@@ -296,6 +296,7 @@ button.ligne-mail { width: 100%; background: none; border: 0; font: inherit; col
 .pastille-mail { justify-self: start; align-self: center; font-size: 12px; font-weight: 600; padding: 3px 9px; border-radius: 999px; white-space: nowrap; background: var(--survol); color: var(--gris); }
 .pastille-mail.ok { background: var(--vert-pale); color: var(--vert-texte); } .pastille-mail.attente { background: var(--jaune-pale); color: var(--jaune-texte); }
 .pastille-mail.alerte { background: var(--rouge-pale); color: var(--rouge-texte); } .pastille-mail.info { background: var(--bleu-pale); color: var(--bleu-fonce); }
+.indice { font-size: 13.5px; padding: 10px 14px; border-radius: 8px; background: var(--bleu-pale); color: var(--encre); } .indice.ok { background: var(--vert-pale); color: var(--vert-texte); } .indice.ko { background: var(--rouge-pale); color: var(--rouge-texte); }
 .tableau .actions { display: flex; flex-wrap: wrap; align-items: center; } .txt-ko { color: var(--rouge); }
 .tuiles { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-bottom: 18px; }
 .tuile { border: 1px solid var(--trait); border-radius: var(--rayon); padding: 14px 16px; background: var(--feuille); text-decoration: none; color: inherit; display: block; }
@@ -948,6 +949,7 @@ function afficherDossier(f) {
   h += '<div class="fiche-grille"><div>';
   h += carteAction(f);
   h += blocCloture(f);
+  h += blocDelais(f);
   h += blocPaiement(f);
   h += blocVehicule(f);
   h += blocSuivi(f);
@@ -979,6 +981,19 @@ function afficherDossier(f) {
 }
 
 /* Récapitulatif de paiement : tout ce qu'un contrôleur ou un comptable doit voir, sans rouvrir les pièces jointes */
+// Délais légaux (catastrophe naturelle) : chaque étape avec son échéance, en retard en rouge
+var ETAT_DELAI = { fait: ["Fait", "ok"], fait_en_retard: ["Fait en retard", "alerte"], en_retard: ["En retard", "alerte"], bientot: ["Échéance proche", "attente"], a_venir: ["À venir", "info"] };
+function blocDelais(f) {
+  var l = f.delais_legaux;
+  if (!l || !l.length) return "";
+  return '<section class="bloc"><div class="bloc-tete"><h2>Délais légaux</h2><span class="muet petit">Catastrophe naturelle : au-delà, l\'indemnité porte intérêt au taux légal</span></div><ul class="file">' +
+    l.map(function (x) {
+      var e = ETAT_DELAI[x.etat] || [x.etat, "info"];
+      return '<li><div class="ligne" style="cursor:default"><span class="repere"></span><span class="quoi">' + esc(x.etape) + "<small>" +
+        (x.fait_le ? "Fait le " + esc(C.dateFr(x.fait_le)) : "Avant le " + esc(C.dateFr(x.echeance))) + " · échéance " + esc(C.dateFr(x.echeance)) + "</small></span>" +
+        '<span class="droite"><span class="pastille-mail ' + e[1] + '">' + esc(e[0]) + "</span></span></div></li>";
+    }).join("") + "</ul></section>";
+}
 function blocPaiement(f) {
   var p = f.paiement;
   if (!p) return "";
@@ -1690,10 +1705,16 @@ function dessinerBoites() {
 /* ---------------- Vue : Pilotage ---------------- */
 function vuePilotage() {
   Promise.all([api("indicateurs" + qb()), estResponsable() ? api("pilotage-equipe" + qb()) : Promise.resolve(null),
-               estResponsable() ? api("missions" + qb()).catch(function () { return null; }) : Promise.resolve(null)]).then(function (r) {
-    var i = r[0], eq = r[1], mi = r[2];
+               estResponsable() ? api("missions" + qb()).catch(function () { return null; }) : Promise.resolve(null),
+               estResponsable() ? api("recette").catch(function () { return null; }) : Promise.resolve(null)]).then(function (r) {
+    var i = r[0], eq = r[1], mi = r[2], rec = r[3];
     compter(i);
     var h = bandeauCorporel() + '<div class="entete-vue"><div><h1>Pilotage</h1><p>Espace ' + esc(C.ESPACES[S.branche].nom.toLowerCase()) + " de " + esc(i.assureur) + ", hors jeux de test archivés.</p></div></div>";
+    if (rec && rec.lancee_le) {
+      var ko = (rec.resultats || []).filter(function (x) { return !x.ok; });
+      h += '<p class="indice' + (rec.ok ? " ok" : " ko") + '" style="margin:0 0 14px">Recette de nuit du ' + esc(C.dateFr(rec.lancee_le)) + " : " +
+        (rec.ok ? "les " + rec.nb_parcours + " parcours automatiques fonctionnent." : rec.nb_echecs + " parcours en échec (" + esc(ko.map(function (x) { return C.theme(x.parcours) || x.parcours; }).join(", ")) + "), prévenez Klerio.") + "</p>";
+    }
     var delai = i.delai_moyen_cloture_heures;
     h += '<div class="chiffres">' +
       '<div class="chiffre"><div class="val">' + (i.en_cours || 0) + '</div><div class="lib">Dossiers en cours sur ' + (i.total || 0) + "</div></div>" +
