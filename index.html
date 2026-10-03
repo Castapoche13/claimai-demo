@@ -882,6 +882,7 @@ function afficherDossier(f) {
   h += '<div class="fiche-grille"><div>';
   h += carteAction(f);
   h += blocCloture(f);
+  h += blocPaiement(f);
   h += blocVehicule(f);
   h += blocSuivi(f);
   h += blocAnalyse(f, an, d);
@@ -909,6 +910,43 @@ function afficherDossier(f) {
   h += "</aside></div>";
   $("vue").innerHTML = h;
   brancherFiche(f);
+}
+
+/* Récapitulatif de paiement : tout ce qu'un contrôleur ou un comptable doit voir, sans rouvrir les pièces jointes */
+function blocPaiement(f) {
+  var p = f.paiement;
+  if (!p) return "";
+  var b = p.beneficiaire || {}, fa = p.facture || {}, ex = p.expertise || {}, ca = p.calcul || {}, v = p.validation || {};
+  var etat = p.statut === "confirme" ? ["Payé", "ok"] : p.statut === "envoye" ? ["Bon à payer envoyé à la comptabilité", "attente"]
+    : p.statut === "propose" ? ["Règlement à valider", "attente"] : p.statut === "valide" ? ["Règlement validé, bon à payer en préparation", "info"] : ["Facture reçue, règlement en préparation", "info"];
+  var par = (v.par || "").indexOf("automatique:") === 0 ? "Klerio, automatiquement" + ({ "automatique:garage_partenaire": " (garage partenaire)", "automatique:reglement_sous_seuil": " (sous le seuil)", "automatique:indemnite_expert": " (indemnité fixée par l'expert)" }[v.par] || "")
+    : (v.par || "").replace(/^humain:|^outil:/, "");
+  var ligne = function (lib, val, fort) { return val == null || val === "" ? "" : "<dt>" + esc(lib) + "</dt><dd>" + (fort ? "<b>" + val + "</b>" : val) + "</dd>"; };
+  var h = '<section class="bloc"><div class="bloc-tete"><h2>Paiement</h2><span class="pastille-mail ' + etat[1] + '">' + esc(etat[0]) + '</span></div><div class="bloc-corps"><dl class="info-liste">';
+  h += ligne("Bénéficiaire", esc(b.nom || "") + (b.type === "garage" ? '<span class="muet"> · ' + (b.partenaire ? "garage partenaire" : "garage hors réseau") + "</span>" : ""));
+  if (b.type === "garage") {
+    h += ligne("Titulaire du compte", esc(b.titulaire || ""));
+    h += ligne("IBAN", b.iban_present ? '<span class="mono">' + esc(b.iban) + "</span>" + (b.iban_maj_le ? '<span class="muet"> · mis à jour le ' + esc(C.dateCourte(b.iban_maj_le)) + "</span>" : "")
+      : '<span class="statut ko">RIB manquant</span>' + (p.rib_attendu ? '<span class="muet"> · demandé au garage</span>' : ""));
+  }
+  if (fa.numero || fa.ttc != null) {
+    h += ligne("Facture", (fa.numero ? "N° " + esc(fa.numero) : "Sans numéro") + (fa.recue_le ? '<span class="muet"> · reçue le ' + esc(C.dateCourte(fa.recue_le)) + "</span>" : ""));
+    h += ligne("Montant HT", fa.ht != null ? esc(eur(fa.ht)) : "");
+    h += ligne("TVA", fa.tva != null ? esc(eur(fa.tva)) : "");
+    h += ligne("Montant TTC", fa.ttc != null ? esc(eur(fa.ttc)) : "");
+  }
+  if (ex.retenu_ttc != null) h += ligne("Retenu par l'expert", esc(eur(ex.retenu_ttc)) + " TTC");
+  if (ex.vetuste_ttc) h += ligne("Vétusté", "− " + esc(eur(ex.vetuste_ttc)));
+  if (ca.base != null) {
+    h += ligne("Base du règlement", esc(eur(ca.base)) + (ca.tva_recuperable ? '<span class="muet"> · HT, TVA récupérable</span>' : ""));
+    h += ligne("Franchise", Number(ca.franchise) ? "− " + esc(eur(ca.franchise)) : "Aucune");
+    h += ligne("Net à payer", esc(eur(ca.net)), true);
+  }
+  h += ligne("Libellé du virement", '<span class="mono">' + esc(p.libelle_virement || "") + "</span>");
+  if (v.le) h += ligne("Validé par", esc(par) + '<span class="muet"> · le ' + esc(C.dateFr(v.le)) + "</span>");
+  if (p.bon_a_payer_le) h += ligne("Bon à payer", "Envoyé le " + esc(C.dateFr(p.bon_a_payer_le)));
+  if (p.paye_le) h += ligne("Payé", "Le " + esc(C.dateFr(p.paye_le)) + (p.ref_virement ? ', référence <span class="mono">' + esc(p.ref_virement) + "</span>" : "") + (p.paye_par ? '<span class="muet"> · confirmé par ' + esc(p.paye_par.replace(/^portail:/, "")) + "</span>" : ""));
+  return h + "</dl></div></section>";
 }
 
 /* Véhicule irréparable, vol retrouvé, garage choisi par l'assuré */
