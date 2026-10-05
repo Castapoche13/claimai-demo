@@ -47,6 +47,7 @@
     arrete_catnat_absent: "Arrêté de catastrophe naturelle à référencer",
     responsabilite_a_valider: "Accident avec un tiers : responsabilité à valider",
     vigilance_vol: "Vol : points de vigilance à vérifier avant d'indemniser",
+    tempete_garantie_obligatoire: "Tempête : garantie par la loi même sans garantie climatique, à qualifier",
     relances_sans_reponse: "Trois relances sans réponse",
     choix_vei: "Véhicule irréparable : choix de l'assuré attendu",
     choix_vol_retrouve: "Véhicule retrouvé : choix de l'assuré attendu",

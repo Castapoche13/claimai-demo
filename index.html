@@ -164,14 +164,14 @@ table.tableau { width: 100%; border-collapse: collapse; font-size: 13.5px; }
 .cases .num { display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: var(--bleu-pale); color: var(--bleu-fonce); font-weight: 700; font-size: 12px; }
 .parts { border: 0; padding: 0; margin: 14px 0 6px; }
 .parts legend { font-weight: 600; font-size: 14px; margin-bottom: 8px; padding: 0; }
-.parts-choix { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
+.parts-choix { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
 .part { position: relative; }
 .part input { position: absolute; opacity: 0; inset: 0; margin: 0; cursor: pointer; }
 .part span { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 52px; border: 1px solid var(--trait); border-radius: 8px; background: var(--feuille); text-align: center; padding: 6px 4px; }
 .part small { font-size: 11.5px; color: var(--encre-2, inherit); opacity: .8; }
 .part input:checked + span { border-color: var(--bleu-fonce); background: var(--bleu-pale); color: var(--bleu-fonce); box-shadow: 0 0 0 1px var(--bleu-fonce); }
 .part input:focus-visible + span { outline: 2px solid var(--bleu-fonce); outline-offset: 2px; }
-@media (max-width: 560px) { .constat { grid-template-columns: 1fr; } .parts-choix { grid-template-columns: repeat(3, 1fr); } }
+@media (max-width: 560px) { .constat { grid-template-columns: 1fr; } }
 .decompte { display: grid; grid-template-columns: 1fr auto; gap: 6px 24px; max-width: 420px; font-size: 13.5px; }
 .decompte .total { font-weight: 600; font-size: 15px; border-top: 1px solid var(--trait); padding-top: 8px; margin-top: 2px; }
 .decompte .nb { text-align: right; }
@@ -1002,7 +1002,7 @@ function afficherDossier(f) {
 }
 
 /* Accident avec un autre véhicule : le constat, la proposition de Klerio et la part retenue par le gestionnaire */
-var PARTS_RESP = [[0, "0 %", "non responsable"], [25, "25 %", ""], [50, "50 %", "partagée"], [75, "75 %", ""], [100, "100 %", "responsable"]];
+var PARTS_RESP = [[0, "0 %", "non responsable"], [50, "50 %", "partagée"], [100, "100 %", "responsable"]];
 function vehiculeConstat(cote, k, cases, assure) {
   return '<div class="vehicule-constat' + (assure ? " assure" : "") + '"><div class="vc-tete"><b>Véhicule ' + cote + "</b>" + (assure ? '<span class="pastille-mail info">Votre assuré</span>' : '<span class="pastille-mail neutre">Tiers</span>') + "</div>" +
     '<div class="muet petit">' + esc([k["immat_" + cote.toLowerCase()], k["assureur_" + cote.toLowerCase()]].filter(Boolean).join(" · ") || "Immatriculation non lue") + "</div>" +
@@ -1021,7 +1021,9 @@ function carteResponsabilite(f, v) {
     PARTS_RESP.map(function (x) {
       return '<label class="part"><input type="radio" name="r-pct" value="' + x[0] + '"' + (Number(p.pct) === x[0] && p.pct != null ? " checked" : "") + "><span><b>" + x[1] + "</b>" + (x[2] ? "<small>" + x[2] + "</small>" : "") + "</span></label>";
     }).join("") + "</div>" +
-    '<p class="muet petit" style="margin:8px 0 0">0 % : ni franchise ni malus, Klerio prépare le recours contre l\'assureur adverse. Partagée : franchise au prorata, malus réduit de moitié. 100 % : franchise du contrat et malus de 25 %.</p></fieldset>';
+    '<p class="muet petit" style="margin:8px 0 0">Barème de la convention IRSA : 0, 50 ou 100 %. 0 % : ni franchise ni malus, Klerio prépare le recours. Partagée : franchise au prorata, malus réduit de moitié. 100 % : franchise du contrat et malus de 25 %.</p></fieldset>';
+  var adv = (p.tiers && p.tiers.assureur) || k[p.cote_assure === "A" ? "assureur_b" : "assureur_a"] || "";
+  h += '<label class="champ">Assureur de l\'autre véhicule <span class="aide">sans lui, pas d\'indemnisation directe : la franchise s\'applique et le recours ne peut pas partir</span><input class="saisie" id="r-adv" value="' + esc(adv) + '" placeholder="Nom de la compagnie adverse"></label>';
   h += '<label class="champ">Commentaire <span class="aide">Obligatoire si vous changez la proposition ou traitez le dossier hors circuit.</span><textarea class="saisie" id="d-com" rows="2" style="min-height:64px"></textarea></label>' +
     '<div class="decision-actions"><button class="btn primaire" id="d-oui" data-v="' + esc(v.id) + '">Valider et lancer la suite</button><button class="btn" id="d-non" data-v="' + esc(v.id) + '">Traiter hors circuit</button></div>' +
     '<p class="loi">La responsabilité n\'est jamais fixée sans votre validation. L\'assuré reçoit la répartition et peut la contester en répondant au courrier.</p></div><div class="tampon" id="tampon" aria-hidden="true"></div></section>';
@@ -1597,6 +1599,7 @@ function brancherFiche(f) {
       var choix = document.querySelector("input[name=r-pct]:checked"), propo = (propoValidation(f) || {}).proposition || {};
       if (!choix) { C.toast("Choisissez la part de responsabilité de l'assuré.", true); parts[0].focus(); return; }
       corpsV.responsabilite_pct = Number(choix.value);
+      if ($("r-adv") && $("r-adv").value.trim()) corpsV.assureur_adverse = $("r-adv").value.trim();
       if (propo.pct != null && Number(propo.pct) !== corpsV.responsabilite_pct && !com) { C.toast("Vous changez la proposition : expliquez pourquoi en commentaire.", true); $("d-com").focus(); return; }
     }
     C.occupe(btn, true, "Enregistrement");
@@ -2204,7 +2207,11 @@ function ongletDonnees(p) {
   h += '<div class="reglage"><div class="expl"><h3>Automatisation</h3><p>Ce que Klerio fait seul, sans clic. Les cas douteux et les anomalies reviennent toujours à un gestionnaire.</p></div><div class="zone pile">' +
     '<div class="grille-2"><label class="champ">Règlement automatique jusqu\'à <span class="aide">en €, vide = tout faire valider</span><input class="saisie" id="s-auto" type="number" min="0" step="100" value="' + esc(p.reglement_auto_max_eur == null ? "" : p.reglement_auto_max_eur) + '"></label></div>' +
     '<label class="case"><input type="checkbox" id="s-refus"' + (p.refus_automatique ? " checked" : "") + '> Refus automatique des cas contractuels évidents (contrat non en vigueur, garantie non souscrite)</label>' +
-    '<p class="muet petit">Le courrier indique que la réponse est automatique et que l\'assuré peut demander un réexamen par un gestionnaire (RGPD, article 22). À valider avec votre délégué à la protection des données avant la production. Les règlements corporels restent toujours validés par un humain.</p></div></div>';
+    '<p class="muet petit">Le courrier indique que la réponse est automatique et que l\'assuré peut demander un réexamen par un gestionnaire (RGPD, article 22). À valider avec votre délégué à la protection des données avant la production. Les règlements corporels restent toujours validés par un humain.</p>' +
+    '<div class="grille-2"><label class="champ">Service réclamations : adresse <span class="aide">citée dans chaque refus</span><input class="saisie" id="s-rec-adr" value="' + esc(p.reclamations_adresse || "") + '" placeholder="Service réclamations, adresse postale"></label>' +
+    '<label class="champ">Service réclamations : e-mail<input class="saisie" id="s-rec-mail" type="email" value="' + esc(p.reclamations_email || "") + '" placeholder="reclamations@votre-compagnie.fr"></label></div>' +
+    '<label class="champ">Médiateur <span class="aide">vide = la Médiation de l\'Assurance</span><input class="saisie" id="s-mediateur" value="' + esc(p.mediateur || "") + '" placeholder="Le Médiateur de l\'Assurance, TSA 50110, 75441 Paris Cedex 09"></label>' +
+    '<p class="muet petit">Chaque refus et chaque classement rappellent la réclamation (accusé sous 10 jours ouvrables, réponse sous 2 mois), le médiateur et la prescription de deux ans.</p></div></div>';
   h += '<div class="reglage"><div class="expl"><h3>Paiement des garages</h3><p>Dès que l\'expert a fixé le montant et que le garage partenaire a envoyé sa facture, le règlement part au service comptable, sans autre validation.</p></div><div class="zone pile">' +
     '<label class="case"><input type="checkbox" id="s-garage"' + (p.paiement_garage_auto ? " checked" : "") + '> Payer directement les garages partenaires sur le montant de l\'expert, quel que soit le montant</label>' +
     '<div class="grille-2"><label class="champ">Service comptable <span class="aide">reçoit chaque bon à payer</span><input class="saisie" id="s-compta" type="email" value="' + esc(p.email_comptabilite || "") + '" placeholder="comptabilite@votre-compagnie.fr"></label></div>' +
@@ -2213,7 +2220,7 @@ function ongletDonnees(p) {
     '<div class="grille-2"><label class="champ">Titulaire du compte<input class="saisie" id="s-tit-deb" value="' + esc(p.compte_paiement_titulaire || "") + '" maxlength="70"></label></div>' +
     '<p class="muet petit">Le comptable reçoit un mail par règlement validé (garage ou assuré), avec un lien sécurisé : montant, IBAN du référentiel, facture, et un ordre de virement SEPA déjà rempli à importer dans la banque. Il saisit ensuite la référence du virement, ce qui clôt le dossier et prévient l\'assuré et le garage du paiement. Restent toujours chez un gestionnaire : une facture au-dessus du montant de l\'expert, une facture déjà présentée sur un autre dossier, un garage hors réseau.</p></div></div>';
   h += '<div class="reglage"><div class="expl"><h3>Vol et véhicule irréparable</h3><p>L\'expert fixe la valeur du véhicule. Klerio fait l\'offre à l\'assuré, recueille son choix et ses pièces en ligne, puis calcule l\'indemnité.</p></div><div class="zone pile">' +
-    '<label class="case"><input type="checkbox" id="s-indemnite"' + (p.indemnite_expert_auto ? " checked" : "") + '> Verser sans validation les indemnités fixées par l\'expert (vol non retrouvé, véhicule irréparable), quel que soit le montant</label>' +
+    '<label class="case"><input type="checkbox" id="s-indemnite"' + (p.indemnite_expert_auto ? " checked" : "") + '> Verser sans validation les indemnités fixées par l\'expert (véhicule irréparable), quel que soit le montant. Un vol est toujours validé par un gestionnaire.</label>' +
     '<div class="grille-2">' + champNum("s-vei", "Délai de réponse de l'assuré à l'offre", "jours", p.delai_reponse_vei_jours) + '</div>' +
     '<p class="muet petit">Le vol est le sinistre le plus exposé à la fraude : sans cette option, chaque indemnité au-dessus du seuil de règlement automatique est validée par un gestionnaire. Sans réponse de l\'assuré dans le délai, il est réputé conserver son véhicule irréparable, comme le prévoit la procédure.</p></div></div>';
   h += '<div class="reglage"><div class="expl"><h3>Organisation de l\'équipe</h3><p>Qui traite les dossiers qui demandent une décision.</p></div><div class="zone pile">' +
@@ -2302,6 +2309,7 @@ function brancherRaccordement(admin) {
     var auto = $("s-auto").value, m = document.querySelector('[name="s-mode"]:checked'), c = document.querySelector('[name="s-cons"]:checked');
     envoyer(this, "parametres", { reglement_auto_max_eur: auto === "" ? null : Number(auto), refus_automatique: $("s-refus").checked,
       paiement_garage_auto: $("s-garage").checked, email_comptabilite: $("s-compta").value.trim(),
+      reclamations_adresse: $("s-rec-adr").value.trim(), reclamations_email: $("s-rec-mail").value.trim(), mediateur: $("s-mediateur").value.trim(),
       compte_paiement_iban: $("s-iban-deb").value.trim(), compte_paiement_bic: $("s-bic-deb").value.trim(), compte_paiement_titulaire: $("s-tit-deb").value.trim(),
       indemnite_expert_auto: $("s-indemnite").checked, delai_reponse_vei_jours: Number($("s-vei").value),
       mode_repartition: m ? m.value : "corbeille", conservation: c ? c.value : "conserver", delai_effacement_jours: Number($("s-effacement").value) }, "Choix enregistrés");
