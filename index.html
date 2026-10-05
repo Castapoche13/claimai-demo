@@ -155,6 +155,23 @@ table.tableau { width: 100%; border-collapse: collapse; font-size: 13.5px; }
 .decision .explication { color: var(--encre-2); max-width: 72ch; }
 .decision .loi { font-size: 12.5px; color: var(--gris); }
 .decision-actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.constat { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 12px 0; }
+.vehicule-constat { border: 1px solid var(--trait); border-radius: 8px; padding: 10px 12px; background: var(--feuille-2); min-width: 0; }
+.vehicule-constat.assure { border-color: var(--bleu-fonce); }
+.vc-tete { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 2px; }
+.cases { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 6px; font-size: 13.5px; }
+.cases li { display: grid; grid-template-columns: 24px 1fr; gap: 8px; align-items: start; }
+.cases .num { display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: var(--bleu-pale); color: var(--bleu-fonce); font-weight: 700; font-size: 12px; }
+.parts { border: 0; padding: 0; margin: 14px 0 6px; }
+.parts legend { font-weight: 600; font-size: 14px; margin-bottom: 8px; padding: 0; }
+.parts-choix { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
+.part { position: relative; }
+.part input { position: absolute; opacity: 0; inset: 0; margin: 0; cursor: pointer; }
+.part span { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 52px; border: 1px solid var(--trait); border-radius: 8px; background: var(--feuille); text-align: center; padding: 6px 4px; }
+.part small { font-size: 11.5px; color: var(--encre-2, inherit); opacity: .8; }
+.part input:checked + span { border-color: var(--bleu-fonce); background: var(--bleu-pale); color: var(--bleu-fonce); box-shadow: 0 0 0 1px var(--bleu-fonce); }
+.part input:focus-visible + span { outline: 2px solid var(--bleu-fonce); outline-offset: 2px; }
+@media (max-width: 560px) { .constat { grid-template-columns: 1fr; } .parts-choix { grid-template-columns: repeat(3, 1fr); } }
 .decompte { display: grid; grid-template-columns: 1fr auto; gap: 6px 24px; max-width: 420px; font-size: 13.5px; }
 .decompte .total { font-weight: 600; font-size: 15px; border-top: 1px solid var(--trait); padding-top: 8px; margin-top: 2px; }
 .decompte .nb { text-align: right; }
@@ -634,6 +651,7 @@ function attente(d) {
   var v = d.validation, p = v && v.proposition || {};
   if (v && v.etape === "decision" && p.decision === "classement_sans_indemnite") return ["Classement sans indemnité à confirmer", "AIPP estimée " + C.nombre(p.aipp_estimee != null ? p.aipp_estimee : p.aipp) + " %"];
   if (v && v.etape === "decision") return ["Refus proposé, à confirmer ou écarter", C.motif(p.motif)];
+  if (v && v.etape === "responsabilite") return ["Responsabilité à valider", p.pct != null ? "Klerio propose : assuré responsable à " + p.pct + " %" : "Accident avec un autre véhicule : constat à examiner"];
   if (v && v.etape === "prereglement") return ["Règlement de " + eur(p.montant_net) + " à valider", p.remboursement_assure ? "Remboursement de l'assuré, garage hors réseau, franchise déduite" : d.theme === "VOL" ? "Indemnité vol versée à l'assuré, franchise déduite" : p.beneficiaire === "assure" ? "Capital invalidité versé à l'assuré" : "Versé au réparateur, franchise déduite"];
   if (v && v.etape === "anomalie") {
     var a = (p.anomalies || [])[0]; return [a ? (C.ANOMALIES[a.code] || a.code) : (C.ANOMALIES[p.code] || "Anomalie à examiner"), a ? a.detail : C.motif(d.motif)];
@@ -950,7 +968,9 @@ function afficherDossier(f) {
   h += carteAction(f);
   h += blocCloture(f);
   h += blocDelais(f);
+  h += blocResponsabilite(f);
   h += blocPaiement(f);
+  h += blocRecours(f);
   h += blocVehicule(f);
   h += blocSuivi(f);
   h += blocAnalyse(f, an, d);
@@ -978,6 +998,88 @@ function afficherDossier(f) {
   h += "</aside></div>";
   $("vue").innerHTML = h;
   brancherFiche(f);
+}
+
+/* Accident avec un autre véhicule : le constat, la proposition de Klerio et la part retenue par le gestionnaire */
+var PARTS_RESP = [[0, "0 %", "non responsable"], [25, "25 %", ""], [50, "50 %", "partagée"], [75, "75 %", ""], [100, "100 %", "responsable"]];
+function vehiculeConstat(cote, k, cases, assure) {
+  return '<div class="vehicule-constat' + (assure ? " assure" : "") + '"><div class="vc-tete"><b>Véhicule ' + cote + "</b>" + (assure ? '<span class="pastille-mail info">Votre assuré</span>' : '<span class="pastille-mail neutre">Tiers</span>') + "</div>" +
+    '<div class="muet petit">' + esc([k["immat_" + cote.toLowerCase()], k["assureur_" + cote.toLowerCase()]].filter(Boolean).join(" · ") || "Immatriculation non lue") + "</div>" +
+    (cases.length ? '<ul class="cases">' + cases.map(function (c) { return "<li><span class=\"num\">" + c.n + "</span>" + esc(c.libelle) + "</li>"; }).join("") + "</ul>" : '<p class="muet petit">Aucune case cochée</p>') + "</div>";
+}
+function carteResponsabilite(f, v) {
+  var p = v.proposition || {}, k = p.constat || {}, al = p.alertes || [];
+  var expl = p.pct != null
+    ? "Klerio propose : votre assuré responsable à " + p.pct + " %. Règle appliquée : " + (p.regle || "") + "."
+    : "Klerio ne peut pas proposer de répartition seul : choisissez la part de responsabilité de votre assuré à partir des éléments du dossier.";
+  var h = '<section class="decision" id="carte-decision"><div class="decision-entete">Décision requise</div><div class="decision-corps"><h2>Valider la responsabilité</h2>' +
+    '<p class="explication">' + esc(expl) + "</p>";
+  if (al.length) h += '<div class="pile">' + al.map(function (a) { return '<div class="alerte"><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M8 4.5v4M8 10.8v.6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg><span>' + esc(a) + "</span></div>"; }).join("") + "</div>";
+  if (p.constat) h += '<div class="constat">' + vehiculeConstat("A", k, p.cases_a || [], p.cote_assure === "A") + vehiculeConstat("B", k, p.cases_b || [], p.cote_assure === "B") + "</div>";
+  h += '<fieldset class="parts"><legend>Part de responsabilité de votre assuré</legend><div class="parts-choix">' +
+    PARTS_RESP.map(function (x) {
+      return '<label class="part"><input type="radio" name="r-pct" value="' + x[0] + '"' + (Number(p.pct) === x[0] && p.pct != null ? " checked" : "") + "><span><b>" + x[1] + "</b>" + (x[2] ? "<small>" + x[2] + "</small>" : "") + "</span></label>";
+    }).join("") + "</div>" +
+    '<p class="muet petit" style="margin:8px 0 0">0 % : ni franchise ni malus, Klerio prépare le recours contre l\'assureur adverse. Partagée : franchise au prorata, malus réduit de moitié. 100 % : franchise du contrat et malus de 25 %.</p></fieldset>';
+  h += '<label class="champ">Commentaire <span class="aide">Obligatoire si vous changez la proposition ou traitez le dossier hors circuit.</span><textarea class="saisie" id="d-com" rows="2" style="min-height:64px"></textarea></label>' +
+    '<div class="decision-actions"><button class="btn primaire" id="d-oui" data-v="' + esc(v.id) + '">Valider et lancer la suite</button><button class="btn" id="d-non" data-v="' + esc(v.id) + '">Traiter hors circuit</button></div>' +
+    '<p class="loi">La responsabilité n\'est jamais fixée sans votre validation. L\'assuré reçoit la répartition et peut la contester en répondant au courrier.</p></div><div class="tampon" id="tampon" aria-hidden="true"></div></section>';
+  return h;
+}
+function blocResponsabilite(f) {
+  var r = f.responsabilite_retenue;
+  if (!r || r.pct == null) return "";
+  var lib = Number(r.pct) === 0 ? ["Non responsable", "ok"] : Number(r.pct) === 100 ? ["Responsable", "alerte"] : ["Partagée", "attente"];
+  return '<section class="bloc"><div class="bloc-tete"><h2>Responsabilité</h2><span class="pastille-mail ' + lib[1] + '">' + esc(lib[0]) + " · " + esc(String(r.pct)) + ' %</span></div><div class="bloc-corps"><dl class="info-liste">' +
+    (r.regle ? "<dt>Règle appliquée</dt><dd>" + esc(r.regle) + "</dd>" : "") +
+    (r.propose_pct != null && Number(r.propose_pct) !== Number(r.pct) ? "<dt>Proposé par Klerio</dt><dd>" + esc(String(r.propose_pct)) + " %, corrigé par le gestionnaire</dd>" : "") +
+    "<dt>Validée par</dt><dd>" + esc(String(r.valide_par || "").replace(/^humain:/, "")) + (r.le ? '<span class="muet"> · ' + esc(C.dateFr(r.le)) + "</span>" : "") + "</dd>" +
+    (r.commentaire ? "<dt>Commentaire</dt><dd>" + esc(r.commentaire) + "</dd>" : "") +
+    (f.tiers && (f.tiers.immatriculation || f.tiers.assureur) ? "<dt>Autre véhicule</dt><dd>" + esc([f.tiers.immatriculation, f.tiers.assureur].filter(Boolean).join(" · ")) + "</dd>" : "") +
+    "</dl></div></section>";
+}
+var ETAT_RECOURS = { a_emettre: ["À émettre", "attente"], emis: ["Émis, règlement attendu", "info"], encaisse: ["Encaissé", "ok"], conteste: ["Contesté", "alerte"], abandonne: ["Abandonné", "neutre"] };
+function blocRecours(f) {
+  var r = f.recours;
+  if (!r) return "";
+  var e = ETAT_RECOURS[r.statut] || [r.statut, "info"];
+  var h = '<section class="bloc" id="bloc-recours"><div class="bloc-tete"><h2>Recours contre l\'assureur adverse</h2><span class="pastille-mail ' + e[1] + '">' + esc(e[0]) + '</span></div><div class="bloc-corps"><dl class="info-liste">' +
+    "<dt>Montant</dt><dd><b>" + esc(eur(r.montant)) + "</b>" + '<span class="muet"> · ' + (r.mode === "forfait" ? "forfait conventionnel IRSA" : "montant réel retenu par l'expert") +
+    (Number(r.responsabilite_assure_pct) > 0 ? ", " + (100 - Number(r.responsabilite_assure_pct)) + " % de " + esc(eur(r.base)) : "") + "</span></dd>" +
+    "<dt>Assureur adverse</dt><dd>" + esc(r.assureur_adverse || "Non identifié") + (r.immat_tiers ? '<span class="muet"> · véhicule ' + esc(r.immat_tiers) + "</span>" : "") + "</dd>" +
+    (r.email_adverse ? "<dt>Service recours</dt><dd>" + esc(r.email_adverse) + "</dd>" : "") +
+    (r.emis_le ? "<dt>Émis le</dt><dd>" + esc(C.dateFr(r.emis_le)) + "</dd>" : "") +
+    (r.encaisse_le ? "<dt>Encaissé</dt><dd>" + esc(eur(r.encaisse_eur)) + '<span class="muet"> le ' + esc(C.dateFr(r.encaisse_le)) + "</span></dd>" : "") +
+    (r.commentaire ? "<dt>Note</dt><dd>" + esc(r.commentaire) + "</dd>" : "") + "</dl>";
+  if (r.statut === "a_emettre" || r.statut === "conteste") {
+    h += '<div class="grille-2" style="margin-top:12px"><label class="champ">Assureur adverse<input class="saisie" id="rc-nom" value="' + esc(r.assureur_adverse || "") + '"></label>' +
+      '<label class="champ">Adresse du service recours<input class="saisie" id="rc-email" type="email" placeholder="recours@assureur.fr" value="' + esc(r.email_adverse || "") + '"></label></div>' +
+      '<div class="decision-actions" style="margin-top:12px"><button class="btn primaire" data-recours="emettre">Envoyer la demande de recours</button>' +
+      (r.statut === "conteste" ? "" : '<button class="btn discret" data-recours="abandonner">Abandonner</button>') + "</div>" +
+      '<p class="muet petit">L\'adresse est retenue : les prochains recours vers cet assureur partiront tout seuls.</p>';
+  } else if (r.statut === "emis") {
+    h += '<div class="grille-2" style="margin-top:12px"><label class="champ">Montant reçu<input class="saisie" id="rc-montant" inputmode="decimal" value="' + esc(String(r.montant)) + '"></label>' +
+      '<label class="champ">Note<input class="saisie" id="rc-com" placeholder="Obligatoire en cas de contestation"></label></div>' +
+      '<div class="decision-actions" style="margin-top:12px"><button class="btn primaire" data-recours="encaisser">Marquer encaissé</button><button class="btn" data-recours="contester">Contesté par l\'assureur</button></div>';
+  }
+  return h + "</div></section>";
+}
+function brancherRecours(f) {
+  document.querySelectorAll("[data-recours]").forEach(function (b) {
+    b.onclick = function () {
+      var a = b.dataset.recours, corps = { numero: f.numero, action: a };
+      var val = function (id) { var x = $(id); return x ? x.value.trim() : ""; };
+      if (a === "emettre") { corps.email = val("rc-email"); corps.assureur_adverse = val("rc-nom"); }
+      if (a === "encaisser") corps.montant = Number(val("rc-montant").replace(",", "."));
+      if (a === "contester" || a === "abandonner") {
+        corps.commentaire = val("rc-com") || (a === "abandonner" ? window.prompt("Motif de l'abandon du recours ?") || "" : "");
+        if (!corps.commentaire) { C.toast("Indiquez le motif.", true); if ($("rc-com")) $("rc-com").focus(); return; }
+      }
+      C.occupe(b, true, "");
+      api("recours", { body: corps }).then(function () { C.toast("Recours : " + (ETAT_RECOURS[{ emettre: "emis", encaisser: "encaisse", contester: "conteste", abandonner: "abandonne" }[a]] || [a])[0]); vueDossier(f.numero); })
+        .catch(function (x) { C.occupe(b, false); C.toast(x.message, true); });
+    };
+  });
 }
 
 /* Récapitulatif de paiement : tout ce qu'un contrôleur ou un comptable doit voir, sans rouvrir les pièces jointes */
@@ -1077,6 +1179,7 @@ function propoValidation(f) { return (f.validations_en_attente || []).slice(-1)[
 
 function carteAction(f) {
   var v = propoValidation(f);
+  if (v && v.etape === "responsabilite") return carteResponsabilite(f, v);
   if (v) {
     var p = v.proposition || {}, titre, expl, oui, non, corps = "", loi = "", horsPlafond = false;
     if (v.etape === "decision" && p.decision === "classement_sans_indemnite") {
@@ -1467,12 +1570,21 @@ function brancherFiche(f) {
   });
   brancherSuivi(f);
   brancherTitulaire(f);
+  brancherRecours(f);
   var oui = $("d-oui"), non = $("d-non");
   function decider(resultat, btn) {
     var com = $("d-com").value.trim();
     if (resultat === "rejete" && !com) { C.toast("Ajoutez un commentaire pour écarter la proposition.", true); $("d-com").focus(); return; }
+    var corpsV = { validation_id: btn.dataset.v, resultat: resultat, commentaire: com || null };
+    var parts = document.querySelectorAll("input[name=r-pct]");
+    if (parts.length && resultat === "valide") {
+      var choix = document.querySelector("input[name=r-pct]:checked"), propo = (propoValidation(f) || {}).proposition || {};
+      if (!choix) { C.toast("Choisissez la part de responsabilité de l'assuré.", true); parts[0].focus(); return; }
+      corpsV.responsabilite_pct = Number(choix.value);
+      if (propo.pct != null && Number(propo.pct) !== corpsV.responsabilite_pct && !com) { C.toast("Vous changez la proposition : expliquez pourquoi en commentaire.", true); $("d-com").focus(); return; }
+    }
     C.occupe(btn, true, "Enregistrement");
-    api("valider", { body: { validation_id: btn.dataset.v, resultat: resultat, commentaire: com || null } }).then(function (r) {
+    api("valider", { body: corpsV }).then(function (r) {
       C.toast("Dossier " + f.numero + " : " + ((C.STATUTS[r.statut] || [r.statut])[0]));
       rafraichirCompteur();
       vueDossier(f.numero);
@@ -1706,8 +1818,9 @@ function dessinerBoites() {
 function vuePilotage() {
   Promise.all([api("indicateurs" + qb()), estResponsable() ? api("pilotage-equipe" + qb()) : Promise.resolve(null),
                estResponsable() ? api("missions" + qb()).catch(function () { return null; }) : Promise.resolve(null),
-               estResponsable() ? api("recette").catch(function () { return null; }) : Promise.resolve(null)]).then(function (r) {
-    var i = r[0], eq = r[1], mi = r[2], rec = r[3];
+               estResponsable() ? api("recette").catch(function () { return null; }) : Promise.resolve(null),
+               S.branche === "corporel" ? Promise.resolve(null) : api("recours").catch(function () { return null; })]).then(function (r) {
+    var i = r[0], eq = r[1], mi = r[2], rec = r[3], rc = r[4];
     compter(i);
     var h = bandeauCorporel() + '<div class="entete-vue"><div><h1>Pilotage</h1><p>Espace ' + esc(C.ESPACES[S.branche].nom.toLowerCase()) + " de " + esc(i.assureur) + ", hors jeux de test archivés.</p></div></div>";
     if (rec && rec.lancee_le) {
@@ -1733,6 +1846,7 @@ function vuePilotage() {
       "<dt>Échecs d'envoi</dt><dd>" + ((i.courriers || {}).erreurs || 0) + "</dd><dt>Déclarations lues par Claude</dt><dd>" + (i.analyses_ia || 0) + "</dd>" +
       "<dt>Fiabilité moyenne</dt><dd>" + (i.confiance_moyenne != null ? Math.round(i.confiance_moyenne * 100) + " %" : "–") + "</dd></dl></div></section></div>";
     if (eq) { var i0 = h.indexOf('<div class="deux">'); h = h.slice(0, i0) + '<div style="margin-top:16px">' + blocEquipePilotage(eq) + "</div>" + (mi ? blocMissions(mi) : "") + h.slice(i0); }
+    if (rc && (rc.a_suivre || []).length) h += blocRecoursPilotage(rc);
     $("vue").innerHTML = h;
     brancherEquipePilotage(eq);
     brancherMissions();
@@ -1811,6 +1925,18 @@ function celluleDispo(x) {
 
 /* Missions expert / garage en cours : relancer ou confier à un autre intervenant */
 var TYPES_MISSION = { expertise: "Expertise", expertise_medicale: "Expertise médicale", reparation: "Réparation" };
+function blocRecoursPilotage(rc) {
+  var l = rc.a_suivre || [];
+  return '<section class="bloc"><div class="bloc-tete"><h2>Recours contre les assureurs adverses<span class="compte">' + l.length + '</span></h2><span class="muet petit">' +
+    esc(eur(rc.en_attente_eur)) + " à récupérer · " + esc(eur(rc.encaisse_12_mois)) + " encaissés sur 12 mois</span></div>" +
+    '<div class="tableau-wrap"><table class="tableau"><thead><tr><th>Dossier</th><th>Assureur adverse</th><th class="nb">Montant</th><th>État</th><th class="nb">Depuis</th></tr></thead><tbody id="recours-l">' +
+    l.map(function (x, i) {
+      var e = ETAT_RECOURS[x.statut] || [x.statut, "info"];
+      return '<tr style="cursor:default"' + (i >= 8 ? ' class="ancien" hidden' : "") + '><td><a href="#/dossier/' + esc(x.numero) + '"><b>' + esc(x.numero) + "</b></a></td><td>" + esc(x.assureur_adverse || "Non identifié") +
+        '</td><td class="nb">' + esc(eur(x.montant)) + '<div class="muet petit">' + (x.mode === "forfait" ? "forfait IRSA" : "réel") + '</div></td><td><span class="pastille-mail ' + e[1] + '">' + esc(e[0]) + '</span></td><td class="nb">' + C.nombre(x.age_jours, 0) + " j</td></tr>";
+    }).join("") + "</tbody></table></div>" +
+    (l.length > 8 ? '<div class="bloc-corps"><button type="button" class="btn petit" data-voir-plus="recours-l" data-lib="Voir les ' + (l.length - 8) + ' autres recours">Voir les ' + (l.length - 8) + " autres recours</button></div>" : "") + "</section>";
+}
 function blocMissions(mi) {
   var l = mi.missions || [], retard = l.filter(function (m) { return m.en_retard; }).length, dr = mi.delais_retour || {};
   var h = '<section class="bloc"><div class="bloc-tete"><h2>Missions en cours<span class="compte">' + l.length + '</span></h2><span class="muet petit">Expertises et réparations confiées, sans retour pour l\'instant. En retard au-delà de ' + (mi.delai_relance_jours || 7) + " jours.</span></div>" +

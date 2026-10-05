@@ -15,7 +15,7 @@
     clos: ["Clos et payé", "ok"], classe_sans_suite: ["Classé", "neutre"]
   };
   var THEMES = {
-    BRIS_GLACE: "Bris de glace", PERTE_CONTROLE_OBSTACLE_FIXE: "Perte de contrôle", VANDALISME: "Vandalisme",
+    BRIS_GLACE: "Bris de glace", PERTE_CONTROLE_OBSTACLE_FIXE: "Perte de contrôle", ACCIDENT_TIERS: "Accident avec un tiers", VANDALISME: "Vandalisme",
     TENTATIVE_VOL: "Tentative de vol", VOL: "Vol du véhicule", VOL_RETROUVE: "Vol, véhicule retrouvé", INCENDIE: "Incendie", EVENEMENT_CLIMATIQUE: "Grêle, tempête",
     CATASTROPHE_NATURELLE: "Catastrophe naturelle",
     GARANTIE_ACCIDENT: "Garantie Accident", AUTRE: "Autre sinistre", NON_QUALIFIE: "Non qualifié"
@@ -45,6 +45,7 @@
     information_a_traiter: "Information reçue à examiner",
     reouverture: "Dossier rouvert par un gestionnaire",
     arrete_catnat_absent: "Arrêté de catastrophe naturelle à référencer",
+    responsabilite_a_valider: "Accident avec un tiers : responsabilité à valider",
     relances_sans_reponse: "Trois relances sans réponse",
     choix_vei: "Véhicule irréparable : choix de l'assuré attendu",
     choix_vol_retrouve: "Véhicule retrouvé : choix de l'assuré attendu",
@@ -85,7 +86,7 @@
     enfant_handicape: "Enfant en situation de handicap", personne_a_charge: "Personne à charge", conducteur_tiers: "Conducteur autorisé" };
   // Types de sinistre par espace : le matériel (contractuel) et le corporel, séparés dans toute la console
   var ESPACES = {
-    materiel: { nom: "Matériel", themes: ["BRIS_GLACE", "PERTE_CONTROLE_OBSTACLE_FIXE", "VANDALISME", "TENTATIVE_VOL", "VOL", "VOL_RETROUVE", "INCENDIE", "EVENEMENT_CLIMATIQUE", "CATASTROPHE_NATURELLE"] },
+    materiel: { nom: "Matériel", themes: ["BRIS_GLACE", "PERTE_CONTROLE_OBSTACLE_FIXE", "ACCIDENT_TIERS", "VANDALISME", "TENTATIVE_VOL", "VOL", "VOL_RETROUVE", "INCENDIE", "EVENEMENT_CLIMATIQUE", "CATASTROPHE_NATURELLE"] },
     corporel: { nom: "Corporel", themes: ["GARANTIE_ACCIDENT"] }
   };
   var GARANTIES = { BRIS_GLACE: "Bris de glace", DOMMAGES_TOUS_ACCIDENTS: "Dommages tous accidents", VOL_VANDALISME: "Vol et vandalisme", VOL: "Vol",
