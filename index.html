@@ -969,6 +969,7 @@ function afficherDossier(f) {
   h += blocCloture(f);
   h += blocDelais(f);
   h += blocResponsabilite(f);
+  h += blocVigilance(f);
   h += blocPaiement(f);
   h += blocRecours(f);
   h += blocVehicule(f);
@@ -1025,6 +1026,16 @@ function carteResponsabilite(f, v) {
     '<div class="decision-actions"><button class="btn primaire" id="d-oui" data-v="' + esc(v.id) + '">Valider et lancer la suite</button><button class="btn" id="d-non" data-v="' + esc(v.id) + '">Traiter hors circuit</button></div>' +
     '<p class="loi">La responsabilité n\'est jamais fixée sans votre validation. L\'assuré reçoit la répartition et peut la contester en répondant au courrier.</p></div><div class="tampon" id="tampon" aria-hidden="true"></div></section>';
   return h;
+}
+function blocVigilance(f) {
+  var v = f.vigilance;
+  if (!v) return "";
+  var l = v.indices || [];
+  var etat = v.levee ? ["Vérifié", "ok"] : l.length ? [l.length + " point" + (l.length > 1 ? "s" : "") + " à vérifier", "attente"] : ["Rien à signaler", "ok"];
+  return '<section class="bloc"><div class="bloc-tete"><h2>Vigilance vol</h2><span class="pastille-mail ' + etat[1] + '">' + esc(etat[0]) + '</span></div><div class="bloc-corps">' +
+    (l.length ? '<ul class="liste-simple">' + l.map(function (i) { return "<li>" + esc(i.libelle) + "</li>"; }).join("") + "</ul>" : '<p class="muet">Déclaration dans les délais, contrat ancien, pas d\'antécédent de vol.</p>') +
+    (v.levee ? '<p class="muet petit" style="margin-top:8px">Vérifié par ' + esc(String(v.levee_par || "").replace(/^humain:/, "")) + "</p>" :
+      '<p class="muet petit" style="margin-top:8px">Klerio ne refuse jamais seul : avant l\'offre d\'indemnisation, un gestionnaire confirme ces points.</p>') + "</div></section>";
 }
 function blocResponsabilite(f) {
   var r = f.responsabilite_retenue;
@@ -1213,10 +1224,15 @@ function carteAction(f) {
       var an = p.anomalies || (p.code ? [p] : []);
       titre = an.length > 1 ? an.length + " écarts relevés" : (C.ANOMALIES[(an[0] || {}).code] || "Anomalie à examiner");
       expl = "Klerio a arrêté le circuit automatique. Vérifiez puis décidez de la suite.";
+      if (p.code === "VIGILANCE_VOL") {
+        titre = "Vol : " + an.length + " point" + (an.length > 1 ? "s" : "") + " de vigilance avant d'indemniser";
+        expl = "Aucune offre n'est partie. Vérifiez le récépissé de plainte (date, numéro), les deux jeux de clés, la carte grise et l'historique du contrat. Si tout est cohérent, lancez l'offre ; sinon, traitez le dossier manuellement (enquête, audition de l'assuré).";
+      }
       corps = '<div class="pile">' + an.map(function (a) {
         return '<div class="alerte ko"><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2l6.5 11.5h-13z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M8 6.5v3M8 11.5v.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg><span><b>' + esc(C.ANOMALIES[a.code] || a.code) + "</b>" + (a.detail ? "<br>" + esc(a.detail) : "") + "</span></div>";
       }).join("") + "</div>";
-      oui = p.expertise_id ? "Accepter et poursuivre" : "Prendre la main"; non = "Traiter manuellement";
+      oui = p.code === "VIGILANCE_VOL" ? "Rien d'anormal : envoyer l'offre" : p.expertise_id ? "Accepter et poursuivre" : "Prendre la main";
+      non = p.code === "VIGILANCE_VOL" ? "Enquête : traiter manuellement" : "Traiter manuellement";
     }
     return '<section class="decision" id="carte-decision"><div class="decision-entete">Décision requise</div><div class="decision-corps"><h2>' + esc(titre) + "</h2>" +
       (expl ? '<p class="explication">' + esc(expl) + "</p>" : "") + corps +
