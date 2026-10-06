@@ -114,6 +114,7 @@ var TITRES = {
   expert_auto: ["Rapport d'expertise", "Indiquez vos conclusions. Le règlement au réparateur sera calculé sur le montant que vous retenez."],
   expert_medical: ["Conclusions médicales", "Indiquez uniquement vos conclusions. Conformément au secret médical, aucun compte rendu détaillé n'est demandé."],
   garage: ["Facture", "Après réparation, transmettez la facture, avec votre RIB s'il a changé. Garage partenaire : le règlement vous est versé directement, franchise déduite."],
+  enqueteur: ["Conclusion de l'enquête", "Indiquez ce que vos vérifications ont établi. En cas de doute, un gestionnaire examine le dossier : aucune décision n'est prise automatiquement contre l'assuré."],
   assure: ["Pièces à nous transmettre", "Retrouvez ici ce que nous attendons de vous pour avancer : documents à envoyer, choix à faire. Vous pouvez répondre en plusieurs fois."]
 };
 
@@ -236,8 +237,24 @@ function envoyerChoix(btn, corps, ok) {
   return api("portail", { body: corps }).then(function () { C.toast(ok); charger(); })
     .catch(function (x) { C.occupe(btn, false); C.toast(x.message, true); });
 }
+function radio(nom, valeur, lib) { return '<label class="case"><input type="radio" name="' + nom + '" value="' + valeur + '"> ' + esc(lib) + "</label>"; }
+function blocQuestionnaireVol() {
+  return '<div class="carte"><form class="carte-in" id="form-qv" novalidate><h2>Questionnaire sur le vol</h2>' +
+    '<p class="intro">Quelques questions sur les circonstances, obligatoires pour traiter votre dossier. Répondez le plus précisément possible.</p>' +
+    '<fieldset class="champ"><legend>Où se trouvaient les clés au moment du vol ?</legend>' + radio("qv-cles", "avec_moi", "Sur moi ou avec la personne qui utilisait le véhicule") +
+      radio("qv-cles", "domicile", "À mon domicile") + radio("qv-cles", "dans_vehicule", "Dans ou sur le véhicule") + radio("qv-cles", "volees", "Elles ont été volées aussi (cambriolage, vol de sac...)") + "</fieldset>" +
+    '<div class="grille-2"><label class="champ">Nombre de jeux de clés que vous pouvez remettre<input class="saisie" id="qv-nb" type="number" min="0" max="9" step="1" value="2"></label>' +
+    '<label class="champ">Dernière utilisation du véhicule <span class="aide">date et heure</span><input class="saisie" id="qv-der" type="datetime-local"></label></div>' +
+    '<fieldset class="champ"><legend>Où le véhicule était-il stationné ?</legend>' + radio("qv-st", "garage_ferme", "Dans un garage fermé") + radio("qv-st", "parking_prive", "Sur un parking privé ou une cour") +
+      radio("qv-st", "voie_publique", "Sur la voie publique") + radio("qv-st", "autre", "Ailleurs") + "</fieldset>" +
+    '<label class="case" id="qv-eff-l" hidden><input type="checkbox" id="qv-eff"> Le garage a été forcé (serrure, porte ou fenêtre fracturée)</label>' +
+    '<label class="case"><input type="checkbox" id="qv-antivol"> Le véhicule avait un antivol ou une alarme en service</label>' +
+    '<label class="case"><input type="checkbox" id="qv-vente"> Le véhicule était en vente</label>' +
+    '<label class="champ">Autre précision <span class="aide">facultatif</span><textarea class="saisie" id="qv-com" rows="2" maxlength="1000"></textarea></label>' +
+    '<div class="envoyer"><button class="btn primaire" id="b-qv" type="submit">Envoyer mes réponses</button><span class="muet petit">Klerio vérifie ensuite votre dossier, sans délai supplémentaire.</span></div></form></div>';
+}
 function blocsAssure(c) {
-  var h = "", v = c.vei, vr = c.vol_retrouve, g = c.choix_garage;
+  var h = c.questionnaire_vol ? blocQuestionnaireVol() : "", v = c.vei, vr = c.vol_retrouve, g = c.choix_garage;
   if (v && !v.choix) {
     h += '<div class="carte"><form class="carte-in" id="form-vei" novalidate><h2>Votre véhicule est économiquement irréparable</h2>' +
       '<p class="intro">Les réparations, estimées à ' + esc(eur(v.reparations_ttc)) + ", dépassent la valeur de remplacement de votre véhicule, fixée par l'expert à " + esc(eur(v.vrade_ttc)) +
@@ -285,6 +302,19 @@ function blocsAssure(c) {
   return h;
 }
 function brancherAssure() {
+  var fq = $("form-qv");
+  if (fq) {
+    var majEff = function () { var x = document.querySelector('input[name="qv-st"]:checked'); $("qv-eff-l").hidden = !x || x.value !== "garage_ferme"; };
+    fq.querySelectorAll('input[name="qv-st"]').forEach(function (r) { r.addEventListener("change", majEff); });
+    fq.addEventListener("submit", function (e) {
+      e.preventDefault();
+      var cl = document.querySelector('input[name="qv-cles"]:checked'), st = document.querySelector('input[name="qv-st"]:checked');
+      if (!cl || !st) return C.toast("Indiquez où se trouvaient les clés et où le véhicule était stationné.", true);
+      envoyerChoix($("b-qv"), { questionnaire_vol: { cles: cl.value, nb_cles: Number($("qv-nb").value || 0), stationnement: st.value,
+        effraction_garage: st.value === "garage_ferme" ? $("qv-eff").checked : undefined, antivol: $("qv-antivol").checked, en_vente: $("qv-vente").checked,
+        derniere_utilisation: $("qv-der").value || undefined, commentaire: $("qv-com").value.trim() || undefined } }, "Merci, vos réponses sont enregistrées");
+    });
+  }
   var fv = $("form-vei");
   if (fv) fv.addEventListener("submit", function (e) {
     e.preventDefault(); var x = document.querySelector('input[name="vei"]:checked');
@@ -341,7 +371,7 @@ function afficher(c) {
     $("main").innerHTML = h + pied(); return;
   }
   var extra = c.role === "assure" ? blocsAssure(c) : "";
-  var piecesAssure = c.role === "assure" && (c.pieces_attendues || []).some(function (p) { return !p.recue; });
+  var piecesAssure = c.role === "assure" && (c.pieces_attendues || []).some(function (p) { return !p.recue && p.code !== "QUESTIONNAIRE_VOL"; });
   if (c.role === "assure" && (extra || !piecesAssure) && (c.reponse_attendue || extra)) {
     h += extra;
     if (piecesAssure) {
@@ -374,6 +404,7 @@ function afficher(c) {
 function zoneDepot(c) {
   var fac = c.role === "garage" && (c.pieces_attendues || []).some(function (p) { return p.code === "FACTURE" && !p.recue; });
   if (c.role !== "expert_auto" && c.role !== "expert_medical" && !fac) return "";
+  if (c.role === "expert_auto" && c.cles_attendues && !c.evaluation_vol) return "";
   var quoi = c.role === "expert_auto" ? "votre rapport d'expertise" : c.role === "expert_medical" ? "vos conclusions médicales" : "votre facture";
   return '<div class="depot" id="depot"><b>Gagnez du temps : déposez ' + quoi + "</b>" +
     "<p>PDF ou photo, 8 Mo au maximum. Le formulaire se remplit tout seul ; vous vérifiez chaque valeur avant d'envoyer.</p>" +
@@ -386,13 +417,27 @@ function num(id, lib, aide, attrs) {
   return '<label class="champ">' + esc(lib) + (aide ? ' <span class="aide">' + esc(aide) + "</span>" : "") + '<input class="saisie" id="' + id + '" type="number" inputmode="decimal" step="0.01" min="0" ' + (attrs || "") + "></label>";
 }
 
+function champsCles() {
+  return '<h3>Clés du véhicule</h3><div class="grille-2">' + num("f-cles", "Jeux de clés reçus de l'assuré", "nombre", 'step="1" max="9"') + "<div></div></div>" +
+    '<label class="case"><input type="checkbox" id="f-cles-ok" checked> Les clés correspondent bien au véhicule</label>' +
+    '<label class="champ">Observations sur les clés <span class="aide">lecture des clés, usure, copie...</span><textarea class="saisie" id="f-cles-obs" rows="2" maxlength="500"></textarea></label>';
+}
 function formulaire(c) {
+  if (c.role === "enqueteur") {
+    var en = c.enquete || {}, q = en.questionnaire || {};
+    return (en.indices && en.indices.length ? '<p class="indice"><b>Points relevés à l\'ouverture</b><br>' + en.indices.map(esc).join("<br>") + "</p>" : "") +
+      (q.cles ? '<p class="muet petit">Questionnaire de l\'assuré : clés ' + esc(q.cles) + ", " + esc(q.nb_cles) + " jeu(x), stationnement " + esc(q.stationnement) + (q.derniere_utilisation ? ", dernière utilisation " + esc(q.derniere_utilisation) : "") + "</p>" : "") +
+      '<fieldset class="champ"><legend>Conclusion</legend>' + radio("f-conc", "vol_confirme", "Le vol est établi") + radio("f-conc", "doute", "Des doutes subsistent") +
+      radio("f-conc", "fraude_suspectee", "Je soupçonne une fausse déclaration") + "</fieldset>" +
+      '<label class="champ">Vos constatations <span class="aide">obligatoire</span><textarea class="saisie" id="f-syn" rows="5" maxlength="4000" required></textarea></label>';
+  }
+  if (c.role === "expert_auto" && c.cles_attendues && !c.evaluation_vol) return champsCles();
   // Vol du véhicule : l'expert ne chiffre pas de réparation, il évalue la valeur de remplacement
   if (c.role === "expert_auto" && c.evaluation_vol) return '<div class="grille-2">' + num("f-ttc", "Valeur de remplacement à dire d'expert (VRADE)", "TTC, en €", "required") + "</div>" +
     '<div hidden>' + num("f-devis", "", "") + num("f-taux", "", "") + num("f-heures", "", "") + num("f-pieces", "", "") + num("f-ht", "", "") +
     '<p id="f-coherence"></p><input type="checkbox" id="f-vei" checked><input type="checkbox" id="f-direct" checked></div>' +
     '<p class="indice">Véhicule déclaré volé : indiquez sa valeur au jour du vol. L\'assuré sera indemnisé sur cette base s\'il n\'est pas retrouvé.</p>' +
-    '<label class="champ">Observations <span class="aide">facultatif</span><textarea class="saisie" id="f-conclusion" rows="3"></textarea></label>';
+    '<label class="champ">Observations <span class="aide">facultatif</span><textarea class="saisie" id="f-conclusion" rows="3"></textarea></label>' + champsCles();
   if (c.role === "expert_auto") return '<div class="grille-2">' + num("f-devis", "Devis du réparateur", "TTC, en €") + num("f-ttc", "Montant retenu", "TTC, en €", "required") + "</div>" +
     '<div class="grille-3">' + num("f-taux", "Taux horaire", "€ HT") + num("f-heures", "Main-d'œuvre", "en heures") + num("f-pieces", "Pièces", "HT, en €") + "</div>" +
     '<div class="grille-2">' + num("f-ht", "Montant retenu", "HT, en €") + "<div></div></div>" +
@@ -416,7 +461,7 @@ function formulaire(c) {
       (manque.indexOf("DELEGATION_PAIEMENT") >= 0 ? '<label class="case"><input type="checkbox" id="f-deleg"> Je joins la délégation de paiement signée par l\'assuré</label>' : "") +
       (fac ? '<label class="champ">Nature des travaux <span class="aide">facultatif</span><textarea class="saisie" id="f-conclusion" rows="2"></textarea></label>' : "");
   }
-  return (c.pieces_attendues || []).map(function (p) {
+  return (c.pieces_attendues || []).filter(function (p) { return p.code !== "QUESTIONNAIRE_VOL"; }).map(function (p) {
     return '<div class="piece' + (p.recue ? " recue" : "") + '"><label class="case"><input type="checkbox" name="piece" value="' + esc(p.code) + '"' + (p.recue ? " checked disabled" : "") + "> <span><b>" + esc(C.PIECES[p.code] || p.libelle) + "</b>" +
       (p.recue ? '<br><span class="muet petit">Déjà reçue</span>' : "") + "</span></label>" + (p.recue ? "<span></span>" : '<input type="file" aria-label="Fichier ' + esc(p.libelle) + '" accept=".pdf,.jpg,.jpeg,.png">') + "</div>";
   }).join("") + '<p class="muet petit">Démonstration : seul l\'envoi de chaque pièce est enregistré, les fichiers ne sont pas conservés.</p>';
@@ -495,11 +540,19 @@ function brancher(c) {
   $("form").addEventListener("submit", function (e) {
     e.preventDefault();
     var r = {};
-    if (c.role === "expert_auto") {
+    if (c.role === "enqueteur") {
+      var cc = document.querySelector('input[name="f-conc"]:checked');
+      r = { conclusion: cc && cc.value, synthese: $("f-syn").value.trim() };
+      if (!r.conclusion || r.synthese.length < 20) return C.toast("Choisissez une conclusion et résumez vos constatations.", true);
+    } else if (c.role === "expert_auto" && !$("f-ttc")) {
+      r = { cles_recues: val("f-cles"), cles_conformes: $("f-cles-ok").checked, cles_observations: $("f-cles-obs").value.trim() || undefined };
+      if (r.cles_recues == null) return C.toast("Indiquez le nombre de jeux de clés reçus.", true);
+    } else if (c.role === "expert_auto") {
       r = { montant_devis_ttc: val("f-devis"), montant_ttc: val("f-ttc"), montant_ht: val("f-ht"), taux_horaire: val("f-taux"), heures: val("f-heures"),
         montant_pieces_ht: val("f-pieces"), vei: $("f-vei").checked, reglement_direct_autorise: $("f-direct").checked, conclusion: $("f-conclusion").value.trim() || undefined,
         vetuste_ttc: val("f-vet"), vrade_ttc: val("f-vrade"), valeur_epave_ttc: val("f-epave") };
       if (!r.montant_ttc) return C.toast("Indiquez le montant retenu TTC.", true);
+      if ($("f-cles") && val("f-cles") != null) { r.cles_recues = val("f-cles"); r.cles_conformes = $("f-cles-ok").checked; r.cles_observations = $("f-cles-obs").value.trim() || undefined; }
       if (r.vei && !c.evaluation_vol && (!r.vrade_ttc || r.valeur_epave_ttc == null)) return C.toast("Véhicule irréparable : indiquez la valeur de remplacement et la valeur de l'épave.", true);
     } else if (c.role === "expert_medical") {
       r = { aipp_pct: val("f-aipp"), date_consolidation: $("f-conso").value || undefined, dependance_totale: $("f-dep").checked, conclusion: $("f-conclusion").value.trim() || undefined };

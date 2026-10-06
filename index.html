@@ -967,7 +967,9 @@ function afficherDossier(f) {
   h += '<div class="fiche-grille"><div>';
   h += carteAction(f);
   h += blocCloture(f);
+  h += blocCatnat(f);
   h += blocDelais(f);
+  h += blocReclamations(f);
   h += blocResponsabilite(f);
   h += blocVigilance(f);
   h += blocPaiement(f);
@@ -1022,6 +1024,11 @@ function carteResponsabilite(f, v) {
       return '<label class="part"><input type="radio" name="r-pct" value="' + x[0] + '"' + (Number(p.pct) === x[0] && p.pct != null ? " checked" : "") + "><span><b>" + x[1] + "</b>" + (x[2] ? "<small>" + x[2] + "</small>" : "") + "</span></label>";
     }).join("") + "</div>" +
     '<p class="muet petit" style="margin:8px 0 0">Barème de la convention IRSA : 0, 50 ou 100 %. 0 % : ni franchise ni malus, Klerio prépare le recours. Partagée : franchise au prorata, malus réduit de moitié. 100 % : franchise du contrat et malus de 25 %.</p></fieldset>';
+  var sit = (p.tiers && p.tiers.situation) || (f.tiers && f.tiers.situation) || "assure";
+  h += '<fieldset class="parts"><legend>L\'autre conducteur</legend><div class="parts-choix">' +
+    [["assure", "Assuré", "assureur connu"], ["non_assure", "Non assuré", "recours direct"], ["inconnu", "Inconnu", "délit de fuite"], ["etranger", "Étranger", "Bureau central français"]].map(function (x) {
+      return '<label class="part"><input type="radio" name="r-sit" value="' + x[0] + '"' + (sit === x[0] ? " checked" : "") + "><span><b>" + x[1] + "</b><small>" + x[2] + "</small></span></label>";
+    }).join("") + '</div><p class="muet petit" style="margin:8px 0 0">Non assuré, inconnu ou étranger : pas d\'indemnisation directe, la garantie dommages de l\'assuré joue (franchise comprise). Sans cette garantie, le refus indique à l\'assuré comment saisir le Fonds de garantie (FGAO).</p></fieldset>';
   var adv = (p.tiers && p.tiers.assureur) || k[p.cote_assure === "A" ? "assureur_b" : "assureur_a"] || "";
   h += '<label class="champ">Assureur de l\'autre véhicule <span class="aide">sans lui, pas d\'indemnisation directe : la franchise s\'applique et le recours ne peut pas partir</span><input class="saisie" id="r-adv" value="' + esc(adv) + '" placeholder="Nom de la compagnie adverse"></label>';
   h += '<label class="champ">Commentaire <span class="aide">Obligatoire si vous changez la proposition ou traitez le dossier hors circuit.</span><textarea class="saisie" id="d-com" rows="2" style="min-height:64px"></textarea></label>' +
@@ -1029,15 +1036,27 @@ function carteResponsabilite(f, v) {
     '<p class="loi">La responsabilité n\'est jamais fixée sans votre validation. L\'assuré reçoit la répartition et peut la contester en répondant au courrier.</p></div><div class="tampon" id="tampon" aria-hidden="true"></div></section>';
   return h;
 }
+var CLES_Q = { avec_moi: "sur l'assuré", domicile: "au domicile", dans_vehicule: "dans le véhicule", volees: "volées aussi" };
+var STAT_Q = { garage_ferme: "garage fermé", parking_prive: "parking privé", voie_publique: "voie publique", autre: "autre lieu" };
 function blocVigilance(f) {
   var v = f.vigilance;
   if (!v) return "";
-  var l = v.indices || [];
-  var etat = v.levee ? ["Vérifié", "ok"] : l.length ? [l.length + " point" + (l.length > 1 ? "s" : "") + " à vérifier", "attente"] : ["Rien à signaler", "ok"];
-  return '<section class="bloc"><div class="bloc-tete"><h2>Vigilance vol</h2><span class="pastille-mail ' + etat[1] + '">' + esc(etat[0]) + '</span></div><div class="bloc-corps">' +
-    (l.length ? '<ul class="liste-simple">' + l.map(function (i) { return "<li>" + esc(i.libelle) + "</li>"; }).join("") + "</ul>" : '<p class="muet">Déclaration dans les délais, contrat ancien, pas d\'antécédent de vol.</p>') +
-    (v.levee ? '<p class="muet petit" style="margin-top:8px">Vérifié par ' + esc(String(v.levee_par || "").replace(/^humain:/, "")) + "</p>" :
-      '<p class="muet petit" style="margin-top:8px">Klerio ne refuse jamais seul : avant l\'offre d\'indemnisation, un gestionnaire confirme ces points.</p>') + "</div></section>";
+  var d = f.details || {}, q = d.vol_questionnaire, k = d.cles, en = f.enquete, l = v.indices || [], ok = v.points_confirmes || [];
+  var etat = v.levee ? [String(v.levee_par || "").indexOf("automatique") === 0 ? "Vérifié par Klerio" : "Vérifié", "ok"] : l.length ? [l.length + " point" + (l.length > 1 ? "s" : "") + " à regarder", "attente"] : ["Rien à signaler", "ok"];
+  var h = '<section class="bloc"><div class="bloc-tete"><h2>Vérifications du vol</h2><span class="pastille-mail ' + etat[1] + '">' + esc(etat[0]) + '</span></div><div class="bloc-corps pile">';
+  if (l.length) h += '<div><div class="sous-titre">Points à regarder</div><ul class="liste-simple">' + l.map(function (i) { return "<li>" + esc(i.libelle) + "</li>"; }).join("") + "</ul></div>";
+  if (ok.length) h += '<div><div class="sous-titre">Points confirmés</div><ul class="liste-simple">' + ok.map(function (x) { return "<li>" + esc(x) + "</li>"; }).join("") + "</ul></div>";
+  if (v.synthese_ia) h += '<p class="petit">' + esc(v.synthese_ia) + "</p>";
+  h += '<dl class="info-liste">' +
+    "<dt>Questionnaire</dt><dd>" + (q ? "Clés " + esc(CLES_Q[q.cles] || q.cles) + ", " + esc(String(q.nb_cles)) + " jeu(x), " + esc(STAT_Q[q.stationnement] || q.stationnement) +
+      (q.antivol ? ", antivol" : "") + (q.en_vente ? ", véhicule en vente" : "") : '<span class="muet">Pas encore rempli par l\'assuré</span>') + "</dd>" +
+    "<dt>Clés</dt><dd>" + (k ? esc(String(k.recues)) + " jeu(x) reçu(s) par l'expert" + (k.conformes === false ? ', <span class="statut ko">non conformes</span>' : k.recues > 0 ? ", conformes" : "") + (k.observations ? '<span class="muet"> · ' + esc(k.observations) + "</span>" : "")
+      : '<span class="muet">Pas encore confirmées par l\'expert</span>') + "</dd>" +
+    (en ? "<dt>Enquête</dt><dd>" + esc(en.enqueteur || "") + ", " + (en.statut === "en_cours" ? "en cours" : esc(({ vol_confirme: "vol établi", doute: "doutes", fraude_suspectee: "fraude soupçonnée" })[en.conclusion] || en.conclusion || "")) + "</dd>" : "") + "</dl>";
+  h += '<p class="muet petit">Klerio contrôle lui-même la plainte, la facture d\'achat, le certificat de non-gage, les clés et la cohérence du récit. Les indices mineurs sont levés automatiquement ; les indices sérieux vous sont présentés. Aucun refus n\'est jamais décidé sans vous.' +
+    (v.levee ? " Levée par " + esc(String(v.levee_par || "").replace(/^humain:|^automatique:verifications/, function (m) { return m === "automatique:verifications" ? "Klerio" : ""; })) + "." : "") + "</p>";
+  if (!v.levee && FINIS.indexOf(f.statut) < 0) h += '<p><button class="btn petit" id="b-verif-vol">Relancer la vérification</button></p>';
+  return h + "</div></section>";
 }
 function blocResponsabilite(f) {
   var r = f.responsabilite_retenue;
@@ -1097,7 +1116,68 @@ function brancherRecours(f) {
 
 /* Récapitulatif de paiement : tout ce qu'un contrôleur ou un comptable doit voir, sans rouvrir les pièces jointes */
 // Délais légaux (catastrophe naturelle) : chaque étape avec son échéance, en retard en rouge
-var ETAT_DELAI = { fait: ["Fait", "ok"], fait_en_retard: ["Fait en retard", "alerte"], en_retard: ["En retard", "alerte"], bientot: ["Échéance proche", "attente"], a_venir: ["À venir", "info"] };
+var ETAT_DELAI = { a_faire: ["À faire", "attente"], fait: ["Fait", "ok"], fait_en_retard: ["Fait en retard", "alerte"], en_retard: ["En retard", "alerte"], bientot: ["Échéance proche", "attente"], a_venir: ["À venir", "info"] };
+function blocCatnat(f) {
+  if (f.theme !== "CATASTROPHE_NATURELLE" || f.statut === "hors_perimetre") return "";
+  var c = f.catnat;
+  var h = '<section class="bloc"><div class="bloc-tete"><h2>Arrêté de catastrophe naturelle</h2>' + (c ? '<span class="pastille-mail ok">Publié le ' + esc(C.dateFr(c.publication_jo)) + "</span>" : '<span class="pastille-mail attente">Date de publication à saisir</span>') + '</div><div class="bloc-corps pile">';
+  if (c) h += '<dl class="info-liste"><dt>Arrêté</dt><dd>' + esc(c.arrete) + "</dd>" + (c.declaration_tardive ? '<dt>Déclaration</dt><dd><span class="statut ko">Plus de 30 jours après la publication</span></dd>' : "") + "</dl>" + '<p class="muet petit">' + esc(c.a_verifier || "") + "</p>";
+  if (!c && FINIS.indexOf(f.statut) < 0) h += '<div class="grille-2"><label class="champ">Arrêté<input class="saisie" id="cn-arrete" value="' + esc((f.details || {}).arrete_catnat || "") + '" placeholder="Ex. arrêté du 12 juin 2026"></label>' +
+    '<label class="champ">Publié au Journal officiel le<input class="saisie" id="cn-pub" type="date"></label></div><p><button class="btn petit" id="b-catnat">Enregistrer</button></p>';
+  return h + "</div></section>";
+}
+/* Réclamations : accusé de réception sous 10 jours ouvrables, réponse sous 2 mois (recommandation ACPR 2022-R-01) */
+var ETAT_RECL = { ar_a_envoyer: ["Accusé de réception à envoyer", "attente"], ar_en_retard: ["Accusé de réception en retard", "alerte"], dans_les_delais: ["En cours", "info"],
+  bientot: ["Échéance proche", "attente"], en_retard: ["Réponse en retard", "alerte"], repondue: ["Répondue", "ok"], mediateur: ["Médiateur saisi", "alerte"], close: ["Close", "neutre"] };
+function blocReclamations(f) {
+  var l = f.reclamations || [];
+  if (f.efface_le && !l.length) return "";
+  var ouverte = l.filter(function (r) { return r.statut === "ouverte"; })[0];
+  var h = '<section class="bloc" id="bloc-recl"><div class="bloc-tete"><h2>Réclamations' + (l.length ? '<span class="compte">' + l.length + "</span>" : "") + '</h2><span class="muet petit">Réponse écrite sous 2 mois</span></div><div class="bloc-corps pile">';
+  l.forEach(function (r) {
+    var e = ETAT_RECL[r.etat] || [r.etat, "info"];
+    h += '<div class="recl"><div class="ligne-recl"><b>' + esc(r.objet) + '</b> <span class="pastille-mail ' + e[1] + '">' + esc(e[0]) + "</span></div>" +
+      '<dl class="info-liste"><dt>Reçue le</dt><dd>' + esc(C.dateFr(r.recue_le)) + '<span class="muet"> · ' + esc(CANAUX[r.canal] || r.canal || "") + ", " + esc(INTERLOCUTEURS[r.interlocuteur] || r.interlocuteur || "") + "</span></dd>" +
+      "<dt>Accusé de réception</dt><dd>" + (r.ar_envoye_le ? "Envoyé le " + esc(C.dateFr(r.ar_envoye_le)) : "À envoyer avant le " + esc(C.dateFr(r.ar_limite))) + "</dd>" +
+      (r.statut === "ouverte" ? "<dt>Réponse avant le</dt><dd><b>" + esc(C.dateFr(r.reponse_limite)) + "</b>" + (r.jours_restants != null ? '<span class="muet"> · ' + (r.jours_restants >= 0 ? r.jours_restants + " jours restants" : "dépassé de " + (-r.jours_restants) + " jours") + "</span>" : "") + "</dd>"
+        : "<dt>Réponse</dt><dd>" + esc(r.reponse || "") + '<span class="muet"> · ' + esc(({ fondee: "fondée", partiellement_fondee: "partiellement fondée", non_fondee: "non fondée" })[r.issue] || "") + (r.repondue_le ? ", le " + esc(C.dateFr(r.repondue_le)) : "") + "</span></dd>") + "</dl>";
+    if (r.statut === "ouverte") {
+      h += '<label class="champ">Réponse motivée <span class="aide">envoyée à l\'assuré avec, si besoin, les coordonnées du médiateur</span><textarea class="saisie" id="rl-rep-' + esc(r.id) + '" rows="3"></textarea></label>' +
+        '<div class="grille-2"><label class="champ">Réclamation<select class="saisie" id="rl-iss-' + esc(r.id) + '"><option value="non_fondee">Non fondée</option><option value="partiellement_fondee">Partiellement fondée</option><option value="fondee">Fondée</option></select></label><div></div></div>' +
+        '<div class="decision-actions"><button class="btn primaire" data-recl="repondre" data-id="' + esc(r.id) + '">Envoyer la réponse</button>' +
+        (r.ar_envoye_le ? "" : '<button class="btn" data-recl="ar_envoye" data-id="' + esc(r.id) + '">Accusé de réception envoyé par mes soins</button>') + "</div>";
+    } else if (r.statut === "repondue") {
+      h += '<div class="decision-actions"><button class="btn petit" data-recl="mediateur" data-id="' + esc(r.id) + '">L\'assuré a saisi le médiateur</button><button class="btn petit discret" data-recl="clore" data-id="' + esc(r.id) + '">Clore</button></div>';
+    } else if (r.statut === "mediateur") {
+      h += '<div class="decision-actions"><button class="btn petit discret" data-recl="clore" data-id="' + esc(r.id) + '">Clore après l\'avis du médiateur</button></div>';
+    }
+    h += "</div>";
+  });
+  if (!ouverte && !f.efface_le) {
+    h += '<details><summary class="petit">Enregistrer une réclamation</summary><div class="pile" style="margin-top:10px"><label class="champ">Objet<input class="saisie" id="rl-objet" maxlength="1000" placeholder="Ce que la personne conteste ou reproche"></label>' +
+      '<div class="grille-3"><label class="champ">Reçue par<select class="saisie" id="rl-canal">' + options(CANAUX, "courrier") + '</select></label><label class="champ">De la part de<select class="saisie" id="rl-qui">' + options(INTERLOCUTEURS, "assure") + '</select></label>' +
+      '<label class="champ">Reçue le<input class="saisie" id="rl-date" type="date"></label></div>' +
+      '<div class="decision-actions"><button class="btn" data-recl="ouvrir">Enregistrer</button><span class="muet petit">Un accusé de réception part tout de suite à l\'assuré.</span></div></div></details>';
+  }
+  return h + "</div></section>";
+}
+function brancherReclamations(f) {
+  document.querySelectorAll("[data-recl]").forEach(function (b) {
+    b.onclick = function () {
+      var a = b.dataset.recl, id = b.dataset.id, corps = { action: a };
+      if (a === "ouvrir") {
+        corps.numero = f.numero; corps.objet = $("rl-objet").value.trim(); corps.canal = $("rl-canal").value; corps.interlocuteur = $("rl-qui").value; corps.recue_le = $("rl-date").value || null;
+        if (!corps.objet) { C.toast("Indiquez l'objet de la réclamation.", true); $("rl-objet").focus(); return; }
+      } else {
+        corps.id = id;
+        if (a === "repondre") { corps.reponse = $("rl-rep-" + id).value.trim(); corps.issue = $("rl-iss-" + id).value; if (corps.reponse.length < 20) { C.toast("Rédigez une réponse motivée.", true); $("rl-rep-" + id).focus(); return; } }
+      }
+      C.occupe(b, true, "");
+      api("reclamations", { body: corps }).then(function () { C.toast(a === "ouvrir" ? "Réclamation enregistrée" : a === "repondre" ? "Réponse envoyée" : "C'est noté"); rafraichirCompteur(); vueDossier(f.numero); })
+        .catch(function (x) { C.occupe(b, false); C.toast(x.message, true); });
+    };
+  });
+}
 function blocDelais(f) {
   var l = f.delais_legaux;
   if (!l || !l.length) return "";
@@ -1105,7 +1185,7 @@ function blocDelais(f) {
     l.map(function (x) {
       var e = ETAT_DELAI[x.etat] || [x.etat, "info"];
       return '<li><div class="ligne" style="cursor:default"><span class="repere"></span><span class="quoi">' + esc(x.etape) + "<small>" +
-        (x.fait_le ? "Fait le " + esc(C.dateFr(x.fait_le)) : "Avant le " + esc(C.dateFr(x.echeance))) + " · échéance " + esc(C.dateFr(x.echeance)) + "</small></span>" +
+        (x.echeance ? (x.fait_le ? "Fait le " + esc(C.dateFr(x.fait_le)) : "Avant le " + esc(C.dateFr(x.echeance))) + " · échéance " + esc(C.dateFr(x.echeance)) : "") + (x.note ? (x.echeance ? "<br>" : "") + esc(x.note) : "") + "</small></span>" +
         '<span class="droite"><span class="pastille-mail ' + e[1] + '">' + esc(e[0]) + "</span></span></div></li>";
     }).join("") + "</ul></section>";
 }
@@ -1227,26 +1307,34 @@ function carteAction(f) {
       titre = an.length > 1 ? an.length + " écarts relevés" : (C.ANOMALIES[(an[0] || {}).code] || "Anomalie à examiner");
       expl = "Klerio a arrêté le circuit automatique. Vérifiez puis décidez de la suite.";
       if (p.code === "VIGILANCE_VOL") {
-        titre = "Vol : " + an.length + " point" + (an.length > 1 ? "s" : "") + " de vigilance avant d'indemniser";
-        expl = "Aucune offre n'est partie. Vérifiez le récépissé de plainte (date, numéro), les deux jeux de clés, la carte grise et l'historique du contrat. Si tout est cohérent, lancez l'offre ; sinon, traitez le dossier manuellement (enquête, audition de l'assuré).";
+        titre = "Vol : " + an.length + " point" + (an.length > 1 ? "s" : "") + " sérieux avant d'indemniser";
+        expl = "Klerio a contrôlé les pièces et la cohérence du dossier : les points ci-dessous dépassent ce qu'il peut lever seul. Aucune offre n'est partie. Si les explications de l'assuré vous suffisent, lancez l'offre ; sinon, traitez le dossier manuellement.";
+        if ((p.points_confirmes || []).length) corps += '<p class="muet petit">Confirmé : ' + p.points_confirmes.map(esc).join(" · ") + "</p>";
       }
-      corps = '<div class="pile">' + an.map(function (a) {
+      if (p.code === "ENQUETE_VOL") {
+        titre = "Vol : l'enquêteur " + (p.conclusion === "doute" ? "émet des doutes" : "soupçonne une fausse déclaration");
+        expl = "Aucune décision n'est prise sans vous. Une fausse déclaration ne peut être opposée à l'assuré que si elle est prouvée : appuyez-vous sur le rapport de l'enquêteur.";
+        if (p.synthese) corps += '<p class="recit">' + esc(p.synthese) + "</p>";
+      }
+      corps = (corps || "") + '<div class="pile">' + an.map(function (a) {
         return '<div class="alerte ko"><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2l6.5 11.5h-13z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M8 6.5v3M8 11.5v.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg><span><b>' + esc(C.ANOMALIES[a.code] || a.code) + "</b>" + (a.detail ? "<br>" + esc(a.detail) : "") + "</span></div>";
       }).join("") + "</div>";
-      oui = p.code === "VIGILANCE_VOL" ? "Rien d'anormal : envoyer l'offre" : p.expertise_id ? "Accepter et poursuivre" : "Prendre la main";
-      non = p.code === "VIGILANCE_VOL" ? "Enquête : traiter manuellement" : "Traiter manuellement";
+      oui = p.code === "VIGILANCE_VOL" ? "Rien d'anormal : envoyer l'offre" : p.code === "ENQUETE_VOL" ? "Poursuivre l'indemnisation" : p.expertise_id ? "Accepter et poursuivre" : "Prendre la main";
+      non = "Traiter manuellement";
     }
     return '<section class="decision" id="carte-decision"><div class="decision-entete">Décision requise</div><div class="decision-corps"><h2>' + esc(titre) + "</h2>" +
       (expl ? '<p class="explication">' + esc(expl) + "</p>" : "") + corps +
       '<label class="champ">Commentaire <span class="aide">Obligatoire si vous écartez la proposition.</span><textarea class="saisie" id="d-com" rows="2" style="min-height:64px"></textarea></label>' +
-      '<div class="decision-actions"><button class="btn primaire" id="d-oui" data-v="' + esc(v.id) + '"' + (horsPlafond ? " disabled" : "") + '>' + esc(oui) + '</button><button class="btn danger" id="d-non" data-v="' + esc(v.id) + '">' + esc(non) + "</button></div>" +
+      '<div class="decision-actions"><button class="btn primaire" id="d-oui" data-v="' + esc(v.id) + '"' + (horsPlafond ? " disabled" : "") + '>' + esc(oui) + '</button><button class="btn danger" id="d-non" data-v="' + esc(v.id) + '">' + esc(non) + "</button>" +
+        (p.code === "VIGILANCE_VOL" ? '<button class="btn discret" id="d-enquete">Confier à un enquêteur (facultatif)</button>' : "") + "</div>" +
       (loi ? '<p class="loi">' + esc(loi) + "</p>" : "") + '</div><div class="tampon" id="tampon" aria-hidden="true"></div></section>';
   }
   if (f.statut === "hors_perimetre") {
     return '<section class="decision"><div class="decision-entete">À reprendre</div><div class="decision-corps"><h2>' + (f.motif === "reouverture" ? "Dossier rouvert" : "Ce dossier sort du circuit automatique") + '</h2><p class="explication">' + esc(C.motif(f.motif)) +
       ". Choisissez le type de sinistre pour le relancer dans le circuit, ou classez-le.</p>" +
       '<div class="grille-2"><label class="champ">Type retenu<select class="saisie" id="r-theme">' + C.ESPACES.materiel.themes.concat(C.ESPACES.corporel.themes).map(function (k) { return '<option value="' + k + '"' + (k === f.theme ? " selected" : "") + ">" + esc(C.theme(k)) + "</option>"; }).join("") + '</select></label>' +
-      '<label class="champ">Commentaire<input class="saisie" id="r-com" placeholder="' + (f.motif === "arrete_catnat_absent" ? "Référence de l\'arrêté (date et Journal officiel)" : "Ce que vous avez vérifié") + '"></label></div>' +
+      '<label class="champ">' + (f.motif === "arrete_catnat_absent" ? "Arrêté" : "Commentaire") + '<input class="saisie" id="r-com" placeholder="' + (f.motif === "arrete_catnat_absent" ? "Ex. arrêté du 12 juin 2026" : "Ce que vous avez vérifié") + '"></label></div>' +
+      (f.motif === "arrete_catnat_absent" ? '<div class="grille-2"><label class="champ">Publié au Journal officiel le <span class="aide">les délais légaux partent de cette date</span><input class="saisie" id="r-pub" type="date"></label><div></div></div>' : "") +
       '<div class="decision-actions"><button class="btn primaire" id="r-prendre">Reprendre dans le circuit</button><button class="btn" id="r-classer">Classer le dossier</button>' +
       (f.motif === "analyse_ia_en_echec" ? '<button class="btn discret" id="r-reanalyser">Relancer l\'analyse</button>' : "") + "</div></div></section>";
   }
@@ -1489,7 +1577,7 @@ function blocPieces(f) {
   return '<section class="bloc"><div class="bloc-tete"><h3>Pièces du dossier</h3><span class="muet petit">' + p.filter(function (x) { return x.recue_le; }).length + " sur " + p.length + '</span></div><div class="bloc-corps"><ul class="pieces">' +
     p.map(function (x) {
       return '<li><span class="coche ' + (x.recue_le ? "ok" : "") + '"></span><span>' + esc(C.PIECES[x.code] || x.libelle) + "<small>" + esc(par[x.par] || x.par) + (x.recue_le ? ", reçue le " + esc(C.dateCourte(x.recue_le)) : x.obligatoire ? ", attendue" : ", facultative") + "</small></span>" +
-        (!x.recue_le && !fini && x.par === "assure" ? '<button class="btn petit" data-piece="' + esc(x.code) + '">Reçue en agence</button>' : "<span></span>") + "</li>";
+        (!x.recue_le && !fini && x.par === "assure" && x.code !== "QUESTIONNAIRE_VOL" ? '<button class="btn petit" data-piece="' + esc(x.code) + '">Reçue en agence</button>' : "<span></span>") + "</li>";
     }).join("") + "</ul></div></section>";
 }
 
@@ -1589,6 +1677,20 @@ function brancherFiche(f) {
   brancherSuivi(f);
   brancherTitulaire(f);
   brancherRecours(f);
+  brancherReclamations(f);
+  var bv = $("b-verif-vol");
+  if (bv) bv.onclick = function () { C.occupe(bv, true, "Vérification"); api("verifier-vol", { body: { numero: f.numero } }).then(function (r) { C.toast("Vérification relancée"); afficherDossier(r); }).catch(function (x) { C.occupe(bv, false); C.toast(x.message, true); }); };
+  var be = $("d-enquete");
+  if (be) be.onclick = function () {
+    if (!confirm("Confier ce dossier à un enquêteur de votre réseau ? L'offre attendra sa conclusion.")) return;
+    C.occupe(be, true, "Envoi"); api("enquete", { body: { numero: f.numero } }).then(function (r) { C.toast("Enquête confiée"); rafraichirCompteur(); afficherDossier(r); }).catch(function (x) { C.occupe(be, false); C.toast(x.message, true); });
+  };
+  var bc = $("b-catnat");
+  if (bc) bc.onclick = function () {
+    var a = $("cn-arrete").value.trim(), dp = $("cn-pub").value;
+    if (!a || !dp) { C.toast("Indiquez l'arrêté et sa date de publication.", true); return; }
+    C.occupe(bc, true, ""); api("catnat", { body: { numero: f.numero, arrete: a, date_publication: dp } }).then(function (r) { C.toast("Arrêté enregistré"); afficherDossier(r); }).catch(function (x) { C.occupe(bc, false); C.toast(x.message, true); });
+  };
   var oui = $("d-oui"), non = $("d-non");
   function decider(resultat, btn) {
     var com = $("d-com").value.trim();
@@ -1600,6 +1702,8 @@ function brancherFiche(f) {
       if (!choix) { C.toast("Choisissez la part de responsabilité de l'assuré.", true); parts[0].focus(); return; }
       corpsV.responsabilite_pct = Number(choix.value);
       if ($("r-adv") && $("r-adv").value.trim()) corpsV.assureur_adverse = $("r-adv").value.trim();
+      var sitC = document.querySelector("input[name=r-sit]:checked");
+      if (sitC) corpsV.tiers_situation = sitC.value;
       if (propo.pct != null && Number(propo.pct) !== corpsV.responsabilite_pct && !com) { C.toast("Vous changez la proposition : expliquez pourquoi en commentaire.", true); $("d-com").focus(); return; }
     }
     C.occupe(btn, true, "Enregistrement");
@@ -1615,7 +1719,12 @@ function brancherFiche(f) {
   var pr = $("r-prendre"), cl = $("r-classer"), ra = $("r-reanalyser");
   if (pr) pr.addEventListener("click", function () {
     C.occupe(pr, true, "Reprise");
-    api("reprendre", { body: { numero: f.numero, action: "prendre_en_charge", theme: $("r-theme").value, commentaire: $("r-com").value.trim() || null } })
+    var corpsR = { numero: f.numero, action: "prendre_en_charge", theme: $("r-theme").value, commentaire: $("r-com").value.trim() || null };
+    if ($("r-pub")) {
+      if (corpsR.theme === "CATASTROPHE_NATURELLE" && (!corpsR.commentaire || !$("r-pub").value)) { C.occupe(pr, false); C.toast("Indiquez l'arrêté et sa date de publication au Journal officiel.", true); return; }
+      if ($("r-pub").value) { corpsR.catnat_publication = $("r-pub").value; corpsR.catnat_arrete = corpsR.commentaire; }
+    }
+    api("reprendre", { body: corpsR })
       .then(function (r) { C.toast("Repris dans le circuit : " + (C.STATUTS[r.statut] || [r.statut])[0]); rafraichirCompteur(); afficherDossier(r); })
       .catch(function (x) { C.occupe(pr, false); C.toast(x.message, true); });
   });

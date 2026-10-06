@@ -47,6 +47,9 @@
     arrete_catnat_absent: "Arrêté de catastrophe naturelle à référencer",
     responsabilite_a_valider: "Accident avec un tiers : responsabilité à valider",
     vigilance_vol: "Vol : points de vigilance à vérifier avant d'indemniser",
+    enquete_defavorable: "Vol : l'enquête émet des doutes, décision à prendre",
+    reclamation: "Réclamation en cours : réponse à adresser dans les 2 mois",
+    reclamation_a_enregistrer: "Mécontentement exprimé : réclamation à enregistrer",
     tempete_garantie_obligatoire: "Tempête : garantie par la loi même sans garantie climatique, à qualifier",
     relances_sans_reponse: "Trois relances sans réponse",
     choix_vei: "Véhicule irréparable : choix de l'assuré attendu",
@@ -70,19 +73,21 @@
     ECART_BAREME: "AIPP éloignée du barème", CONSOLIDATION_MANQUANTE: "Date de consolidation absente",
     CONSOLIDATION_INCOHERENTE: "Date de consolidation incohérente", DEPENDANCE_TOTALE: "Dépendance totale signalée",
     AUCUN_REPARATEUR: "Aucun réparateur agréé trouvé", AUCUN_EXPERT: "Aucun expert trouvé",
-    RELANCES_SANS_REPONSE: "Trois relances sans réponse", CALCUL_IMPOSSIBLE: "Calcul impossible", VIGILANCE_VOL: "Point de vigilance avant d'indemniser le vol"
+    RELANCES_SANS_REPONSE: "Trois relances sans réponse", CALCUL_IMPOSSIBLE: "Calcul impossible", VIGILANCE_VOL: "Point de vigilance avant d'indemniser le vol",
+    ENQUETE_VOL: "Conclusion de l'enquêteur"
   };
   var COURRIERS = {
     accuse_reception: "Prise en charge", refus: "Refus", mission_expert: "Mission d'expertise",
     prise_en_charge_garage: "Ordre de réparation", demande_pieces: "Demande de pièces", relance: "Relance",
     avis_reglement: "Avis de règlement", information: "Information", classement: "Classement", bon_a_payer: "Bon à payer"
   };
-  var ROLES = { assure: "Assuré", expert: "Expert", garage: "Réparateur", expert_auto: "Expert automobile", expert_medical: "Médecin expert", comptable: "Service comptable", comptabilite: "Service comptable" };
+  var ROLES = { assure: "Assuré", expert: "Expert", garage: "Réparateur", expert_auto: "Expert automobile", expert_medical: "Médecin expert", comptable: "Service comptable", comptabilite: "Service comptable", enqueteur: "Enquêteur" };
   var PIECES = {
     FACTURE: "Facture", DELEGATION_PAIEMENT: "Délégation de paiement", RAPPORT_EXPERTISE: "Rapport d'expertise",
     DEPOT_PLAINTE: "Récépissé de plainte", CMI: "Certificat médical initial", FICHE_RENSEIGNEMENTS: "Fiche de renseignements",
     RIB: "RIB", RAPPORT_MEDICAL: "Conclusions médicales", DOUBLES_CLES: "Deux jeux de clés",
-    CERTIFICAT_IMMATRICULATION: "Carte grise", RAPPORT_POMPIERS: "Rapport des pompiers", CERTIFICAT_CESSION: "Certificat de cession et carte grise barrée"
+    CERTIFICAT_IMMATRICULATION: "Carte grise", RAPPORT_POMPIERS: "Rapport des pompiers", CERTIFICAT_CESSION: "Certificat de cession et carte grise barrée",
+    FACTURE_ACHAT: "Facture d'achat du véhicule", CERTIFICAT_NON_GAGE: "Certificat de non-gage", QUESTIONNAIRE_VOL: "Questionnaire sur le vol"
   };
   var LIENS = { societaire: "Sociétaire", conjoint: "Conjoint", enfant_mineur: "Enfant mineur", enfant_etudiant: "Enfant étudiant",
     enfant_handicape: "Enfant en situation de handicap", personne_a_charge: "Personne à charge", conducteur_tiers: "Conducteur autorisé" };
