@@ -971,6 +971,7 @@ function afficherDossier(f) {
   h += blocDelais(f);
   h += blocReclamations(f);
   h += blocResponsabilite(f);
+  h += blocGestion(f);
   h += blocVigilance(f);
   h += blocPaiement(f);
   h += blocRecours(f);
@@ -1031,8 +1032,8 @@ function carteResponsabilite(f, v) {
     }).join("") + '</div><p class="muet petit" style="margin:8px 0 0">Non assuré, inconnu ou étranger : pas d\'indemnisation directe, la garantie dommages de l\'assuré joue (franchise comprise). Sans cette garantie, le refus indique à l\'assuré comment saisir le Fonds de garantie (FGAO).</p></fieldset>';
   var adv = (p.tiers && p.tiers.assureur) || k[p.cote_assure === "A" ? "assureur_b" : "assureur_a"] || "";
   h += '<label class="champ">Assureur de l\'autre véhicule <span class="aide">sans lui, pas d\'indemnisation directe : la franchise s\'applique et le recours ne peut pas partir</span><input class="saisie" id="r-adv" value="' + esc(adv) + '" placeholder="Nom de la compagnie adverse"></label>';
-  h += '<label class="champ">Commentaire <span class="aide">Obligatoire si vous changez la proposition ou traitez le dossier hors circuit.</span><textarea class="saisie" id="d-com" rows="2" style="min-height:64px"></textarea></label>' +
-    '<div class="decision-actions"><button class="btn primaire" id="d-oui" data-v="' + esc(v.id) + '">Valider et lancer la suite</button><button class="btn" id="d-non" data-v="' + esc(v.id) + '">Traiter hors circuit</button></div>' +
+  h += '<label class="champ">Commentaire <span class="aide">Obligatoire si vous changez la proposition ou reprenez la main.</span><textarea class="saisie" id="d-com" rows="2" style="min-height:64px"></textarea></label>' +
+    '<div class="decision-actions"><button class="btn primaire" id="d-oui" data-v="' + esc(v.id) + '">Valider et lancer la suite</button><button class="btn" id="d-non" data-v="' + esc(v.id) + '">Reprendre la main</button></div>' +
     '<p class="loi">La responsabilité n\'est jamais fixée sans votre validation. L\'assuré reçoit la répartition et peut la contester en répondant au courrier.</p></div><div class="tampon" id="tampon" aria-hidden="true"></div></section>';
   return h;
 }
@@ -1117,6 +1118,55 @@ function brancherRecours(f) {
 /* Récapitulatif de paiement : tout ce qu'un contrôleur ou un comptable doit voir, sans rouvrir les pièces jointes */
 // Délais légaux (catastrophe naturelle) : chaque étape avec son échéance, en retard en rouge
 var ETAT_DELAI = { a_faire: ["À faire", "attente"], fait: ["Fait", "ok"], fait_en_retard: ["Fait en retard", "alerte"], en_retard: ["En retard", "alerte"], bientot: ["Échéance proche", "attente"], a_venir: ["À venir", "info"] };
+/* Actions du gestionnaire sur un dossier en cours : message libre, responsabilité corrigée */
+function blocGestion(f) {
+  if (FINIS.indexOf(f.statut) >= 0 || f.efface_le) return "";
+  var r = f.responsabilite_retenue, regleValide = (f.reglements || []).some(function (x) { return ["valide", "envoye", "confirme"].indexOf(x.statut) >= 0; });
+  var enAttente = (f.validations_en_attente || []).length > 0;
+  var h = '<section class="bloc" id="bloc-gestion"><div class="bloc-tete"><h2>Agir sur le dossier</h2><span class="muet petit">Sans retourner dans l\'outil de la compagnie</span></div><div class="bloc-corps pile">';
+  h += '<details id="g-courrier"' + (f.statut === "anomalie_gestionnaire" ? "" : "") + '><summary class="petit">Écrire à un intervenant</summary><div class="pile" style="margin-top:10px">' +
+    '<div class="grille-2"><label class="champ">À<select class="saisie" id="g-dest"><option value="assure">L\'assuré</option><option value="garage">Le garage</option><option value="expert">L\'expert</option>' +
+    (f.theme === "ACCIDENT_TIERS" ? '<option value="assureur_adverse">L\'assureur adverse</option>' : "") + '</select></label>' +
+    '<label class="champ">Adresse <span class="aide">si elle n\'est pas connue</span><input class="saisie" id="g-email" type="email" placeholder="facultatif"></label></div>' +
+    '<label class="champ">Objet<input class="saisie" id="g-objet" maxlength="150"></label><label class="champ">Message<textarea class="saisie" id="g-texte" rows="4"></textarea></label>' +
+    '<div class="decision-actions"><button class="btn" id="g-envoyer">Envoyer</button><span class="muet petit">Le message part avec le lien sécurisé de la personne pour répondre ou envoyer un document.</span></div></div></details>';
+  if (f.theme === "ACCIDENT_TIERS" && r && r.pct != null && !regleValide && !enAttente) {
+    h += '<details><summary class="petit">Corriger la responsabilité (contestation, nouveau témoignage)</summary><div class="pile" style="margin-top:10px"><div class="grille-2"><label class="champ">Nouvelle part de l\'assuré<select class="saisie" id="g-pct">' +
+      [0, 50, 100].filter(function (x) { return x !== Number(r.pct); }).map(function (x) { return '<option value="' + x + '">' + x + " %</option>"; }).join("") + '</select></label><div></div></div>' +
+      '<label class="champ">Motif <span class="aide">envoyé à l\'assuré</span><input class="saisie" id="g-motif-resp"></label>' +
+      '<div class="decision-actions"><button class="btn" id="g-resp">Corriger et prévenir l\'assuré</button><span class="muet petit">Le recours est recalculé tant qu\'il n\'est pas émis.</span></div></div></details>';
+  }
+  return h + "</div></section>";
+}
+function brancherGestion(f) {
+  var envoyer = function (b, corps, ok) {
+    corps.numero = f.numero; C.occupe(b, true, "");
+    api("gestion", { body: corps }).then(function (r) { C.toast(ok); rafraichirCompteur(); afficherDossier(r); }).catch(function (x) { C.occupe(b, false); C.toast(x.message, true); });
+  };
+  var val = function (id) { var x = $(id); return x ? x.value.trim() : ""; };
+  var b;
+  if ((b = $("g-envoyer"))) b.onclick = function () {
+    if (val("g-objet").length < 3 || val("g-texte").length < 10) return C.toast("Indiquez un objet et un message.", true);
+    envoyer(b, { action: "courrier", destinataire: val("g-dest"), email: val("g-email") || undefined, objet: val("g-objet"), texte: val("g-texte") }, "Message envoyé");
+  };
+  if ((b = $("g-resp"))) b.onclick = function () {
+    if (val("g-motif-resp").length < 10) return C.toast("Expliquez pourquoi la responsabilité change.", true);
+    envoyer(b, { action: "responsabilite", pct: Number(val("g-pct")), motif: val("g-motif-resp") }, "Responsabilité corrigée, assuré prévenu");
+  };
+  if ((b = $("g-ouvrir-courrier"))) b.onclick = function () { var d = $("g-courrier"); if (d) { d.open = true; d.scrollIntoView({ behavior: "smooth", block: "center" }); } };
+  if ((b = $("g-ouvrir-reg"))) b.onclick = function () { $("g-reg").hidden = !$("g-reg").hidden; };
+  if ((b = $("g-missionner"))) b.onclick = function () { envoyer(b, { action: "missionner" }, "Expert et garage missionnés"); };
+  if ((b = $("g-reg-ok"))) b.onclick = function () {
+    var base = Number(val("g-base").replace(",", ".")), fr = Number((val("g-fr") || "0").replace(",", "."));
+    if (!(base > 0)) return C.toast("Indiquez le montant retenu.", true);
+    if (val("g-motif-reg").length < 10) return C.toast("Justifiez le montant.", true);
+    envoyer(b, { action: "reglement", beneficiaire: val("g-benef"), montant_base: base, franchise_eur: fr, motif: val("g-motif-reg") }, "Règlement soumis à validation");
+  };
+  if ((b = $("g-clore"))) b.onclick = function () {
+    if (val("r-com").length < 5) { C.toast("Indiquez le motif de la clôture.", true); return $("r-com").focus(); }
+    envoyer(b, { action: "clore", motif: val("r-com") }, "Dossier clos");
+  };
+}
 function blocCatnat(f) {
   if (f.theme !== "CATASTROPHE_NATURELLE" || f.statut === "hors_perimetre") return "";
   var c = f.catnat;
@@ -1320,7 +1370,7 @@ function carteAction(f) {
         return '<div class="alerte ko"><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2l6.5 11.5h-13z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M8 6.5v3M8 11.5v.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg><span><b>' + esc(C.ANOMALIES[a.code] || a.code) + "</b>" + (a.detail ? "<br>" + esc(a.detail) : "") + "</span></div>";
       }).join("") + "</div>";
       oui = p.code === "VIGILANCE_VOL" ? "Rien d'anormal : envoyer l'offre" : p.code === "ENQUETE_VOL" ? "Poursuivre l'indemnisation" : p.expertise_id ? "Accepter et poursuivre" : "Prendre la main";
-      non = "Traiter manuellement";
+      non = "Reprendre la main";
     }
     return '<section class="decision" id="carte-decision"><div class="decision-entete">Décision requise</div><div class="decision-corps"><h2>' + esc(titre) + "</h2>" +
       (expl ? '<p class="explication">' + esc(expl) + "</p>" : "") + corps +
@@ -1339,8 +1389,16 @@ function carteAction(f) {
       (f.motif === "analyse_ia_en_echec" ? '<button class="btn discret" id="r-reanalyser">Relancer l\'analyse</button>' : "") + "</div></div></section>";
   }
   if (f.statut === "anomalie_gestionnaire") {
-    return '<section class="decision"><div class="decision-entete">Traitement manuel</div><div class="decision-corps"><h2>Dossier en traitement manuel</h2><p class="explication">' + esc(C.motif(f.motif)) + ". Poursuivez le dossier dans votre outil, puis classez-le ici pour clore la trace.</p>" +
-      '<label class="champ">Motif du classement<input class="saisie" id="r-com"></label><div class="decision-actions"><button class="btn" id="r-classer">Classer le dossier</button></div></div></section>';
+    var regle = (f.reglements || []).some(function (r) { return ["propose", "valide", "envoye", "confirme"].indexOf(r.statut) >= 0; });
+    return '<section class="decision"><div class="decision-entete">Repris en main</div><div class="decision-corps"><h2>Vous menez ce dossier dans Klerio</h2><p class="explication">' + esc(C.motif(f.motif)) +
+      ". Le circuit automatique est arrêté : écrivez aux intervenants, corrigez la responsabilité, missionnez, réglez puis clôturez, sans quitter Klerio. Tout reste tracé au journal.</p>" +
+      '<div class="decision-actions"><button class="btn" id="g-missionner">Missionner l\'expert et le garage</button>' + (regle ? "" : '<button class="btn" id="g-ouvrir-reg">Saisir un règlement</button>') + '<button class="btn" id="g-ouvrir-courrier">Écrire à un intervenant</button></div>' +
+      (regle ? "" : '<div id="g-reg" class="pile" hidden style="margin-top:12px"><div class="grille-3"><label class="champ">Payer<select class="saisie" id="g-benef"><option value="reparateur">Le garage missionné</option><option value="assure">L\'assuré</option></select></label>' +
+        '<label class="champ">Montant retenu <span class="aide">TTC, en €</span><input class="saisie" id="g-base" inputmode="decimal"></label><label class="champ">Franchise <span class="aide">en €</span><input class="saisie" id="g-fr" inputmode="decimal" value="0"></label></div>' +
+        '<label class="champ">Justification <span class="aide">facture, expertise, accord avec l\'assuré</span><input class="saisie" id="g-motif-reg"></label>' +
+        '<div class="decision-actions"><button class="btn primaire" id="g-reg-ok">Soumettre le règlement</button><span class="muet petit">Il passe par la validation habituelle (un autre gestionnaire en production), puis le bon à payer part au comptable.</span></div></div>') +
+      '<label class="champ" style="margin-top:12px">Clore ou classer <span class="aide">motif obligatoire</span><input class="saisie" id="r-com" placeholder="Ex. réparé et payé, accord trouvé avec l\'assuré"></label>' +
+      '<div class="decision-actions"><button class="btn" id="g-clore">Clore le dossier</button><button class="btn discret" id="r-classer">Classer sans suite</button></div></div></section>';
   }
   if (f.statut === "reglement_envoye") {
     return '<section class="decision"><div class="decision-entete">Paiement</div><div class="decision-corps"><h2>Confirmer le virement</h2><p class="explication">Le règlement est ordonné. Saisissez la référence du virement pour clore le dossier.</p>' +
@@ -1678,6 +1736,7 @@ function brancherFiche(f) {
   brancherTitulaire(f);
   brancherRecours(f);
   brancherReclamations(f);
+  brancherGestion(f);
   var bv = $("b-verif-vol");
   if (bv) bv.onclick = function () { C.occupe(bv, true, "Vérification"); api("verifier-vol", { body: { numero: f.numero } }).then(function (r) { C.toast("Vérification relancée"); afficherDossier(r); }).catch(function (x) { C.occupe(bv, false); C.toast(x.message, true); }); };
   var be = $("d-enquete");
