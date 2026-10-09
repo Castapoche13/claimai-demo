@@ -59,7 +59,7 @@
 }
 
 /* ---------- Blocs ---------- */
-.bloc { background: var(--feuille); border: 1px solid var(--trait); border-radius: var(--rayon); }
+.bloc { background: var(--feuille); border: 1px solid var(--trait); border-radius: var(--rayon); box-shadow: var(--ombre); }
 .bloc-tete { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 16px; border-bottom: 1px solid var(--trait); min-height: 48px; }
 .bloc-corps { padding: 16px; }
 .bloc + .bloc { margin-top: 16px; }
@@ -147,7 +147,7 @@ table.tableau { width: 100%; border-collapse: collapse; font-size: 13.5px; }
 @media (max-width: 1080px) { .fiche-grille { grid-template-columns: minmax(0, 1fr); } }
 
 /* Décision attendue */
-.decision { border: 1px solid var(--trait-fort); background: var(--feuille); border-radius: var(--rayon); }
+.decision { border: 1px solid var(--trait-fort); background: var(--feuille); border-radius: var(--rayon); box-shadow: var(--ombre); }
 .decision-entete { display: flex; align-items: center; gap: 8px; padding: 10px 16px; border-bottom: 1px solid var(--trait); font-size: 12.5px; font-weight: 500; color: var(--orange-texte); background: var(--feuille-2); border-radius: var(--rayon) var(--rayon) 0 0; }
 .decision-entete::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--orange); }
 .decision-corps { padding: 16px; display: grid; gap: 14px; }
@@ -316,7 +316,7 @@ button.ligne-mail { width: 100%; background: none; border: 0; font: inherit; col
 .indice { font-size: 13.5px; padding: 10px 14px; border-radius: 8px; background: var(--bleu-pale); color: var(--encre); } .indice.ok { background: var(--vert-pale); color: var(--vert-texte); } .indice.ko { background: var(--rouge-pale); color: var(--rouge-texte); }
 .tableau .actions { display: flex; flex-wrap: wrap; align-items: center; } .txt-ko { color: var(--rouge); }
 .tuiles { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-bottom: 18px; }
-.tuile { border: 1px solid var(--trait); border-radius: var(--rayon); padding: 14px 16px; background: var(--feuille); text-decoration: none; color: inherit; display: block; }
+.tuile { border: 1px solid var(--trait); border-radius: var(--rayon); padding: 14px 16px; background: var(--feuille); box-shadow: var(--ombre); text-decoration: none; color: inherit; display: block; }
 a.tuile:hover { border-color: var(--trait-fort); text-decoration: none; }
 .tuile .val { font-size: 26px; font-weight: 600; letter-spacing: -.02em; line-height: 1.1; }
 .tuile .lib { font-size: 12.5px; color: var(--gris); margin-top: 6px; }

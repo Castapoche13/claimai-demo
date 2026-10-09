@@ -1,15 +1,15 @@
 /* Klerio : feuille commune (console, espace en ligne). Blanc, neutre, une seule couleur d'action. */
 :root {
   --encre: #111827;
-  --encre-2: #374151;
-  --gris: #6B7280;
-  --gris-clair: #9CA3AF;
-  --papier: #FFFFFF;
+  --encre-2: #1F2937;
+  --gris: #4B5563;
+  --gris-clair: #6B7280;
+  --papier: #EDF0F4;
   --feuille: #FFFFFF;
-  --feuille-2: #F9FAFB;
-  --survol: #F3F4F6;
-  --trait: #E5E7EB;
-  --trait-fort: #D1D5DB;
+  --feuille-2: #F5F7FA;
+  --survol: #E6EAF0;
+  --trait: #D3D9E1;
+  --trait-fort: #AEB7C4;
   --bleu: #2563EB;
   --bleu-fonce: #1D4ED8;
   --bleu-pale: #EFF6FF;
@@ -25,7 +25,7 @@
   --vert: #16A34A;
   --vert-texte: #15803D;
   --vert-pale: #F0FDF4;
-  --ombre: none;
+  --ombre: 0 1px 2px rgba(16, 24, 40, .06);
   --rayon: 8px;
   --police: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   color-scheme: light;
