@@ -130,3 +130,7 @@ textarea.saisie { min-height: 88px; resize: vertical; line-height: 1.5; }
 /* Marque */
 .marque { display: flex; align-items: center; gap: 9px; font-weight: 600; font-size: 15px; letter-spacing: -.01em; }
 .marque svg { flex: none; }
+
+/* échéances légales (tiers blessé) */
+ul.delais { list-style: none; padding: 0; margin: 2px 0 4px; display: grid; gap: 6px; }
+ul.delais li { font-size: 14px; line-height: 1.45; }

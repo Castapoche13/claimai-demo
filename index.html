@@ -972,6 +972,8 @@ function afficherDossier(f) {
   h += blocReclamations(f);
   h += blocResponsabilite(f);
   h += blocGestion(f);
+  h += blocRecoursRecus(f);
+  h += blocVictimes(f);
   h += blocVigilance(f);
   h += blocPaiement(f);
   h += blocRecours(f);
@@ -1166,6 +1168,141 @@ function brancherGestion(f) {
     if (val("r-com").length < 5) { C.toast("Indiquez le motif de la clôture.", true); return $("r-com").focus(); }
     envoyer(b, { action: "clore", motif: val("r-com") }, "Dossier clos");
   };
+}
+/* Recours reçus de l'assureur adverse : notre assuré est responsable, en tout ou partie */
+var ETAT_RR = { a_examiner: ["À examiner", "attente"], accepte: ["Accepté, à régler", "attente"], conteste: ["Contesté", "alerte"], regle: ["Réglé", "ok"], clos: ["Clos", "info"] };
+function blocRecoursRecus(f) {
+  var l = f.recours_recus || [];
+  if (f.theme !== "ACCIDENT_TIERS" && !l.length) return "";
+  if (f.efface_le && !l.length) return "";
+  var pct = f.responsabilite_retenue && f.responsabilite_retenue.pct != null ? Number(f.responsabilite_retenue.pct) : null;
+  var h = '<section class="bloc" id="bloc-rr"><div class="bloc-tete"><h2>Recours reçus' + (l.length ? '<span class="compte">' + l.length + "</span>" : "") + '</h2><span class="muet petit">L\'assureur adverse nous réclame ce qu\'il a versé</span></div><div class="bloc-corps pile">';
+  l.forEach(function (r) {
+    var e = ETAT_RR[r.statut] || [r.statut, "info"], id = esc(r.id);
+    h += '<div class="recl"><div class="ligne-recl"><b>' + esc(r.assureur_adverse || "Assureur adverse") + "</b>" + (r.reference_adverse ? '<span class="muet"> · réf. ' + esc(r.reference_adverse) + "</span>" : "") + ' <span class="pastille-mail ' + e[1] + '">' + esc(e[0]) + "</span></div>" +
+      '<dl class="info-liste"><dt>Reçu le</dt><dd>' + esc(C.dateFr(r.recu_le)) + (r.statut === "a_examiner" ? '<span class="muet"> · depuis ' + esc(String(r.age_jours)) + " jours</span>" : "") + "</dd>" +
+      "<dt>Réclamé</dt><dd>" + (r.montant_reclame != null ? esc(C.eur(r.montant_reclame)) + (r.mode === "forfait" ? '<span class="muet"> · forfait conventionnel</span>' : r.mode === "reel" ? '<span class="muet"> · montant réel</span>' : "") : '<span class="muet">à compléter</span>') + "</dd>" +
+      (r.montant_du != null ? "<dt>Part de notre assuré</dt><dd><b>" + esc(C.eur(r.montant_du)) + '</b><span class="muet"> · responsabilité retenue ' + esc(String(r.responsabilite_assure_pct)) + " %</span></dd>" : "") +
+      (r.montant_accepte != null ? "<dt>Accepté</dt><dd>" + esc(C.eur(r.montant_accepte)) + (r.reference_reglement ? '<span class="muet"> · réglé, réf. ' + esc(r.reference_reglement) + "</span>" : "") + "</dd>" : "") +
+      (r.motif ? "<dt>Motif</dt><dd>" + esc(r.motif) + "</dd>" : "") + "</dl>";
+    if (r.statut === "a_examiner" && (r.montant_reclame == null || !r.assureur_adverse)) {
+      h += '<div class="grille-3"><label class="champ">Assureur adverse<input class="saisie" id="rr-adv-' + id + '" value="' + esc(r.assureur_adverse || "") + '"></label>' +
+        '<label class="champ">Montant réclamé <span class="aide">en €</span><input class="saisie" id="rr-mt-' + id + '" inputmode="decimal"></label>' +
+        '<label class="champ">Sa référence<input class="saisie" id="rr-ref-' + id + '" value="' + esc(r.reference_adverse || "") + '"></label></div>' +
+        '<div class="decision-actions"><button class="btn" data-rr="completer" data-id="' + id + '">Compléter</button></div>';
+    } else if (r.statut === "a_examiner" || r.statut === "conteste") {
+      var proposer = pct === 0 ? "contester" : "accepter";
+      h += '<label class="champ">Motif <span class="aide">obligatoire pour contester ou pour accepter plus que la part de notre assuré ; envoyé à l\'assureur adverse</span><input class="saisie" id="rr-motif-' + id + '"></label>' +
+        '<div class="grille-2"><label class="champ">Montant accepté <span class="aide">par défaut, la part de notre assuré</span><input class="saisie" id="rr-acc-' + id + '" inputmode="decimal" placeholder="' + esc(r.montant_du != null ? String(r.montant_du) : "") + '"></label>' +
+        '<label class="champ">Adresse du service recours<input class="saisie" id="rr-mail-' + id + '" type="email" value="' + esc(r.email_adverse || "") + '"></label></div>' +
+        '<div class="decision-actions">' + (pct === null ? '<span class="muet petit">Validez d\'abord la responsabilité de notre assuré.</span>' :
+          '<button class="btn' + (proposer === "accepter" ? " primaire" : "") + '" data-rr="accepter" data-id="' + id + '"' + (pct === 0 ? " disabled" : "") + ">Accepter</button>") +
+        (r.statut === "a_examiner" ? '<button class="btn' + (proposer === "contester" ? " primaire" : "") + '" data-rr="contester" data-id="' + id + '">Contester</button>' : "") +
+        '<button class="btn discret" data-rr="clore" data-id="' + id + '">Clore</button></div>';
+    } else if (r.statut === "accepte") {
+      h += '<div class="grille-2"><label class="champ">Référence du règlement <span class="aide">compensation ou virement</span><input class="saisie" id="rr-regref-' + id + '"></label><div></div></div>' +
+        '<div class="decision-actions"><button class="btn primaire" data-rr="regler" data-id="' + id + '">Marquer réglé</button></div>';
+    }
+    h += "</div>";
+  });
+  if (!f.efface_le) {
+    h += '<details' + (l.length ? "" : "") + '><summary class="petit">Enregistrer un recours reçu</summary><div class="pile" style="margin-top:10px">' +
+      '<div class="grille-3"><label class="champ">Assureur adverse<input class="saisie" id="rr-n-adv" value="' + esc((f.tiers && f.tiers.assureur) || "") + '"></label>' +
+      '<label class="champ">Montant réclamé <span class="aide">en €</span><input class="saisie" id="rr-n-mt" inputmode="decimal"></label>' +
+      '<label class="champ">Calcul<select class="saisie" id="rr-n-mode"><option value="forfait">Forfait conventionnel</option><option value="reel">Montant réel</option><option value="inconnu">Non précisé</option></select></label></div>' +
+      '<div class="grille-3"><label class="champ">Sa référence<input class="saisie" id="rr-n-ref"></label><label class="champ">Adresse du service recours<input class="saisie" id="rr-n-mail" type="email"></label>' +
+      '<label class="champ">Reçu le<input class="saisie" id="rr-n-date" type="date"></label></div>' +
+      '<div class="decision-actions"><button class="btn" data-rr="enregistrer">Enregistrer</button><span class="muet petit">Klerio calcule la part de notre assuré selon la responsabilité retenue.</span></div></div></details>';
+  }
+  return h + "</div></section>";
+}
+
+/* Tiers blessé : Klerio ne chiffre rien, il suit les délais d'offre de la loi Badinter (art. L211-9) */
+var QUALITES = { inconnue: "À préciser", conducteur_adverse: "Conducteur de l'autre véhicule", passager_adverse: "Passager de l'autre véhicule", passager_assure: "Passager de notre assuré", pieton_cycliste: "Piéton ou cycliste" };
+var GRAVITES = { inconnue: "À préciser", legere: "Blessure légère", grave: "Blessure grave" };
+var ETAT_VT = { a_instruire: ["À instruire", "alerte"], en_cours: ["En cours", "attente"], gere_par_autre_assureur: ["Géré par un autre assureur", "info"], offre_definitive_faite: ["Offre définitive faite", "ok"], clos: ["Clos", "info"] };
+function blocVictimes(f) {
+  var l = f.victimes_tiers || [];
+  if (f.branche === "corporel" || (f.theme !== "ACCIDENT_TIERS" && !l.length)) return "";
+  if (f.efface_le && !l.length) return "";
+  var h = '<section class="bloc" id="bloc-vt"><div class="bloc-tete"><h2>Personne blessée' + (l.length ? '<span class="compte">' + l.length + "</span>" : "") + '</h2><span class="muet petit">Loi du 5 juillet 1985 : délais d\'offre</span></div><div class="bloc-corps pile">';
+  l.forEach(function (v) {
+    var e = ETAT_VT[v.statut] || [v.statut, "info"], id = esc(v.id), suivi = v.statut === "a_instruire" || v.statut === "en_cours";
+    h += '<div class="recl"><div class="ligne-recl"><b>' + esc(QUALITES[v.qualite] || v.qualite) + '</b><span class="muet"> · ' + esc(GRAVITES[v.gravite] || v.gravite) + '</span> <span class="pastille-mail ' + e[1] + '">' + esc(e[0]) + "</span></div>" +
+      '<dl class="info-liste"><dt>Signalée le</dt><dd>' + esc(C.dateFr(v.signale_le)) + '<span class="muet"> · ' + esc(({ constat: "case « blessés » du constat", information_recue: "information reçue", gestionnaire: "saisie gestionnaire" })[v.source] || v.source) + "</span></dd>" +
+      (v.note ? "<dt>Note</dt><dd>" + esc(v.note) + "</dd>" : "") +
+      (v.assureur_gestionnaire ? "<dt>Géré par</dt><dd>" + esc(v.assureur_gestionnaire) + (v.motif ? '<span class="muet"> · ' + esc(v.motif) + "</span>" : "") + "</dd>" : "") +
+      (v.offre_provisionnelle_le ? "<dt>Offre provisionnelle</dt><dd>" + esc(C.dateFr(v.offre_provisionnelle_le)) + "</dd>" : "") +
+      (v.offre_definitive_le ? "<dt>Offre définitive</dt><dd>" + esc(C.dateFr(v.offre_definitive_le)) + "</dd>" : "") + "</dl>";
+    if ((v.echeances || []).length) {
+      h += '<ul class="delais">' + v.echeances.map(function (x) {
+        var etat = x.fait_le ? "ok" : x.reste_jours < 0 ? "alerte" : x.reste_jours <= 30 ? "attente" : "info";
+        return '<li><span class="pastille-mail ' + etat + '">' + (x.fait_le ? "Fait le " + esc(C.dateFr(x.fait_le)) : x.reste_jours < 0 ? "Dépassé de " + (-x.reste_jours) + " j" : "J-" + x.reste_jours) + "</span> " +
+          esc(x.libelle) + ' <span class="muet petit">avant le ' + esc(C.dateFr(x.limite)) + " · " + esc(x.texte) + "</span></li>";
+      }).join("") + "</ul>";
+    }
+    if (v.irca_probable && suivi) h += '<p class="muet petit">Blessure légère d\'une personne de l\'autre véhicule : en général, c\'est son propre assureur qui l\'indemnise (convention IRCA) puis exerce un recours contre nous. Si c\'est le cas, indiquez-le ci-dessous.</p>';
+    if (suivi) {
+      h += '<div class="grille-3"><label class="champ">Qui<select class="saisie" id="vt-q-' + id + '">' + options(QUALITES, v.qualite) + '</select></label>' +
+        '<label class="champ">Gravité<select class="saisie" id="vt-g-' + id + '">' + options(GRAVITES, v.gravite) + '</select></label>' +
+        '<label class="champ">Demande d\'indemnisation reçue le<input class="saisie" id="vt-dem-' + id + '" type="date" value="' + esc(v.date_demande || "") + '"></label></div>' +
+        '<label class="champ">Note <span class="aide">300 caractères, aucun détail médical</span><input class="saisie" id="vt-note-' + id + '" maxlength="300" value="' + esc(v.note || "") + '"></label>' +
+        '<div class="decision-actions"><button class="btn" data-vt="preciser" data-id="' + id + '">Enregistrer</button></div>' +
+        '<div class="grille-3"><label class="champ">Date<input class="saisie" id="vt-date-' + id + '" type="date"></label><div></div><div></div></div>' +
+        '<div class="decision-actions"><button class="btn petit" data-vt="consolidation" data-id="' + id + '">Consolidation apprise ce jour-là</button>' +
+        '<button class="btn petit" data-vt="offre_provisionnelle" data-id="' + id + '">Offre provisionnelle envoyée</button>' +
+        '<button class="btn petit" data-vt="offre_definitive" data-id="' + id + '">Offre définitive envoyée</button></div>' +
+        '<div class="grille-2"><label class="champ">Assureur qui gère la victime<input class="saisie" id="vt-ass-' + id + '"></label><label class="champ">Motif<input class="saisie" id="vt-motif-' + id + '"></label></div>' +
+        '<div class="decision-actions"><button class="btn petit" data-vt="confier" data-id="' + id + '">Géré par cet assureur</button><button class="btn petit discret" data-vt="clore" data-id="' + id + '">Clore le suivi</button></div>';
+    }
+    h += "</div>";
+  });
+  if (!f.efface_le && !l.some(function (v) { return v.statut === "a_instruire" || v.statut === "en_cours"; })) {
+    h += '<details><summary class="petit">Signaler une personne blessée</summary><div class="pile" style="margin-top:10px">' +
+      '<div class="grille-2"><label class="champ">Qui<select class="saisie" id="vt-n-q">' + options(QUALITES, "inconnue") + '</select></label><label class="champ">Gravité<select class="saisie" id="vt-n-g">' + options(GRAVITES, "inconnue") + "</select></label></div>" +
+      '<div class="decision-actions"><button class="btn" data-vt="signaler">Signaler</button><span class="muet petit">Klerio calcule les échéances d\'offre et relance avant chaque date. Il ne chiffre rien.</span></div></div></details>';
+  }
+  return h + "</div></section>";
+}
+function brancherRecoursVictimes(f) {
+  var val = function (i) { var x = $(i); return x ? x.value.trim() : ""; };
+  var nb = function (t) { if (t === "") return undefined; var n = Number(t.replace(/[\s\u00a0\u202f€]/g, "").replace(",", ".")); return isFinite(n) && n > 0 ? n : NaN; };
+  var envoyer = function (b, corps, ok) {
+    corps.numero = f.numero; C.occupe(b, true, "");
+    api("gestion", { body: corps }).then(function (r) { C.toast(ok); rafraichirCompteur(); afficherDossier(r); }).catch(function (x) { C.occupe(b, false); C.toast(x.message, true); });
+  };
+  document.querySelectorAll("[data-rr]").forEach(function (b) {
+    b.onclick = function () {
+      var e = b.dataset.rr, id = b.dataset.id;
+      if (e === "enregistrer") {
+        if (!val("rr-n-adv")) return C.toast("Indiquez l'assureur adverse.", true);
+        if (Number.isNaN(nb(val("rr-n-mt")))) return C.toast("Montant illisible : écrivez par exemple 2030,50.", true);
+        return envoyer(b, { action: "recours_recu", assureur_adverse: val("rr-n-adv"), montant: nb(val("rr-n-mt")), mode: val("rr-n-mode"), reference: val("rr-n-ref") || undefined,
+          email: val("rr-n-mail") || undefined, recu_le: val("rr-n-date") || undefined }, "Recours enregistré");
+      }
+      var c = { action: "recours_recu", id: id, etape: e };
+      if (e === "completer") { c.assureur_adverse = val("rr-adv-" + id) || undefined; c.montant = nb(val("rr-mt-" + id)); if (Number.isNaN(c.montant)) return C.toast("Montant illisible : écrivez par exemple 2030,50.", true); c.reference = val("rr-ref-" + id) || undefined;
+        if (c.montant === undefined && !c.assureur_adverse) return C.toast("Indiquez au moins le montant réclamé.", true); }
+      if (e === "accepter") { c.montant = nb(val("rr-acc-" + id)); if (Number.isNaN(c.montant)) return C.toast("Montant illisible : écrivez par exemple 1015,50.", true); c.motif = val("rr-motif-" + id) || undefined; c.email = val("rr-mail-" + id) || undefined; }
+      if (e === "contester") { c.motif = val("rr-motif-" + id); c.email = val("rr-mail-" + id) || undefined;
+        if (c.motif.length < 10) return C.toast("Expliquez pourquoi vous contestez : le motif part chez l'assureur adverse.", true); }
+      if (e === "clore") { c.motif = val("rr-motif-" + id); if (c.motif.length < 5) return C.toast("Indiquez le motif dans le champ Motif.", true); }
+      if (e === "regler") { c.reference = val("rr-regref-" + id); if (!c.reference) return C.toast("Indiquez la référence du règlement.", true); }
+      envoyer(b, c, ({ completer: "Recours complété", accepter: "Recours accepté, réponse envoyée", contester: "Contestation envoyée", clore: "Recours clos", regler: "Recours réglé" })[e]);
+    };
+  });
+  document.querySelectorAll("[data-vt]").forEach(function (b) {
+    b.onclick = function () {
+      var e = b.dataset.vt, id = b.dataset.id;
+      if (e === "signaler") return envoyer(b, { action: "victime", qualite: val("vt-n-q"), gravite: val("vt-n-g") }, "Personne blessée signalée");
+      var c = { action: "victime", id: id, etape: e };
+      if (e === "preciser") { c.qualite = val("vt-q-" + id); c.gravite = val("vt-g-" + id); c.date_demande = val("vt-dem-" + id) || undefined; c.note = val("vt-note-" + id) || undefined; }
+      if (["consolidation", "offre_provisionnelle", "offre_definitive"].indexOf(e) >= 0) { c.date = val("vt-date-" + id); if (!c.date) return C.toast("Indiquez la date dans le champ Date.", true); }
+      if (e === "confier") { c.assureur = val("vt-ass-" + id); c.motif = val("vt-motif-" + id) || undefined; if (!c.assureur) return C.toast("Indiquez l'assureur qui gère la victime.", true); }
+      if (e === "clore") { c.motif = val("vt-motif-" + id); if (c.motif.length < 5) return C.toast("Indiquez le motif dans le champ Motif.", true); }
+      envoyer(b, c, ({ preciser: "Enregistré", consolidation: "Consolidation enregistrée", offre_provisionnelle: "Offre provisionnelle enregistrée", offre_definitive: "Offre définitive enregistrée", confier: "Suivi confié", clore: "Suivi clos" })[e]);
+    };
+  });
 }
 function blocCatnat(f) {
   if (f.theme !== "CATASTROPHE_NATURELLE" || f.statut === "hors_perimetre") return "";
@@ -1737,6 +1874,7 @@ function brancherFiche(f) {
   brancherRecours(f);
   brancherReclamations(f);
   brancherGestion(f);
+  brancherRecoursVictimes(f);
   var bv = $("b-verif-vol");
   if (bv) bv.onclick = function () { C.occupe(bv, true, "Vérification"); api("verifier-vol", { body: { numero: f.numero } }).then(function (r) { C.toast("Vérification relancée"); afficherDossier(r); }).catch(function (x) { C.occupe(bv, false); C.toast(x.message, true); }); };
   var be = $("d-enquete");
