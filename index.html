@@ -997,9 +997,11 @@ function afficherDossier(f) {
     "<dt>Déclaré le</dt><dd>" + esc(C.dateFr(f.date_declaration || f.cree)) + "</dd>" +
     (d.victime ? "<dt>Victime</dt><dd>" + esc((d.victime.age != null ? d.victime.age + " ans" : "Âge inconnu") + ", " + (C.LIENS[d.victime.lien] || d.victime.lien || "lien inconnu")) + "</dd>" : "") +
     "</dl></div></section>";
+  var lienClient = ctr.assure_ref ? "#/client/" + encodeURIComponent(ctr.assure_ref) : "";
   h += '<section class="bloc"><div class="bloc-tete"><h3>Contrat</h3>' + (ctr.statut ? '<span class="statut ' + (ctr.statut === "actif" ? "ok" : "ko") + '">' + esc(ctr.statut === "actif" ? "Actif" : "Résilié") + "</span>" : "") + '</div><div class="bloc-corps">' +
-    (ctr.numero ? '<dl class="info-liste"><dt>Numéro</dt><dd>' + esc(ctr.numero) + "</dd>" + (ctr.immatriculation ? "<dt>Véhicule</dt><dd>" + esc(ctr.immatriculation) + "</dd>" : "") +
-      "<dt>Assuré</dt><dd>" + esc(ctr.assure_ref) + "</dd><dt>Effet</dt><dd>" + esc(C.dateCourte(ctr.date_effet)) + (ctr.date_fin ? " au " + esc(C.dateCourte(ctr.date_fin)) : "") + "</dd>" +
+    (lienClient ? '<a class="btn primaire petit bouton-client" href="' + lienClient + '">Voir tout le client : dossiers, mails, pièces</a>' : "") +
+    (ctr.numero ? '<dl class="info-liste"><dt>Numéro</dt><dd>' + (lienClient ? '<a href="' + lienClient + '">' + esc(ctr.numero) + "</a>" : esc(ctr.numero)) + "</dd>" + (ctr.immatriculation ? "<dt>Véhicule</dt><dd>" + esc(ctr.immatriculation) + "</dd>" : "") +
+      "<dt>Assuré</dt><dd>" + (lienClient ? '<a href="' + lienClient + '">' + esc(ctr.assure_ref) + "</a>" : esc(ctr.assure_ref)) + "</dd><dt>Effet</dt><dd>" + esc(C.dateCourte(ctr.date_effet)) + (ctr.date_fin ? " au " + esc(C.dateCourte(ctr.date_fin)) : "") + "</dd>" +
       "<dt>Garanties</dt><dd>" + ((ctr.garanties || []).map(function (g) {
         return esc(C.GARANTIES[g.code] || g.code) +
           '<span class="muet">' + (g.option ? ", option " + g.option : ", franchise " + eur(g.franchise)) +
@@ -1342,16 +1344,41 @@ function vueClient(ref) {
           '</td><td class="petit">' + esc((k.garanties || []).map(function (g) { return C.GARANTIES[g] || g; }).join(", ")) + '</td><td class="nb">' + esc(String(k.nb_dossiers)) + "</td></tr>";
       }).join("") + "</tbody></table></div></section>";
     h += '<section class="bloc"><div class="bloc-tete"><h2>Tous ses dossiers<span class="compte">' + dos.length + '</span></h2><span class="muet petit">Du plus récent au plus ancien, terminés compris</span></div><div class="tableau-wrap">' +
-      (dos.length ? '<table class="tableau"><thead><tr><th>Dossier</th><th>Type</th><th>Sinistre</th><th>Véhicule</th><th>Statut</th><th class="nb">Réglé</th></tr></thead><tbody>' +
+      (dos.length ? '<table class="tableau" id="tab-dossiers-client"><thead><tr><th>Dossier</th><th>Type</th><th>Sinistre</th><th>Véhicule</th><th>Statut</th><th>Pièces</th><th class="nb">Échanges</th><th class="nb">Réglé</th></tr></thead><tbody>' +
         dos.map(function (d) {
-          return '<tr data-n="' + esc(d.numero) + '" tabindex="0"><td><b>' + esc(d.numero) + "</b>" + (d.doublon_de ? '<div class="muet petit">doublon de ' + esc(d.doublon_de) + "</div>" : "") + "</td><td>" + esc(C.theme(d.theme)) +
-            "</td><td>" + esc(C.dateCourte(d.date_sinistre)) + "</td><td>" + esc(d.immatriculation || d.contrat || "") + "</td><td>" + C.statut(d.statut) + '</td><td class="nb">' + esc(eur(d.montant)) + "</td></tr>";
+          return '<tr data-n="' + esc(d.numero) + '" tabindex="0" title="Voir les échanges de ce dossier"><td><a href="#/dossier/' + encodeURIComponent(d.numero) + '"><b>' + esc(d.numero) + "</b></a>" + (d.doublon_de ? '<div class="muet petit">doublon de ' + esc(d.doublon_de) + "</div>" : "") + "</td><td>" + esc(C.theme(d.theme)) +
+            "</td><td>" + esc(C.dateCourte(d.date_sinistre)) + "</td><td>" + esc(d.immatriculation || d.contrat || "") + "</td><td>" + C.statut(d.statut) +
+            '</td><td class="petit">' + (d.pieces_attendues ? esc(d.pieces_recues + " / " + d.pieces_attendues) + (d.pieces_recues >= d.pieces_attendues ? ' <span class="muet">complètes</span>' : "") : '<span class="muet">aucune</span>') +
+            '</td><td class="nb">' + esc(String(d.nb_mails || 0)) + '</td><td class="nb">' + esc(eur(d.montant)) + "</td></tr>";
         }).join("") + "</tbody></table>" : '<div class="vide">Aucun dossier.</div>') + "</div></section>";
+    h += '<section class="bloc" id="bloc-echanges"><div class="bloc-tete"><h2>Tous les échanges</h2><div class="filtre-file" role="group" aria-label="Filtrer les échanges">' +
+      '<button type="button" data-sens="" aria-pressed="true">Tout</button><button type="button" data-sens="envoye" aria-pressed="false">Mails envoyés</button>' +
+      '<button type="button" data-sens="recu" aria-pressed="false">Mails reçus</button><button type="button" data-sens="piece" aria-pressed="false">Pièces reçues</button><button type="button" data-sens="note" aria-pressed="false">Notes</button></div></div>' +
+      '<div class="bloc-corps"><p class="muet petit" id="ech-filtre-dossier"></p><ul class="echanges" id="ech-liste"></ul></div></section>';
     $("vue").innerHTML = h;
-    var t = $("vue").querySelectorAll("table")[1];
+    var ech = c.echanges || [], filtre = { sens: "", numero: "" };
+    var DIR = { envoye: ["Envoyé", "info"], recu: ["Reçu", "ok"], piece: ["Pièce reçue", "ok"], note: ["Note", "neutre"] };
+    var AVEC = { assure: "l'assuré", garage: "le garage", expert: "l'expert", expert_medical: "le médecin expert", comptabilite: "la comptabilité", assureur_adverse: "l'assureur adverse", tiers: "le tiers", autre: "un tiers", enqueteur: "l'enquêteur" };
+    function dessinerEchanges() {
+      var l = ech.filter(function (e) { return (!filtre.sens || e.sens === filtre.sens) && (!filtre.numero || e.numero === filtre.numero); });
+      $("ech-filtre-dossier").innerHTML = filtre.numero ? "Dossier " + esc(filtre.numero) + ' · <a href="#/dossier/' + encodeURIComponent(filtre.numero) + '">ouvrir le dossier</a> · <button class="lien" id="ech-tous">voir tous les dossiers</button>' : "Cliquez sur un dossier ci-dessus pour ne voir que ses échanges.";
+      if ($("ech-tous")) $("ech-tous").onclick = function () { filtre.numero = ""; dessinerEchanges(); };
+      $("ech-liste").innerHTML = l.length ? l.slice(0, 150).map(function (e) {
+        var d = DIR[e.sens] || [e.sens, "neutre"];
+        var qui = e.sens === "envoye" ? "à " + (AVEC[e.avec] || e.avec) : e.sens === "recu" ? "de " + (AVEC[e.avec] || e.avec) : e.sens === "piece" ? "de " + (AVEC[e.avec] || e.avec) : (e.canal ? e.canal : "");
+        return '<li><span class="pastille-mail ' + d[1] + '">' + esc(d[0]) + '</span> <span class="muet petit">' + esc(C.heure(e.le)) + " · " + esc(qui) + ' · <a href="#/dossier/' + encodeURIComponent(e.numero) + '">' + esc(e.numero) + "</a></span>" +
+          '<div class="ech-objet">' + esc(e.objet || "") + "</div></li>";
+      }).join("") : '<li class="vide">Aucun échange pour ce filtre.</li>';
+    }
+    document.querySelectorAll("#bloc-echanges [data-sens]").forEach(function (b) {
+      b.onclick = function () { document.querySelectorAll("#bloc-echanges [data-sens]").forEach(function (x) { x.setAttribute("aria-pressed", String(x === b)); }); filtre.sens = b.dataset.sens; dessinerEchanges(); };
+    });
+    dessinerEchanges();
+    var t = $("tab-dossiers-client");
     if (t) {
-      t.addEventListener("click", function (e) { var tr = e.target.closest("tr[data-n]"); if (tr) ouvrirDossier(tr.dataset.n); });
-      t.addEventListener("keydown", function (e) { var tr = e.target.closest("tr[data-n]"); if (tr && e.key === "Enter") ouvrirDossier(tr.dataset.n); });
+      var choisir = function (tr) { filtre.numero = filtre.numero === tr.dataset.n ? "" : tr.dataset.n; t.querySelectorAll("tr[data-n]").forEach(function (x) { x.classList.toggle("choisi", x.dataset.n === filtre.numero); }); dessinerEchanges(); $("bloc-echanges").scrollIntoView({ behavior: "smooth", block: "start" }); };
+      t.addEventListener("click", function (e) { if (e.target.closest("a")) return; var tr = e.target.closest("tr[data-n]"); if (tr) choisir(tr); });
+      t.addEventListener("keydown", function (e) { var tr = e.target.closest("tr[data-n]"); if (tr && e.key === "Enter") choisir(tr); });
     }
   }).catch(erreurVue);
 }
@@ -1428,46 +1455,66 @@ function blocRecoursRecus(f) {
 var QUALITES = { inconnue: "À préciser", conducteur_adverse: "Conducteur de l'autre véhicule", passager_adverse: "Passager de l'autre véhicule", passager_assure: "Passager de notre assuré", pieton_cycliste: "Piéton ou cycliste" };
 var GRAVITES = { inconnue: "À préciser", legere: "Blessure légère", grave: "Blessure grave" };
 var ETAT_VT = { a_instruire: ["À instruire", "alerte"], en_cours: ["En cours", "attente"], gere_par_autre_assureur: ["Géré par un autre assureur", "info"], offre_definitive_faite: ["Offre définitive faite", "ok"], clos: ["Clos", "info"] };
+// Personne blessée dans un accident avec un autre véhicule : une phrase pour dire où on en est, une seule question ou action à la fois
+var QUI_PHRASE = { conducteur_adverse: "Le conducteur de l'autre véhicule", passager_adverse: "Un passager de l'autre véhicule", passager_assure: "Un passager de notre assuré", pieton_cycliste: "Un piéton ou un cycliste", inconnue: "Une personne" };
 function blocVictimes(f) {
   var l = f.victimes_tiers || [];
   if (f.branche === "corporel" || (f.theme !== "ACCIDENT_TIERS" && !l.length)) return "";
   if (f.efface_le && !l.length) return "";
-  var h = '<section class="bloc" id="bloc-vt"><div class="bloc-tete"><h2>Personne blessée' + (l.length ? '<span class="compte">' + l.length + "</span>" : "") + '</h2><span class="muet petit">Loi du 5 juillet 1985 : délais d\'offre</span></div><div class="bloc-corps pile">';
+  if (!l.length) {
+    // rien de signalé : un simple lien discret
+    return '<section class="bloc" id="bloc-vt"><div class="bloc-corps"><details><summary class="petit">Quelqu\'un a été blessé dans cet accident ?</summary><div class="pile" style="margin-top:10px">' +
+      '<div class="grille-2"><label class="champ">Qui<select class="saisie" id="vt-n-q">' + options(QUALITES, "inconnue") + '</select></label><label class="champ">Gravité<select class="saisie" id="vt-n-g">' + options(GRAVITES, "inconnue") + "</select></label></div>" +
+      '<div class="decision-actions"><button class="btn" data-vt="signaler">Signaler</button><span class="muet petit">Klerio suit les délais d\'offre de la loi Badinter et vous prévient avant chaque date.</span></div></div></details></div></section>';
+  }
+  var h = '<section class="bloc" id="bloc-vt"><div class="bloc-tete"><h2>Personne blessée' + (l.length > 1 ? '<span class="compte">' + l.length + "</span>" : "") + '</h2><span class="muet petit">Suivi des délais d\'offre (loi Badinter)</span></div><div class="bloc-corps pile">';
   l.forEach(function (v) {
-    var e = ETAT_VT[v.statut] || [v.statut, "info"], id = esc(v.id), suivi = v.statut === "a_instruire" || v.statut === "en_cours";
-    h += '<div class="recl"><div class="ligne-recl"><b>' + esc(QUALITES[v.qualite] || v.qualite) + '</b><span class="muet"> · ' + esc(GRAVITES[v.gravite] || v.gravite) + '</span> <span class="pastille-mail ' + e[1] + '">' + esc(e[0]) + "</span></div>" +
-      '<dl class="info-liste"><dt>Signalée le</dt><dd>' + esc(C.dateFr(v.signale_le)) + '<span class="muet"> · ' + esc(({ constat: "case « blessés » du constat", information_recue: "information reçue", gestionnaire: "saisie gestionnaire" })[v.source] || v.source) + "</span></dd>" +
-      (v.note ? "<dt>Note</dt><dd>" + esc(v.note) + "</dd>" : "") +
-      (v.assureur_gestionnaire ? "<dt>Géré par</dt><dd>" + esc(v.assureur_gestionnaire) + (v.motif ? '<span class="muet"> · ' + esc(v.motif) + "</span>" : "") + "</dd>" : "") +
-      (v.offre_provisionnelle_le ? "<dt>Offre provisionnelle</dt><dd>" + esc(C.dateFr(v.offre_provisionnelle_le)) + "</dd>" : "") +
-      (v.offre_definitive_le ? "<dt>Offre définitive</dt><dd>" + esc(C.dateFr(v.offre_definitive_le)) + "</dd>" : "") + "</dl>";
-    if ((v.echeances || []).length) {
-      h += '<ul class="delais">' + v.echeances.map(function (x) {
-        var etat = x.fait_le ? "ok" : x.reste_jours < 0 ? "alerte" : x.reste_jours <= 30 ? "attente" : "info";
-        return '<li><span class="pastille-mail ' + etat + '">' + (x.fait_le ? "Fait le " + esc(C.dateFr(x.fait_le)) : x.reste_jours < 0 ? "Dépassé de " + (-x.reste_jours) + " j" : "J-" + x.reste_jours) + "</span> " +
-          esc(x.libelle) + ' <span class="muet petit">avant le ' + esc(C.dateFr(x.limite)) + " · " + esc(x.texte) + "</span></li>";
-      }).join("") + "</ul>";
+    var id = esc(v.id), suivi = v.statut === "a_instruire" || v.statut === "en_cours";
+    var qui = QUI_PHRASE[v.qualite] || "Une personne", grav = v.gravite === "legere" ? ", légèrement blessé" : v.gravite === "grave" ? ", gravement blessé" : "";
+    var prochaine = (v.echeances || []).filter(function (x) { return !x.fait_le; })[0];
+    h += '<div class="recl">';
+    h += '<p class="vt-titre"><b>' + esc(qui + grav) + "</b>" + (v.source === "constat" ? '<span class="muet"> · case « blessés » cochée sur le constat</span>' : "") + "</p>";
+    if (v.statut === "gere_par_autre_assureur") {
+      h += '<p class="indice ok">Rien à faire : <b>' + esc(v.assureur_gestionnaire || "son assureur") + "</b> l'indemnise" + (v.motif && /IRCA/.test(v.motif) ? " (convention IRCA entre assureurs)" : "") +
+        ". S'il nous réclame un remboursement, la demande apparaîtra dans « Recours reçus ».</p>";
+    } else if (v.statut === "offre_definitive_faite") {
+      h += '<p class="indice ok">Offre définitive faite le ' + esc(C.dateFr(v.offre_definitive_le)) + " : suivi terminé.</p>";
+    } else if (v.statut === "clos") {
+      h += '<p class="muet">Suivi clos' + (v.motif ? " : " + esc(v.motif) : "") + ".</p>";
+    } else if (v.qualite === "inconnue" || v.gravite === "inconnue") {
+      // une seule question : qui, puis la gravité
+      h += '<p>Pour savoir qui doit l\'indemniser, Klerio a besoin d\'une précision' + (v.qualite === "inconnue" ? " : <b>qui est blessé ?</b>" : " : <b>quelle gravité ?</b>") + "</p>";
+      h += '<div class="choix-rapides">' + (v.qualite === "inconnue"
+        ? ["conducteur_adverse", "passager_adverse", "passager_assure", "pieton_cycliste"].map(function (q) { return '<button class="btn" data-vt="preciser" data-id="' + id + '" data-q="' + q + '">' + esc(QUALITES[q]) + "</button>"; }).join("")
+        : '<button class="btn" data-vt="preciser" data-id="' + id + '" data-g="legere">Blessure légère</button><button class="btn" data-vt="preciser" data-id="' + id + '" data-g="grave">Blessure grave</button>') + "</div>";
+    } else {
+      h += "<p>" + (prochaine ? "Nous devons faire une <b>" + esc(prochaine.libelle.charAt(0).toLowerCase() + prochaine.libelle.slice(1)) + "</b> avant le <b>" + esc(C.dateFr(prochaine.limite)) + "</b> " +
+          '<span class="pastille-mail ' + (prochaine.reste_jours < 0 ? "alerte" : prochaine.reste_jours <= 30 ? "attente" : "info") + '">' + (prochaine.reste_jours < 0 ? "dépassé de " + (-prochaine.reste_jours) + " j" : "J-" + prochaine.reste_jours) + "</span>" +
+          '<br><span class="muet petit">' + esc(prochaine.texte) + ". Klerio vous relance avant l'échéance.</span>" : "Aucune échéance en cours.") + "</p>";
+      var etape = v.offre_provisionnelle_le || v.consolidation_connue_le ? "offre_definitive" : "offre_provisionnelle";
+      h += '<div class="grille-3"><label class="champ">Date<input class="saisie" id="vt-date-' + id + '" type="date"></label><div class="decision-actions" style="align-self:end">' +
+        '<button class="btn primaire" data-vt="' + etape + '" data-id="' + id + '">' + (etape === "offre_definitive" ? "Offre définitive envoyée ce jour-là" : "Offre envoyée ce jour-là") + "</button></div><div></div></div>";
     }
-    if (v.irca_probable && suivi) h += '<p class="muet petit">Blessure légère d\'une personne de l\'autre véhicule : en général, c\'est son propre assureur qui l\'indemnise (convention IRCA) puis exerce un recours contre nous. Si c\'est le cas, indiquez-le ci-dessous.</p>';
     if (suivi) {
-      h += '<div class="grille-3"><label class="champ">Qui<select class="saisie" id="vt-q-' + id + '">' + options(QUALITES, v.qualite) + '</select></label>' +
+      h += '<details class="autres"><summary class="petit">Autres actions</summary><div class="pile" style="margin-top:10px">' +
+        '<div class="grille-3"><label class="champ">Qui<select class="saisie" id="vt-q-' + id + '">' + options(QUALITES, v.qualite) + '</select></label>' +
         '<label class="champ">Gravité<select class="saisie" id="vt-g-' + id + '">' + options(GRAVITES, v.gravite) + '</select></label>' +
         '<label class="champ">Demande d\'indemnisation reçue le<input class="saisie" id="vt-dem-' + id + '" type="date" value="' + esc(v.date_demande || "") + '"></label></div>' +
         '<label class="champ">Note <span class="aide">300 caractères, aucun détail médical</span><input class="saisie" id="vt-note-' + id + '" maxlength="300" value="' + esc(v.note || "") + '"></label>' +
         '<div class="decision-actions"><button class="btn" data-vt="preciser" data-id="' + id + '">Enregistrer</button></div>' +
-        '<div class="grille-3"><label class="champ">Date<input class="saisie" id="vt-date-' + id + '" type="date"></label><div></div><div></div></div>' +
-        '<div class="decision-actions"><button class="btn petit" data-vt="consolidation" data-id="' + id + '">Consolidation apprise ce jour-là</button>' +
-        '<button class="btn petit" data-vt="offre_provisionnelle" data-id="' + id + '">Offre provisionnelle envoyée</button>' +
-        '<button class="btn petit" data-vt="offre_definitive" data-id="' + id + '">Offre définitive envoyée</button></div>' +
+        '<div class="grille-3"><label class="champ">Date<input class="saisie" id="vt-date2-' + id + '" type="date"></label><div></div><div></div></div>' +
+        '<div class="decision-actions"><button class="btn petit" data-vt="consolidation" data-id="' + id + '" data-d="2">Consolidation apprise ce jour-là</button>' +
+        '<button class="btn petit" data-vt="offre_provisionnelle" data-id="' + id + '" data-d="2">Offre provisionnelle envoyée</button>' +
+        '<button class="btn petit" data-vt="offre_definitive" data-id="' + id + '" data-d="2">Offre définitive envoyée</button></div>' +
         '<div class="grille-2"><label class="champ">Assureur qui gère la victime<input class="saisie" id="vt-ass-' + id + '"></label><label class="champ">Motif<input class="saisie" id="vt-motif-' + id + '"></label></div>' +
-        '<div class="decision-actions"><button class="btn petit" data-vt="confier" data-id="' + id + '">Géré par cet assureur</button><button class="btn petit discret" data-vt="clore" data-id="' + id + '">Clore le suivi</button></div>';
+        '<div class="decision-actions"><button class="btn petit" data-vt="confier" data-id="' + id + '">Géré par cet assureur</button><button class="btn petit discret" data-vt="clore" data-id="' + id + '">Clore le suivi</button></div></div></details>';
     }
     h += "</div>";
   });
   if (!f.efface_le && !l.some(function (v) { return v.statut === "a_instruire" || v.statut === "en_cours"; })) {
-    h += '<details><summary class="petit">Signaler une personne blessée</summary><div class="pile" style="margin-top:10px">' +
+    h += '<details><summary class="petit">Signaler une autre personne blessée</summary><div class="pile" style="margin-top:10px">' +
       '<div class="grille-2"><label class="champ">Qui<select class="saisie" id="vt-n-q">' + options(QUALITES, "inconnue") + '</select></label><label class="champ">Gravité<select class="saisie" id="vt-n-g">' + options(GRAVITES, "inconnue") + "</select></label></div>" +
-      '<div class="decision-actions"><button class="btn" data-vt="signaler">Signaler</button><span class="muet petit">Klerio calcule les échéances d\'offre et relance avant chaque date. Il ne chiffre rien.</span></div></div></details>';
+      '<div class="decision-actions"><button class="btn" data-vt="signaler">Signaler</button></div></div></details>';
   }
   return h + "</div></section>";
 }
@@ -1503,8 +1550,9 @@ function brancherRecoursVictimes(f) {
       var e = b.dataset.vt, id = b.dataset.id;
       if (e === "signaler") return envoyer(b, { action: "victime", qualite: val("vt-n-q"), gravite: val("vt-n-g") }, "Personne blessée signalée");
       var c = { action: "victime", id: id, etape: e };
-      if (e === "preciser") { c.qualite = val("vt-q-" + id); c.gravite = val("vt-g-" + id); c.date_demande = val("vt-dem-" + id) || undefined; c.note = val("vt-note-" + id) || undefined; }
-      if (["consolidation", "offre_provisionnelle", "offre_definitive"].indexOf(e) >= 0) { c.date = val("vt-date-" + id); if (!c.date) return C.toast("Indiquez la date dans le champ Date.", true); }
+      if (e === "preciser" && (b.dataset.q || b.dataset.g)) { if (b.dataset.q) c.qualite = b.dataset.q; if (b.dataset.g) c.gravite = b.dataset.g; }
+      else if (e === "preciser") { c.qualite = val("vt-q-" + id); c.gravite = val("vt-g-" + id); c.date_demande = val("vt-dem-" + id) || undefined; c.note = val("vt-note-" + id) || undefined; }
+      if (["consolidation", "offre_provisionnelle", "offre_definitive"].indexOf(e) >= 0) { c.date = val((b.dataset.d ? "vt-date2-" : "vt-date-") + id); if (!c.date) return C.toast("Indiquez la date.", true); }
       if (e === "confier") { c.assureur = val("vt-ass-" + id); c.motif = val("vt-motif-" + id) || undefined; if (!c.assureur) return C.toast("Indiquez l'assureur qui gère la victime.", true); }
       if (e === "clore") { c.motif = val("vt-motif-" + id); if (c.motif.length < 5) return C.toast("Indiquez le motif dans le champ Motif.", true); }
       envoyer(b, c, ({ preciser: "Enregistré", consolidation: "Consolidation enregistrée", offre_provisionnelle: "Offre provisionnelle enregistrée", offre_definitive: "Offre définitive enregistrée", confier: "Suivi confié", clore: "Suivi clos" })[e]);
@@ -1735,6 +1783,20 @@ function carteAction(f) {
         (p.code === "VIGILANCE_VOL" ? '<button class="btn discret" id="d-enquete">Confier à un enquêteur (facultatif)</button>' : "") + "</div>" +
       (loi ? '<p class="loi">' + esc(loi) + "</p>" : "") + '</div><div class="tampon" id="tampon" aria-hidden="true"></div></section>';
   }
+  if (f.statut === "hors_perimetre" && f.motif === "arrete_catnat_absent") {
+    // Klerio cherche lui-même l'arrêté chaque jour sur les sources officielles : rien à faire, sauf si vous l'avez déjà
+    var cr = (f.details || {}).catnat_recherche || null;
+    return '<section class="decision"><div class="decision-entete">En attente de l\'arrêté</div><div class="decision-corps"><h2>Klerio attend la reconnaissance de catastrophe naturelle</h2>' +
+      '<p class="explication">Une catastrophe naturelle n\'est indemnisée qu\'après la publication au Journal officiel d\'un arrêté qui vise la commune. Klerio le cherche lui-même chaque matin sur les sources officielles (Légifrance, Géorisques, préfecture) et reprend le dossier dès qu\'il le trouve. L\'assuré a été prévenu. Rien à faire de votre côté.</p>' +
+      (cr ? '<p class="indice' + (cr.trouve ? (cr.applique ? " ok" : "") : "") + '">Dernière recherche ' + esc(C.depuis(cr.le)) + " : " +
+        (cr.trouve ? (cr.reconnue === false ? "un arrêté a été trouvé mais il ne reconnaît pas la commune" : esc(cr.arrete || "arrêté trouvé") + (cr.publication_jo ? ", publié le " + esc(C.dateFr(cr.publication_jo)) : "") + (cr.applique ? ", appliqué." : ", à confirmer.")) + (cr.url ? ' <a href="' + esc(cr.url) + '" target="_blank" rel="noopener">source</a>' : "")
+          : "pas encore d'arrêté publié pour cette commune et cette date.") + "</p>" : '<p class="muet petit">Première recherche en cours…</p>') +
+      '<div class="decision-actions"><button class="btn primaire" id="cn-chercher">Chercher maintenant</button></div>' +
+      '<details style="margin-top:12px"><summary class="petit">Vous avez l\'arrêté ? Saisissez-le</summary><div class="pile" style="margin-top:10px">' +
+      '<div class="grille-2"><label class="champ">Arrêté<input class="saisie" id="r-com" placeholder="Ex. arrêté du 12 juin 2026"></label>' +
+      '<label class="champ">Publié au Journal officiel le<input class="saisie" id="r-pub" type="date"></label></div><input type="hidden" id="r-theme" value="CATASTROPHE_NATURELLE">' +
+      '<div class="decision-actions"><button class="btn" id="r-prendre">Reprendre dans le circuit</button><button class="btn discret" id="r-classer">Classer le dossier</button></div></div></details></div></section>';
+  }
   if (f.statut === "hors_perimetre") {
     return '<section class="decision"><div class="decision-entete">À reprendre</div><div class="decision-corps"><h2>' + (f.motif === "reouverture" ? "Dossier rouvert" : "Ce dossier sort du circuit automatique") + '</h2><p class="explication">' + esc(C.motif(f.motif)) +
       ". Choisissez le type de sinistre pour le relancer dans le circuit, ou classez-le.</p>" +
@@ -1878,7 +1940,7 @@ var VALEURS_DOC = [["montant_ttc", "Montant TTC", "eur"], ["montant_ht", "Montan
   ["taux_horaire", "Taux horaire HT", "eur"], ["heures", "Main-d'œuvre", "h"], ["montant_pieces_ht", "Pièces HT", "eur"], ["vei", "VEI", "bool"],
   ["reglement_direct_autorise", "Règlement direct", "bool"], ["delegation_paiement", "Délégation jointe", "bool"], ["immatriculation", "Immatriculation", "txt"],
   ["aipp_pct", "AIPP", "pct"], ["date_consolidation", "Consolidation", "date"], ["dependance_totale", "Dépendance totale", "bool"]];
-var ETAT_DOC = { applique: ["Appliqué au dossier", "ok"], a_verifier: ["À vérifier", "vous"], ecarte: ["Écarté", "neutre"], aide_saisie: ["Aide à la saisie", "neutre"] };
+var ETAT_DOC = { applique: ["Appliqué au dossier", "ok"], a_verifier: ["À vérifier", "vous"], ecarte: ["Écarté", "neutre"], aide_saisie: ["Aide à la saisie", "neutre"], range: ["Rangé au dossier", "neutre"] };
 function valeurDoc(v, t) {
   if (v === undefined || v === null || v === "") return null;
   if (t === "eur") return eur(v); if (t === "pct") return C.nombre(v, 1) + " %"; if (t === "h") return C.nombre(v, 1) + " h";
@@ -2133,6 +2195,13 @@ function brancherFiche(f) {
   if (oui) oui.addEventListener("click", function () { decider("valide", oui); });
   if (non) non.addEventListener("click", function () { decider("rejete", non); });
 
+  var cn = $("cn-chercher");
+  if (cn) cn.addEventListener("click", function () {
+    C.occupe(cn, true, "Recherche sur internet");
+    api("catnat-rechercher", { body: { numero: f.numero } })
+      .then(function (r) { var b = (r.bilan || [])[0] || {}; C.toast(b.trouve ? "Arrêté trouvé" : "Pas encore d'arrêté publié : Klerio recherchera chaque matin"); rafraichirCompteur(); afficherDossier(r.dossier); })
+      .catch(function (x) { C.occupe(cn, false); C.toast(x.message, true); });
+  });
   var pr = $("r-prendre"), cl = $("r-classer"), ra = $("r-reanalyser");
   if (pr) pr.addEventListener("click", function () {
     C.occupe(pr, true, "Reprise");

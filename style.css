@@ -157,3 +157,18 @@ ol.raisonnement li.ok .pastille-etape { background: var(--vert-pale); color: var
 ol.raisonnement li.att .pastille-etape { background: var(--jaune-pale); color: var(--jaune-texte); }
 ol.raisonnement li.ko .pastille-etape { background: var(--rouge-pale); color: var(--rouge-texte); }
 ol.raisonnement li.info .pastille-etape { background: var(--bleu-pale); color: var(--bleu); }
+
+/* Personne blessée : une question à la fois */
+.vt-titre { margin: 0 0 6px; font-size: 15px; }
+.choix-rapides { display: flex; flex-wrap: wrap; gap: 8px; margin: 6px 0 4px; }
+details.autres { margin-top: 10px; }
+details.autres > summary { cursor: pointer; color: var(--texte-2, inherit); }
+
+/* Fiche client : tous les échanges */
+.bouton-client { display: inline-block; margin-bottom: 12px; }
+ul.echanges { list-style: none; margin: 0; padding: 0; }
+ul.echanges li { padding: 10px 0; border-bottom: 1px solid var(--ligne, rgba(127,127,127,.2)); }
+ul.echanges li:last-child { border-bottom: 0; }
+.ech-objet { margin-top: 3px; }
+tr.choisi td { background: var(--accent-doux, rgba(31,95,214,.08)); }
+button.lien { background: none; border: 0; padding: 0; color: var(--accent, #1f5fd6); cursor: pointer; font: inherit; text-decoration: underline; }
