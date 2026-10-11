@@ -26,6 +26,7 @@
     contrat_introuvable: "Aucun contrat ne correspond au numéro déclaré",
     contrat_a_verifier: "Déclaré par mail : le contrat ou le véhicule cité ne correspond pas exactement, à vérifier",
     expediteur_inconnu: "Déclaré par mail par une adresse inconnue du contrat : identité à vérifier",
+    fraude_suspectee: "Suspicion de fraude : identité non confirmée ou contestée par le titulaire",
     theme_non_gere: "Type de sinistre non couvert par le circuit",
     theme_hors_perimetre: "Sinistre hors du circuit automatique",
     tiers_implique: "Un tiers est impliqué : responsabilité à établir",
@@ -86,7 +87,7 @@
     prise_en_charge_garage: "Ordre de réparation", demande_pieces: "Demande de pièces", relance: "Relance",
     avis_reglement: "Avis de règlement", information: "Information", classement: "Classement", bon_a_payer: "Bon à payer"
   };
-  var ROLES = { assure: "Assuré", expert: "Expert", garage: "Réparateur", expert_auto: "Expert automobile", expert_medical: "Médecin expert", comptable: "Service comptable", comptabilite: "Service comptable", enqueteur: "Enquêteur" };
+  var ROLES = { assure: "Assuré", expert: "Expert", garage: "Réparateur", expert_auto: "Expert automobile", expert_medical: "Médecin expert", comptable: "Service comptable", comptabilite: "Service comptable", enqueteur: "Enquêteur", declarant: "Déclarant" };
   var PIECES = {
     FACTURE: "Facture", DELEGATION_PAIEMENT: "Délégation de paiement", RAPPORT_EXPERTISE: "Rapport d'expertise",
     DEPOT_PLAINTE: "Récépissé de plainte", CMI: "Certificat médical initial", FICHE_RENSEIGNEMENTS: "Fiche de renseignements",

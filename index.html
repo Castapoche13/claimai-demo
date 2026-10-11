@@ -347,6 +347,8 @@ a.tuile:hover { border-color: var(--trait-fort); text-decoration: none; }
 .onglets a { padding: 9px 12px; font-size: 13.5px; font-weight: 500; color: var(--gris); border-bottom: 2px solid transparent; margin-bottom: -1px; white-space: nowrap; }
 .onglets a:hover { color: var(--encre); text-decoration: none; }
 .onglets a[aria-current="page"] { color: var(--encre); border-bottom-color: var(--encre); }
+.fiche-onglets { margin-top: 28px; }
+.fiche-onglets .onglets { margin-bottom: 14px; }
 
 /* ---------- Vérification du raccordement ---------- */
 .verif-tete { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px 20px; align-items: center; padding: 16px; border-bottom: 1px solid var(--trait); }
@@ -960,6 +962,25 @@ function vueDossier(numero) {
   api("dossier?numero=" + encodeURIComponent(numero)).then(afficherDossier).catch(erreurVue);
 }
 
+var ONGLET_FICHE = "echanges";
+function ongletsFiche(f, l) {
+  l = l.filter(function (o) { return o[2]; });
+  if (!l.length) return "";
+  if (!l.some(function (o) { return o[0] === ONGLET_FICHE; })) ONGLET_FICHE = l[0][0];
+  return '<div class="fiche-onglets"><nav class="onglets" role="tablist" aria-label="Historique du dossier">' + l.map(function (o) {
+      return '<a href="#" role="tab" data-onglet="' + o[0] + '" aria-selected="' + (o[0] === ONGLET_FICHE) + '"' + (o[0] === ONGLET_FICHE ? ' aria-current="page"' : "") + ">" + esc(o[1]) + "</a>";
+    }).join("") + "</nav>" +
+    l.map(function (o) { return '<div class="panneau-onglet" role="tabpanel" data-panneau="' + o[0] + '"' + (o[0] === ONGLET_FICHE ? "" : " hidden") + ">" + o[2] + "</div>"; }).join("") + "</div>";
+}
+function brancherOnglets() {
+  document.querySelectorAll(".fiche-onglets [data-onglet]").forEach(function (a) {
+    a.addEventListener("click", function (e) {
+      e.preventDefault(); ONGLET_FICHE = a.dataset.onglet;
+      document.querySelectorAll(".fiche-onglets [data-onglet]").forEach(function (x) { var on = x === a; x.setAttribute("aria-selected", on); if (on) x.setAttribute("aria-current", "page"); else x.removeAttribute("aria-current"); });
+      document.querySelectorAll(".fiche-onglets [data-panneau]").forEach(function (p) { p.hidden = p.dataset.panneau !== ONGLET_FICHE; });
+    });
+  });
+}
 function afficherDossier(f) {
   var ctr = f.contrat || {}, d = f.details || {}, an = f.analyse && f.analyse.detail || {};
   var h = '<a class="retour" href="#/file"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M8.5 3L4.5 7l4 4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>Retour à la file</a>';
@@ -970,26 +991,31 @@ function afficherDossier(f) {
   h += barreTitulaire(f);
 
   h += '<div class="fiche-grille"><div>';
+  // en haut : ce qu'il faut faire et où en est le dossier ; en dessous, tout l'historique rangé par onglets
+  var reclOuverte = (f.reclamations || []).some(function (r) { return r.statut === "ouverte"; });
   h += carteAction(f);
   h += blocExplication(f);
   h += blocCloture(f);
   h += blocCatnat(f);
   h += blocDelais(f);
-  h += blocReclamations(f);
+  if (reclOuverte) h += blocReclamations(f);
   h += blocResponsabilite(f);
-  h += blocGestion(f);
-  h += blocRecoursRecus(f);
-  h += blocVictimes(f);
+  // recours reçus et blessés : en haut seulement s'il y en a, sinon rangés dans « Agir »
+  var aRR = (f.recours_recus || []).length > 0, aVT = (f.victimes_tiers || []).length > 0;
+  if (aRR) h += blocRecoursRecus(f);
+  if (aVT) h += blocVictimes(f);
+  h += blocIdentiteFraude(f);
   h += blocVigilance(f);
   h += blocPaiement(f);
   h += blocRecours(f);
   h += blocVehicule(f);
-  h += blocSuivi(f);
-  h += blocAnalyse(f, an, d);
-  h += blocDocuments(f);
-  h += blocExpertises(f);
-  h += blocCourriers(f);
-  h += blocJournal(f);
+  var nCour = (f.courriers || []).length, nNotes = (f.notes || []).length, nDocs = (f.documents_lus || []).length + (f.expertises || []).length;
+  h += ongletsFiche(f, [
+    ["echanges", "Échanges" + (nCour + nNotes ? " (" + (nCour + nNotes) + ")" : ""), blocSuivi(f) + blocCourriers(f)],
+    ["documents", "Documents" + (nDocs ? " (" + nDocs + ")" : ""), blocDocuments(f) + blocExpertises(f)],
+    ["agir", "Agir", blocGestion(f) + (aRR ? "" : blocRecoursRecus(f)) + (aVT ? "" : blocVictimes(f)) + (reclOuverte ? "" : blocReclamations(f))],
+    ["ia", "Lecture IA", blocAnalyse(f, an, d)],
+    ["journal", "Journal", blocJournal(f)]]);
   h += "</div><aside>";
   h += '<section class="bloc"><div class="bloc-tete"><h3>Déclaration</h3></div><div class="bloc-corps pile">' +
     '<p class="recit">' + esc(f.recit) + "</p>" +
@@ -1012,6 +1038,7 @@ function afficherDossier(f) {
   h += blocPieces(f);
   h += "</aside></div>";
   $("vue").innerHTML = h;
+  brancherOnglets();
   brancherFiche(f);
 }
 
@@ -1050,6 +1077,29 @@ function carteResponsabilite(f, v) {
 }
 var CLES_Q = { avec_moi: "sur l'assuré", domicile: "au domicile", dans_vehicule: "dans le véhicule", volees: "volées aussi" };
 var STAT_Q = { garage_ferme: "garage fermé", parking_prive: "parking privé", voie_publique: "voie publique", autre: "autre lieu" };
+// Identité du déclarant et points de vigilance : jamais un refus, seulement un paiement validé par un humain au-delà du seuil
+var ID_ETAT = { en_cours: ["Vérification en cours", "attente"], verifiee_questions: ["Vérifiée par questions", "ok"], confirmee_titulaire: ["Confirmée par le titulaire", "ok"],
+  echec: ["Échec des questions", "alerte"], contestee: ["Contestée par le titulaire", "alerte"] };
+function blocIdentiteFraude(f) {
+  var id = f.identite, sf = f.signaux_fraude || {}, l = sf.signaux || [];
+  if (!id && !l.length) return "";
+  var haut = sf.niveau === "eleve";
+  var h = '<section class="bloc" id="bloc-fraude"><div class="bloc-tete"><h2>Points de vigilance</h2><span class="pastille-mail ' + (haut ? "alerte" : l.length ? "info" : "ok") + '">' +
+    esc(haut ? "Paiement validé par un humain" : l.length ? l.length + " signal" + (l.length > 1 ? "s" : "") + " mineur" + (l.length > 1 ? "s" : "") : "Rien à signaler") + '</span></div><div class="bloc-corps pile">';
+  if (id) {
+    var e = ID_ETAT[id.statut] || [id.statut, "info"];
+    h += '<p><b>Identité du déclarant</b> <span class="pastille-mail ' + e[1] + '">' + esc(e[0]) + "</span><br><span class=\"muet petit\">" +
+      ({ en_cours: "La déclaration vient de " + esc(id.declarant || "une adresse inconnue") + ". Klerio a demandé au titulaire de confirmer d'un clic, et au déclarant de répondre à des questions sur le contrat. Sans réponse sous 5 jours, le dossier vous revient.",
+         verifiee_questions: "Le déclarant a répondu juste aux questions. Le titulaire peut encore contester ; un paiement à l'assuré reste validé par un humain tant qu'il n'a pas confirmé.",
+         confirmee_titulaire: "Le titulaire a confirmé " + (id.titulaire === "proche" ? "qu'un proche a déclaré pour lui." : "être l'auteur de la déclaration."),
+         echec: "Deux réponses fausses : dossier suspendu. Contactez le titulaire sur ses coordonnées du contrat avant toute suite.",
+         contestee: "Le titulaire dit ne pas être au courant : dossier suspendu. Vérifiez avec lui avant toute suite, et envisagez un dépôt de plainte pour usurpation." })[id.statut] + "</span></p>";
+  }
+  if (l.length) h += '<ul class="liste-simple">' + l.map(function (x) { return "<li>" + esc(x.libelle) + "</li>"; }).join("") + "</ul>";
+  h += '<p class="muet petit">Ces signaux ne prouvent rien : la fraude suppose une intention, que seul un humain peut établir. ' +
+    (haut ? "Au-delà du seuil fixé par la compagnie, Klerio ne paie jamais seul : le règlement attend votre validation." : "En dessous du seuil, le dossier suit son cours normalement.") + "</p>";
+  return h + "</div></section>";
+}
 function blocVigilance(f) {
   var v = f.vigilance;
   if (!v) return "";
@@ -1164,7 +1214,7 @@ function brancherGestion(f) {
     if (val("g-motif-resp").length < 10) return C.toast("Expliquez pourquoi la responsabilité change.", true);
     envoyer(b, { action: "responsabilite", pct: Number(val("g-pct")), motif: val("g-motif-resp") }, "Responsabilité corrigée, assuré prévenu");
   };
-  if ((b = $("g-ouvrir-courrier"))) b.onclick = function () { var d = $("g-courrier"); if (d) { d.open = true; d.scrollIntoView({ behavior: "smooth", block: "center" }); } };
+  if ((b = $("g-ouvrir-courrier"))) b.onclick = function () { var o = document.querySelector('[data-onglet="agir"]'); if (o) o.click(); var d = $("g-courrier"); if (d) { d.open = true; d.scrollIntoView({ behavior: "smooth", block: "center" }); } };
   if ((b = $("g-ouvrir-reg"))) b.onclick = function () { $("g-reg").hidden = !$("g-reg").hidden; };
   if ((b = $("g-missionner"))) b.onclick = function () { envoyer(b, { action: "missionner" }, "Expert et garage missionnés"); };
   if ((b = $("g-reg-ok"))) b.onclick = function () {
@@ -1358,7 +1408,7 @@ function vueClient(ref) {
     $("vue").innerHTML = h;
     var ech = c.echanges || [], filtre = { sens: "", numero: "" };
     var DIR = { envoye: ["Envoyé", "info"], recu: ["Reçu", "ok"], piece: ["Pièce reçue", "ok"], note: ["Note", "neutre"] };
-    var AVEC = { assure: "l'assuré", garage: "le garage", expert: "l'expert", expert_medical: "le médecin expert", comptabilite: "la comptabilité", assureur_adverse: "l'assureur adverse", tiers: "le tiers", autre: "un tiers", enqueteur: "l'enquêteur" };
+    var AVEC = { assure: "l'assuré", garage: "le garage", expert: "l'expert", expert_medical: "le médecin expert", comptabilite: "la comptabilité", assureur_adverse: "l'assureur adverse", tiers: "le tiers", autre: "un tiers", enqueteur: "l'enquêteur", declarant: "le déclarant" };
     function dessinerEchanges() {
       var l = ech.filter(function (e) { return (!filtre.sens || e.sens === filtre.sens) && (!filtre.numero || e.numero === filtre.numero); });
       $("ech-filtre-dossier").innerHTML = filtre.numero ? "Dossier " + esc(filtre.numero) + ' · <a href="#/dossier/' + encodeURIComponent(filtre.numero) + '">ouvrir le dossier</a> · <button class="lien" id="ech-tous">voir tous les dossiers</button>' : "Cliquez sur un dossier ci-dessus pour ne voir que ses échanges.";
@@ -1859,10 +1909,10 @@ function blocSuivi(f) {
   var h = '<section class="bloc" id="suivi"><div class="bloc-tete"><h2>Informations reçues' + (notes.length ? '<span class="compte">' + notes.length + "</span>" : "") +
     '</h2><span class="muet petit">Appel, mail, courrier ou document reçu hors de Klerio</span></div><div class="bloc-corps pile">';
   if (f.efface_le) return h + '<p class="muet">Données effacées chez Klerio : notez les nouvelles informations dans votre outil.</p></div></section>';
-  h += '<form id="form-note" class="pile" novalidate><div class="grille-2"><label class="champ">Reçu par<select class="saisie" id="n-canal">' + options(CANAUX, "telephone") + "</select></label>" +
+  h += '<details id="d-note"' + (notes.length ? "" : " open") + '><summary class="petit">Noter un appel, un mail ou un courrier reçu</summary><form id="form-note" class="pile" novalidate style="margin-top:10px"><div class="grille-2"><label class="champ">Reçu par<select class="saisie" id="n-canal">' + options(CANAUX, "telephone") + "</select></label>" +
     '<label class="champ">De la part de<select class="saisie" id="n-qui">' + options(INTERLOCUTEURS, "assure") + "</select></label></div>" +
     '<label class="champ">Ce que la personne a dit ou écrit<textarea class="saisie" id="n-texte" rows="3" maxlength="8000" placeholder="Ex. : l\'assuré a déposé plainte hier et enverra le récépissé par mail."></textarea></label>' +
-    '<div class="decision-actions"><button class="btn primaire" id="n-ok">Enregistrer et analyser</button><span class="muet petit">Klerio propose les suites ; rien ne change sans votre clic.</span></div></form>';
+    '<div class="decision-actions"><button class="btn primaire" id="n-ok">Enregistrer et analyser</button><span class="muet petit">Klerio propose les suites ; rien ne change sans votre clic.</span></div></form></details>';
   h += '<label class="depot-fiche" id="depot-fiche"><input type="file" id="depot-fichier" accept="application/pdf,image/jpeg,image/png,image/webp">' +
     "<b>Déposer un document reçu</b> (rapport, facture, photo, PDF jusqu'à 8 Mo) : Klerio le lit et l'applique si tout concorde." +
     (f.theme === "GARANTIE_ACCIDENT" ? "<br>Dossier corporel : le document est lu puis jamais conservé." : "") + "</label>";

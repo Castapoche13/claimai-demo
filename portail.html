@@ -253,8 +253,17 @@ function blocQuestionnaireVol() {
     '<label class="champ">Autre précision <span class="aide">facultatif</span><textarea class="saisie" id="qv-com" rows="2" maxlength="1000"></textarea></label>' +
     '<div class="envoyer"><button class="btn primaire" id="b-qv" type="submit">Envoyer mes réponses</button><span class="muet petit">Klerio vérifie ensuite votre dossier, sans délai supplémentaire.</span></div></form></div>';
 }
+// Déclaration faite depuis une autre adresse que celle du contrat : le titulaire confirme d'un clic
+function blocConfirmationIdentite() {
+  return '<div class="carte"><form class="carte-in" id="form-id" novalidate><h2>Êtes-vous à l\'origine de cette déclaration ?</h2>' +
+    '<p class="intro">Elle nous a été envoyée depuis une adresse e-mail qui n\'est pas celle de votre contrat. Rien ne sera engagé sans votre réponse ou une vérification.</p><div class="choix">' +
+    '<label class="option"><input type="radio" name="idt" value="moi"><b>Oui, c\'est moi</b><p>J\'ai envoyé cette déclaration depuis une autre adresse.</p></label>' +
+    '<label class="option"><input type="radio" name="idt" value="proche"><b>Oui, un proche l\'a faite pour moi</b><p>Je suis au courant et je la confirme.</p></label>' +
+    '<label class="option"><input type="radio" name="idt" value="inconnu"><b>Non, je ne suis pas au courant</b><p>La déclaration est bloquée tout de suite et un gestionnaire vous contacte.</p></label></div>' +
+    '<div class="envoyer"><button class="btn primaire" id="b-idt" type="submit">Envoyer ma réponse</button></div></form></div>';
+}
 function blocsAssure(c) {
-  var h = c.questionnaire_vol ? blocQuestionnaireVol() : "", v = c.vei, vr = c.vol_retrouve, g = c.choix_garage;
+  var h = (c.confirmation_identite ? blocConfirmationIdentite() : "") + (c.questionnaire_vol ? blocQuestionnaireVol() : ""), v = c.vei, vr = c.vol_retrouve, g = c.choix_garage;
   if (v && !v.choix) {
     h += '<div class="carte"><form class="carte-in" id="form-vei" novalidate><h2>Votre véhicule est économiquement irréparable</h2>' +
       '<p class="intro">Les réparations, estimées à ' + esc(eur(v.reparations_ttc)) + ", dépassent la valeur de remplacement de votre véhicule, fixée par l'expert à " + esc(eur(v.vrade_ttc)) +
@@ -302,6 +311,13 @@ function blocsAssure(c) {
   return h;
 }
 function brancherAssure() {
+  var fi = $("form-id");
+  if (fi) fi.addEventListener("submit", function (e) {
+    e.preventDefault(); var x = document.querySelector('input[name="idt"]:checked');
+    if (!x) return C.toast("Choisissez une réponse.", true);
+    if (x.value === "inconnu" && !confirm("Confirmer que vous n'êtes pas au courant de cette déclaration ? Elle sera bloquée.")) return;
+    envoyerChoix($("b-idt"), { confirmation_identite: x.value }, x.value === "inconnu" ? "Merci : la déclaration est bloquée, un gestionnaire vous contacte" : "Merci, votre confirmation est enregistrée");
+  });
   var fq = $("form-qv");
   if (fq) {
     var majEff = function () { var x = document.querySelector('input[name="qv-st"]:checked'); $("qv-eff-l").hidden = !x || x.value !== "garage_ferme"; };
@@ -350,10 +366,39 @@ function brancherAssure() {
   }
 }
 
+// Personne qui a déclaré depuis une adresse inconnue : quelques questions de contrôle, aucune donnée du dossier n'est affichée
+function afficherDeclarant(c) {
+  if (c.identite_statut !== "en_cours") {
+    var ok = c.identite_statut === "verifiee_questions" || c.identite_statut === "confirmee_titulaire";
+    return etat(ok ? ICONE_OK : ICONE_ATT, ok ? "" : "attente", ok ? "Vérification terminée" : "Vérification en cours",
+      ok ? "Merci, la déclaration " + esc(c.numero) + " suit son cours. Les prochains messages seront envoyés au titulaire du contrat." : "Un gestionnaire reprend la déclaration avec le titulaire du contrat.");
+  }
+  var ENTREE = { date: 'type="date"', mois: 'type="month" placeholder="AAAA-MM"', texte: 'type="text" autocomplete="off" placeholder="Ex. AB-123-CD"' };
+  var h = '<div class="carte"><form class="carte-in" id="form-decl" novalidate><span class="muet petit">Déclaration ' + esc(c.numero) + '</span><h1>Une vérification rapide</h1>' +
+    '<p class="intro">Votre déclaration a été envoyée depuis une adresse e-mail qui n\'est pas celle du contrat. Pour protéger nos assurés contre la fraude, répondez à ces questions. Si vous déclarez pour un proche, demandez-lui ces informations.</p>' +
+    (c.questions_identite || []).map(function (q) { return '<label class="champ">' + esc(q.libelle) + '<input class="saisie" data-q="' + esc(q.code) + '" ' + (ENTREE[q.type] || ENTREE.texte) + "></label>"; }).join("") +
+    (c.essais_restants < 2 ? '<p class="indice">Dernier essai : en cas d\'erreur, la déclaration sera vérifiée par un gestionnaire avec le titulaire du contrat.</p>' : "") +
+    '<div class="envoyer"><button class="btn primaire" id="b-decl" type="submit">Vérifier</button></div></form></div>';
+  $("main").innerHTML = h + pied();
+  $("form-decl").addEventListener("submit", function (e) {
+    e.preventDefault();
+    var rep = {}, vide = false;
+    document.querySelectorAll("#form-decl [data-q]").forEach(function (i) { rep[i.dataset.q] = i.value.trim(); if (!rep[i.dataset.q]) vide = true; });
+    if (vide) return C.toast("Répondez à toutes les questions.", true);
+    var bt = $("b-decl"); C.occupe(bt, true, "Vérification");
+    api("portail", { body: { t: jeton, identite: rep } }).then(function (r) {
+      if (r.resultat === "verifiee") return etat(ICONE_OK, "", "Merci, c'est vérifié", "La déclaration " + esc(c.numero) + " suit son cours. Les prochains messages seront envoyés au titulaire du contrat.");
+      if (r.resultat === "echec") return etat(ICONE_KO, "ko", "Vérification impossible", esc(r.message));
+      C.toast(r.message || "Une réponse ne correspond pas.", true); charger();
+    }).catch(function (x) { C.occupe(bt, false); C.toast(x.message, true); });
+  });
+}
+
 function afficher(c) {
   $("cie").innerHTML = esc(c.assureur || "Service sinistres") + "<small>Service sinistres, espace sécurisé</small>";
   document.title = "Dossier " + c.numero + ", " + (c.assureur || "service sinistres");
   if (c.role === "comptable") { document.title = "Bon à payer " + c.numero; return afficherComptable(c); }
+  if (c.role === "declarant") { document.title = "Vérification, dossier " + c.numero; return afficherDeclarant(c); }
   var t = TITRES[c.role] || ["Votre dossier", ""];
   var h = '<div class="carte"><div class="carte-in"><span class="muet petit">' + esc(C.ROLES[c.role] || "") + "</span><h1>Dossier " + esc(c.numero) + '</h1><p class="intro">' + esc(t[1]) + "</p></div>" +
     '<div class="resume"><div>Type<b>' + esc(C.theme(c.theme)) + "</b></div><div>Date du sinistre<b>" + esc(C.dateFr(c.date_sinistre)) + "</b></div>" +
