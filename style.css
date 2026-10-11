@@ -147,3 +147,13 @@ table.comparaison td, table.comparaison th { white-space: nowrap; }
 table.comparaison tr.raisons td { white-space: normal; padding-bottom: 12px; }
 table.comparaison tr:not(.raisons) td { border-bottom: 0; }
 .recit-court { color: var(--gris); font-style: italic; }
+
+/* raisonnement de Klerio */
+ol.raisonnement { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+ol.raisonnement li { display: grid; grid-template-columns: 24px 1fr; gap: 10px; align-items: start; }
+ol.raisonnement li p { margin: 3px 0 0; color: var(--encre-2); font-size: 13.5px; line-height: 1.5; }
+ol.raisonnement .pastille-etape { width: 24px; height: 24px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; }
+ol.raisonnement li.ok .pastille-etape { background: var(--vert-pale); color: var(--vert-texte); }
+ol.raisonnement li.att .pastille-etape { background: var(--jaune-pale); color: var(--jaune-texte); }
+ol.raisonnement li.ko .pastille-etape { background: var(--rouge-pale); color: var(--rouge-texte); }
+ol.raisonnement li.info .pastille-etape { background: var(--bleu-pale); color: var(--bleu); }

@@ -971,6 +971,7 @@ function afficherDossier(f) {
 
   h += '<div class="fiche-grille"><div>';
   h += carteAction(f);
+  h += blocExplication(f);
   h += blocCloture(f);
   h += blocCatnat(f);
   h += blocDelais(f);
@@ -1175,6 +1176,53 @@ function brancherGestion(f) {
     envoyer(b, { action: "clore", motif: val("r-com") }, "Dossier clos");
   };
 }
+/* ---------------- Pourquoi Klerio a fait ça : le raisonnement, étape par étape ---------------- */
+function blocExplication(f) {
+  if (!f.analyse && !f.doublon) return "";
+  var an = (f.analyse && f.analyse.detail) || {}, conf = an.confiance != null ? Number(an.confiance) : null, etapes = [];
+  var ok = function (t, d) { etapes.push(["ok", t, d]); }, att = function (t, d) { etapes.push(["att", t, d]); }, ko = function (t, d) { etapes.push(["ko", t, d]); }, inf = function (t, d) { etapes.push(["info", t, d]); };
+  // 1. Lecture de la déclaration
+  if (an.echec_ia) ko("Lecture de la déclaration impossible", "L'analyse automatique n'a pas abouti : un gestionnaire reprend la déclaration.");
+  else {
+    var doute = (conf != null && conf < .7) || an.theme_declare_coherent === false || (an.incoherences || []).length;
+    var titre = "Type retenu : " + C.theme(f.theme) + (conf != null ? " (fiabilité " + Math.round(conf * 100) + " %)" : "");
+    var d = an.justification || (an.resume ? "Résumé de la déclaration : " + an.resume : "");
+    if (an.theme_declare_coherent === false) d += (d ? " " : "") + "Le type choisi par l'assuré ne correspond pas au récit.";
+    if ((an.incoherences || []).length) d += (d ? " " : "") + "Points incohérents : " + an.incoherences.join(" ; ") + ".";
+    (doute ? att : ok)(titre, d);
+  }
+  // 2. Contrat et garantie
+  var cc = f.controle_contrat, ctr = f.contrat || {};
+  if (!ctr.numero) ko("Aucun contrat rattaché", "La déclaration ne correspond à aucun contrat connu.");
+  else if (cc && cc.ok) ok("Contrat " + ctr.numero + " actif, garantie couverte", "Garantie « " + (C.GARANTIES[cc.garantie] || cc.garantie || "") + " » souscrite" + (cc.franchise_eur != null ? ", franchise " + eur(cc.franchise_eur) + "." : "."));
+  else if (cc) ko("Contrat " + ctr.numero + " : sinistre non couvert", C.motif(cc.motif) + (cc.garantie_requise ? " (garantie nécessaire : " + (C.GARANTIES[cc.garantie_requise] || cc.garantie_requise) + ")." : "."));
+  // 3. Déjà déclaré ?
+  var dbl = f.doublons || [], prob = dbl.filter(function (x) { return x.niveau === "certain" || x.niveau === "probable"; }), autres = dbl.filter(function (x) { return x.niveau === "autre_vehicule"; });
+  if (f.doublon) ko("Déjà déclaré : même sinistre que " + f.doublon.de, "Même véhicule, même type de sinistre, même date et récit qui se recoupe : la nouvelle déclaration a été versée au dossier d'origine.");
+  else if (f.doublon_ecarte) inf("Doublon écarté par " + f.doublon_ecarte.par, f.doublon_ecarte.motif || "");
+  else if (prob.length) att("Peut-être déjà déclaré", "Sinistre proche sur le même véhicule : " + prob.map(function (x) { return x.numero + " (" + (x.raisons || []).join(", ") + ")"; }).join(" ; ") + ". L'assuré a été interrogé.");
+  else if (f.contrat && f.contrat.numero) ok("Pas de doublon", "Aucun sinistre proche sur ce véhicule dans les 30 jours." + (autres.length ? " " + autres.length + " dossier" + (autres.length > 1 ? "s" : "") + " récent" + (autres.length > 1 ? "s" : "") + " sur un autre véhicule du client, sans lien." : ""));
+  // 4. Ce que Klerio a fait
+  var st = f.statut, v = propoValidation(f);
+  if (st === "classe_sans_suite" && f.motif === "doublon") inf("Décision : classé en doublon", "Rien n'est payé deux fois. L'assuré a reçu son numéro de dossier d'origine. Réversible avec « Ce n'est pas un doublon ».");
+  else if (st === "hors_perimetre") att("Décision : sorti du circuit automatique", C.motif(f.motif) + ". Un gestionnaire décide de la suite.");
+  else if (v) att("Décision : en attente de votre validation", attente({ validation: v, statut: st, motif: f.motif, theme: f.theme })[0] + ".");
+  else if (st === "anomalie_gestionnaire") att("Décision : repris en main par un gestionnaire", C.motif(f.motif) + ".");
+  else if (st === "refuse") ko("Décision : refusé", C.motif(f.motif) + ", après validation d'un gestionnaire.");
+  else if (st === "classe_sans_suite") inf("Décision : classé sans suite", "Par un gestionnaire.");
+  else if (st === "clos") ok("Décision : réglé et clos", "");
+  else if (st !== "recu" && st !== "analyse") ok("Décision : pris en charge automatiquement", "Rien ne bloquait : contrat valide, aucun doute sur la déclaration. Étape actuelle : " + (C.STATUTS[st] ? C.STATUTS[st][0] : st) + ".");
+  if (!etapes.length) return "";
+  var ic = { ok: '<path d="M4 8.5l2.5 2.5L12 5.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>',
+    att: '<path d="M8 4.5v4.2M8 11v.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>',
+    ko: '<path d="M5 5l6 6M11 5l-6 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>',
+    info: '<path d="M8 7.2v4M8 4.6v.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>' };
+  return '<section class="bloc" id="bloc-pourquoi"><div class="bloc-tete"><h2>Pourquoi Klerio a fait ça</h2><span class="muet petit">Le raisonnement, étape par étape</span></div><div class="bloc-corps"><ol class="raisonnement">' +
+    etapes.map(function (e) {
+      return '<li class="' + e[0] + '"><span class="pastille-etape"><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true">' + ic[e[0]] + "</svg></span><div><b>" + esc(e[1]) + "</b>" + (e[2] ? "<p>" + esc(e[2]) + "</p>" : "") + "</div></li>";
+    }).join("") + "</ol></div></section>";
+}
+
 /* ---------------- Doublons ---------------- */
 var NIVEAUX_DOUBLON = { certain: ["Doublon presque sûr", "alerte"], probable: ["Doublon possible", "attente"], autre_sinistre: ["Même véhicule, autre sinistre", "info"], autre_vehicule: ["Autre véhicule du client", "neutre"], ecarte: ["Doublon écarté par un gestionnaire", "neutre"] };
 function comparaisonDoublon(f, cands) {
