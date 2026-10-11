@@ -432,6 +432,7 @@ a.tuile:hover { border-color: var(--trait-fort); text-decoration: none; }
       <li><a href="#/file" data-vue="file"><svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path d="M3 4h12M3 9h12M3 14h7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>Accueil<span class="compteur" id="n-compteur" hidden></span></a></li>
       <li><a href="#/dossiers" data-vue="dossiers"><svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path d="M2.5 5.5v8a1 1 0 001 1h11a1 1 0 001-1v-6a1 1 0 00-1-1H8.5L7 4.5H3.5a1 1 0 00-1 1z" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>Dossiers en cours</a></li>
       <li><a href="#/archives" data-vue="archives"><svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><rect x="2.5" y="3.5" width="13" height="3.5" rx="1" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M3.5 7v6.5a1 1 0 001 1h9a1 1 0 001-1V7M7.5 10h3" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>Archives</a></li>
+      <li><a href="#/clients" data-vue="clients"><svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><circle cx="9" cy="6.5" r="3" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M3.5 15c.7-2.8 2.8-4.2 5.5-4.2s4.8 1.4 5.5 4.2" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>Clients</a></li>
       <li><a href="#/declarer" data-vue="declarer"><svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path d="M9 3.5v11M3.5 9h11" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>Déclarer un sinistre</a></li>
       <li><a href="#/boites" data-vue="boites"><svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><rect x="2.5" y="4" width="13" height="10" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M3 5l6 5 6-5" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>Boîtes mail de test</a></li>
       <li><a href="#/pilotage" data-vue="pilotage"><svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path d="M3.5 14.5V9M9 14.5V4M14.5 14.5v-7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>Pilotage</a></li>
@@ -629,12 +630,12 @@ function router() {
   var h = location.hash.replace(/^#\/?/, "").split("/");
   var vue = h[0] || "file";
   document.querySelectorAll(".nav a[data-vue]").forEach(function (a) {
-    if (a.dataset.vue === vue) a.setAttribute("aria-current", "page"); else a.removeAttribute("aria-current");
+    if (a.dataset.vue === vue || (a.dataset.vue === "clients" && vue === "client")) a.setAttribute("aria-current", "page"); else a.removeAttribute("aria-current");
   });
   var v = $("vue"); v.innerHTML = '<div class="vide"><span class="tourne" style="display:inline-block"></span></div>';
   window.scrollTo(0, 0);
   var f = { file: vueFile, dossiers: vueDossiers, dossier: function () { vueDossier(decodeURIComponent(h[1] || "")); },
-    archives: vueArchives, declarer: vueDeclarer, boites: vueBoites, pilotage: vuePilotage, raccordement: function () { vueRaccordement(h[1]); }, equipe: vueEquipe }[vue] || vueFile;
+    archives: vueArchives, clients: vueClients, client: function () { vueClient(decodeURIComponent(h[1] || "")); }, doublons: vueDoublons, declarer: vueDeclarer, boites: vueBoites, pilotage: vuePilotage, raccordement: function () { vueRaccordement(h[1]); }, equipe: vueEquipe }[vue] || vueFile;
   f();
 }
 function erreurVue(x) { $("vue").innerHTML = '<div class="bloc"><div class="vide"><b>Impossible de charger cette page</b>' + esc(x.message) + '<p style="margin-top:14px"><button class="btn" onclick="location.reload()">Recharger</button></p></div></div>'; }
@@ -665,8 +666,8 @@ function attente(d) {
 /* ---------------- Vue : Accueil ---------------- */
 var FILTRE_FILE = "klerio-filtre-file";
 function vueFile() {
-  Promise.all([api("a-traiter" + qb()), api("dossiers?limite=300&termines=0" + qb("&")), api("indicateurs" + qb())]).then(function (r) {
-    var file = r[0] || [], encours = r[1] || [], ind = r[2] || {};
+  Promise.all([api("a-traiter" + qb()), api("dossiers?limite=300&termines=0" + qb("&")), api("indicateurs" + qb()), api("doublons" + qb()).catch(function () { return null; })]).then(function (r) {
+    var file = r[0] || [], encours = r[1] || [], ind = r[2] || {}, dbl = r[3];
     compter(ind);
     var moi = S.moi || {}, resp = estResponsable();
     var aMoi = file.filter(function (d) { return d.gestionnaire && d.gestionnaire.id === moi.id; });
@@ -697,6 +698,10 @@ function vueFile() {
     h += '<section class="bloc"><div class="bloc-tete"><h2>À traiter</h2><div class="filtre-file" role="group" aria-label="Filtrer">' +
       filtres.map(function (f) { return '<button type="button" data-filtre="' + f[0] + '" aria-pressed="' + (f[0] === choix) + '">' + esc(f[1]) + '<span class="n">' + f[2].length + "</span></button>"; }).join("") +
       '</div></div><div id="file-liste"></div></section>';
+    if (dbl && (dbl.classes || []).length) {
+      var n30 = dbl.classes.filter(function (d) { return Date.now() - new Date(d.recu_le).getTime() < 30 * 864e5; }).length;
+      if (n30) h += '<p class="muet petit" style="margin:-4px 0 14px"><a href="#/doublons">' + n30 + " déclaration" + (n30 > 1 ? "s" : "") + " en double classée" + (n30 > 1 ? "s" : "") + " ces 30 derniers jours</a> : rattachée" + (n30 > 1 ? "s" : "") + " au dossier d'origine, sans rien à faire.</p>";
+    }
     h += blocMailsRecus(ind.mails_recus || []);
     h += '<section class="bloc"><div class="bloc-tete"><h2>Attendent un tiers<span class="compte">' + tiers.length + '</span></h2><span class="muet petit">Relances automatiques, puis retour vers vous après trois relances</span></div>' +
       (tiers.length ? listeSimple(tiers.slice(0, 8)) + (tiers.length > 8 ? '<div class="bloc-corps"><a href="#/dossiers">Voir les ' + tiers.length + " dossiers en cours</a></div>" : "") : '<div class="vide">Aucun dossier en attente d\'un tiers.</div>') + "</section>";
@@ -999,6 +1004,7 @@ function afficherDossier(f) {
           '<span class="muet">' + (g.option ? ", option " + g.option : ", franchise " + eur(g.franchise)) +
           (g.plafond != null ? ", plafond " + eur(g.plafond) : "") + (g.vetuste_pieces_pct ? ", vétusté pièces " + C.nombre(g.vetuste_pieces_pct) + " %" : "") + "</span>";
       }).join("<br>") || "Aucune") + "</dd></dl>" : '<p class="muet">Aucun contrat rattaché.</p>') + "</div></section>";
+  h += blocClient(f);
   h += blocPrestataires(f);
   h += blocPieces(f);
   h += "</aside></div>";
@@ -1169,6 +1175,137 @@ function brancherGestion(f) {
     envoyer(b, { action: "clore", motif: val("r-com") }, "Dossier clos");
   };
 }
+/* ---------------- Doublons ---------------- */
+var NIVEAUX_DOUBLON = { certain: ["Doublon presque sûr", "alerte"], probable: ["Doublon possible", "attente"], autre_sinistre: ["Même véhicule, autre sinistre", "info"], autre_vehicule: ["Autre véhicule du client", "neutre"], ecarte: ["Doublon écarté par un gestionnaire", "neutre"] };
+function comparaisonDoublon(f, cands) {
+  var ctr = f.contrat || {};
+  var ligne = function (x, moi) {
+    var n = NIVEAUX_DOUBLON[x.niveau] || [x.niveau, "info"];
+    return '<tr class="' + (moi ? "moi" : "") + '"><td>' + (moi ? "<b>Ce dossier</b>" : '<a href="#/dossier/' + encodeURIComponent(x.numero) + '"><b>' + esc(x.numero) + "</b></a>") + "</td><td>" + esc(C.theme(x.theme)) +
+      "</td><td>" + esc(C.dateCourte(x.date_sinistre)) + "</td><td>" + esc(x.immatriculation || x.contrat || "") + '<div class="muet petit">' + esc(x.immatriculation ? x.contrat || "" : "") + "</div></td><td>" + C.statut(moi ? f.statut : x.statut) + "</td></tr>" +
+      '<tr class="raisons' + (moi ? " moi" : "") + '"><td colspan="5">' + (moi ? "" : '<span class="pastille-mail ' + n[1] + '">' + esc(n[0]) + "</span> " + esc((x.raisons || []).join(" · ")) + "<br>") +
+      '<span class="recit-court">« ' + esc(((moi ? f.recit : x.recit) || "").slice(0, 260)) + " »</span></td></tr>";
+  };
+  return '<div class="tableau-wrap"><table class="tableau comparaison"><thead><tr><th>Dossier</th><th>Type</th><th>Sinistre</th><th>Véhicule</th><th>Statut</th></tr></thead><tbody>' +
+    ligne({ theme: f.theme, date_sinistre: f.date_sinistre, contrat: ctr.numero, immatriculation: ctr.immatriculation }, true) + cands.map(function (x) { return ligne(x); }).join("") + "</tbody></table></div>";
+}
+function carteDoublon(f) {
+  var cands = (f.doublons || []).filter(function (x) { return x.niveau === "certain" || x.niveau === "probable"; });
+  var h = '<section class="decision"><div class="decision-entete">Doublon à vérifier</div><div class="decision-corps"><h2>Ce sinistre a peut-être déjà été déclaré</h2>' +
+    '<p class="explication">Le même client a déjà un dossier proche sur le même véhicule. Comparez, puis tranchez : rien n\'est payé tant que vous n\'avez pas décidé.</p>' + comparaisonDoublon(f, cands);
+  h += '<label class="champ" style="margin-top:12px">Ce qui vous fait trancher <span class="aide">obligatoire si ce n\'est pas un doublon</span><input class="saisie" id="db-motif" placeholder="Ex. autre pare-brise, l\'assuré confirme deux impacts"></label>' +
+    '<div class="decision-actions">' + cands.map(function (x) { return '<button class="btn" data-doublon="' + esc(x.numero) + '">Doublon de ' + esc(x.numero) + "</button>"; }).join("") +
+    '<button class="btn primaire" id="db-different">Ce n\'est pas un doublon : reprendre le circuit</button></div>' +
+    '<p class="muet petit">En doublon, la déclaration est ajoutée au dossier d\'origine et l\'assuré reçoit un message lui indiquant son numéro de dossier.</p></div></section>';
+  return h;
+}
+function carteDoublonClasse(f) {
+  var o = f.doublon || {}, auto = String(o.par || "").indexOf("automatique:") === 0;
+  return '<section class="decision"><div class="decision-entete">Doublon</div><div class="decision-corps"><h2>Classé en doublon de <a href="#/dossier/' + encodeURIComponent(o.de || "") + '">' + esc(o.de || "") + "</a></h2>" +
+    '<p class="explication">' + (auto ? "Klerio l'a classé seul : même véhicule, même type de sinistre, même date et récit qui se recoupe." : "Classé par " + esc(String(o.par || "").replace(/^humain:/, "")) + (o.motif ? " : " + esc(o.motif) : ".")) +
+    " La déclaration a été versée au dossier d'origine et l'assuré a été prévenu.</p>" +
+    ((f.doublons || []).length ? comparaisonDoublon(f, (f.doublons || []).filter(function (x) { return x.niveau !== "autre_vehicule"; })) : "") +
+    (f.efface_le ? "" : '<label class="champ" style="margin-top:12px">Si ce n\'est pas un doublon <span class="aide">ce qui distingue ce sinistre</span><input class="saisie" id="db-motif"></label>' +
+      '<div class="decision-actions"><button class="btn" id="db-different">Ce n\'est pas un doublon : rouvrir et reprendre le circuit</button></div>') + "</div></section>";
+}
+function brancherDoublon(f) {
+  var envoyer = function (b, corps, ok) {
+    corps.numero = f.numero; corps.action = "doublon"; C.occupe(b, true, "");
+    api("gestion", { body: corps }).then(function (r) { C.toast(ok); rafraichirCompteur(); afficherDossier(r); }).catch(function (x) { C.occupe(b, false); C.toast(x.message, true); });
+  };
+  document.querySelectorAll("[data-doublon]").forEach(function (b) {
+    b.onclick = function () { envoyer(b, { decision: "doublon", original: b.dataset.doublon, motif: ($("db-motif") || {}).value || undefined }, "Classé en doublon de " + b.dataset.doublon); };
+  });
+  var d = $("db-different");
+  if (d) d.onclick = function () {
+    var m = ($("db-motif").value || "").trim();
+    if (m.length < 5) { C.toast("Indiquez ce qui distingue ce sinistre.", true); return $("db-motif").focus(); }
+    envoyer(d, { decision: "different", motif: m }, "Le dossier reprend le circuit");
+  };
+}
+function vueDoublons() {
+  api("doublons" + qb()).then(function (r) {
+    var l = r.classes || [];
+    var h = '<div class="entete-vue"><div><h1>Doublons</h1><p>Déclarations d\'un sinistre déjà enregistré, classées ces 60 derniers jours. Elles ne prennent plus de place dans l\'accueil ; chacune reste réversible depuis sa fiche.' +
+      (r.a_verifier ? " " + r.a_verifier + " doublon" + (r.a_verifier > 1 ? "s" : "") + " possible" + (r.a_verifier > 1 ? "s attendent" : " attend") + " votre vérification dans l\'accueil." : "") + "</p></div></div>" +
+      '<section class="bloc"><div class="tableau-wrap">' + (l.length ? '<table class="tableau"><thead><tr><th>Déclaration</th><th>Doublon de</th><th>Type</th><th>Sinistre</th><th>Véhicule</th><th>Classé par</th><th>Reçu</th></tr></thead><tbody>' +
+        l.map(function (d) {
+          return '<tr data-n="' + esc(d.numero) + '" tabindex="0"><td><b>' + esc(d.numero) + '</b></td><td><a href="#/dossier/' + encodeURIComponent(d.de || "") + '">' + esc(d.de || "") + "</a></td><td>" + esc(C.theme(d.theme)) +
+            "</td><td>" + esc(C.dateCourte(d.date_sinistre)) + "</td><td>" + esc(d.contrat || "") + (d.immatriculation ? '<div class="muet petit">' + esc(d.immatriculation) + "</div>" : "") +
+            '</td><td class="muet">' + (d.automatique ? "Klerio" : esc(String(d.par || "").replace(/^humain:/, ""))) + '</td><td class="muet">' + esc(C.depuis(d.recu_le)) + "</td></tr>";
+        }).join("") + "</tbody></table>" : '<div class="vide"><b>Aucun doublon classé</b>Les déclarations en double apparaîtront ici.</div>') + "</div></section>";
+    $("vue").innerHTML = h;
+    var t = $("vue").querySelector("table");
+    if (t) t.addEventListener("click", function (e) { if (e.target.closest("a")) return; var tr = e.target.closest("tr[data-n]"); if (tr) ouvrirDossier(tr.dataset.n); });
+  }).catch(erreurVue);
+}
+
+/* ---------------- Clients ---------------- */
+function blocClient(f) {
+  var c = f.client;
+  if (!c || !c.ref) return "";
+  var autres = c.autres_dossiers || [];
+  return '<section class="bloc" id="bloc-client"><div class="bloc-tete"><h3>Client</h3><a class="petit" href="#/client/' + encodeURIComponent(c.ref) + '">Fiche client</a></div><div class="bloc-corps pile">' +
+    '<dl class="info-liste"><dt>Référence</dt><dd>' + esc(c.ref) + "</dd>" + (c.email ? "<dt>Email</dt><dd>" + esc(c.email) + "</dd>" : "") +
+    "<dt>Contrats</dt><dd>" + esc(String(c.nb_contrats)) + "</dd><dt>Autres dossiers</dt><dd>" + esc(String(autres.length)) + "</dd></dl>" +
+    (autres.length ? '<ul class="liste-mini">' + autres.slice(0, 6).map(function (o) {
+      return '<li><a href="#/dossier/' + encodeURIComponent(o.numero) + '">' + esc(o.numero) + '</a> <span class="muet">' + esc(C.theme(o.theme)) + " · " + esc(C.dateCourte(o.date_sinistre)) + "</span>" +
+        '<div class="petit">' + (o.meme_vehicule ? '<span class="pastille-mail info">Même véhicule</span> ' : '<span class="pastille-mail neutre">' + esc(o.immatriculation || o.contrat || "Autre contrat") + "</span> ") +
+        C.statut(o.statut) + (o.motif === "doublon" ? ' <span class="muet">doublon</span>' : "") + "</div></li>";
+    }).join("") + "</ul>" + (autres.length > 6 ? '<a class="petit" href="#/client/' + encodeURIComponent(c.ref) + '">Voir les ' + autres.length + " dossiers</a>" : "") : '<p class="muet petit">Aucun autre dossier pour ce client.</p>') +
+    "</div></section>";
+}
+function vueClients() {
+  var q = decodeURIComponent(location.hash.split("/")[2] || "");
+  $("vue").innerHTML = '<div class="entete-vue"><div><h1>Clients</h1><p>Retrouvez un client par sa référence, son email, un numéro de contrat, une immatriculation ou un numéro de dossier : vous voyez tous ses contrats et tous ses dossiers, en cours comme terminés.</p></div></div>' +
+    '<section class="bloc"><div class="bloc-tete"><div class="filtres"><input class="saisie" id="cl-q" type="search" placeholder="Référence, email, contrat, immatriculation" value="' + esc(q) + '"></div><span class="muet petit" id="cl-n"></span></div><div class="tableau-wrap" id="cl-table"><div class="vide">Saisissez au moins 2 caractères.</div></div></section>';
+  var t;
+  function charger() {
+    var qq = $("cl-q").value.trim();
+    if (qq.length < 2) { $("cl-table").innerHTML = '<div class="vide">Saisissez au moins 2 caractères.</div>'; $("cl-n").textContent = ""; return; }
+    api("clients?q=" + encodeURIComponent(qq) + qb("&")).then(function (l) {
+      $("cl-n").textContent = l.length + " client" + (l.length > 1 ? "s" : "");
+      $("cl-table").innerHTML = l.length ? '<table class="tableau"><thead><tr><th>Client</th><th>Email</th><th>Contrats</th><th>Véhicules</th><th class="nb">Dossiers</th></tr></thead><tbody>' +
+        l.map(function (c) {
+          return '<tr data-ref="' + esc(c.ref) + '" tabindex="0"><td><b>' + esc(c.ref) + "</b></td><td>" + esc((c.emails || []).join(", ")) + "</td><td>" + esc((c.contrats || []).join(", ")) +
+            "</td><td>" + esc((c.immatriculations || []).join(", ")) + '</td><td class="nb">' + esc(String(c.nb_dossiers)) + "</td></tr>";
+        }).join("") + "</tbody></table>" : '<div class="vide"><b>Aucun client trouvé</b>Vérifiez l\'orthographe ou essayez le numéro de contrat.</div>';
+    }).catch(function (x) { C.toast(x.message, true); });
+  }
+  $("cl-q").addEventListener("input", function () { clearTimeout(t); t = setTimeout(charger, 250); });
+  $("cl-table").addEventListener("click", function (e) { var tr = e.target.closest("tr[data-ref]"); if (tr) location.hash = "#/client/" + encodeURIComponent(tr.dataset.ref); });
+  $("cl-table").addEventListener("keydown", function (e) { var tr = e.target.closest("tr[data-ref]"); if (tr && e.key === "Enter") location.hash = "#/client/" + encodeURIComponent(tr.dataset.ref); });
+  if (q) charger(); else $("cl-q").focus();
+}
+function vueClient(ref) {
+  api("client?ref=" + encodeURIComponent(ref) + qb("&")).then(function (c) {
+    var st = c.stats || {}, dos = c.dossiers || [];
+    var h = '<a class="retour" href="#/clients"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M8.5 3L4.5 7l4 4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>Clients</a>' +
+      '<div class="entete-vue"><div><h1>' + esc(c.ref) + "</h1><p>" + esc((c.emails || []).join(", ") || "Aucun email connu") + "</p></div></div>" +
+      '<div class="tuiles"><div class="tuile"><div class="val">' + esc(String(st.en_cours || 0)) + '</div><div class="lib">Dossiers en cours</div></div>' +
+      '<div class="tuile"><div class="val">' + esc(String(st.sinistres_12_mois || 0)) + '</div><div class="lib">Sinistres sur 12 mois</div>' + (st.doublons ? '<div class="sous">hors ' + st.doublons + " doublon" + (st.doublons > 1 ? "s" : "") + "</div>" : "") + "</div>" +
+      '<div class="tuile"><div class="val">' + esc(eur(st.regle_eur || 0)) + '</div><div class="lib">Réglé au total</div></div>' +
+      '<div class="tuile' + (st.reclamations_ouvertes ? " vous" : "") + '"><div class="val">' + esc(String(st.reclamations_ouvertes || 0)) + '</div><div class="lib">Réclamations ouvertes</div></div></div>';
+    h += '<section class="bloc"><div class="bloc-tete"><h2>Contrats<span class="compte">' + (c.contrats || []).length + '</span></h2></div><div class="tableau-wrap"><table class="tableau"><thead><tr><th>Contrat</th><th>Véhicule</th><th>Statut</th><th>Effet</th><th>Garanties</th><th class="nb">Dossiers</th></tr></thead><tbody>' +
+      (c.contrats || []).map(function (k) {
+        return "<tr><td><b>" + esc(k.numero) + "</b></td><td>" + esc(k.immatriculation || "Garantie Accident") + "</td><td>" + esc(k.statut === "actif" ? "Actif" : k.statut || "") + "</td><td>" + esc(C.dateCourte(k.date_effet)) + (k.date_fin ? " au " + esc(C.dateCourte(k.date_fin)) : "") +
+          '</td><td class="petit">' + esc((k.garanties || []).map(function (g) { return C.GARANTIES[g] || g; }).join(", ")) + '</td><td class="nb">' + esc(String(k.nb_dossiers)) + "</td></tr>";
+      }).join("") + "</tbody></table></div></section>";
+    h += '<section class="bloc"><div class="bloc-tete"><h2>Tous ses dossiers<span class="compte">' + dos.length + '</span></h2><span class="muet petit">Du plus récent au plus ancien, terminés compris</span></div><div class="tableau-wrap">' +
+      (dos.length ? '<table class="tableau"><thead><tr><th>Dossier</th><th>Type</th><th>Sinistre</th><th>Véhicule</th><th>Statut</th><th class="nb">Réglé</th></tr></thead><tbody>' +
+        dos.map(function (d) {
+          return '<tr data-n="' + esc(d.numero) + '" tabindex="0"><td><b>' + esc(d.numero) + "</b>" + (d.doublon_de ? '<div class="muet petit">doublon de ' + esc(d.doublon_de) + "</div>" : "") + "</td><td>" + esc(C.theme(d.theme)) +
+            "</td><td>" + esc(C.dateCourte(d.date_sinistre)) + "</td><td>" + esc(d.immatriculation || d.contrat || "") + "</td><td>" + C.statut(d.statut) + '</td><td class="nb">' + esc(eur(d.montant)) + "</td></tr>";
+        }).join("") + "</tbody></table>" : '<div class="vide">Aucun dossier.</div>') + "</div></section>";
+    $("vue").innerHTML = h;
+    var t = $("vue").querySelectorAll("table")[1];
+    if (t) {
+      t.addEventListener("click", function (e) { var tr = e.target.closest("tr[data-n]"); if (tr) ouvrirDossier(tr.dataset.n); });
+      t.addEventListener("keydown", function (e) { var tr = e.target.closest("tr[data-n]"); if (tr && e.key === "Enter") ouvrirDossier(tr.dataset.n); });
+    }
+  }).catch(erreurVue);
+}
+
 /* Recours reçus de l'assureur adverse : notre assuré est responsable, en tout ou partie */
 var ETAT_RR = { a_examiner: ["À examiner", "attente"], accepte: ["Accepté, à régler", "attente"], conteste: ["Contesté", "alerte"], regle: ["Réglé", "ok"], clos: ["Clos", "info"] };
 function blocRecoursRecus(f) {
@@ -1458,6 +1595,8 @@ function barreTitulaire(f) {
 function propoValidation(f) { return (f.validations_en_attente || []).slice(-1)[0]; }
 
 function carteAction(f) {
+  if (f.statut === "hors_perimetre" && f.motif === "doublon_possible") return carteDoublon(f);
+  if (f.statut === "classe_sans_suite" && f.motif === "doublon") return carteDoublonClasse(f);
   var v = propoValidation(f);
   if (v && v.etape === "responsabilite") return carteResponsabilite(f, v);
   if (v) {
@@ -1875,6 +2014,7 @@ function brancherFiche(f) {
   brancherReclamations(f);
   brancherGestion(f);
   brancherRecoursVictimes(f);
+  brancherDoublon(f);
   var bv = $("b-verif-vol");
   if (bv) bv.onclick = function () { C.occupe(bv, true, "Vérification"); api("verifier-vol", { body: { numero: f.numero } }).then(function (r) { C.toast("Vérification relancée"); afficherDossier(r); }).catch(function (x) { C.occupe(bv, false); C.toast(x.message, true); }); };
   var be = $("d-enquete");

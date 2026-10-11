@@ -134,3 +134,16 @@ textarea.saisie { min-height: 88px; resize: vertical; line-height: 1.5; }
 /* échéances légales (tiers blessé) */
 ul.delais { list-style: none; padding: 0; margin: 2px 0 4px; display: grid; gap: 6px; }
 ul.delais li { font-size: 14px; line-height: 1.45; }
+
+/* doublons et fiche client */
+ul.liste-mini { list-style: none; margin: 4px 0 0; padding: 0; display: grid; gap: 10px; }
+ul.liste-mini li { font-size: 13.5px; line-height: 1.45; }
+ul.liste-mini .petit { margin-top: 3px; display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+table.comparaison td { vertical-align: top; }
+table.comparaison tr.moi td { background: var(--bleu-pale); }
+table.comparaison tr.raisons td { padding-top: 0; font-size: 13px; color: var(--encre-2); border-top: 0; }
+table.comparaison { min-width: 520px; }
+table.comparaison td, table.comparaison th { white-space: nowrap; }
+table.comparaison tr.raisons td { white-space: normal; padding-bottom: 12px; }
+table.comparaison tr:not(.raisons) td { border-bottom: 0; }
+.recit-court { color: var(--gris); font-style: italic; }
