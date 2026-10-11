@@ -244,7 +244,7 @@ function blocQuestionnaireVol() {
     '<fieldset class="champ"><legend>Où se trouvaient les clés au moment du vol ?</legend>' + radio("qv-cles", "avec_moi", "Sur moi ou avec la personne qui utilisait le véhicule") +
       radio("qv-cles", "domicile", "À mon domicile") + radio("qv-cles", "dans_vehicule", "Dans ou sur le véhicule") + radio("qv-cles", "volees", "Elles ont été volées aussi (cambriolage, vol de sac...)") + "</fieldset>" +
     '<div class="grille-2"><label class="champ">Nombre de jeux de clés que vous pouvez remettre<input class="saisie" id="qv-nb" type="number" min="0" max="9" step="1" value="2"></label>' +
-    '<label class="champ">Dernière utilisation du véhicule <span class="aide">date et heure</span><input class="saisie" id="qv-der" type="datetime-local"></label></div>' +
+    '<label class="champ">Dernière utilisation du véhicule <span class="aide">date et heure</span><input class="saisie" id="qv-der" type="datetime-local" max="' + new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16) + '"></label></div>' +
     '<fieldset class="champ"><legend>Où le véhicule était-il stationné ?</legend>' + radio("qv-st", "garage_ferme", "Dans un garage fermé") + radio("qv-st", "parking_prive", "Sur un parking privé ou une cour") +
       radio("qv-st", "voie_publique", "Sur la voie publique") + radio("qv-st", "autre", "Ailleurs") + "</fieldset>" +
     '<label class="case" id="qv-eff-l" hidden><input type="checkbox" id="qv-eff"> Le garage a été forcé (serrure, porte ou fenêtre fracturée)</label>' +
@@ -310,6 +310,8 @@ function brancherAssure() {
       e.preventDefault();
       var cl = document.querySelector('input[name="qv-cles"]:checked'), st = document.querySelector('input[name="qv-st"]:checked');
       if (!cl || !st) return C.toast("Indiquez où se trouvaient les clés et où le véhicule était stationné.", true);
+      var der = $("qv-der").value;
+      if (der && new Date(der).getTime() > Date.now() + 60000) return C.toast("La date de dernière utilisation ne peut pas être dans le futur.", true);
       envoyerChoix($("b-qv"), { questionnaire_vol: { cles: cl.value, nb_cles: Number($("qv-nb").value || 0), stationnement: st.value,
         effraction_garage: st.value === "garage_ferme" ? $("qv-eff").checked : undefined, antivol: $("qv-antivol").checked, en_vente: $("qv-vente").checked,
         derniere_utilisation: $("qv-der").value || undefined, commentaire: $("qv-com").value.trim() || undefined } }, "Merci, vos réponses sont enregistrées");
@@ -414,7 +416,11 @@ function zoneDepot(c) {
 }
 
 function num(id, lib, aide, attrs) {
-  return '<label class="champ">' + esc(lib) + (aide ? ' <span class="aide">' + esc(aide) + "</span>" : "") + '<input class="saisie" id="' + id + '" type="number" inputmode="decimal" step="0.01" min="0" ' + (attrs || "") + "></label>";
+  attrs = attrs || "";
+  // un seul attribut step : le premier l'emporterait. Montants : flèches de 1 €, centimes acceptés à la saisie
+  if (!/\bstep=/.test(attrs)) attrs += ' step="any"';
+  var entier = /\bstep="1"/.test(attrs);
+  return '<label class="champ">' + esc(lib) + (aide ? ' <span class="aide">' + esc(aide) + "</span>" : "") + '<input class="saisie" id="' + id + '" type="number" inputmode="' + (entier ? "numeric" : "decimal") + '" min="0" ' + attrs + "></label>";
 }
 
 function champsCles() {
@@ -439,7 +445,8 @@ function formulaire(c) {
     '<p class="indice">Véhicule déclaré volé : indiquez sa valeur au jour du vol. L\'assuré sera indemnisé sur cette base s\'il n\'est pas retrouvé.</p>' +
     '<label class="champ">Observations <span class="aide">facultatif</span><textarea class="saisie" id="f-conclusion" rows="3"></textarea></label>' + champsCles();
   if (c.role === "expert_auto") return '<div class="grille-2">' + num("f-devis", "Devis du réparateur", "TTC, en €") + num("f-ttc", "Montant retenu", "TTC, en €", "required") + "</div>" +
-    '<div class="grille-3">' + num("f-taux", "Taux horaire", "€ HT") + num("f-heures", "Main-d'œuvre", "en heures") + num("f-pieces", "Pièces", "HT, en €") + "</div>" +
+    '<p class="petit muet" id="f-ttc-vei" hidden>Véhicule irréparable : le montant des réparations est facultatif, l\'indemnité se calcule sur la valeur de remplacement.</p>' +
+    '<div class="grille-3">' + num("f-taux", "Taux horaire", "€ HT") + num("f-heures", "Main-d'œuvre", "en heures", 'step="0.5"') + num("f-pieces", "Pièces", "HT, en €") + "</div>" +
     '<div class="grille-2">' + num("f-ht", "Montant retenu", "HT, en €") + "<div></div></div>" +
     '<p class="indice" id="f-coherence">Renseignez le détail du chiffrage pour vérifier sa cohérence.</p>' +
     '<div class="grille-2">' + num("f-vet", "Vétusté déduite", "TTC, en €, facultatif") + "<div></div></div>" +
@@ -518,7 +525,13 @@ function brancherDepot(c) {
 function brancher(c) {
   brancherDepot(c);
   var vei = $("f-vei"), bloc = $("f-vei-bloc");
-  if (vei && bloc) { var maj = function () { bloc.hidden = !vei.checked; }; vei.addEventListener("change", maj); vei.addEventListener("input", maj); maj(); }
+  if (vei && bloc) {
+    var maj = function () {
+      bloc.hidden = !vei.checked;
+      if ($("f-ttc-vei")) { $("f-ttc-vei").hidden = !vei.checked; $("f-ttc").required = !vei.checked; }
+    };
+    vei.addEventListener("change", maj); vei.addEventListener("input", maj); maj();
+  }
   var coh = $("f-coherence");
   if (coh) ["f-taux", "f-heures", "f-pieces", "f-ht", "f-ttc"].forEach(function (id) {
     $(id).addEventListener("input", function () {
@@ -551,9 +564,14 @@ function brancher(c) {
       r = { montant_devis_ttc: val("f-devis"), montant_ttc: val("f-ttc"), montant_ht: val("f-ht"), taux_horaire: val("f-taux"), heures: val("f-heures"),
         montant_pieces_ht: val("f-pieces"), vei: $("f-vei").checked, reglement_direct_autorise: $("f-direct").checked, conclusion: $("f-conclusion").value.trim() || undefined,
         vetuste_ttc: val("f-vet"), vrade_ttc: val("f-vrade"), valeur_epave_ttc: val("f-epave") };
-      if (!r.montant_ttc) return C.toast("Indiquez le montant retenu TTC.", true);
+      var veiRep = r.vei && !c.evaluation_vol;
+      if (!r.montant_ttc && !veiRep) return C.toast(c.evaluation_vol ? "Indiquez la valeur de remplacement (VRADE)." : "Indiquez le montant retenu TTC.", true);
       if ($("f-cles") && val("f-cles") != null) { r.cles_recues = val("f-cles"); r.cles_conformes = $("f-cles-ok").checked; r.cles_observations = $("f-cles-obs").value.trim() || undefined; }
-      if (r.vei && !c.evaluation_vol && (!r.vrade_ttc || r.valeur_epave_ttc == null)) return C.toast("Véhicule irréparable : indiquez la valeur de remplacement et la valeur de l'épave.", true);
+      if (veiRep && (!r.vrade_ttc || r.valeur_epave_ttc == null)) return C.toast("Véhicule irréparable : indiquez la valeur de remplacement et la valeur de l'épave.", true);
+      if (veiRep && r.valeur_epave_ttc >= r.vrade_ttc) return C.toast("La valeur de l'épave doit être inférieure à la valeur de remplacement.", true);
+      if (r.vetuste_ttc && r.montant_ttc && r.vetuste_ttc >= r.montant_ttc) return C.toast("La vétusté déduite doit être inférieure au montant retenu.", true);
+      if (r.vetuste_ttc && !r.montant_ttc) return C.toast("La vétusté se déduit d'un montant de réparation : indiquez le montant retenu, ou videz la vétusté.", true);
+      if (r.montant_ht && r.montant_ttc && r.montant_ht > r.montant_ttc) return C.toast("Le montant HT ne peut pas dépasser le montant TTC.", true);
     } else if (c.role === "expert_medical") {
       r = { aipp_pct: val("f-aipp"), date_consolidation: $("f-conso").value || undefined, dependance_totale: $("f-dep").checked, conclusion: $("f-conclusion").value.trim() || undefined };
       if (r.aipp_pct == null || r.aipp_pct > 100) return C.toast("Indiquez un taux d'AIPP entre 0 et 100 %.", true);

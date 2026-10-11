@@ -733,14 +733,14 @@ function vueFile() {
 }
 // Mails reçus sur la boîte sinistres : chacun apparaît ici dès son arrivée, avec ce que Klerio en a fait
 var MAIL_STATUT = { recu: ["En cours de lecture", "info"], dossier_cree: ["Dossier ouvert", "ok"], rattache: ["Ajouté au dossier", "ok"],
-  demande_infos: ["Infos demandées à l'expéditeur", "attente"], ignore: ["Ignoré", "neutre"], erreur: ["Erreur de lecture", "alerte"] };
+  demande_infos: ["Infos demandées à l'expéditeur", "attente"], a_rattacher: ["À rattacher à un dossier", "alerte"], ignore: ["Ignoré", "neutre"], erreur: ["Erreur de lecture", "alerte"] };
 function blocMailsRecus(l) {
   var h = '<section class="bloc"><div class="bloc-tete"><h2>Mails reçus<span class="compte">' + l.length + '</span></h2><span class="muet petit">Boîte sinistres : chaque mail est lu et traité dès son arrivée. Cliquez pour lire.</span></div>';
   if (!l.length) return h + '<div class="vide">Aucun mail reçu pour l\'instant' + (S.env === "test" ? "" : " dans cet environnement") + '.</div></section>';
   var plus = Math.max(0, l.length - 3);
   return h + '<ul class="file mails" id="mails-recus">' + l.map(function (m, i) {
     var s = MAIL_STATUT[m.statut] || [m.statut, "neutre"];
-    var hesite = ["ignore", "demande_infos", "erreur"].indexOf(m.statut) >= 0 || m.confiance === "inconnu";
+    var hesite = ["ignore", "demande_infos", "erreur", "a_rattacher"].indexOf(m.statut) >= 0 || m.confiance === "inconnu";
     var msgs = m.messages && m.messages.length ? m.messages : [{ id: m.id, recu_le: m.recu_le, expediteur: m.expediteur, via: m.via, objet: m.objet, contenu: m.contenu, pieces: m.pieces }];
     var nbPj = msgs.reduce(function (t, x) { return t + (x.pieces || []).length; }, 0);
     var fil = msgs.map(function (x, j) {
@@ -750,7 +750,7 @@ function blocMailsRecus(l) {
         '<pre class="mail-texte">' + esc(x.contenu || "(texte non disponible pour ce mail)") + "</pre>" +
         (pjx ? '<p class="muet petit">Pièces jointes : ' + pjx + "</p>" : "");
     }).join("");
-    var relancer = ["demande_infos", "erreur", "ignore"].indexOf(m.statut) >= 0;
+    var relancer = ["demande_infos", "erreur", "ignore", "a_rattacher"].indexOf(m.statut) >= 0;
     return "<li" + (i >= 3 ? ' class="ancien" hidden' : "") + '><button type="button" class="ligne ligne-mail" data-mail="' + esc(m.id) + '" aria-expanded="false"><span class="repere"></span>' +
       '<span class="num">' + esc(m.expediteur || "?") + '<small>' + (msgs.length > 1 ? msgs.length + " messages" : "Mail reçu") + (nbPj ? " · 📎 " + nbPj : "") + (m.via ? " · via adresse de test" : "") + '</small></span>' +
       '<span class="quoi">' + esc(msgs[0].objet || m.objet || "(sans objet)") + '<small>' + (m.numero ? esc(m.numero) + (m.theme ? " · " + esc(C.theme(m.theme)) : "") : esc(m.precision || "")) + '</small></span>' +
@@ -1206,6 +1206,7 @@ function blocExplication(f) {
   var st = f.statut, v = propoValidation(f);
   if (st === "classe_sans_suite" && f.motif === "doublon") inf("Décision : classé en doublon", "Rien n'est payé deux fois. L'assuré a reçu son numéro de dossier d'origine. Réversible avec « Ce n'est pas un doublon ».");
   else if (st === "hors_perimetre") att("Décision : sorti du circuit automatique", C.motif(f.motif) + ". Un gestionnaire décide de la suite.");
+  else if (v && v.etape === "responsabilite") att("Décision : la responsabilité attend un gestionnaire", pourquoiHumainResp(v.proposition || {}, f));
   else if (v) att("Décision : en attente de votre validation", attente({ validation: v, statut: st, motif: f.motif, theme: f.theme })[0] + ".");
   else if (st === "anomalie_gestionnaire") att("Décision : repris en main par un gestionnaire", C.motif(f.motif) + ".");
   else if (st === "refuse") ko("Décision : refusé", C.motif(f.motif) + ", après validation d'un gestionnaire.");
@@ -1661,6 +1662,16 @@ function barreTitulaire(f) {
   return '<div class="titulaire-barre"><span>' + txt + '</span><span class="actions">' + b + "</span></div>";
 }
 
+// Pourquoi Klerio n'a pas fixé seul la responsabilité (il le fait quand le constat est clair : règle du barème à 0 ou 100 %, constat signé, tiers assuré, aucun blessé)
+function pourquoiHumainResp(p, f) {
+  var al = p.alertes || [], sit = (p.tiers || {}).situation;
+  if (al.length) return al[0];
+  if (!p.constat) return "Pas de constat amiable : la responsabilité s'établit à partir du récit, des témoignages ou des photos.";
+  if (sit && sit !== "assure") return "L'autre conducteur est " + ({ non_assure: "non assuré", inconnu: "inconnu (délit de fuite)", etranger: "immatriculé à l'étranger" }[sit] || sit) + " : la suite dépend de votre décision.";
+  if (p.pct === 50) return (p.certain ? "Partage à 50 % (" + p.regle + ")" : "Aucune règle du barème ne départage les cases cochées") + " : un partage est toujours validé par un gestionnaire.";
+  if (!p.certain) return "Les cases cochées ne correspondent à aucune règle du barème : à vérifier.";
+  return f.statut === "decision_a_valider" ? "Responsabilité fixée par le barème, en attente de confirmation." : "";
+}
 function propoValidation(f) { return (f.validations_en_attente || []).slice(-1)[0]; }
 
 function carteAction(f) {
