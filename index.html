@@ -1250,7 +1250,7 @@ function carteDoublon(f) {
 function carteDoublonClasse(f) {
   var o = f.doublon || {}, auto = String(o.par || "").indexOf("automatique:") === 0;
   return '<section class="decision"><div class="decision-entete">Doublon</div><div class="decision-corps"><h2>Classé en doublon de <a href="#/dossier/' + encodeURIComponent(o.de || "") + '">' + esc(o.de || "") + "</a></h2>" +
-    '<p class="explication">' + (auto ? "Klerio l'a classé seul : même véhicule, même type de sinistre, même date et récit qui se recoupe." : "Classé par " + esc(String(o.par || "").replace(/^humain:/, "")) + (o.motif ? " : " + esc(o.motif) : ".")) +
+    '<p class="explication">' + (auto ? "Klerio l'a classé seul : " + (o.motif ? esc(o.motif) + "." : "même véhicule, même type de sinistre, même date et récit qui se recoupe.") : "Classé par " + esc(String(o.par || "").replace(/^humain:/, "")) + (o.motif ? " : " + esc(o.motif) : ".")) +
     " La déclaration a été versée au dossier d'origine et l'assuré a été prévenu.</p>" +
     ((f.doublons || []).length ? comparaisonDoublon(f, (f.doublons || []).filter(function (x) { return x.niveau !== "autre_vehicule"; })) : "") +
     (f.efface_le ? "" : '<label class="champ" style="margin-top:12px">Si ce n\'est pas un doublon <span class="aide">ce qui distingue ce sinistre</span><input class="saisie" id="db-motif"></label>' +
@@ -1334,6 +1334,7 @@ function vueClient(ref) {
       '<div class="tuile"><div class="val">' + esc(String(st.sinistres_12_mois || 0)) + '</div><div class="lib">Sinistres sur 12 mois</div>' + (st.doublons ? '<div class="sous">hors ' + st.doublons + " doublon" + (st.doublons > 1 ? "s" : "") + "</div>" : "") + "</div>" +
       '<div class="tuile"><div class="val">' + esc(eur(st.regle_eur || 0)) + '</div><div class="lib">Réglé au total</div></div>' +
       '<div class="tuile' + (st.reclamations_ouvertes ? " vous" : "") + '"><div class="val">' + esc(String(st.reclamations_ouvertes || 0)) + '</div><div class="lib">Réclamations ouvertes</div></div></div>';
+    h += blocDeclarationsMultiples(c.declarations_multiples || []);
     h += '<section class="bloc"><div class="bloc-tete"><h2>Contrats<span class="compte">' + (c.contrats || []).length + '</span></h2></div><div class="tableau-wrap"><table class="tableau"><thead><tr><th>Contrat</th><th>Véhicule</th><th>Statut</th><th>Effet</th><th>Garanties</th><th class="nb">Dossiers</th></tr></thead><tbody>' +
       (c.contrats || []).map(function (k) {
         return "<tr><td><b>" + esc(k.numero) + "</b></td><td>" + esc(k.immatriculation || "Garantie Accident") + "</td><td>" + esc(k.statut === "actif" ? "Actif" : k.statut || "") + "</td><td>" + esc(C.dateCourte(k.date_effet)) + (k.date_fin ? " au " + esc(C.dateCourte(k.date_fin)) : "") +
@@ -1352,6 +1353,26 @@ function vueClient(ref) {
       t.addEventListener("keydown", function (e) { var tr = e.target.closest("tr[data-n]"); if (tr && e.key === "Enter") ouvrirDossier(tr.dataset.n); });
     }
   }).catch(erreurVue);
+}
+
+/* Même sinistre déclaré plusieurs fois : ce que Klerio ou le gestionnaire a décidé, gardé dans l'historique du client */
+function verdictDoublon(x) {
+  var par = String(x.par || ""), qui = par.indexOf("automatique:") === 0 ? "Klerio" : par.replace(/^humain:/, "").replace(/^outil:/, "");
+  var lien = function (n) { return '<a href="#/dossier/' + encodeURIComponent(n) + '">' + esc(n) + "</a>"; };
+  if (x.verdict === "doublon") return ['<span class="pastille-mail info">Doublon, classé</span>', "Même sinistre que " + lien(x.original || "") + " : " + (qui === "Klerio" ? "classé automatiquement par Klerio" : "classé par " + esc(qui)) + (x.le ? " le " + esc(C.dateFr(x.le)) : "") + (x.motif ? " (" + esc(x.motif) + ")" : "") + "."];
+  if (x.verdict === "different") return ['<span class="pastille-mail ok">Sinistre différent</span>', "Ressemblait à " + (x.original ? lien(x.original) : "un autre dossier") + ", mais " + esc(qui) + " a confirmé que c'est un autre sinistre" + (x.motif ? " : " + esc(x.motif) : "") + ". Le dossier a été traité normalement."];
+  return ['<span class="pastille-mail attente">À trancher</span>', "Ressemble à " + (x.original ? lien(x.original) : "un autre dossier") + "." + (x.question_assure ? " Question envoyée à l'assuré le " + esc(C.dateFr(x.question_assure)) + "." : "") + " Un gestionnaire décide sur la fiche du dossier."];
+}
+function blocDeclarationsMultiples(l) {
+  if (!l.length) return "";
+  return '<section class="bloc"><div class="bloc-tete"><h2>Déclarations reçues plusieurs fois<span class="compte">' + l.length + '</span></h2><span class="muet petit">Chaque fois que le client a redéclaré un sinistre, et le verdict</span></div><div class="bloc-corps pile">' +
+    l.map(function (x) {
+      var v = verdictDoublon(x);
+      return '<div class="recl"><div class="ligne-recl"><a href="#/dossier/' + encodeURIComponent(x.numero) + '"><b>' + esc(x.numero) + "</b></a> " + v[0] + "</div>" +
+        '<dl class="info-liste"><dt>Reçu</dt><dd>' + esc(C.heure(x.recu_le)) + (x.canal === "email" ? " par mail" : " depuis l'outil de l'assureur") + "</dd>" +
+        "<dt>Sinistre</dt><dd>" + esc(C.theme(x.theme)) + " du " + esc(C.dateCourte(x.date_sinistre)) + (x.immatriculation ? '<span class="muet"> · ' + esc(x.immatriculation) + "</span>" : "") + "</dd>" +
+        "<dt>Verdict</dt><dd>" + v[1] + "</dd></dl></div>";
+    }).join("") + "</div></section>";
 }
 
 /* Recours reçus de l'assureur adverse : notre assuré est responsable, en tout ou partie */
