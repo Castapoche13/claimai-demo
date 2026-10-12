@@ -918,7 +918,8 @@ function parcours(f) {
   var noms = ETAPES[t];
   var exp = f.expertises || [], regl = (f.reglements || []).filter(function (r) { return r.statut !== "annule"; });
   var manque = (f.pieces || []).filter(function (p) { return p.obligatoire && !p.recue_le; });
-  var a = !!f.analyse && f.statut !== "recu", c = f.decision === "garanti", m = (f.missions || []).length > 0;
+  // un dossier qui a avancé a forcément été analysé, même si l'analyse a été effacée depuis (RGPD)
+  var m = (f.missions || []).length > 0, a = f.statut !== "recu", c = f.decision === "garanti" || m;
   var has = function (n) { return exp.some(function (x) { return x.nature === n; }); };
   var valide = regl.some(function (r) { return r.statut === "envoye" || r.statut === "confirme"; });
   var paye = regl.some(function (r) { return r.statut === "confirme"; });
@@ -1013,7 +1014,7 @@ function afficherDossier(f) {
   h += ongletsFiche(f, [
     ["echanges", "Échanges" + (nCour + nNotes ? " (" + (nCour + nNotes) + ")" : ""), blocSuivi(f) + blocCourriers(f)],
     ["documents", "Documents" + (nDocs ? " (" + nDocs + ")" : ""), blocDocuments(f) + blocExpertises(f)],
-    ["agir", "Agir", blocGestion(f) + (aRR ? "" : blocRecoursRecus(f)) + (aVT ? "" : blocVictimes(f)) + (reclOuverte ? "" : blocReclamations(f))],
+    ["agir", "Actions", blocGestion(f) + (aRR ? "" : blocRecoursRecus(f)) + (aVT ? "" : blocVictimes(f)) + (reclOuverte ? "" : blocReclamations(f))],
     ["ia", "Lecture IA", blocAnalyse(f, an, d)],
     ["journal", "Journal", blocJournal(f)]]);
   h += "</div><aside>";
@@ -1475,14 +1476,26 @@ function blocRecoursRecus(f) {
         '<label class="champ">Sa référence<input class="saisie" id="rr-ref-' + id + '" value="' + esc(r.reference_adverse || "") + '"></label></div>' +
         '<div class="decision-actions"><button class="btn" data-rr="completer" data-id="' + id + '">Compléter</button></div>';
     } else if (r.statut === "a_examiner" || r.statut === "conteste") {
-      var proposer = pct === 0 ? "contester" : "accepter";
-      h += '<label class="champ">Motif <span class="aide">obligatoire pour contester ou pour accepter plus que la part de notre assuré ; envoyé à l\'assureur adverse</span><input class="saisie" id="rr-motif-' + id + '"></label>' +
-        '<div class="grille-2"><label class="champ">Montant accepté <span class="aide">par défaut, la part de notre assuré</span><input class="saisie" id="rr-acc-' + id + '" inputmode="decimal" placeholder="' + esc(r.montant_du != null ? String(r.montant_du) : "") + '"></label>' +
-        '<label class="champ">Adresse du service recours<input class="saisie" id="rr-mail-' + id + '" type="email" value="' + esc(r.email_adverse || "") + '"></label></div>' +
-        '<div class="decision-actions">' + (pct === null ? '<span class="muet petit">Validez d\'abord la responsabilité de notre assuré.</span>' :
-          '<button class="btn' + (proposer === "accepter" ? " primaire" : "") + '" data-rr="accepter" data-id="' + id + '"' + (pct === 0 ? " disabled" : "") + ">Accepter</button>") +
-        (r.statut === "a_examiner" ? '<button class="btn' + (proposer === "contester" ? " primaire" : "") + '" data-rr="contester" data-id="' + id + '">Contester</button>' : "") +
-        '<button class="btn discret" data-rr="clore" data-id="' + id + '">Clore</button></div>';
+      // une phrase avec ce que Klerio propose, un bouton ; le reste replié
+      var motifDefaut = pct === 0 ? "Notre assuré n'est pas responsable de l'accident (responsabilité retenue : 0 %)." : "";
+      var mailChamp = '<label class="champ">Adresse du service recours<input class="saisie" id="rr-mail-' + id + '" type="email" value="' + esc(r.email_adverse || "") + '"></label>';
+      if (pct === null) {
+        h += '<p class="muet">Validez d\'abord la responsabilité de notre assuré : Klerio calculera alors ce qui est dû.</p>';
+      } else if (r.statut === "a_examiner" && pct > 0) {
+        h += '<p>Klerio propose de <b>payer ' + esc(C.eur(r.montant_du)) + "</b>, la part de notre assuré (" + esc(String(pct)) + " % de responsabilité).</p>" +
+          '<div class="decision-actions"><button class="btn primaire" data-rr="accepter" data-id="' + id + '">Accepter et payer ' + esc(C.eur(r.montant_du)) + "</button></div>";
+      } else if (r.statut === "a_examiner") {
+        h += "<p>Notre assuré n'est pas responsable : Klerio propose de <b>contester</b>. Le motif ci-dessous est envoyé à l'assureur adverse.</p>";
+      }
+      if (pct !== null) {
+        var ouvert = r.statut === "a_examiner" && pct === 0;
+        h += (ouvert ? '<div class="pile">' : '<details class="autres"><summary class="petit">Contester, ou accepter un autre montant</summary><div class="pile" style="margin-top:10px">') +
+          '<label class="champ">Motif <span class="aide">envoyé à l\'assureur adverse</span><input class="saisie" id="rr-motif-' + id + '" value="' + esc(motifDefaut) + '"></label>' +
+          '<div class="grille-2">' + (pct > 0 ? '<label class="champ">Autre montant accepté <span class="aide">vide = la part de notre assuré</span><input class="saisie" id="rr-acc-' + id + '" inputmode="decimal" placeholder="' + esc(r.montant_du != null ? String(r.montant_du) : "") + '"></label>' : "") + mailChamp + "</div>" +
+          '<div class="decision-actions">' + (r.statut === "a_examiner" ? '<button class="btn' + (ouvert ? " primaire" : "") + '" data-rr="contester" data-id="' + id + '">Contester</button>' : "") +
+          (pct > 0 ? '<button class="btn" data-rr="accepter" data-id="' + id + '">Accepter ce montant</button>' : "") +
+          '<button class="btn discret" data-rr="clore" data-id="' + id + '">Clore sans suite</button></div>' + (ouvert ? "</div>" : "</div></details>");
+      }
     } else if (r.statut === "accepte") {
       h += '<div class="grille-2"><label class="champ">Référence du règlement <span class="aide">compensation ou virement</span><input class="saisie" id="rr-regref-' + id + '"></label><div></div></div>' +
         '<div class="decision-actions"><button class="btn primaire" data-rr="regler" data-id="' + id + '">Marquer réglé</button></div>';

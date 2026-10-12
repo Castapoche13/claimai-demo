@@ -160,6 +160,8 @@ ol.raisonnement li.info .pastille-etape { background: var(--bleu-pale); color: v
 
 /* Personne blessée : une question à la fois */
 .vt-titre { margin: 0 0 6px; font-size: 15px; }
+.recl > p { margin: 10px 0 8px; }
+.recl > .decision-actions { margin-top: 4px; }
 .choix-rapides { display: flex; flex-wrap: wrap; gap: 8px; margin: 6px 0 4px; }
 details.autres { margin-top: 10px; }
 details.autres > summary { cursor: pointer; color: var(--texte-2, inherit); }
