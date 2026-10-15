@@ -454,7 +454,7 @@ a.tuile:hover { border-color: var(--trait-fort); text-decoration: none; }
       <div class="barre-in">
         <form class="recherche" id="form-recherche" role="search">
           <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><circle cx="7" cy="7" r="4.5" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M10.5 10.5L14 14" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
-          <input class="saisie" id="q" type="search" placeholder="Dossier, contrat, immatriculation, référence" aria-label="Rechercher un dossier">
+          <input class="saisie" id="q" type="search" placeholder="Plaque, n° de plainte, client, contrat, dossier…" aria-label="Rechercher un dossier">
         </form>
         <div class="env" role="group" aria-label="Environnement">
           <button type="button" id="env-prod" aria-pressed="true">Production</button>
@@ -637,7 +637,7 @@ function router() {
   var v = $("vue"); v.innerHTML = '<div class="vide"><span class="tourne" style="display:inline-block"></span></div>';
   window.scrollTo(0, 0);
   var f = { file: vueFile, dossiers: vueDossiers, dossier: function () { vueDossier(decodeURIComponent(h[1] || "")); },
-    archives: vueArchives, clients: vueClients, client: function () { vueClient(decodeURIComponent(h[1] || "")); }, doublons: vueDoublons, declarer: vueDeclarer, boites: vueBoites, pilotage: vuePilotage, raccordement: function () { vueRaccordement(h[1]); }, equipe: vueEquipe }[vue] || vueFile;
+    archives: vueArchives, recherche: function () { vueRecherche(decodeURIComponent(h[1] || "")); }, clients: vueClients, client: function () { vueClient(decodeURIComponent(h[1] || "")); }, doublons: vueDoublons, declarer: vueDeclarer, boites: vueBoites, pilotage: vuePilotage, raccordement: function () { vueRaccordement(h[1]); }, equipe: vueEquipe }[vue] || vueFile;
   f();
 }
 function erreurVue(x) { $("vue").innerHTML = '<div class="bloc"><div class="vide"><b>Impossible de charger cette page</b>' + esc(x.message) + '<p style="margin-top:14px"><button class="btn" onclick="location.reload()">Recharger</button></p></div></div>'; }
@@ -646,7 +646,7 @@ function ouvrirDossier(n) { location.hash = "#/dossier/" + encodeURIComponent(n)
 $("form-recherche").addEventListener("submit", function (e) {
   e.preventDefault(); var q = $("q").value.trim(); if (!q) return;
   if (/^(CLM|ESS)-\d{4}-\d{6}$/i.test(q)) { ouvrirDossier(q.toUpperCase()); return; }
-  location.hash = "#/dossiers/" + encodeURIComponent(q);
+  location.hash = "#/recherche/" + encodeURIComponent(q);
 });
 
 /* ---------------- Ce que le dossier attend ---------------- */
@@ -866,6 +866,23 @@ function vueDossiers() {
   charger();
 }
 
+/* ---------------- Vue : Recherche (tous les dossiers, en cours et terminés) ---------------- */
+function vueRecherche(q) {
+  $("vue").innerHTML = '<div class="entete-vue"><div><h1>Recherche : ' + esc(q) + '</h1><p>Tous les dossiers, en cours et terminés, y compris ceux traités entièrement par Klerio : par plaque (écrite comme vous voulez), numéro de plainte, numéro de série, client, email, contrat, plaque de l\'autre véhicule ou numéro de dossier.</p></div></div><section class="bloc"><div class="tableau-wrap" id="r-table"><div class="vide">Recherche…</div></div></section>';
+  api("dossiers?limite=100&q=" + encodeURIComponent(q)).then(function (l) {
+    if (l.length === 1) { location.replace("#/dossier/" + encodeURIComponent(l[0].numero)); return; }
+    $("r-table").innerHTML = l.length ? '<table class="tableau"><thead><tr><th>Dossier</th><th>Trouvé par</th><th>Type</th><th>Client et véhicule</th><th>Sinistre</th><th>Statut</th><th>Suivi par</th></tr></thead><tbody>' +
+      l.map(function (d) {
+        return '<tr data-n="' + esc(d.numero) + '" tabindex="0"><td><b>' + esc(d.numero) + "</b></td><td>" + esc(d.trouve_par || "") + "</td><td>" + esc(C.theme(d.theme)) +
+          "</td><td>" + esc(d.client || "") + (d.immatriculation ? '<div class="muet petit">' + esc(d.immatriculation) + "</div>" : "") + "</td><td>" + esc(C.dateCourte(d.date_sinistre)) +
+          "</td><td>" + C.statut(d.statut) + '</td><td class="muet">' + esc(d.gestionnaire || "Automatique") + "</td></tr>";
+      }).join("") + "</tbody></table>" : '<div class="vide"><b>Aucun dossier ne correspond à « ' + esc(q) + ' »</b>Essayez la plaque seule, le numéro de contrat ou le nom de client.</div>';
+    var t = $("r-table");
+    t.onclick = function (e) { var tr = e.target.closest("tr[data-n]"); if (tr) ouvrirDossier(tr.dataset.n); };
+    t.onkeydown = function (e) { var tr = e.target.closest("tr[data-n]"); if (tr && e.key === "Enter") ouvrirDossier(tr.dataset.n); };
+  }).catch(erreurVue);
+}
+
 /* ---------------- Vue : Archives ---------------- */
 function vueArchives() {
   var h = bandeauCorporel() + '<div class="entete-vue"><div><h1>Archives</h1><p>Tous les dossiers terminés : clos et payés, refusés ou classés. Chacun a aussi été remis complet à votre outil, avec son récapitulatif PDF.</p></div></div>' +
@@ -1007,6 +1024,7 @@ function afficherDossier(f) {
   if (aVT) h += blocVictimes(f);
   h += blocIdentiteFraude(f);
   h += blocVigilance(f);
+  h += blocEnquete(f);
   h += blocPaiement(f);
   h += blocRecours(f);
   h += blocVehicule(f);
@@ -1099,6 +1117,24 @@ function blocIdentiteFraude(f) {
   if (l.length) h += '<ul class="liste-simple">' + l.map(function (x) { return "<li>" + esc(x.libelle) + "</li>"; }).join("") + "</ul>";
   h += '<p class="muet petit">Ces signaux ne prouvent rien : la fraude suppose une intention, que seul un humain peut établir. ' +
     (haut ? "Au-delà du seuil fixé par la compagnie, Klerio ne paie jamais seul : le règlement attend votre validation." : "En dessous du seuil, le dossier suit son cours normalement.") + "</p>";
+  return h + "</div></section>";
+}
+// Vol, tentative, vandalisme : tout ce qui touche à la plainte et à l'enquête au même endroit
+function blocEnquete(f) {
+  if (["VOL", "TENTATIVE_VOL", "VANDALISME"].indexOf(f.theme) < 0) return "";
+  var pl = (f.documents_lus || []).filter(function (x) { return x.nature === "depot_plainte"; })[0], ex = pl && pl.extraction || {};
+  var pp = (f.pieces || []).filter(function (p) { return p.code === "DEPOT_PLAINTE"; })[0];
+  var appels = (f.notes || []).filter(function (n) { return n.interlocuteur === "police"; });
+  var vr = (f.details || {}).vol_retrouve;
+  var h = '<section class="bloc" id="bloc-enquete"><div class="bloc-tete"><h2>Plainte et enquête</h2>' + (vr ? '<span class="pastille-mail ok">Véhicule retrouvé</span>' : "") + '</div><div class="bloc-corps pile"><dl class="info-liste">' +
+    "<dt>Plainte</dt><dd>" + (pl ? "Déposée le " + esc(C.dateFr(ex.date_plainte)) + (ex.service_plainte ? ", " + esc(ex.service_plainte) : "") + (ex.numero_plainte ? '<br><span class="muet">N° </span><b>' + esc(ex.numero_plainte) + "</b>" : "")
+      : pp && pp.recue_le ? "Récépissé reçu le " + esc(C.dateFr(pp.recue_le)) : '<span class="muet">' + (pp ? "Récépissé demandé à l'assuré, pas encore reçu" : "Pas de plainte au dossier") + "</span>") + "</dd>" +
+    (vr ? "<dt>Retrouvé</dt><dd>" + esc(C.dateFr(vr.retrouve_le)) + (vr.commentaire ? '<span class="muet"> · ' + esc(vr.commentaire) + "</span>" : "") + "</dd>" : "") + "</dl>";
+  h += '<div><div class="sous-titre">Échanges avec la police ou la gendarmerie</div>' + (appels.length ? '<ul class="liste-simple">' + appels.map(function (n) {
+      return "<li><b>" + esc(C.dateFr(n.cree_le)) + "</b> · " + esc((n.analyse && n.analyse.resume) || n.contenu || "") + "</li>"; }).join("") + "</ul>" : '<p class="muet petit">Aucun pour l\'instant.</p>') + "</div>";
+  if (!f.efface_le) h += '<div class="decision-actions"><button class="btn petit" id="b-appel-police">Noter un appel de la police ou de la gendarmerie</button>' +
+    (f.theme === "VOL" && !vr && ["refuse", "classe_sans_suite"].indexOf(f.statut) < 0 ? '<button class="btn petit" id="b-retrouve">Le véhicule a été retrouvé</button>' : "") + "</div>" +
+    '<p class="muet petit">Klerio lit chaque note et propose la suite. L\'assuré peut aussi signaler que son véhicule est retrouvé depuis son lien.</p>';
   return h + "</div></section>";
 }
 function blocVigilance(f) {
@@ -1660,7 +1696,7 @@ function blocReclamations(f) {
   });
   if (!ouverte && !f.efface_le) {
     h += '<details><summary class="petit">Enregistrer une réclamation</summary><div class="pile" style="margin-top:10px"><label class="champ">Objet<input class="saisie" id="rl-objet" maxlength="1000" placeholder="Ce que la personne conteste ou reproche"></label>' +
-      '<div class="grille-3"><label class="champ">Reçue par<select class="saisie" id="rl-canal">' + options(CANAUX, "courrier") + '</select></label><label class="champ">De la part de<select class="saisie" id="rl-qui">' + options(INTERLOCUTEURS, "assure") + '</select></label>' +
+      '<div class="grille-3"><label class="champ">Reçue par<select class="saisie" id="rl-canal">' + options(CANAUX, "courrier") + '</select></label><label class="champ">De la part de<select class="saisie" id="rl-qui">' + options(INTERLOCUTEURS_RECL, "assure") + '</select></label>' +
       '<label class="champ">Reçue le<input class="saisie" id="rl-date" type="date"></label></div>' +
       '<div class="decision-actions"><button class="btn" data-recl="ouvrir">Enregistrer</button><span class="muet petit">Un accusé de réception part tout de suite à l\'assuré.</span></div></div></details>';
   }
@@ -1755,8 +1791,6 @@ function blocVehicule(f) {
         : "L'indemnisation n'était pas versée : le dossier est passé en expertise et réparation.") + "</p>" + taches(vr.taches_assureur) + "</div></section>";
   }
   if (cg) h += '<p class="note-garage petit muet">Réparateur choisi par l\'assuré : <b>' + esc(cg.garage) + "</b>" + (cg.hors_reseau ? ", hors réseau : son règlement sera validé par un gestionnaire." : ", garage partenaire.") + "</p>";
-  if (f.theme === "VOL" && !vr && ["refuse", "classe_sans_suite"].indexOf(f.statut) < 0)
-    h += '<p><button class="btn petit" id="b-retrouve">Le véhicule a été retrouvé</button> <span class="muet petit">L\'assuré peut aussi le signaler depuis son lien.</span></p>';
   return h;
 }
 
@@ -1912,10 +1946,12 @@ function blocCloture(f) {
 
 /* Informations reçues par téléphone, mail ou courrier, et documents déposés par le gestionnaire */
 var CANAUX = { telephone: "Téléphone", email: "Mail", courrier: "Courrier", accueil: "Accueil en agence", autre: "Autre" };
-var INTERLOCUTEURS = { assure: "Assuré", tiers: "Tiers", garage: "Réparateur", expert: "Expert", avocat: "Avocat", autre: "Autre" };
+var INTERLOCUTEURS = { assure: "Assuré", tiers: "Tiers", garage: "Réparateur", expert: "Expert", avocat: "Avocat", police: "Police ou gendarmerie", autre: "Autre" };
+var INTERLOCUTEURS_RECL = { assure: "Assuré", tiers: "Tiers", garage: "Réparateur", expert: "Expert", avocat: "Avocat", autre: "Autre" };
 var IMPACTS = { TIERS_SIGNALE: "Tiers signalé", PIECE_ANNONCEE: "Pièce annoncée", PIECE_TRANSMISE: "Pièce transmise", CONTESTATION: "Contestation",
   NOUVEAU_DOMMAGE: "Nouveau dommage", BLESSURE_SIGNALEE: "Blessure signalée", CHANGEMENT_COORDONNEES: "Coordonnées modifiées",
-  DEMANDE_INFORMATION: "Demande d'information", RECLAMATION: "Réclamation", DESISTEMENT: "Désistement", AUCUN_IMPACT: "Sans effet sur le dossier" };
+  DEMANDE_INFORMATION: "Demande d'information", RECLAMATION: "Réclamation", DESISTEMENT: "Désistement", RECOURS_ADVERSE: "Recours de l'assureur adverse",
+  VEHICULE_RETROUVE: "Véhicule retrouvé", ENQUETE: "Enquête de police", AUCUN_IMPACT: "Sans effet sur le dossier" };
 function options(o, choisi) { return Object.keys(o).map(function (k) { return '<option value="' + k + '"' + (k === choisi ? " selected" : "") + ">" + esc(o[k]) + "</option>"; }).join(""); }
 function blocSuivi(f) {
   var notes = (f.notes || []).filter(function (n) { return !(n.analyse && n.analyse.reouverture); });
@@ -1924,6 +1960,7 @@ function blocSuivi(f) {
   if (f.efface_le) return h + '<p class="muet">Données effacées chez Klerio : notez les nouvelles informations dans votre outil.</p></div></section>';
   h += '<details id="d-note"' + (notes.length ? "" : " open") + '><summary class="petit">Noter un appel, un mail ou un courrier reçu</summary><form id="form-note" class="pile" novalidate style="margin-top:10px"><div class="grille-2"><label class="champ">Reçu par<select class="saisie" id="n-canal">' + options(CANAUX, "telephone") + "</select></label>" +
     '<label class="champ">De la part de<select class="saisie" id="n-qui">' + options(INTERLOCUTEURS, "assure") + "</select></label></div>" +
+    '<p class="indice" id="n-police" hidden><b>Appel de la police ou de la gendarmerie.</b> Notez tout ce qu\'on vous apprend. Avant de donner vous-même une information, vérifiez que l\'appel vient bien du service en le rappelant par son standard officiel ; les données personnelles de l\'assuré ne se communiquent que sur réquisition écrite.</p>' +
     '<label class="champ">Ce que la personne a dit ou écrit<textarea class="saisie" id="n-texte" rows="3" maxlength="8000" placeholder="Ex. : l\'assuré a déposé plainte hier et enverra le récépissé par mail."></textarea></label>' +
     '<div class="decision-actions"><button class="btn primaire" id="n-ok">Enregistrer et analyser</button><span class="muet petit">Klerio propose les suites ; rien ne change sans votre clic.</span></div></form></details>';
   h += '<label class="depot-fiche" id="depot-fiche"><input type="file" id="depot-fichier" accept="application/pdf,image/jpeg,image/png,image/webp">' +
@@ -2343,6 +2380,14 @@ function brancherSuivi(f) {
       .catch(function (x) { C.occupe(ro, false); C.toast(x.message, true); });
   };
   var fn = $("form-note");
+  var nq = $("n-qui"); if (nq) nq.addEventListener("change", function () { $("n-police").hidden = nq.value !== "police"; });
+  var bap = $("b-appel-police");
+  if (bap) bap.onclick = function () {
+    var o = document.querySelector('[data-onglet="echanges"]'); if (o) o.click();
+    var dn = $("d-note"); if (dn) dn.open = true;
+    $("n-canal").value = "telephone"; nq.value = "police"; $("n-police").hidden = false;
+    $("n-texte").scrollIntoView({ behavior: "smooth", block: "center" }); $("n-texte").focus();
+  };
   if (fn) fn.addEventListener("submit", function (e) {
     e.preventDefault();
     var t = $("n-texte").value.trim(), b = $("n-ok");
