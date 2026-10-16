@@ -59,6 +59,8 @@
     tempete_garantie_obligatoire: "Tempête : garantie par la loi même sans garantie climatique, à qualifier",
     relances_sans_reponse: "Trois relances sans réponse",
     choix_vei: "Véhicule irréparable : choix de l'assuré attendu",
+    valeur_contestee: "Valeur du véhicule contestée : réexamen par l'expert", contestation_valeur: "Valeur du véhicule : désaccord avec l'assuré",
+    valeur_sans_reponse: "Valeur du véhicule : l'assuré ne répond pas",
     choix_vol_retrouve: "Véhicule retrouvé : choix de l'assuré attendu",
     vei_sans_valeur: "Véhicule irréparable : valeurs de l'expert manquantes",
     qualite_assure_a_verifier: "Âge ou lien de la victime à vérifier",
@@ -79,7 +81,7 @@
     ECART_BAREME: "AIPP éloignée du barème", CONSOLIDATION_MANQUANTE: "Date de consolidation absente",
     CONSOLIDATION_INCOHERENTE: "Date de consolidation incohérente", DEPENDANCE_TOTALE: "Dépendance totale signalée",
     AUCUN_REPARATEUR: "Aucun réparateur agréé trouvé", AUCUN_EXPERT: "Aucun expert trouvé",
-    RELANCES_SANS_REPONSE: "Trois relances sans réponse", CALCUL_IMPOSSIBLE: "Calcul impossible", VIGILANCE_VOL: "Point de vigilance avant d'indemniser le vol",
+    RELANCES_SANS_REPONSE: "Trois relances sans réponse", CALCUL_IMPOSSIBLE: "Calcul impossible", VIGILANCE_VOL: "Point de vigilance avant d'indemniser le vol", CONTESTATION_VALEUR: "Valeur du véhicule contestée", VALEUR_SANS_REPONSE: "Assuré sans réponse sur la valeur",
     ENQUETE_VOL: "Conclusion de l'enquêteur"
   };
   var COURRIERS = {

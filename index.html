@@ -1024,6 +1024,7 @@ function afficherDossier(f) {
   if (aVT) h += blocVictimes(f);
   h += blocIdentiteFraude(f);
   h += blocVigilance(f);
+  h += blocValeurVehicule(f);
   h += blocEnquete(f);
   h += blocPaiement(f);
   h += blocRecours(f);
@@ -1126,7 +1127,7 @@ function blocEnquete(f) {
   var pp = (f.pieces || []).filter(function (p) { return p.code === "DEPOT_PLAINTE"; })[0];
   var appels = (f.notes || []).filter(function (n) { return n.interlocuteur === "police"; });
   var vr = (f.details || {}).vol_retrouve;
-  var h = '<section class="bloc" id="bloc-enquete"><div class="bloc-tete"><h2>Plainte et enquête</h2>' + (vr ? '<span class="pastille-mail ok">Véhicule retrouvé</span>' : "") + '</div><div class="bloc-corps pile"><dl class="info-liste">' +
+  var h = '<section class="bloc" id="bloc-enquete"><div class="bloc-tete"><h2>Plainte et enquête</h2>' + (vr ? '<span class="statut ok">Véhicule retrouvé</span>' : "") + '</div><div class="bloc-corps pile"><dl class="info-liste">' +
     "<dt>Plainte</dt><dd>" + (pl ? "Déposée le " + esc(C.dateFr(ex.date_plainte)) + (ex.service_plainte ? ", " + esc(ex.service_plainte) : "") + (ex.numero_plainte ? '<br><span class="muet">N° </span><b>' + esc(ex.numero_plainte) + "</b>" : "")
       : pp && pp.recue_le ? "Récépissé reçu le " + esc(C.dateFr(pp.recue_le)) : '<span class="muet">' + (pp ? "Récépissé demandé à l'assuré, pas encore reçu" : "Pas de plainte au dossier") + "</span>") + "</dd>" +
     (vr ? "<dt>Retrouvé</dt><dd>" + esc(C.dateFr(vr.retrouve_le)) + (vr.commentaire ? '<span class="muet"> · ' + esc(vr.commentaire) + "</span>" : "") + "</dd>" : "") + "</dl>";
@@ -1819,6 +1820,39 @@ function pourquoiHumainResp(p, f) {
 }
 function propoValidation(f) { return (f.validations_en_attente || []).slice(-1)[0]; }
 
+// Valeur du véhicule (vol, irréparable) : désaccord persistant ou assuré sans réponse ; le gestionnaire fixe la valeur, la suite repart seule
+function carteValeur(f, p, an) {
+  var val = (f.details || {}).valeur || {}, ct = val.contestation || {}, sans = p.code === "VALEUR_SANS_REPONSE";
+  return '<section class="decision" id="carte-decision"><div class="decision-entete">Décision requise</div><div class="decision-corps"><h2>' +
+    (sans ? "L'assuré ne répond pas sur la valeur de son véhicule" : "Valeur du véhicule : l'assuré n'est pas d'accord") + "</h2>" +
+    '<p class="explication">' + (sans ? "Deux relances sont restées sans réponse. Appelez-le : s'il accepte, fixez la valeur proposée ; sinon, notez sa demande et fixez la valeur que vous retenez."
+      : "La valeur de l'expert a été contestée" + (val.tour >= 2 ? ", puis maintenue ou révisée après réexamen" : "") + ". Fixez la valeur que vous retenez : l'assuré reçoit votre décision et ses voies de recours (contre-expertise, réclamation, médiateur), puis le dossier repart seul.") + "</p>" +
+    '<dl class="info-liste"><dt>Valeur de l\'expert</dt><dd><b>' + esc(eur(val.valeur_ttc)) + "</b>" + (val.commentaire_expert ? '<span class="muet"> · « ' + esc(val.commentaire_expert) + " »</span>" : "") + "</dd>" +
+    (ct.montant_demande ? "<dt>Demande de l'assuré</dt><dd><b>" + esc(eur(ct.montant_demande)) + "</b></dd>" : "") +
+    (ct.motif ? "<dt>Ses arguments</dt><dd>" + esc(ct.motif) + "</dd>" : "") + "</dl>" +
+    '<div class="grille-2"><label class="champ">Valeur que vous retenez <span class="aide">TTC, en €</span><input class="saisie" id="fv-montant" inputmode="decimal" value="' + esc(val.valeur_ttc != null ? String(val.valeur_ttc).replace(".", ",") : "") + '"></label><div></div></div>' +
+    '<label class="champ">Votre explication à l\'assuré <span class="aide">obligatoire, elle lui est envoyée</span><textarea class="saisie" id="fv-motif" rows="3" placeholder="Ex. au vu des factures d\'entretien reçues, nous retenons la valeur haute du marché."></textarea></label>' +
+    '<div class="decision-actions"><button class="btn primaire" id="fv-ok">Fixer cette valeur et prévenir l\'assuré</button></div>' +
+    '<p class="loi">L\'assuré peut toujours faire appel à un expert de son choix ; en cas de désaccord persistant entre les deux experts, un tiers expert est désigné.</p></div></section>';
+}
+// Historique de la valeur du véhicule : proposition, contestation, réponse de l'expert, décision
+var ETAT_VALEUR = { proposee: ["Réponse de l'assuré attendue", "neutre"], reexamen: ["Réexamen par l'expert", "neutre"], desaccord: ["Désaccord : à trancher", "vous"],
+  acceptee: ["Acceptée par l'assuré", "ok"], fixee: ["Fixée par un gestionnaire", "ok"] };
+var QUOI_VALEUR = { proposition: "Valeur proposée à l'assuré", contestation: "Contestée par l'assuré", reponse_expert: "Réponse de l'expert", acceptation: "Acceptée par l'assuré", decision_gestionnaire: "Fixée par un gestionnaire" };
+function blocValeurVehicule(f) {
+  var val = (f.details || {}).valeur;
+  if (!val) return "";
+  var e = ETAT_VALEUR[val.statut] || [val.statut, "info"], hist = val.historique || [];
+  return '<section class="bloc" id="bloc-valeur"><div class="bloc-tete"><h2>Valeur du véhicule</h2><span class="statut ' + e[1] + '">' + esc(e[0]) + '</span></div><div class="bloc-corps pile">' +
+    "<p>Valeur retenue : <b>" + esc(eur(val.valeur_ttc)) + "</b>, soit " + esc(eur(val.net_eur)) + " pour l'assuré après franchise." +
+    (val.statut === "proposee" && val.echeance ? ' <span class="muet petit">Réponse attendue avant le ' + esc(C.dateFr(val.echeance)) + ", Klerio relance seul.</span>" : "") +
+    (val.statut === "reexamen" ? ' <span class="muet petit">L\'expert a 7 jours pour répondre, Klerio le relance seul.</span>' : "") + "</p>" +
+    '<ul class="liste-simple">' + hist.map(function (h) {
+      var det = h.quoi === "proposition" ? eur(h.valeur) + (h.revisee ? " (révisée)" : "") : h.quoi === "contestation" ? (h.montant_demande ? "demande " + eur(h.montant_demande) + " : " : "") + (h.motif || "")
+        : h.quoi === "reponse_expert" ? (h.decision === "reviser" ? "révise à " + eur(h.valeur) : "maintient") + " : " + (h.commentaire || "") : h.quoi === "decision_gestionnaire" ? eur(h.valeur) + " : " + (h.commentaire || "") : "";
+      return "<li><b>" + esc(C.dateFr(h.le)) + "</b> · " + esc(QUOI_VALEUR[h.quoi] || h.quoi) + (det ? '<span class="muet"> · ' + esc(det) + "</span>" : "") + "</li>";
+    }).join("") + "</ul></div></section>";
+}
 function carteAction(f) {
   if (f.statut === "hors_perimetre" && f.motif === "doublon_possible") return carteDoublon(f);
   if (f.statut === "classe_sans_suite" && f.motif === "doublon") return carteDoublonClasse(f);
@@ -1855,6 +1889,7 @@ function carteAction(f) {
       }
     } else {
       var an = p.anomalies || (p.code ? [p] : []);
+      if (p.code === "CONTESTATION_VALEUR" || p.code === "VALEUR_SANS_REPONSE") return carteValeur(f, p, an);
       titre = an.length > 1 ? an.length + " écarts relevés" : (C.ANOMALIES[(an[0] || {}).code] || "Anomalie à examiner");
       expl = "Klerio a arrêté le circuit automatique. Vérifiez puis décidez de la suite.";
       if (p.code === "VIGILANCE_VOL") {
@@ -2173,7 +2208,8 @@ var ACTIONS = { creation_dossier: "Dossier créé à partir de la déclaration",
   pieces_recues: "Pièces reçues", reponse_portail: "Réponse reçue par l'espace en ligne", lecture_document: "Document lu par Klerio", document_applique: "Document validé par un gestionnaire", document_ecarte: "Document écarté", archivage_jeu_test: "Archivé",
   information_recue: "Information reçue notée", action_information: "Suite donnée à une information reçue", reouverture: "Dossier rouvert",
   archive_envoyee: "Dossier complet envoyé à votre outil", prise_dossier: "Dossier pris en charge", renvoi_manager: "Renvoyé au responsable",
-  offre_vei: "Offre véhicule irréparable envoyée à l'assuré", choix_vei: "Choix de l'assuré sur le véhicule irréparable",
+  offre_vei: "Offre véhicule irréparable envoyée à l'assuré", proposition_valeur: "Valeur du véhicule proposée à l'assuré", valeur_acceptee: "Valeur acceptée par l'assuré",
+  valeur_contestee: "Valeur contestée par l'assuré", valeur_revisee: "Valeur révisée", valeur_fixee: "Valeur fixée par un gestionnaire", reexamen_valeur: "Réponse de l'expert à la contestation", reponse_valeur: "Réponse de l'assuré sur la valeur", choix_vei: "Choix de l'assuré sur le véhicule irréparable",
   vehicule_retrouve: "Véhicule volé signalé retrouvé", choix_vol_retrouve: "Choix de l'assuré sur le véhicule retrouvé", choix_garage: "Réparateur choisi par l'assuré",
   reaffectation: "Dossier réaffecté", attribution: "Dossier attribué automatiquement", archive_recuperee: "Archive téléchargée par votre outil", effacement_donnees: "Données personnelles effacées chez Klerio" };
 function acteur(a) {
@@ -2295,6 +2331,16 @@ function brancherFiche(f) {
   if (oui) oui.addEventListener("click", function () { decider("valide", oui); });
   if (non) non.addEventListener("click", function () { decider("rejete", non); });
 
+  var fvo = $("fv-ok");
+  if (fvo) fvo.onclick = function () {
+    var mt = Number($("fv-montant").value.replace(/[\s\u00a0\u202f€]/g, "").replace(",", ".")), mo = $("fv-motif").value.trim();
+    if (!(mt > 0)) return C.toast("Indiquez la valeur retenue, par exemple 18 500.", true);
+    if (mo.length < 10) return C.toast("Expliquez votre décision : elle est envoyée à l'assuré.", true);
+    C.occupe(fvo, true, "Envoi");
+    api("gestion", { body: { numero: f.numero, action: "valeur", valeur: mt, motif: mo } })
+      .then(function (r) { C.toast("Valeur fixée, l'assuré est prévenu"); rafraichirCompteur(); afficherDossier(r); })
+      .catch(function (x) { C.occupe(fvo, false); C.toast(x.message, true); });
+  };
   var cn = $("cn-chercher");
   if (cn) cn.addEventListener("click", function () {
     C.occupe(cn, true, "Recherche sur internet");

@@ -70,6 +70,8 @@ form.carte-in { display: grid; gap: 18px; }
 .option .montant { font-size: 18px; font-weight: 600; white-space: nowrap; }
 .option p { grid-column: 2 / -1; font-size: 13.5px; color: var(--encre-2); margin: 0; }
 .encart-lien { background: none; border: 0; padding: 0; color: var(--bleu); font: inherit; font-weight: 600; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
+.liste-docs { list-style: none; padding: 0; margin: 6px 0 14px; display: grid; gap: 8px; }
+.liste-docs li { padding: 10px 12px; border: 1px solid var(--trait, #dde3ec); border-radius: 8px; }
 @media (max-width: 560px) { .option { grid-template-columns: auto 1fr; } .option .montant { grid-column: 2; } }
 .pied { font-size: 12.5px; color: var(--gris); margin-top: 24px; line-height: 1.6; }
 </style>
@@ -262,17 +264,56 @@ function blocConfirmationIdentite() {
     '<label class="option"><input type="radio" name="idt" value="inconnu"><b>Non, je ne suis pas au courant</b><p>La déclaration est bloquée tout de suite et un gestionnaire vous contacte.</p></label></div>' +
     '<div class="envoyer"><button class="btn primaire" id="b-idt" type="submit">Envoyer ma réponse</button></div></form></div>';
 }
+// Valeur du véhicule fixée par l'expert : l'assuré l'accepte ou la conteste (vol, véhicule irréparable)
+function champsContestation(val) {
+  var t2 = (val.tour || 1) >= 2;
+  return '<div class="pile" id="val-contest" hidden>' +
+    '<label class="champ">Pourquoi la valeur ne vous convient pas <span class="aide">obligatoire</span><textarea class="saisie" id="val-motif" rows="3" maxlength="1500" placeholder="Ex. options non comptées (toit ouvrant, GPS), faible kilométrage, entretien récent, annonces de véhicules équivalents plus chères"></textarea></label>' +
+    '<div class="grille-2">' + num("val-dem", "Montant que vous estimez juste", "facultatif, en €", "") + "<div></div></div>" +
+    '<p class="petit muet">' + (t2 ? "Un gestionnaire reprendra votre dossier avec vous." : "L'expert réexaminera son évaluation.") +
+    " Vous pourrez envoyer vos justificatifs (annonces, factures d'options ou d'entretien, carnet d'entretien) en répondant au mail de confirmation.</p></div>";
+}
+function introValeur(val) {
+  if ((val.tour || 1) >= 2 && val.commentaire_expert) return "Après votre contestation, l'expert a réexaminé son évaluation et retient " + esc(eur(val.valeur_ttc)) + " : « " + esc(val.commentaire_expert) + " ».";
+  return "L'expert a estimé votre véhicule à " + esc(eur(val.valeur_ttc)) + " : c'est le prix d'un véhicule équivalent (même modèle, âge, kilométrage et équipements) sur le marché.";
+}
+function blocValeur(c) {
+  var val = c.valeur;
+  if (!val || c.vei) return "";
+  if (val.statut === "proposee") {
+    var t2 = (val.tour || 1) >= 2;
+    return '<div class="carte"><form class="carte-in" id="form-val" novalidate><h2>La valeur de votre véhicule</h2>' +
+      '<p class="intro">' + introValeur(val) + " Si votre véhicule n'est pas retrouvé, votre indemnité sera de <b>" + esc(eur(val.net_eur)) + "</b>, franchise de " + esc(eur(val.franchise_eur)) + " déduite.</p>" +
+      '<div class="choix"><label class="option"><input type="radio" name="val" value="accepter"><b>J\'accepte cette valeur</b><span class="montant">' + esc(eur(val.net_eur)) + "</span><p>L'indemnité vous est versée à la fin du délai de recherche, une fois les dernières pièces reçues.</p></label>" +
+      '<label class="option"><input type="radio" name="val" value="contester"><b>' + (t2 ? "Je reste en désaccord" : "Je conteste la valeur") + "</b><span></span><p>" +
+        (t2 ? "Un gestionnaire reprend votre dossier." : "Expliquez pourquoi : l'expert réexamine son évaluation.") + "</p></label></div>" +
+      champsContestation(val) + '<div class="envoyer"><button class="btn primaire" id="b-val" type="submit">Envoyer ma réponse</button>' +
+      (val.echeance ? '<span class="muet petit">Avant le ' + esc(C.dateFr(val.echeance)) + "</span>" : "") + "</div></form></div>";
+  }
+  var txt = { reexamen: ["Votre contestation est chez l'expert", "Il réexamine son évaluation ; nous vous écrirons dès sa réponse. Pour appuyer votre demande, envoyez vos justificatifs en répondant au mail de confirmation."],
+    desaccord: ["Un gestionnaire reprend votre dossier", "Il revient vers vous pour trouver une solution sur la valeur de votre véhicule."],
+    acceptee: ["Valeur acceptée", "Valeur retenue : " + eur(val.valeur_ttc) + ", soit une indemnité de " + eur(val.net_eur) + " après franchise."],
+    fixee: ["Valeur retenue par votre assureur", "Valeur retenue : " + eur(val.valeur_ttc) + ", soit une indemnité de " + eur(val.net_eur) + " après franchise."] }[val.statut];
+  return txt ? '<div class="carte"><div class="carte-in"><h2>' + esc(txt[0]) + '</h2><p class="intro">' + esc(txt[1]) + "</p></div></div>" : "";
+}
 function blocsAssure(c) {
-  var h = (c.confirmation_identite ? blocConfirmationIdentite() : "") + (c.questionnaire_vol ? blocQuestionnaireVol() : ""), v = c.vei, vr = c.vol_retrouve, g = c.choix_garage;
-  if (v && !v.choix) {
+  var h = (c.confirmation_identite ? blocConfirmationIdentite() : "") + (c.questionnaire_vol ? blocQuestionnaireVol() : "") + blocValeur(c), v = c.vei, vr = c.vol_retrouve, g = c.choix_garage, val = c.valeur;
+  if (v && !v.choix && val && (val.statut === "reexamen" || val.statut === "desaccord")) {
+    h += '<div class="carte"><div class="carte-in"><h2>' + (val.statut === "reexamen" ? "Votre contestation est chez l'expert" : "Un gestionnaire reprend votre dossier") + '</h2><p class="intro">' +
+      (val.statut === "reexamen" ? "Il réexamine la valeur de votre véhicule. Vous pourrez choisir entre céder et conserver votre véhicule après sa réponse : nous vous écrirons. Envoyez vos justificatifs en répondant au mail de confirmation." :
+        "Il revient vers vous pour trouver une solution sur la valeur de votre véhicule.") + "</p></div></div>";
+  } else if (v && !v.choix) {
     h += '<div class="carte"><form class="carte-in" id="form-vei" novalidate><h2>Votre véhicule est économiquement irréparable</h2>' +
       '<p class="intro">Les réparations, estimées à ' + esc(eur(v.reparations_ttc)) + ", dépassent la valeur de remplacement de votre véhicule, fixée par l'expert à " + esc(eur(v.vrade_ttc)) +
+      (val && (val.tour || 1) >= 2 && val.commentaire_expert ? " après réexamen (« " + esc(val.commentaire_expert) + " »)" : "") +
       ". Choisissez avant le " + esc(C.dateFr(v.echeance)) + ". Sans réponse, vous serez réputé conserver le véhicule.</p><div class=\"choix\">" +
       '<label class="option"><input type="radio" name="vei" value="ceder"><b>Je cède le véhicule à mon assureur</b><span class="montant">' + esc(eur(v.offre_cession)) + "</span>" +
         "<p>Valeur de remplacement, franchise de " + esc(eur(v.franchise_eur)) + " déduite. Nous nous chargeons de l'épave. Il vous faudra le certificat de cession signé et la carte grise barrée.</p></label>" +
       '<label class="option"><input type="radio" name="vei" value="conserver"><b>Je conserve mon véhicule</b><span class="montant">' + esc(eur(v.offre_conservation)) + "</span>" +
         "<p>Valeur de remplacement moins la valeur de l'épave (" + esc(eur(v.valeur_epave_ttc)) + ") et la franchise. Vous ne pourrez le vendre qu'à un professionnel, ou le faire réparer sous le contrôle d'un expert.</p></label></div>" +
-      '<p class="petit muet">Vous contestez la valeur retenue ? Répondez à l\'email reçu avec vos justificatifs, ou demandez une contre-expertise.</p>' +
+      (val && val.statut === "proposee" ? '<div class="choix"><label class="option"><input type="radio" name="vei" value="contester"><b>' + ((val.tour || 1) >= 2 ? "Je reste en désaccord sur la valeur" : "Je conteste la valeur") +
+        "</b><span></span><p>" + ((val.tour || 1) >= 2 ? "Un gestionnaire reprend votre dossier." : "Expliquez pourquoi : l'expert réexamine son évaluation, puis vous choisissez.") + "</p></label></div>" + champsContestation(val)
+        : '<p class="petit muet">Vous contestez la valeur retenue ? Répondez à l\'email reçu avec vos justificatifs, ou demandez une contre-expertise.</p>') +
       '<div class="envoyer"><button class="btn primaire" id="b-vei" type="submit">Valider mon choix</button></div></form></div>';
   } else if (v && v.choix) {
     h += '<div class="carte"><div class="carte-in"><h2>Véhicule irréparable</h2><p class="intro">Choix enregistré : ' +
@@ -333,10 +374,30 @@ function brancherAssure() {
         derniere_utilisation: $("qv-der").value || undefined, commentaire: $("qv-com").value.trim() || undefined } }, "Merci, vos réponses sont enregistrées");
     });
   }
+  // contestation de la valeur : les champs n'apparaissent que si l'assuré choisit de contester
+  ["val", "vei"].forEach(function (nom) {
+    document.querySelectorAll('input[name="' + nom + '"]').forEach(function (r) {
+      r.addEventListener("change", function () { var z = $("val-contest"); if (z) z.hidden = !(r.checked && r.value === "contester"); });
+    });
+  });
+  var contestation = function () {
+    var m = $("val-motif").value.trim(), dem = $("val-dem").value.trim();
+    if (m.length < 15) { C.toast("Expliquez en quelques mots pourquoi la valeur ne vous convient pas.", true); $("val-motif").focus(); return null; }
+    return { decision: "contester", motif: m, montant_demande: dem || undefined };
+  };
+  var fval = $("form-val");
+  if (fval) fval.addEventListener("submit", function (e) {
+    e.preventDefault(); var x = document.querySelector('input[name="val"]:checked');
+    if (!x) return C.toast("Indiquez si vous acceptez ou contestez la valeur.", true);
+    if (x.value === "accepter") return envoyerChoix($("b-val"), { reponse_valeur: { decision: "accepter" } }, "Merci, votre accord est enregistré");
+    var r = contestation(); if (!r) return;
+    envoyerChoix($("b-val"), { reponse_valeur: r }, "Contestation envoyée : un mail de confirmation vous est adressé");
+  });
   var fv = $("form-vei");
   if (fv) fv.addEventListener("submit", function (e) {
     e.preventDefault(); var x = document.querySelector('input[name="vei"]:checked');
-    if (!x) return C.toast("Choisissez une des deux possibilités.", true);
+    if (!x) return C.toast("Choisissez une des possibilités.", true);
+    if (x.value === "contester") { var r = contestation(); if (!r) return; return envoyerChoix($("b-vei"), { reponse_valeur: r }, "Contestation envoyée : un mail de confirmation vous est adressé"); }
     envoyerChoix($("b-vei"), { choix_vei: x.value }, "Choix enregistré");
   });
   var fr = $("form-vr");
@@ -430,6 +491,38 @@ function afficher(c) {
     $("main").innerHTML = h + pied();
     brancherAssure();
     if (piecesAssure) brancher(c);
+    return;
+  }
+  if (c.role === "expert_auto" && c.reexamen_valeur) {
+    var rx = c.reexamen_valeur, js = rx.justificatifs || [];
+    h += '<div class="carte"><form class="carte-in" id="form-rx" novalidate><h2>L\'assuré conteste votre évaluation</h2>' +
+      '<div class="resume"><div>Valeur retenue<b>' + esc(eur(rx.valeur_ttc)) + "</b></div>" + (rx.montant_demande ? "<div>Montant demandé<b>" + esc(eur(rx.montant_demande)) + "</b></div>" : "") +
+      "<div>Contestée le<b>" + esc(C.dateFr(rx.conteste_le)) + "</b></div></div>" +
+      '<div class="recit"><span>Ses arguments</span>' + esc(rx.motif || "") + "</div>" +
+      "<h3>Ses justificatifs</h3>" + (js.length ? '<ul class="liste-docs">' + js.map(function (d) {
+        return "<li><b>" + esc(d.nom || "Document") + "</b>" + (d.resume ? '<span class="muet petit"> · ' + esc(d.resume) + "</span>" : "") +
+          (d.ouvrable ? ' <button type="button" class="encart-lien" data-jdoc="' + esc(d.id) + '">Ouvrir</button>' : "") + "</li>";
+      }).join("") + "</ul>" : '<p class="muet petit">Aucun pour l\'instant : ceux qu\'il envoie apparaissent ici.</p>') +
+      '<fieldset class="champ"><legend>Votre réponse</legend>' + radio("rx", "maintenir", "Je maintiens ma valeur") + radio("rx", "reviser", "Je révise ma valeur") + "</fieldset>" +
+      '<div class="grille-2" id="rx-nv-bloc" hidden>' + num("rx-nv", "Nouvelle valeur de remplacement", "TTC, en €", "") + "<div></div></div>" +
+      '<label class="champ">Votre explication <span class="aide">obligatoire, transmise à l\'assuré</span><textarea class="saisie" id="rx-com" rows="3" maxlength="1000"></textarea></label>' +
+      '<div class="envoyer"><button class="btn primaire" id="b-rx" type="submit">Envoyer ma réponse</button></div></form></div>';
+    $("main").innerHTML = h + pied();
+    document.querySelectorAll('input[name="rx"]').forEach(function (r) { r.addEventListener("change", function () { $("rx-nv-bloc").hidden = !(r.checked && r.value === "reviser"); }); });
+    document.querySelectorAll("[data-jdoc]").forEach(function (b) {
+      b.addEventListener("click", function () {
+        C.occupe(b, true, "Ouverture");
+        api("portail/document?t=" + jeton + "&id=" + encodeURIComponent(b.getAttribute("data-jdoc"))).then(function (x) { C.occupe(b, false); window.open(x.url, "_blank", "noopener"); })
+          .catch(function (x) { C.occupe(b, false); C.toast(x.message, true); });
+      });
+    });
+    $("form-rx").addEventListener("submit", function (e) {
+      e.preventDefault(); var x = document.querySelector('input[name="rx"]:checked'), com = $("rx-com").value.trim();
+      if (!x) return C.toast("Indiquez si vous maintenez ou révisez votre valeur.", true);
+      if (x.value === "reviser" && !(Number($("rx-nv").value) > 0)) return C.toast("Indiquez la nouvelle valeur.", true);
+      if (com.length < 10) return C.toast("Expliquez votre position en une ou deux phrases : elle est transmise à l'assuré.", true);
+      envoyerChoix($("b-rx"), { reexamen_valeur: { decision: x.value, valeur: x.value === "reviser" ? $("rx-nv").value : undefined, commentaire: com } }, "Merci, votre réponse est transmise à l'assuré");
+    });
     return;
   }
   if (!c.reponse_attendue) {
