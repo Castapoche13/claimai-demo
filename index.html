@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=20261026c">
+<link rel="stylesheet" href="style.css?v=20261026e">
 <style>
 /* ---------- Connexion ---------- */
 .connexion { min-height: 100vh; display: grid; place-items: center; padding: 40px 16px; background: var(--feuille-2); }
@@ -385,7 +385,7 @@ a.tuile:hover { border-color: var(--trait-fort); text-decoration: none; }
 .tableau.appels td:first-child { white-space: nowrap; }
 
 </style>
-<link rel="stylesheet" href="charte.css?v=20261026c">
+<link rel="stylesheet" href="charte.css?v=20261026e">
 </head>
 <body>
 
@@ -472,7 +472,7 @@ a.tuile:hover { border-color: var(--trait-fort); text-decoration: none; }
 <div id="toast" class="toast" hidden role="status"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="commun.js?v=20261026c"></script>
+<script src="commun.js?v=20261026e"></script>
 <script>
 (function () {
 "use strict";
@@ -506,7 +506,8 @@ $("form-connexion").addEventListener("submit", function (e) {
   if (!email || !mdp) { err.textContent = "Saisissez votre email et votre mot de passe."; return; }
   var b = $("c-btn"); C.occupe(b, true, "Connexion");
   sb.auth.signInWithPassword({ email: email, password: mdp }).then(function (r) {
-    if (r.error) throw new Error(/invalid/i.test(r.error.message) ? "Email ou mot de passe incorrect." : r.error.message);
+    if (r.error) throw new Error(/captcha/i.test(r.error.message) ? "Connexion refusée par la protection anti-robot (captcha) du projet Supabase : désactivez-la dans Authentication > Attack Protection, ou contactez l'administrateur."
+      : /invalid/i.test(r.error.message) ? "Email ou mot de passe incorrect." : r.error.message);
     return entrer(r.data.session);
   }).catch(function (x) { err.textContent = x.message; }).finally(function () { C.occupe(b, false); });
 });
