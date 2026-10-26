@@ -6,7 +6,7 @@
 <title>Console sinistres Klerio</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
 <style>
 /* ---------- Connexion ---------- */
@@ -384,6 +384,7 @@ a.tuile:hover { border-color: var(--trait-fort); text-decoration: none; }
 .tableau.fixe tbody tr:hover { background: none; }
 .tableau.appels td:first-child { white-space: nowrap; }
 </style>
+<link rel="stylesheet" href="charte.css">
 </head>
 <body>
 
@@ -641,6 +642,22 @@ function router() {
   f();
 }
 function erreurVue(x) { $("vue").innerHTML = '<div class="bloc"><div class="vide"><b>Impossible de charger cette page</b>' + esc(x.message) + '<p style="margin-top:14px"><button class="btn" onclick="location.reload()">Recharger</button></p></div></div>'; }
+// Explications repliées : chaque bloc qui en contient reçoit un bouton « ? » dans son en-tête
+function plierAides(racine) {
+  racine.querySelectorAll(".bloc, .decision").forEach(function (sec) {
+    if (sec.dataset.aide) return;
+    sec.dataset.aide = "1";
+    if (!sec.querySelector(".explication, .loi, .aide-texte, .decision-actions > span.muet.petit")) return;
+    var tete = sec.querySelector(":scope > .decision-entete, :scope > .bloc-tete");
+    if (!tete) return;
+    sec.classList.add("aide-repliee");
+    var b = document.createElement("button");
+    b.type = "button"; b.className = "aide-btn"; b.textContent = "?"; b.title = "Afficher les explications"; b.setAttribute("aria-expanded", "false");
+    b.addEventListener("click", function () { var o = sec.classList.toggle("aide-repliee"); b.setAttribute("aria-expanded", String(!o)); });
+    tete.appendChild(b);
+  });
+}
+new MutationObserver(function () { plierAides($("vue")); }).observe($("vue"), { childList: true, subtree: true });
 function ouvrirDossier(n) { location.hash = "#/dossier/" + encodeURIComponent(n); }
 
 $("form-recherche").addEventListener("submit", function (e) {
@@ -654,7 +671,7 @@ function attente(d) {
   var v = d.validation, p = v && v.proposition || {};
   if (v && v.etape === "decision" && p.decision === "classement_sans_indemnite") return ["Classement sans indemnité à confirmer", "AIPP estimée " + C.nombre(p.aipp_estimee != null ? p.aipp_estimee : p.aipp) + " %"];
   if (v && v.etape === "decision") return ["Refus proposé, à confirmer ou écarter", C.motif(p.motif)];
-  if (v && v.etape === "responsabilite") return ["Responsabilité à valider", p.pct != null ? "Klerio propose : assuré responsable à " + p.pct + " %" : "Accident avec un autre véhicule : constat à examiner"];
+  if (v && v.etape === "responsabilite") return ["Responsabilité à valider", p.pct != null ? "Proposition : assuré responsable à " + p.pct + " %" : "Accident avec un autre véhicule : constat à examiner"];
   if (v && v.etape === "prereglement") return ["Règlement de " + eur(p.montant_net) + " à valider", p.remboursement_assure ? "Remboursement de l'assuré, garage hors réseau, franchise déduite" : d.theme === "VOL" ? "Indemnité vol versée à l'assuré, franchise déduite" : p.beneficiaire === "assure" ? "Capital invalidité versé à l'assuré" : "Versé au réparateur, franchise déduite"];
   if (v && v.etape === "anomalie") {
     var a = (p.anomalies || [])[0]; return [a ? (C.ANOMALIES[a.code] || a.code) : (C.ANOMALIES[p.code] || "Anomalie à examiner"), a ? a.detail : C.motif(d.motif)];
@@ -1034,7 +1051,7 @@ function afficherDossier(f) {
     ["echanges", "Échanges" + (nCour + nNotes ? " (" + (nCour + nNotes) + ")" : ""), blocSuivi(f) + blocCourriers(f)],
     ["documents", "Documents" + (nDocs ? " (" + nDocs + ")" : ""), blocDocuments(f) + blocExpertises(f)],
     ["agir", "Actions", blocGestion(f) + (aRR ? "" : blocRecoursRecus(f)) + (aVT ? "" : blocVictimes(f)) + (reclOuverte ? "" : blocReclamations(f))],
-    ["ia", "Lecture IA", blocAnalyse(f, an, d)],
+    ["ia", "Analyse", blocAnalyse(f, an, d)],
     ["journal", "Journal", blocJournal(f)]]);
   h += "</div><aside>";
   h += '<section class="bloc"><div class="bloc-tete"><h3>Déclaration</h3></div><div class="bloc-corps pile">' +
@@ -1072,7 +1089,7 @@ function vehiculeConstat(cote, k, cases, assure) {
 function carteResponsabilite(f, v) {
   var p = v.proposition || {}, k = p.constat || {}, al = p.alertes || [];
   var expl = p.pct != null
-    ? "Klerio propose : votre assuré responsable à " + p.pct + " %. Règle appliquée : " + (p.regle || "") + "."
+    ? "Proposition : votre assuré responsable à " + p.pct + " %. Règle appliquée : " + (p.regle || "") + "."
     : "Klerio ne peut pas proposer de répartition seul : choisissez la part de responsabilité de votre assuré à partir des éléments du dossier.";
   var h = '<section class="decision" id="carte-decision"><div class="decision-entete">Décision requise</div><div class="decision-corps"><h2>Valider la responsabilité</h2>' +
     '<p class="explication">' + esc(expl) + "</p>";
@@ -1308,7 +1325,7 @@ function blocExplication(f) {
     att: '<path d="M8 4.5v4.2M8 11v.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>',
     ko: '<path d="M5 5l6 6M11 5l-6 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>',
     info: '<path d="M8 7.2v4M8 4.6v.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>' };
-  return '<section class="bloc" id="bloc-pourquoi"><div class="bloc-tete"><h2>Pourquoi Klerio a fait ça</h2><span class="muet petit">Le raisonnement, étape par étape</span></div><div class="bloc-corps"><ol class="raisonnement">' +
+  return '<section class="bloc" id="bloc-pourquoi"><div class="bloc-tete"><h2>Pourquoi cette décision</h2><span class="muet petit">Étape par étape</span></div><div class="bloc-corps"><ol class="raisonnement">' +
     etapes.map(function (e) {
       return '<li class="' + e[0] + '"><span class="pastille-etape"><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true">' + ic[e[0]] + "</svg></span><div><b>" + esc(e[1]) + "</b>" + (e[2] ? "<p>" + esc(e[2]) + "</p>" : "") + "</div></li>";
     }).join("") + "</ol></div></section>";
@@ -1519,10 +1536,10 @@ function blocRecoursRecus(f) {
       if (pct === null) {
         h += '<p class="muet">Validez d\'abord la responsabilité de notre assuré : Klerio calculera alors ce qui est dû.</p>';
       } else if (r.statut === "a_examiner" && pct > 0) {
-        h += '<p>Klerio propose de <b>payer ' + esc(C.eur(r.montant_du)) + "</b>, la part de notre assuré (" + esc(String(pct)) + " % de responsabilité).</p>" +
+        h += '<p>Proposition : <b>payer ' + esc(C.eur(r.montant_du)) + "</b>, la part de notre assuré (" + esc(String(pct)) + " % de responsabilité).</p>" +
           '<div class="decision-actions"><button class="btn primaire" data-rr="accepter" data-id="' + id + '">Accepter et payer ' + esc(C.eur(r.montant_du)) + "</button></div>";
       } else if (r.statut === "a_examiner") {
-        h += "<p>Notre assuré n'est pas responsable : Klerio propose de <b>contester</b>. Le motif ci-dessous est envoyé à l'assureur adverse.</p>";
+        h += "<p>Notre assuré n'est pas responsable : proposition de <b>contester</b>. Le motif ci-dessous est envoyé à l'assureur adverse.</p>";
       }
       if (pct !== null) {
         var ouvert = r.statut === "a_examiner" && pct === 0;
@@ -1583,7 +1600,7 @@ function blocVictimes(f) {
       h += '<p class="muet">Suivi clos' + (v.motif ? " : " + esc(v.motif) : "") + ".</p>";
     } else if (v.qualite === "inconnue" || v.gravite === "inconnue") {
       // une seule question : qui, puis la gravité
-      h += '<p>Pour savoir qui doit l\'indemniser, Klerio a besoin d\'une précision' + (v.qualite === "inconnue" ? " : <b>qui est blessé ?</b>" : " : <b>quelle gravité ?</b>") + "</p>";
+      h += '<p>Précision nécessaire pour savoir qui doit l\'indemniser' + (v.qualite === "inconnue" ? " : <b>qui est blessé ?</b>" : " : <b>quelle gravité ?</b>") + "</p>";
       h += '<div class="choix-rapides">' + (v.qualite === "inconnue"
         ? ["conducteur_adverse", "passager_adverse", "passager_assure", "pieton_cycliste"].map(function (q) { return '<button class="btn" data-vt="preciser" data-id="' + id + '" data-q="' + q + '">' + esc(QUALITES[q]) + "</button>"; }).join("")
         : '<button class="btn" data-vt="preciser" data-id="' + id + '" data-g="legere">Blessure légère</button><button class="btn" data-vt="preciser" data-id="' + id + '" data-g="grave">Blessure grave</button>') + "</div>";
@@ -1891,7 +1908,7 @@ function carteAction(f) {
       var an = p.anomalies || (p.code ? [p] : []);
       if (p.code === "CONTESTATION_VALEUR" || p.code === "VALEUR_SANS_REPONSE") return carteValeur(f, p, an);
       titre = an.length > 1 ? an.length + " écarts relevés" : (C.ANOMALIES[(an[0] || {}).code] || "Anomalie à examiner");
-      expl = "Klerio a arrêté le circuit automatique. Vérifiez puis décidez de la suite.";
+      expl = "Circuit automatique arrêté. Vérifiez, puis décidez de la suite.";
       if (p.code === "VIGILANCE_VOL") {
         titre = "Vol : " + an.length + " point" + (an.length > 1 ? "s" : "") + " sérieux avant d'indemniser";
         expl = "Klerio a contrôlé les pièces et la cohérence du dossier : les points ci-dessous dépassent ce qu'il peut lever seul. Aucune offre n'est partie. Si les explications de l'assuré vous suffisent, lancez l'offre ; sinon, traitez le dossier manuellement.";
@@ -1997,7 +2014,7 @@ function blocSuivi(f) {
     '<label class="champ">De la part de<select class="saisie" id="n-qui">' + options(INTERLOCUTEURS, "assure") + "</select></label></div>" +
     '<p class="indice" id="n-police" hidden><b>Appel de la police ou de la gendarmerie.</b> Notez tout ce qu\'on vous apprend. Avant de donner vous-même une information, vérifiez que l\'appel vient bien du service en le rappelant par son standard officiel ; les données personnelles de l\'assuré ne se communiquent que sur réquisition écrite.</p>' +
     '<label class="champ">Ce que la personne a dit ou écrit<textarea class="saisie" id="n-texte" rows="3" maxlength="8000" placeholder="Ex. : l\'assuré a déposé plainte hier et enverra le récépissé par mail."></textarea></label>' +
-    '<div class="decision-actions"><button class="btn primaire" id="n-ok">Enregistrer et analyser</button><span class="muet petit">Klerio propose les suites ; rien ne change sans votre clic.</span></div></form></details>';
+    '<div class="decision-actions"><button class="btn primaire" id="n-ok">Enregistrer et analyser</button><span class="muet petit">Les suites proposées ne s\'appliquent qu\'après votre clic.</span></div></form></details>';
   h += '<label class="depot-fiche" id="depot-fiche"><input type="file" id="depot-fichier" accept="application/pdf,image/jpeg,image/png,image/webp">' +
     "<b>Déposer un document reçu</b> (rapport, facture, photo, PDF jusqu'à 8 Mo) : Klerio le lit et l'applique si tout concorde." +
     (f.theme === "GARANTIE_ACCIDENT" ? "<br>Dossier corporel : le document est lu puis jamais conservé." : "") + "</label>";

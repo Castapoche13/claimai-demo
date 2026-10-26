@@ -1,4 +1,4 @@
-/* Klerio : feuille commune (console, espace en ligne). Blanc, neutre, une seule couleur d'action. */
+/* Klerio : feuille commune (console, espace en ligne). Les couleurs du constat amiable : bleu encre pour agir, jaune pour ce qui vous attend. */
 :root {
   --encre: #111827;
   --encre-2: #1F2937;
@@ -10,32 +10,32 @@
   --survol: #E6EAF0;
   --trait: #D3D9E1;
   --trait-fort: #AEB7C4;
-  --bleu: #2563EB;
-  --bleu-fonce: #1D4ED8;
-  --bleu-pale: #EFF6FF;
+  --bleu: #1B3B6F;
+  --bleu-fonce: #122A52;
+  --bleu-pale: #E8EEF7;
   --sur-bleu: #FFFFFF;
-  --orange: #EA580C;
-  --orange-texte: #C2410C;
-  --jaune: #EA580C;
-  --jaune-pale: #FFF7ED;
-  --jaune-texte: #C2410C;
+  --orange: #E9B824;
+  --orange-texte: #7A5600;
+  --jaune: #E9B824;
+  --jaune-pale: #FCF3D6;
+  --jaune-texte: #7A5600;
   --rouge: #DC2626;
   --rouge-texte: #B91C1C;
   --rouge-pale: #FEF2F2;
   --vert: #16A34A;
   --vert-texte: #15803D;
   --vert-pale: #F0FDF4;
-  --ombre: 0 1px 2px rgba(16, 24, 40, .06);
-  --rayon: 8px;
-  --police: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --ombre: none;
+  --rayon: 3px;
+  --police: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   color-scheme: light;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     --encre: #F3F4F6; --encre-2: #D1D5DB; --gris: #9CA3AF; --gris-clair: #6B7280;
     --papier: #0B0C0E; --feuille: #111214; --feuille-2: #16181B; --survol: #1C1E22; --trait: #26282C; --trait-fort: #33363B;
-    --bleu: #3B82F6; --bleu-fonce: #60A5FA; --bleu-pale: #172033; --sur-bleu: #FFFFFF;
-    --orange: #F97316; --orange-texte: #FB923C; --jaune: #F97316; --jaune-pale: #26190F; --jaune-texte: #FB923C;
+    --bleu: #6E9BE0; --bleu-fonce: #98B9EC; --bleu-pale: #17233A; --sur-bleu: #0B1424;
+    --orange: #F0C443; --orange-texte: #F0C443; --jaune: #F0C443; --jaune-pale: #2A2310; --jaune-texte: #F0C443;
     --rouge: #EF4444; --rouge-texte: #F87171; --rouge-pale: #2A1515; --vert: #22C55E; --vert-texte: #4ADE80; --vert-pale: #12241A;
     color-scheme: dark;
   }
@@ -43,8 +43,8 @@
 :root[data-theme="dark"] {
   --encre: #F3F4F6; --encre-2: #D1D5DB; --gris: #9CA3AF; --gris-clair: #6B7280;
   --papier: #0B0C0E; --feuille: #111214; --feuille-2: #16181B; --survol: #1C1E22; --trait: #26282C; --trait-fort: #33363B;
-  --bleu: #3B82F6; --bleu-fonce: #60A5FA; --bleu-pale: #172033; --sur-bleu: #FFFFFF;
-  --orange: #F97316; --orange-texte: #FB923C; --jaune: #F97316; --jaune-pale: #26190F; --jaune-texte: #FB923C;
+  --bleu: #6E9BE0; --bleu-fonce: #98B9EC; --bleu-pale: #17233A; --sur-bleu: #0B1424;
+  --orange: #F0C443; --orange-texte: #F0C443; --jaune: #F0C443; --jaune-pale: #2A2310; --jaune-texte: #F0C443;
   --rouge: #EF4444; --rouge-texte: #F87171; --rouge-pale: #2A1515; --vert: #22C55E; --vert-texte: #4ADE80; --vert-pale: #12241A;
   color-scheme: dark;
 }
