@@ -173,7 +173,7 @@
   function ecrireSession(s) { try { localStorage.setItem(SESSION, JSON.stringify(s)); } catch (e) { } }
   function oublierSession() { try { localStorage.removeItem(SESSION); } catch (e) { } }
 
-  var LOGO = '<svg width="22" height="22" viewBox="0 0 22 22" aria-hidden="true"><rect width="22" height="22" rx="3" fill="#0B7A72"/><path d="M7 5v12M7 11.5 14.5 5M10 9.2 15 17" stroke="#fff" stroke-width="2.2" stroke-linecap="square" fill="none"/></svg>';
+  var LOGO = '<svg width="22" height="22" viewBox="0 0 22 22" aria-hidden="true"><rect width="22" height="22" rx="6" style="fill:var(--encre)"/><path d="M7.5 5.5v11M7.5 11.5 14 5.5M10.2 9.3 14.5 16.5" style="stroke:var(--feuille)" stroke-width="2.2" stroke-linecap="round" fill="none"/></svg>';
 
   g.CA = {
     API_DEFAUT: API_DEFAUT, SUPABASE_URL: SUPABASE_URL, CLE_PUBLIQUE: CLE_PUBLIQUE, STATUTS: STATUTS, THEMES: THEMES, MOTIFS: MOTIFS, ANOMALIES: ANOMALIES, COURRIERS: COURRIERS,

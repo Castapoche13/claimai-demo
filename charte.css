@@ -1,36 +1,32 @@
-/* Charte Klerio : un logiciel de gestion de sinistres, pas une appli grand public.
-   Graphite pour le cadre, pétrole pour agir, orange seulement pour ce qui attend une décision.
-   Texte foncé, traits nets, tableaux denses. Chargée après les styles de la page. */
-
+/* Charte Klerio : noir et blanc, épurée. Un violet pour les liens et la page en cours,
+   l'orange seulement pour ce qui attend une décision. Chargée après les styles de la page. */
 :root {
-  --encre: #15191C; --encre-2: #2A3036; --gris: #4C545C; --gris-clair: #6E767E;
-  --papier: #E8EBEE; --feuille: #FFFFFF; --feuille-2: #F3F5F6; --survol: #E4E9EB;
-  --trait: #CDD3D8; --trait-fort: #9FA8B0;
-  --bleu: #0B7A72; --bleu-fonce: #075C56; --bleu-pale: #E2F1EF; --sur-bleu: #FFFFFF;
-  --orange: #D9480F; --orange-texte: #AE3A0B; --jaune: #D9480F; --jaune-pale: #FDEEE5; --jaune-texte: #AE3A0B;
-  --rouge: #C92A2A; --rouge-texte: #A51F1F; --rouge-pale: #FCECEC;
-  --vert: #2B8A3E; --vert-texte: #1F6B30; --vert-pale: #E9F5EC;
-  --ombre: none; --rayon: 4px;
-  --police: "Source Sans 3", "Segoe UI", system-ui, -apple-system, Roboto, sans-serif;
-  --cadre: #1F2428; --cadre-texte: #C5CCD2; --cadre-fort: #FFFFFF; --cadre-accent: #3FB8AE;
+  --encre: #0D0D12; --encre-2: #26262E; --gris: #5E5E6B; --gris-clair: #8A8A96;
+  --papier: #F7F7F8; --feuille: #FFFFFF; --feuille-2: #F4F4F6; --survol: #EEEEF1; --trait: #E4E4E8; --trait-fort: #C9C9D1;
+  --bleu: #5B47E0; --bleu-fonce: #4634C4; --bleu-pale: #EFEDFD; --sur-bleu: #FFFFFF;
+  --orange: #F04E23; --orange-texte: #C93A12; --jaune: #F04E23; --jaune-pale: #FEF0EB; --jaune-texte: #C93A12;
+  --rouge: #D92D20; --rouge-texte: #B42318; --rouge-pale: #FEF3F2; --vert: #12B76A; --vert-texte: #027A48; --vert-pale: #ECFDF3;
+  --ombre: none; --rayon: 10px;
+  --police: "Plus Jakarta Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --cadre: #FFFFFF; --cadre-texte: #4B4B57; --cadre-fort: #0D0D12; --cadre-accent: #5B47E0; --primaire: #0D0D12; --sur-primaire: #FFFFFF;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --encre: #EDF0F2; --encre-2: #CDD3D8; --gris: #A2AAB2; --gris-clair: #7D868E;
-    --papier: #0E1113; --feuille: #161A1D; --feuille-2: #1C2125; --survol: #232A2E; --trait: #2E363B; --trait-fort: #46525A;
-    --bleu: #3FB8AE; --bleu-fonce: #6CD0C6; --bleu-pale: #0F2A28; --sur-bleu: #06211F;
-    --orange: #FF8A4C; --orange-texte: #FF9E68; --jaune: #FF8A4C; --jaune-pale: #2E1A10; --jaune-texte: #FF9E68;
+    --encre: #F2F2F5; --encre-2: #D4D4DC; --gris: #A3A3B0; --gris-clair: #7C7C8A;
+    --papier: #0B0B0F; --feuille: #141419; --feuille-2: #1A1A21; --survol: #22222B; --trait: #2A2A33; --trait-fort: #3E3E4A;
+    --bleu: #8B7CF6; --bleu-fonce: #A99DFA; --bleu-pale: #221E3D; --sur-bleu: #0B0B0F;
+    --orange: #FF7A50; --orange-texte: #FF9470; --jaune: #FF7A50; --jaune-pale: #2E1A12; --jaune-texte: #FF9470;
     --rouge: #F06262; --rouge-texte: #FF8080; --rouge-pale: #2C1515; --vert: #4CC46A; --vert-texte: #6BD486; --vert-pale: #12271A;
-    --cadre: #0A0C0E; --cadre-texte: #A9B2BA;
+    --cadre: #0F0F14; --cadre-texte: #A3A3B0; --cadre-fort: #FFFFFF; --cadre-accent: #8B7CF6; --primaire: #FFFFFF; --sur-primaire: #0D0D12;
   }
 }
 :root[data-theme="dark"] {
-  --encre: #EDF0F2; --encre-2: #CDD3D8; --gris: #A2AAB2; --gris-clair: #7D868E;
-  --papier: #0E1113; --feuille: #161A1D; --feuille-2: #1C2125; --survol: #232A2E; --trait: #2E363B; --trait-fort: #46525A;
-  --bleu: #3FB8AE; --bleu-fonce: #6CD0C6; --bleu-pale: #0F2A28; --sur-bleu: #06211F;
-  --orange: #FF8A4C; --orange-texte: #FF9E68; --jaune: #FF8A4C; --jaune-pale: #2E1A10; --jaune-texte: #FF9E68;
-  --rouge: #F06262; --rouge-texte: #FF8080; --rouge-pale: #2C1515; --vert: #4CC46A; --vert-texte: #6BD486; --vert-pale: #12271A;
-  --cadre: #0A0C0E; --cadre-texte: #A9B2BA;
+  --encre: #F2F2F5; --encre-2: #D4D4DC; --gris: #A3A3B0; --gris-clair: #7C7C8A;
+    --papier: #0B0B0F; --feuille: #141419; --feuille-2: #1A1A21; --survol: #22222B; --trait: #2A2A33; --trait-fort: #3E3E4A;
+    --bleu: #8B7CF6; --bleu-fonce: #A99DFA; --bleu-pale: #221E3D; --sur-bleu: #0B0B0F;
+    --orange: #FF7A50; --orange-texte: #FF9470; --jaune: #FF7A50; --jaune-pale: #2E1A12; --jaune-texte: #FF9470;
+    --rouge: #F06262; --rouge-texte: #FF8080; --rouge-pale: #2C1515; --vert: #4CC46A; --vert-texte: #6BD486; --vert-pale: #12271A;
+    --cadre: #0F0F14; --cadre-texte: #A3A3B0; --cadre-fort: #FFFFFF; --cadre-accent: #8B7CF6; --primaire: #FFFFFF; --sur-primaire: #0D0D12;
 }
 
 body { font-size: 14px; line-height: 1.45; }
@@ -155,3 +151,43 @@ a { color: var(--bleu); }
   .bannette-table .c-depuis { display: none; }
 }
 @media (max-width: 760px) { .btn { white-space: normal; text-align: center; height: auto; } .decision-corps, .decision-corps > * { min-width: 0; } }
+
+/* Version moderne : plus d'air, angles doux, ombres légères */
+
+body { font-size: 14px; }
+h1 { font-size: 24px; font-weight: 700; letter-spacing: -.01em; }
+.contenu { padding-top: 28px; }
+.bloc, .decision { border-radius: var(--rayon); }
+.accueil-bloc { border-radius: 12px; }
+.bannettes { background: transparent; padding: 0 16px; gap: 8px; }
+.bannette { font-size: 14px; padding: 14px 6px 12px; margin-right: 10px; }
+.badge-n { border-radius: 999px; padding: 1px 8px; }
+.tableau th { background: transparent; border-bottom: 1px solid var(--trait); font-weight: 500; color: var(--gris); font-size: 12.5px; }
+.tableau tbody tr:nth-child(even) { background: transparent; }
+.bannette-table td { padding-top: 12px; padding-bottom: 12px; }
+.bannette-outils { border-bottom: 0; padding: 12px 16px 6px; }
+.filtre-file { border-radius: 8px; }
+.filtre-file button { border-radius: 6px; font-weight: 500; }
+.filtre-file button[aria-pressed="true"] { box-shadow: 0 1px 2px rgba(0,0,0,.08); }
+.btn { border-radius: 8px; font-weight: 600; }
+.saisie { border-radius: 8px; }
+.type-tag { font-size: 12.5px; font-weight: 500; padding: 2px 9px 2px 7px; border-radius: 999px; background: var(--feuille-2); }
+.type-tag::before { width: 7px; height: 7px; border-radius: 50%; }
+.nav a { border-radius: 8px; }
+.espaces, .espaces button { border-radius: 8px; }
+.decision { border-top-width: 1px; border-left: 4px solid var(--orange); }
+.statut::before { border-radius: 50%; }
+.pastille-mail { border-radius: 999px; padding: 2px 9px; }
+.bannette-table tr.haute td:first-child { box-shadow: inset 3px 0 0 var(--orange); }
+
+.nav { border-right: 1px solid var(--trait); }
+.nav a:hover { background: var(--survol); }
+.nav a[aria-current="page"] { background: var(--bleu-pale); color: var(--bleu-fonce); box-shadow: none; }
+.espaces { background: var(--survol); } .espaces button[aria-pressed="true"] { background: var(--feuille); color: var(--encre); box-shadow: 0 1px 2px rgba(0,0,0,.08); }
+.btn.primaire { background: var(--primaire); border-color: var(--primaire); color: var(--sur-primaire); } .btn.primaire:hover { background: var(--encre-2); border-color: var(--encre-2); }
+.bloc, .decision { box-shadow: 0 1px 2px rgba(13,13,18,.04), 0 2px 8px rgba(13,13,18,.04); border-color: var(--trait); }
+.bannette-table .num-lien { color: var(--encre); }
+
+.haut { border-bottom: 1px solid var(--trait); }
+.badge-n.urgent { color: #fff; }
+@media (max-width: 760px) { .bannette-table td { padding: 0; } .bannette { margin-right: 0; } .bannettes { padding: 0 6px; } }
