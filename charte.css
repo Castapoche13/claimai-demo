@@ -1,82 +1,75 @@
-/* Charte Klerio : un outil de travail dense et sobre, aux couleurs du constat amiable.
-   Bleu encre pour le menu et les actions, jaune constat réservé à ce qui attend le gestionnaire.
-   Chargée après les styles de chaque page : elle prime sur eux. */
+/* Compléments à la feuille de la console : explications repliées, accueil en bannettes, lisibilité.
+   Chargée après les styles de la page. */
 
-body { font-size: 13.5px; line-height: 1.45; }
-h1 { font-size: 20px; font-weight: 600; letter-spacing: 0; }
-h2 { font-size: 14.5px; font-weight: 600; letter-spacing: 0; }
-h3 { font-size: 13.5px; }
-
-/* Boutons et champs : angles nets */
-.btn { border-radius: var(--rayon); min-height: 32px; padding: 5px 12px; font-size: 13px; }
-.btn.petit { min-height: 26px; padding: 2px 9px; font-size: 12.5px; }
-.saisie { border-radius: var(--rayon); min-height: 32px; padding: 5px 9px; font-size: 13.5px; }
-.saisie:focus { box-shadow: 0 0 0 2px var(--bleu-pale); }
-label.champ { gap: 4px; font-size: 12.5px; }
-
-/* Menu latéral : bleu encre, page en cours marquée de jaune */
-.nav { background: #13294F; border-right: 0; color: #C3CFE4; gap: 18px; }
-.nav .marque { color: #FFFFFF; }
-.nav-assureur { color: #8FA2C4; }
-.nav-assureur b { color: #FFFFFF; }
-.nav a { color: #C3CFE4; border-radius: 2px; padding: 6px 8px; font-size: 13px; }
-.nav a:hover { background: rgba(255, 255, 255, .07); color: #FFFFFF; }
-.nav a[aria-current="page"] { background: rgba(255, 255, 255, .1); color: #FFFFFF; box-shadow: inset 3px 0 0 #E9B824; }
-.nav a svg, .nav a[aria-current="page"] svg { color: currentColor; opacity: .85; }
-.nav-bas button, .nav-bas a { color: #8FA2C4; }
-.nav-bas button:hover, .nav-bas a:hover { color: #FFFFFF; }
-.espaces { background: rgba(255, 255, 255, .08); border-radius: var(--rayon); }
-.espaces button { color: #C3CFE4; border-radius: 2px; }
-.espaces button[aria-pressed="true"] { background: #FFFFFF; color: #13294F; box-shadow: none; }
-.nav .compteur, .nav .badge { color: #13294F; background: #E9B824; }
-
-/* Barre du haut et en-têtes : plus serrés */
-.barre-in { padding: 8px 28px; }
-.entete-vue { margin-bottom: 14px; }
-.entete-vue p { font-size: 13px; }
-
-/* Blocs : un trait fin, pas d'ombre, un en-tête gris clair */
-.bloc, .decision, .tuile { box-shadow: none; border-radius: var(--rayon); }
-.bloc-tete { padding: 8px 14px; min-height: 38px; background: var(--feuille-2); }
-.bloc-tete h2 { font-size: 13.5px; }
-.bloc-corps { padding: 12px 14px; }
-.bloc + .bloc { margin-top: 12px; }
-
-/* Tableaux : denses, comme un outil métier */
-.tableau th { font-size: 12px; padding: 6px 12px; font-weight: 600; color: var(--gris); }
-.tableau td { padding: 6px 12px; }
-
-/* Tuiles de chiffres */
-.tuiles { gap: 10px; margin-bottom: 14px; }
-.tuile { padding: 10px 14px; }
-.tuile .val { font-size: 21px; letter-spacing: 0; }
-.tuile.vous { border-left: 3px solid var(--orange); }
-
-/* Pastilles et filtres : rectangulaires */
-.pastille-mail { border-radius: 2px; padding: 2px 7px; font-size: 11.5px; }
-.filtre-file { border-radius: var(--rayon); }
-.filtre-file button { border-radius: 2px; }
-
-/* La carte « Décision requise » : le seul élément appuyé, comme un formulaire à viser */
-.decision { border: 1px solid var(--trait-fort); border-left: 5px solid var(--orange); }
-.decision-entete { background: var(--jaune-pale); color: var(--orange-texte); font-weight: 600; border-radius: 0; padding: 7px 14px; }
-.decision-entete::before { display: none; }
-.decision-corps { padding: 14px; gap: 12px; }
-.decision h2 { font-size: 15.5px; }
-
-/* Frise du dossier */
-.route li.ici .pt { border-color: var(--bleu); box-shadow: none; }
-.route li.ici.vous .pt { border-color: var(--orange); background: var(--orange); box-shadow: none; }
+/* Lisibilité en clair : sections bien détachées du fond, en-têtes et libellés plus marqués */
+@media (prefers-color-scheme: light) { :root:not([data-theme="dark"]) .bloc, :root:not([data-theme="dark"]) .decision { border-color: #C9D1DC; box-shadow: 0 1px 3px rgba(16, 24, 40, .08); } }
+:root[data-theme="light"] .bloc, :root[data-theme="light"] .decision { border-color: #C9D1DC; box-shadow: 0 1px 3px rgba(16, 24, 40, .08); }
+.bloc-tete { background: var(--feuille-2); border-bottom: 1px solid var(--trait); }
+.bloc-tete h2 { color: var(--encre); }
+.tableau th { color: var(--encre-2); font-weight: 600; }
+.info-liste dt, dl dt { color: var(--gris); }
+.statut { font-weight: 500; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .bloc-tete { background: var(--feuille-2); } }
 
 /* Explications : rangées derrière un « ? » (bouton ajouté par la page) */
-.aide-btn { flex: none; width: 20px; height: 20px; border-radius: 50%; border: 1px solid var(--trait-fort); background: var(--feuille);
+.aide-btn { flex: none; width: 22px; height: 22px; border-radius: 50%; border: 1px solid var(--trait-fort); background: var(--feuille);
   color: var(--gris); font-size: 12px; font-weight: 600; line-height: 1; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; padding: 0; }
 .aide-btn:hover, .aide-btn[aria-expanded="true"] { border-color: var(--bleu); color: var(--bleu); }
 .aide-repliee .explication, .aide-repliee .loi, .aide-repliee .aide-texte, .aide-repliee .decision-actions > span.muet.petit { display: none; }
 .decision-entete .aide-btn { margin-left: auto; }
 
-/* Espace en ligne (assuré, expert, garage) */
-.carte { border-radius: var(--rayon); }
-.haut { border-bottom: 3px solid #E9B824; }
-.option { border-radius: var(--rayon); }
-.nav .compteur { background: #E9B824; color: #13294F; border-radius: 2px; padding: 0 6px; font-size: 11.5px; }
+/* Type de sinistre : une étiquette de couleur par famille, pour repérer un dossier d'un coup d'œil */
+.type-tag { display: inline-block; white-space: nowrap; font-size: 11.5px; font-weight: 600; padding: 1px 7px; border-radius: 4px; margin-top: 3px; background: var(--survol); color: var(--encre-2); }
+.type-tag.t-vol { background: var(--rouge-pale); color: var(--rouge-texte); }
+.type-tag.t-glace { background: var(--bleu-pale); color: var(--bleu-fonce); }
+.type-tag.t-nature { background: #FEF3C7; color: #8A4B08; }
+:root[data-theme="dark"] .type-tag.t-nature { background: #2B2410; color: #FBBF24; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .type-tag.t-nature { background: #2B2410; color: #FBBF24; } }
+.type-tag.t-corporel { background: var(--vert-pale); color: var(--vert-texte); }
+
+/* Accueil en bannettes : un seul tableau à la fois, les chiffres portés par les onglets */
+.accueil-bloc { overflow: hidden; }
+.bannettes { display: flex; align-items: stretch; border-bottom: 1px solid var(--trait); background: var(--feuille-2); }
+.bannette { flex: 0 0 auto; min-width: 160px; text-align: left; border: 0; border-right: 1px solid var(--trait); background: none; padding: 12px 20px 10px; cursor: pointer; color: var(--gris); font: inherit; border-bottom: 3px solid transparent; margin-bottom: -1px; }
+.bannette:hover { background: var(--survol); }
+.bannette[aria-selected="true"] { background: var(--feuille); color: var(--encre); border-bottom-color: var(--bleu); }
+.bannette .n { display: block; font-size: 24px; font-weight: 600; line-height: 1.15; color: var(--encre); font-variant-numeric: tabular-nums; }
+.bannette.urgent .n { color: var(--orange-texte); }
+.bannette .lib { display: block; font-size: 13.5px; font-weight: 500; }
+.bannette .sous { display: block; font-size: 12px; color: var(--gris); }
+.bannette.urgent .sous { color: var(--orange-texte); font-weight: 500; }
+.bannettes-stats { margin-left: auto; display: flex; flex-direction: column; justify-content: center; gap: 2px; padding: 8px 20px; font-size: 12.5px; color: var(--gris); text-align: right; }
+.bannettes-stats b { color: var(--encre); font-weight: 600; }
+.bannettes-stats:hover { text-decoration: none; background: var(--survol); }
+.bannette-outils { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; padding: 10px 16px; border-bottom: 1px solid var(--trait); }
+.bannette-pied { padding: 10px 16px; border-top: 1px solid var(--trait); margin: 0; }
+.bannette-table td { vertical-align: top; }
+.bannette-table td small { display: block; color: var(--gris); font-size: 12.5px; margin-top: 1px; }
+.bannette-table .c-quoi { font-weight: 500; }
+.bannette-table .c-quoi small { font-weight: 400; }
+.bannette-table .c-prio { width: 14px; padding-right: 0; padding-top: 16px; }
+.bannette-table .c-prio .prio { margin: 0; }
+.bannette-table .c-dossier { white-space: nowrap; width: 1%; }
+.bannette-table .c-suivi { white-space: nowrap; width: 1%; }
+.bannette-table .c-depuis { width: 1%; white-space: nowrap; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+
+/* Listes de mails : l'état tient sur une ligne */
+.pastille-mail { display: inline-block; white-space: nowrap; }
+@media (min-width: 761px) { .ligne { grid-template-columns: minmax(0, 210px) minmax(0, 1fr) max-content 90px; } }
+
+@media (max-width: 960px) { .app { align-content: start; } }
+@media (max-width: 760px) {
+  .bannettes { flex-wrap: wrap; }
+  .bannette { flex: 1 1 0; min-width: 0; padding: 8px 10px 6px; }
+  .bannette .sous, .bannettes-stats { display: none; }
+  .bannette-outils .filtre-file { display: flex; width: 100%; overflow-x: auto; }
+  .bannette-outils .filtre-file button { white-space: nowrap; flex: 1 0 auto; }
+  .bannette-outils > .muet { display: none; }
+  .bannette-table thead { display: none; }
+  .bannette-table, .bannette-table tbody { display: block; }
+  .bannette-table tr { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 10px; padding: 10px 14px; border-bottom: 1px solid var(--trait); }
+  .bannette-table td { display: block; padding: 0; border: 0; }
+  .bannette-table .c-prio, .bannette-table .c-depuis { display: none; }
+  .bannette-table .c-quoi { grid-column: 1 / -1; grid-row: 2; }
+}

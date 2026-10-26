@@ -6,7 +6,7 @@
 <title>Console sinistres Klerio</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
 <style>
 /* ---------- Connexion ---------- */
@@ -383,6 +383,7 @@ a.tuile:hover { border-color: var(--trait-fort); text-decoration: none; }
 .tableau.fixe tbody tr { cursor: default; }
 .tableau.fixe tbody tr:hover { background: none; }
 .tableau.appels td:first-child { white-space: nowrap; }
+
 </style>
 <link rel="stylesheet" href="charte.css">
 </head>
@@ -683,10 +684,13 @@ function attente(d) {
 }
 
 /* ---------------- Vue : Accueil ---------------- */
-var FILTRE_FILE = "klerio-filtre-file";
+// Trois bannettes, comme dans un outil de gestion : ce qui attend une décision, les mails reçus, ce qui attend un tiers.
+// Un seul tableau affiché à la fois ; les chiffres sont portés par les onglets eux-mêmes.
+var FILTRE_FILE = "klerio-filtre-file", BANNETTE = "klerio-bannette";
+var MAIL_A_TRAITER = ["a_rattacher", "erreur"];
 function vueFile() {
   Promise.all([api("a-traiter" + qb()), api("dossiers?limite=300&termines=0" + qb("&")), api("indicateurs" + qb()), api("doublons" + qb()).catch(function () { return null; })]).then(function (r) {
-    var file = r[0] || [], encours = r[1] || [], ind = r[2] || {}, dbl = r[3];
+    var file = r[0] || [], encours = r[1] || [], ind = r[2] || {}, dbl = r[3], mails = ind.mails_recus || [];
     compter(ind);
     var moi = S.moi || {}, resp = estResponsable();
     var aMoi = file.filter(function (d) { return d.gestionnaire && d.gestionnaire.id === moi.id; });
@@ -695,42 +699,37 @@ function vueFile() {
     var renvoyes = file.filter(function (d) { return d.renvoye_manager; });
     var tiers = encours.filter(function (d) { return d.statut === "mission_envoyee" || d.statut === "attente_pieces" || d.statut === "reglement_envoye"; });
     var prio = file.filter(function (d) { return d.priorite === "haute"; }).length;
+    var mailsAction = mails.filter(function (m) { return MAIL_A_TRAITER.indexOf(m.statut) >= 0; }).length;
     var filtres = [["moi", "À moi", aMoi], ["libres", "À prendre", libres]];
     if (resp || autres.length) filtres.push(["equipe", "Toute l'équipe", file]);
-    var choix = "moi";
-    try { choix = localStorage.getItem(FILTRE_FILE) || (aMoi.length ? "moi" : "libres"); } catch (e) { }
-    if (!filtres.some(function (f) { return f[0] === choix; })) choix = "moi";
+    if (resp && renvoyes.length) filtres.unshift(["renvoyes", "Renvoyés", renvoyes]);
+    var choix = null, onglet = null;
+    try { choix = localStorage.getItem(FILTRE_FILE); onglet = localStorage.getItem(BANNETTE); } catch (e) { }
+    if (!filtres.some(function (f) { return f[0] === choix; })) choix = aMoi.length ? "moi" : "libres";
+    if (["decider", "mails", "tiers"].indexOf(onglet) < 0) onglet = "decider";
 
     var prenom = (moi.nom || "").split(/\s+/)[0];
     var h = bandeauCorporel() + '<div class="accueil-tete"><div><h1>Bonjour' + (prenom ? " " + esc(prenom) : "") + '</h1><p>Espace ' + esc(C.ESPACES[S.branche].nom.toLowerCase()) +
-      " · " + esc(new Date().toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" })) + '</p></div><a class="btn primaire" href="#/declarer">Déclarer un sinistre</a></div>';
-    h += '<div class="tuiles">' +
-      '<a class="tuile' + (file.length ? " vous" : "") + '" href="#/file"><div class="val">' + file.length + '</div><div class="lib">Attendent une décision</div>' + (prio ? '<div class="sous">dont ' + prio + " prioritaire" + (prio > 1 ? "s" : "") + "</div>" : "") + "</a>" +
-      '<a class="tuile" href="#/dossiers"><div class="val">' + tiers.length + '</div><div class="lib">Chez un expert, un garage ou l\'assuré</div></a>' +
-      '<a class="tuile" href="#/archives"><div class="val">' + (ind.clos_30j || 0) + '</div><div class="lib">Terminés ces 30 derniers jours</div></a>' +
-      '<a class="tuile" href="#/pilotage"><div class="val">' + (ind.taux_sans_intervention != null ? C.nombre(ind.taux_sans_intervention, 0) + " %" : "–") + '</div><div class="lib">Traités sans aucun clic</div></a></div>';
-
-    if (resp && renvoyes.length) {
-      h += '<section class="bloc"><div class="bloc-tete"><h2>Renvoyés par un gestionnaire<span class="compte">' + renvoyes.length + '</span></h2><span class="muet petit">À réaffecter</span></div><ul class="file">' +
-        renvoyes.map(function (d) { return ligneFile(d, '<small>Renvoyé par ' + esc(d.renvoye_manager.par) + " : " + esc(d.renvoye_manager.motif) + "</small>"); }).join("") + "</ul></section>";
+      ", " + esc(new Date().toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" })) + '</p></div><a class="btn primaire" href="#/declarer">Déclarer un sinistre</a></div>';
+    function tab(cle, lib, n, sous, urgent) {
+      return '<button type="button" role="tab" class="bannette' + (urgent ? " urgent" : "") + '" data-bannette="' + cle + '" aria-selected="' + (cle === onglet) + '" aria-controls="bannette-corps">' +
+        '<span class="n">' + n + '</span><span class="lib">' + esc(lib) + '</span><span class="sous">' + (sous ? esc(sous) : "&nbsp;") + "</span></button>";
     }
-    h += '<section class="bloc"><div class="bloc-tete"><h2>À traiter</h2><div class="filtre-file" role="group" aria-label="Filtrer">' +
-      filtres.map(function (f) { return '<button type="button" data-filtre="' + f[0] + '" aria-pressed="' + (f[0] === choix) + '">' + esc(f[1]) + '<span class="n">' + f[2].length + "</span></button>"; }).join("") +
-      '</div></div><div id="file-liste"></div></section>';
-    if (dbl && (dbl.classes || []).length) {
-      var n30 = dbl.classes.filter(function (d) { return Date.now() - new Date(d.recu_le).getTime() < 30 * 864e5; }).length;
-      if (n30) h += '<p class="muet petit" style="margin:-4px 0 14px"><a href="#/doublons">' + n30 + " déclaration" + (n30 > 1 ? "s" : "") + " en double classée" + (n30 > 1 ? "s" : "") + " ces 30 derniers jours</a> : rattachée" + (n30 > 1 ? "s" : "") + " au dossier d'origine, sans rien à faire.</p>";
-    }
-    h += blocMailsRecus(ind.mails_recus || []);
-    h += '<section class="bloc"><div class="bloc-tete"><h2>Attendent un tiers<span class="compte">' + tiers.length + '</span></h2><span class="muet petit">Relances automatiques, puis retour vers vous après trois relances</span></div>' +
-      (tiers.length ? listeSimple(tiers.slice(0, 8)) + (tiers.length > 8 ? '<div class="bloc-corps"><a href="#/dossiers">Voir les ' + tiers.length + " dossiers en cours</a></div>" : "") : '<div class="vide">Aucun dossier en attente d\'un tiers.</div>') + "</section>";
+    h += '<section class="bloc accueil-bloc"><div class="bannettes" role="tablist" aria-label="Bannettes">' +
+      tab("decider", "À décider", file.length, prio ? prio + " prioritaire" + (prio > 1 ? "s" : "") : (renvoyes.length && resp ? renvoyes.length + " renvoyé" + (renvoyes.length > 1 ? "s" : "") : ""), file.length > 0) +
+      tab("mails", "Mails reçus", mails.length, mailsAction ? mailsAction + " à rattacher" : "", mailsAction > 0) +
+      tab("tiers", "Chez un tiers", tiers.length, "expert, garage, assuré", false) +
+      '<a class="bannettes-stats" href="#/pilotage"><span><b>' + (ind.clos_30j || 0) + "</b> terminés en 30 jours</span><span><b>" +
+        (ind.taux_sans_intervention != null ? C.nombre(ind.taux_sans_intervention, 0) + " %" : "–") + "</b> sans intervention</span></a>" +
+      '</div><div id="bannette-corps" role="tabpanel"></div></section>';
     $("vue").innerHTML = h;
 
-    function dessiner(cle) {
-      var l = (filtres.filter(function (f) { return f[0] === cle; })[0] || filtres[0])[2];
-      var vide = { moi: "Aucun dossier ne vous attend. Prenez-en un dans « À prendre ».", libres: "La file commune est vide.", equipe: "Aucune décision en attente dans l'équipe." }[cle];
-      $("file-liste").innerHTML = l.length ? '<ul class="file">' + l.map(function (d) { return ligneFile(d); }).join("") + "</ul>" : '<div class="vide"><b>Rien à décider ici</b>' + esc(vide) + "</div>";
-      document.querySelectorAll("[data-prendre]").forEach(function (b) {
+    function brancherLignes(racine) {
+      racine.querySelectorAll("tr[data-n]").forEach(function (tr) {
+        tr.onclick = function (e) { if (!e.target.closest("button, a")) ouvrirDossier(tr.dataset.n); };
+        tr.onkeydown = function (e) { if (e.key === "Enter" && e.target === tr) ouvrirDossier(tr.dataset.n); };
+      });
+      racine.querySelectorAll("[data-prendre]").forEach(function (b) {
         b.onclick = function (e) {
           e.preventDefault(); e.stopPropagation();
           C.occupe(b, true, "");
@@ -739,25 +738,77 @@ function vueFile() {
         };
       });
     }
-    dessiner(choix);
-    brancherMails();
-    document.querySelectorAll("[data-filtre]").forEach(function (b) {
-      b.onclick = function () {
-        document.querySelectorAll("[data-filtre]").forEach(function (x) { x.setAttribute("aria-pressed", String(x === b)); });
-        try { localStorage.setItem(FILTRE_FILE, b.dataset.filtre); } catch (e) { }
-        dessiner(b.dataset.filtre);
-      };
-    });
+    function dessinerDecider(cle) {
+      var l = (filtres.filter(function (f) { return f[0] === cle; })[0] || filtres[0])[2];
+      var vide = { moi: "Aucun dossier ne vous attend. Prenez-en un dans « À prendre ».", libres: "La file commune est vide.", equipe: "Aucune décision en attente dans l'équipe.", renvoyes: "Aucun dossier renvoyé." }[cle];
+      $("file-liste").innerHTML = l.length ? tableDecider(l) : '<div class="vide"><b>Rien à décider ici</b>' + esc(vide) + "</div>";
+      brancherLignes($("file-liste"));
+    }
+    function afficher(cle) {
+      onglet = cle;
+      try { localStorage.setItem(BANNETTE, cle); } catch (e) { }
+      document.querySelectorAll("[data-bannette]").forEach(function (x) { x.setAttribute("aria-selected", String(x.dataset.bannette === cle)); });
+      var c = $("bannette-corps"), h2 = "";
+      if (cle === "decider") {
+        h2 = '<div class="bannette-outils"><div class="filtre-file" role="group" aria-label="Filtrer">' +
+          filtres.map(function (f) { return '<button type="button" data-filtre="' + f[0] + '" aria-pressed="' + (f[0] === choix) + '">' + esc(f[1]) + '<span class="n">' + f[2].length + "</span></button>"; }).join("") +
+          '</div><span class="muet petit">Cliquez une ligne pour ouvrir le dossier</span></div><div id="file-liste"></div>';
+        if (dbl && (dbl.classes || []).length) {
+          var n30 = dbl.classes.filter(function (d) { return Date.now() - new Date(d.recu_le).getTime() < 30 * 864e5; }).length;
+          if (n30) h2 += '<p class="bannette-pied muet petit"><a href="#/doublons">' + n30 + " déclaration" + (n30 > 1 ? "s" : "") + " en double classée" + (n30 > 1 ? "s" : "") + " ces 30 derniers jours</a>, rattachée" + (n30 > 1 ? "s" : "") + " au dossier d'origine.</p>";
+        }
+        c.innerHTML = h2;
+        dessinerDecider(choix);
+        c.querySelectorAll("[data-filtre]").forEach(function (b) {
+          b.onclick = function () {
+            c.querySelectorAll("[data-filtre]").forEach(function (x) { x.setAttribute("aria-pressed", String(x === b)); });
+            choix = b.dataset.filtre;
+            try { localStorage.setItem(FILTRE_FILE, choix); } catch (e) { }
+            dessinerDecider(choix);
+          };
+        });
+      } else if (cle === "mails") {
+        c.innerHTML = '<div class="bannette-outils"><span class="muet petit">Boîte sinistres : chaque mail est lu et traité dès son arrivée. Cliquez un mail pour le lire.</span></div>' + listeMails(mails);
+        brancherMails();
+      } else {
+        c.innerHTML = '<div class="bannette-outils"><span class="muet petit">Klerio relance seul, puis vous renvoie le dossier après trois relances sans réponse.</span></div>' +
+          (tiers.length ? tableTiers(tiers.slice(0, 15)) + (tiers.length > 15 ? '<p class="bannette-pied"><a href="#/dossiers">Voir les ' + tiers.length + " dossiers en cours</a></p>" : "") : '<div class="vide">Aucun dossier en attente d\'un tiers.</div>');
+        brancherLignes(c);
+      }
+    }
+    document.querySelectorAll("[data-bannette]").forEach(function (b) { b.onclick = function () { afficher(b.dataset.bannette); }; });
+    afficher(onglet);
   }).catch(erreurVue);
+}
+var FAMILLE_TYPE = { VOL: "t-vol", TENTATIVE_VOL: "t-vol", VOL_RETROUVE: "t-vol", BRIS_GLACE: "t-glace", INCENDIE: "t-nature", EVENEMENT_CLIMATIQUE: "t-nature", CATASTROPHE_NATURELLE: "t-nature", GARANTIE_ACCIDENT: "t-corporel" };
+function typeTag(t) { return '<span class="type-tag ' + (FAMILLE_TYPE[t] || "") + '">' + esc(C.theme(t)) + "</span>"; }
+function tableDecider(l) {
+  return '<div class="tableau-wrap"><table class="tableau bannette-table"><thead><tr><th class="c-prio"><span class="sr">Priorité</span></th><th>Dossier</th><th>Ce qui est attendu</th><th>Suivi par</th><th class="nb">Depuis</th></tr></thead><tbody>' +
+    l.map(function (d) {
+      var a = attente(d), libre = !d.gestionnaire;
+      return '<tr data-n="' + esc(d.numero) + '" tabindex="0"><td class="c-prio">' + (d.priorite === "haute" ? '<span class="prio" title="Prioritaire"></span>' : "") + "</td>" +
+        '<td class="c-dossier"><b>' + esc(d.numero) + "</b><br>" + typeTag(d.theme) + "</td>" +
+        '<td class="c-quoi">' + esc(a[0]) + (a[1] ? "<small>" + esc(a[1]) + "</small>" : "") +
+          (d.renvoye_manager ? "<small>Renvoyé par " + esc(d.renvoye_manager.par) + " : " + esc(d.renvoye_manager.motif) + "</small>" : "") + "</td>" +
+        '<td class="c-suivi">' + (libre ? '<button type="button" class="btn petit" data-prendre="' + esc(d.numero) + '">Prendre</button>' : esc(d.gestionnaire.nom)) + "</td>" +
+        '<td class="nb muet c-depuis">' + esc(C.depuis(d.depuis)) + "</td></tr>";
+    }).join("") + "</tbody></table></div>";
+}
+function tableTiers(l) {
+  return '<div class="tableau-wrap"><table class="tableau bannette-table"><thead><tr><th>Dossier</th><th>Ce qui est attendu</th><th>Statut</th><th class="nb">Depuis</th></tr></thead><tbody>' +
+    l.map(function (d) {
+      return '<tr data-n="' + esc(d.numero) + '" tabindex="0"><td class="c-dossier"><b>' + esc(d.numero) + "</b><br>" + typeTag(d.theme) + "</td>" +
+        '<td class="c-quoi">' + esc(quiAttend(d)) + "<small>Sinistre du " + esc(C.dateCourte(d.date_sinistre)) + (d.code_postal ? ", " + esc(d.code_postal) : "") + "</small></td>" +
+        "<td>" + C.statut(d.statut) + '</td><td class="nb muet c-depuis">' + esc(C.depuis(d.maj)) + "</td></tr>";
+    }).join("") + "</tbody></table></div>";
 }
 // Mails reçus sur la boîte sinistres : chacun apparaît ici dès son arrivée, avec ce que Klerio en a fait
 var MAIL_STATUT = { recu: ["En cours de lecture", "info"], dossier_cree: ["Dossier ouvert", "ok"], rattache: ["Ajouté au dossier", "ok"],
   demande_infos: ["Infos demandées à l'expéditeur", "attente"], a_rattacher: ["À rattacher à un dossier", "alerte"], ignore: ["Ignoré", "neutre"], erreur: ["Erreur de lecture", "alerte"] };
-function blocMailsRecus(l) {
-  var h = '<section class="bloc"><div class="bloc-tete"><h2>Mails reçus<span class="compte">' + l.length + '</span></h2><span class="muet petit">Boîte sinistres : chaque mail est lu et traité dès son arrivée. Cliquez pour lire.</span></div>';
-  if (!l.length) return h + '<div class="vide">Aucun mail reçu pour l\'instant' + (S.env === "test" ? "" : " dans cet environnement") + '.</div></section>';
-  var plus = Math.max(0, l.length - 3);
-  return h + '<ul class="file mails" id="mails-recus">' + l.map(function (m, i) {
+function listeMails(l) {
+  if (!l.length) return '<div class="vide">Aucun mail reçu pour l\'instant' + (S.env === "test" ? "" : " dans cet environnement") + '.</div>';
+  var plus = Math.max(0, l.length - 8);
+  return '<ul class="file mails" id="mails-recus">'  + l.map(function (m, i) {
     var s = MAIL_STATUT[m.statut] || [m.statut, "neutre"];
     var hesite = ["ignore", "demande_infos", "erreur", "a_rattacher"].indexOf(m.statut) >= 0 || m.confiance === "inconnu";
     var msgs = m.messages && m.messages.length ? m.messages : [{ id: m.id, recu_le: m.recu_le, expediteur: m.expediteur, via: m.via, objet: m.objet, contenu: m.contenu, pieces: m.pieces }];
@@ -770,7 +821,7 @@ function blocMailsRecus(l) {
         (pjx ? '<p class="muet petit">Pièces jointes : ' + pjx + "</p>" : "");
     }).join("");
     var relancer = ["demande_infos", "erreur", "ignore", "a_rattacher"].indexOf(m.statut) >= 0;
-    return "<li" + (i >= 3 ? ' class="ancien" hidden' : "") + '><button type="button" class="ligne ligne-mail" data-mail="' + esc(m.id) + '" aria-expanded="false"><span class="repere"></span>' +
+    return "<li" + (i >= 8 ? ' class="ancien" hidden' : "") + '><button type="button" class="ligne ligne-mail" data-mail="' + esc(m.id) + '" aria-expanded="false"><span class="repere"></span>' +
       '<span class="num">' + esc(m.expediteur || "?") + '<small>' + (msgs.length > 1 ? msgs.length + " messages" : "Mail reçu") + (nbPj ? " · 📎 " + nbPj : "") + (m.via ? " · via adresse de test" : "") + '</small></span>' +
       '<span class="quoi">' + esc(msgs[0].objet || m.objet || "(sans objet)") + '<small>' + (m.numero ? esc(m.numero) + (m.theme ? " · " + esc(C.theme(m.theme)) : "") : esc(m.precision || "")) + '</small></span>' +
       '<span class="droite"><span class="pastille-mail ' + s[1] + '">' + esc(s[0]) + '</span><span>' + esc(C.depuis(m.recu_le)) + '</span></span></button>' +
@@ -782,7 +833,7 @@ function blocMailsRecus(l) {
         (hesite && m.statut !== "rattache" && m.statut !== "dossier_cree" ? '<input class="saisie mono" id="mr-' + esc(m.id) + '" placeholder="N° de dossier" aria-label="Numéro du dossier">' +
           '<button type="button" class="btn primaire petit" data-rattacher="' + esc(m.id) + '">Rattacher à ce dossier</button>' : "") + "</div>" +
       "</div></li>";
-  }).join("") + "</ul>" + (plus ? '<div class="bloc-corps" style="padding-top:8px"><button type="button" class="btn petit" data-voir-plus="mails-recus" data-lib="Voir les ' + plus + ' mails plus anciens">Voir les ' + plus + " mails plus anciens</button></div>" : "") + "</section>";
+  }).join("") + "</ul>" + (plus ? '<div class="bannette-pied"><button type="button" class="btn petit" data-voir-plus="mails-recus" data-lib="Voir les ' + plus + ' mails plus anciens">Voir les ' + plus + " mails plus anciens</button></div>" : "");
 }
 // Bouton « voir plus » commun : affiche ou masque les lignes plus anciennes d'une liste
 document.addEventListener("click", function (e) {
