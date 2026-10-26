@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=20261026d">
+<link rel="stylesheet" href="style.css?v=20261026c">
 <style>
 /* ---------- Connexion ---------- */
 .connexion { min-height: 100vh; display: grid; place-items: center; padding: 40px 16px; background: var(--feuille-2); }
@@ -385,7 +385,7 @@ a.tuile:hover { border-color: var(--trait-fort); text-decoration: none; }
 .tableau.appels td:first-child { white-space: nowrap; }
 
 </style>
-<link rel="stylesheet" href="charte.css?v=20261026d">
+<link rel="stylesheet" href="charte.css?v=20261026c">
 </head>
 <body>
 
@@ -472,7 +472,7 @@ a.tuile:hover { border-color: var(--trait-fort); text-decoration: none; }
 <div id="toast" class="toast" hidden role="status"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="commun.js?v=20261026d"></script>
+<script src="commun.js?v=20261026c"></script>
 <script>
 (function () {
 "use strict";
@@ -721,7 +721,7 @@ function vueFile() {
     }
     h += '<section class="bloc accueil-bloc"><div class="bannettes" role="tablist" aria-label="Corbeilles">' +
       tab("decider", "À décider", file.length, file.length > 0) +
-      tab("mails", "Mails reçus", mailsAction || mails.length, mailsAction > 0) +
+      tab("mails", "Mails reçus", mails.length, mailsAction > 0) +
       tab("tiers", "Chez un tiers", tiers.length, false) +
       '</div><div id="bannette-corps" role="tabpanel"></div></section>';
     $("vue").innerHTML = h;
@@ -770,23 +770,8 @@ function vueFile() {
           };
         });
       } else if (cle === "mails") {
-        var cat = "tous";
-        try { cat = localStorage.getItem("klerio-mails-cat") || "tous"; } catch (e) { }
-        if (!MAIL_CATS.some(function (k) { return k[0] === cat; })) cat = "tous";
-        var dessinerMails = function () {
-          var k = MAIL_CATS.filter(function (x) { return x[0] === cat; })[0];
-          $("mails-zone").innerHTML = listeMails(k[2] ? mails.filter(function (m) { return k[2].indexOf(m.statut) >= 0; }) : mails);
-          c.querySelectorAll("[data-mcat]").forEach(function (x) { x.setAttribute("aria-pressed", String(x.dataset.mcat === cat)); });
-          brancherMails();
-        };
-        c.innerHTML = '<div class="bannette-outils"><div class="filtre-file" role="group" aria-label="Trier les mails">' + MAIL_CATS.map(function (k) {
-          var n = k[2] ? mails.filter(function (m) { return k[2].indexOf(m.statut) >= 0; }).length : mails.length;
-          return '<button type="button" data-mcat="' + k[0] + '" aria-pressed="false">' + esc(k[1]) + '<span class="n' + (k[0] === "action" && n ? " urgent" : "") + '">' + n + "</span></button>";
-        }).join("") + '</div><span class="outils-info">Boîte sinistres : chaque mail est lu et classé dès son arrivée</span></div><div id="mails-zone"></div>';
-        c.querySelectorAll("[data-mcat]").forEach(function (x) {
-          x.onclick = function () { cat = x.dataset.mcat; try { localStorage.setItem("klerio-mails-cat", cat); } catch (e) { } dessinerMails(); };
-        });
-        dessinerMails();
+        c.innerHTML = '<div class="bannette-outils"><span class="outils-info">Boîte sinistres, lue à chaque arrivée' + (mailsAction ? ' · <span class="txt-prio">' + mailsAction + " à rattacher</span>" : "") + "</span></div>" + listeMails(mails);
+        brancherMails();
       } else {
         c.innerHTML = '<div class="bannette-outils"><span class="outils-info">Relances automatiques ; retour vers vous après trois relances sans réponse</span></div>' +
           (tiers.length ? tableTiers(tiers.slice(0, 15)) + (tiers.length > 15 ? '<p class="bannette-pied"><a href="#/dossiers">Voir les ' + tiers.length + " dossiers en cours</a></p>" : "") : '<div class="vide">Aucun dossier en attente d\'un tiers.</div>');
@@ -824,60 +809,34 @@ function tableTiers(l) {
 // Mails reçus sur la boîte sinistres : chacun apparaît ici dès son arrivée, avec ce que Klerio en a fait
 var MAIL_STATUT = { recu: ["En cours de lecture", "info"], dossier_cree: ["Dossier ouvert", "ok"], rattache: ["Ajouté au dossier", "ok"],
   demande_infos: ["Infos demandées à l'expéditeur", "attente"], a_rattacher: ["À rattacher à un dossier", "alerte"], ignore: ["Ignoré", "neutre"], erreur: ["Erreur de lecture", "alerte"] };
-// Boîte de réception façon messagerie : une ligne par conversation (expéditeur, objet et début du texte, date),
-// en gras ce qui demande une action ; au clic, la conversation s'ouvre avec ce que Klerio en a fait et les actions possibles.
-var MAIL_CATS = [["tous", "Tous", null], ["action", "À traiter", ["a_rattacher", "erreur"]], ["attente", "En attente de réponse", ["demande_infos"]],
-  ["traites", "Classés", ["dossier_cree", "rattache"]], ["ignores", "Ignorés", ["ignore"]]];
-var COULEURS_AV = ["#5B47E0", "#0E9384", "#D92D20", "#DC6803", "#1570EF", "#7A5AF8", "#C11574", "#475467"];
-function avatarMail(qui) {
-  var t = String(qui || "?"), h = 0;
-  for (var i = 0; i < t.length; i++) h = (h * 31 + t.charCodeAt(i)) >>> 0;
-  return '<span class="mail-av" style="background:' + COULEURS_AV[h % COULEURS_AV.length] + '" aria-hidden="true">' + esc(t.charAt(0).toUpperCase()) + "</span>";
-}
-function dateMail(d) {
-  var x = new Date(d), n = new Date();
-  if (isNaN(x)) return "";
-  if (x.toDateString() === n.toDateString()) return x.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
-  return x.toLocaleDateString("fr-FR", { day: "numeric", month: "short" }) + (x.getFullYear() !== n.getFullYear() ? " " + x.getFullYear() : "");
-}
-function nomExpediteur(e) { var t = String(e || "?"); return t.indexOf("@") > 0 ? t.split("@")[0] : t; }
 function listeMails(l) {
-  if (!l.length) return '<div class="vide"><b>Aucun mail ici</b>Les mails reçus sur la boîte sinistres apparaissent dès leur arrivée.</div>';
-  var plus = Math.max(0, l.length - 12);
-  return '<ul class="boite-mails" id="mails-recus">' + l.map(function (m, i) {
+  if (!l.length) return '<div class="vide">Aucun mail reçu pour l\'instant' + (S.env === "test" ? "" : " dans cet environnement") + '.</div>';
+  var plus = Math.max(0, l.length - 8);
+  return '<ul class="file mails" id="mails-recus">'  + l.map(function (m, i) {
     var s = MAIL_STATUT[m.statut] || [m.statut, "neutre"];
-    var action = ["a_rattacher", "erreur"].indexOf(m.statut) >= 0;
     var hesite = ["ignore", "demande_infos", "erreur", "a_rattacher"].indexOf(m.statut) >= 0 || m.confiance === "inconnu";
     var msgs = m.messages && m.messages.length ? m.messages : [{ id: m.id, recu_le: m.recu_le, expediteur: m.expediteur, via: m.via, objet: m.objet, contenu: m.contenu, pieces: m.pieces }];
-    var dernier = msgs[msgs.length - 1];
     var nbPj = msgs.reduce(function (t, x) { return t + (x.pieces || []).length; }, 0);
-    var extrait = String(dernier.contenu || m.contenu || "").replace(/\s+/g, " ").trim().slice(0, 140);
-    var fil = msgs.map(function (x) {
-      return '<article class="mail-msg"><header>' + avatarMail(x.expediteur || m.expediteur) + '<div class="mail-de"><b>' + esc(nomExpediteur(x.expediteur || m.expediteur)) + '</b> <span class="muet">&lt;' + esc(x.expediteur || m.expediteur || "?") + "&gt;</span>" +
-          '<div class="muet petit">à la boîte sinistres' + (x.via ? ", reçu via " + esc(x.via) + " (adresse de test)" : "") + "</div></div>" +
-          '<time class="muet petit">' + esc(new Date(x.recu_le).toLocaleString("fr-FR", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })) + " (" + esc(C.depuis(x.recu_le)) + ")</time></header>" +
-        '<div class="mail-corps">' + esc(x.contenu || "(texte non disponible pour ce mail)") + "</div>" +
-        ((x.pieces || []).length ? '<div class="mail-pj">' + x.pieces.map(function (p) { return '<span class="pj">📎 ' + esc(p.nom) + "</span>"; }).join("") + "</div>" : "") + "</article>";
+    var fil = msgs.map(function (x, j) {
+      var pjx = (x.pieces || []).map(function (p) { return esc(p.nom); }).join(", ");
+      return (msgs.length > 1 ? '<p class="muet petit" style="margin:' + (j ? "12px" : "0") + ' 0 4px"><b>Message ' + (j + 1) + "</b> · " + esc(C.depuis(x.recu_le)) +
+          (x.via ? " · reçu via " + esc(x.via) + " (adresse de test)" : "") + (x.objet ? " · " + esc(x.objet) : "") + "</p>" : "") +
+        '<pre class="mail-texte">' + esc(x.contenu || "(texte non disponible pour ce mail)") + "</pre>" +
+        (pjx ? '<p class="muet petit">Pièces jointes : ' + pjx + "</p>" : "");
     }).join("");
     var relancer = ["demande_infos", "erreur", "ignore", "a_rattacher"].indexOf(m.statut) >= 0;
-    return "<li" + (i >= 12 ? ' class="ancien" hidden' : "") + (action ? ' data-action="1"' : "") + '>' +
-      '<button type="button" class="mail-ligne' + (action ? " a-traiter" : "") + '" data-mail="' + esc(m.id) + '" aria-expanded="false">' +
-        avatarMail(m.expediteur) +
-        '<span class="mail-qui">' + esc(nomExpediteur(m.expediteur)) + (msgs.length > 1 ? ' <span class="nb-msg">' + msgs.length + "</span>" : "") + "</span>" +
-        '<span class="mail-sujet">' + (m.numero ? '<span class="etiq">' + esc(m.numero) + "</span>" : "") + '<span class="obj">' + esc(msgs[0].objet || m.objet || "(sans objet)") + "</span>" +
-          (extrait ? '<span class="extrait"> – ' + esc(extrait) + "</span>" : "") + "</span>" +
-        '<span class="mail-etat"><span class="pastille-mail ' + s[1] + '">' + esc(s[0]) + "</span></span>" +
-        '<span class="mail-pj-ico">' + (nbPj ? '<span title="' + nbPj + ' pièce' + (nbPj > 1 ? "s" : "") + ' jointe' + (nbPj > 1 ? "s" : "") + '">📎</span>' : "") + "</span>" +
-        '<span class="mail-date">' + esc(dateMail(dernier.recu_le || m.recu_le)) + "</span></button>" +
-      '<div class="mail-detail" id="md-' + esc(m.id) + '" hidden>' +
-        '<h3 class="mail-titre">' + esc(msgs[0].objet || m.objet || "(sans objet)") + (msgs.length > 1 ? ' <span class="muet">' + msgs.length + " messages</span>" : "") + "</h3>" +
-        '<div class="mail-klerio etat-' + s[1] + '"><b>Klerio : ' + esc(s[0]) + (m.numero ? " " + esc(m.numero) + (m.theme ? " (" + esc(C.theme(m.theme)) + ")" : "") : "") + "</b>" +
-          (m.precision ? "<span>" + esc(m.precision) + "</span>" : "") + (m.verification ? "<span>" + esc(m.verification) + "</span>" : "") +
-          '<div class="mail-actions">' + (m.numero ? '<a class="btn primaire petit" href="#/dossier/' + esc(m.numero) + '">Ouvrir le dossier</a>' : "") +
-          (hesite && m.statut !== "rattache" && m.statut !== "dossier_cree" ? '<input class="saisie mono" id="mr-' + esc(m.id) + '" placeholder="N° de dossier" aria-label="Numéro du dossier">' +
-            '<button type="button" class="btn primaire petit" data-rattacher="' + esc(m.id) + '">Rattacher à ce dossier</button>' : "") +
-          (relancer ? '<button type="button" class="btn petit" data-relancer-mail="' + esc(m.id) + '" title="Klerio relit toute la conversation, sans renvoyer de mail à l\'expéditeur">Relancer la lecture</button>' : "") + "</div></div>" +
-        fil + "</div></li>";
+    return "<li" + (i >= 8 ? ' class="ancien" hidden' : "") + '><button type="button" class="ligne ligne-mail" data-mail="' + esc(m.id) + '" aria-expanded="false"><span class="repere"></span>' +
+      '<span class="num">' + esc(m.expediteur || "?") + '<small>' + (msgs.length > 1 ? msgs.length + " messages" : "Mail reçu") + (nbPj ? " · 📎 " + nbPj : "") + (m.via ? " · via adresse de test" : "") + '</small></span>' +
+      '<span class="quoi">' + esc(msgs[0].objet || m.objet || "(sans objet)") + '<small>' + (m.numero ? esc(m.numero) + (m.theme ? " · " + esc(C.theme(m.theme)) : "") : esc(m.precision || "")) + '</small></span>' +
+      '<span class="droite"><span class="pastille-mail ' + s[1] + '">' + esc(s[0]) + '</span><span>' + esc(C.depuis(m.recu_le)) + '</span></span></button>' +
+      '<div class="mail-detail" id="md-' + esc(m.id) + '" hidden>' + fil +
+        (m.verification ? '<p class="petit" style="margin:6px 0 0">' + esc(m.verification) + "</p>" : "") +
+        (m.precision && m.numero ? '<p class="muet petit">' + esc(m.precision) + "</p>" : "") +
+        '<div class="mail-actions">' + (m.numero ? '<a class="btn petit" href="#/dossier/' + esc(m.numero) + '">Ouvrir le dossier ' + esc(m.numero) + "</a>" : "") +
+        (relancer ? '<button type="button" class="btn petit" data-relancer-mail="' + esc(m.id) + '" title="Klerio relit toute la conversation, sans renvoyer de mail à l\'expéditeur">Relancer la lecture</button>' : "") +
+        (hesite && m.statut !== "rattache" && m.statut !== "dossier_cree" ? '<input class="saisie mono" id="mr-' + esc(m.id) + '" placeholder="N° de dossier" aria-label="Numéro du dossier">' +
+          '<button type="button" class="btn primaire petit" data-rattacher="' + esc(m.id) + '">Rattacher à ce dossier</button>' : "") + "</div>" +
+      "</div></li>";
   }).join("") + "</ul>" + (plus ? '<div class="bannette-pied"><button type="button" class="btn petit" data-voir-plus="mails-recus" data-lib="Voir les ' + plus + ' mails plus anciens">Voir les ' + plus + " mails plus anciens</button></div>" : "");
 }
 // Bouton « voir plus » commun : affiche ou masque les lignes plus anciennes d'une liste
