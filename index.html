@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=20261026f">
+<link rel="stylesheet" href="style.css?v=20261026g">
 <style>
 /* ---------- Connexion ---------- */
 .connexion { min-height: 100vh; display: grid; place-items: center; padding: 40px 16px; background: var(--feuille-2); }
@@ -386,7 +386,7 @@ a.tuile:hover { border-color: var(--trait-fort); text-decoration: none; }
 
 #c-captcha { min-height: 65px; }
 </style>
-<link rel="stylesheet" href="charte.css?v=20261026f">
+<link rel="stylesheet" href="charte.css?v=20261026g">
 </head>
 <body>
 
@@ -474,7 +474,7 @@ a.tuile:hover { border-color: var(--trait-fort); text-decoration: none; }
 <div id="toast" class="toast" hidden role="status"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="commun.js?v=20261026f"></script>
+<script src="commun.js?v=20261026g"></script>
 <script>
 (function () {
 "use strict";
@@ -1158,11 +1158,11 @@ function afficherDossier(f) {
     (lienClient ? '<a class="btn primaire petit bouton-client" href="' + lienClient + '">Voir tout le client : dossiers, mails, pièces</a>' : "") +
     (ctr.numero ? '<dl class="info-liste"><dt>Numéro</dt><dd>' + (lienClient ? '<a href="' + lienClient + '">' + esc(ctr.numero) + "</a>" : esc(ctr.numero)) + "</dd>" + (ctr.immatriculation ? "<dt>Véhicule</dt><dd>" + esc(ctr.immatriculation) + "</dd>" : "") +
       "<dt>Assuré</dt><dd>" + (lienClient ? '<a href="' + lienClient + '">' + esc(ctr.assure_ref) + "</a>" : esc(ctr.assure_ref)) + "</dd><dt>Effet</dt><dd>" + esc(C.dateCourte(ctr.date_effet)) + (ctr.date_fin ? " au " + esc(C.dateCourte(ctr.date_fin)) : "") + "</dd>" +
-      "<dt>Garanties</dt><dd>" + ((ctr.garanties || []).map(function (g) {
+      "<dt>Garanties</dt><dd>" + ((ctr.garanties || []).length ? repliable((ctr.garanties || []).map(function (g) {
         return esc(C.GARANTIES[g.code] || g.code) +
           '<span class="muet">' + (g.option ? ", option " + g.option : ", franchise " + eur(g.franchise)) +
           (g.plafond != null ? ", plafond " + eur(g.plafond) : "") + (g.vetuste_pieces_pct ? ", vétusté pièces " + C.nombre(g.vetuste_pieces_pct) + " %" : "") + "</span>";
-      }).join("<br>") || "Aucune") + "</dd></dl>" : '<p class="muet">Aucun contrat rattaché.</p>') + "</div></section>";
+      }), 3, "liste-garanties", "garantie", "garanties") : "Aucune") + "</dd></dl>" : '<p class="muet">Aucun contrat rattaché.</p>') + "</div></section>";
   h += blocClient(f);
   h += blocPrestataires(f);
   h += blocPieces(f);
@@ -1490,6 +1490,18 @@ function vueDoublons() {
 }
 
 /* ---------------- Clients ---------------- */
+// Liste repliable : les n premiers éléments, puis « Voir les x autres » pour déplier
+function repliable(items, n, classe, un, plusieurs) {
+  var reste = items.length - n;
+  return '<div class="repliable' + (reste > 0 ? " replie" : "") + '"><ul class="' + classe + '">' + items.map(function (x, i) { return "<li" + (i >= n ? ' class="en-plus"' : "") + ">" + x + "</li>"; }).join("") + "</ul>" +
+    (reste > 0 ? '<button type="button" class="btn-plus" data-deplier data-lib="Voir ' + (reste > 1 ? "les " + reste + " autres " + plusieurs : "1 autre " + un) + '" aria-expanded="false">Voir ' + (reste > 1 ? "les " + reste + " autres " + plusieurs : "1 autre " + un) + "</button>" : "") + "</div>";
+}
+document.addEventListener("click", function (e) {
+  var b = e.target.closest && e.target.closest("[data-deplier]");
+  if (!b) return;
+  var r = b.closest(".repliable"), ouvert = !r.classList.toggle("replie");
+  b.setAttribute("aria-expanded", String(ouvert)); b.textContent = ouvert ? "Réduire" : b.dataset.lib;
+});
 function blocClient(f) {
   var c = f.client;
   if (!c || !c.ref) return "";
@@ -1497,11 +1509,11 @@ function blocClient(f) {
   return '<section class="bloc" id="bloc-client"><div class="bloc-tete"><h3>Client</h3><a class="petit" href="#/client/' + encodeURIComponent(c.ref) + '">Fiche client</a></div><div class="bloc-corps pile">' +
     '<dl class="info-liste"><dt>Référence</dt><dd>' + esc(c.ref) + "</dd>" + (c.email ? "<dt>Email</dt><dd>" + esc(c.email) + "</dd>" : "") +
     "<dt>Contrats</dt><dd>" + esc(String(c.nb_contrats)) + "</dd><dt>Autres dossiers</dt><dd>" + esc(String(autres.length)) + "</dd></dl>" +
-    (autres.length ? '<ul class="liste-mini">' + autres.slice(0, 6).map(function (o) {
-      return '<li><a href="#/dossier/' + encodeURIComponent(o.numero) + '">' + esc(o.numero) + '</a> <span class="muet">' + esc(C.theme(o.theme)) + " · " + esc(C.dateCourte(o.date_sinistre)) + "</span>" +
+    (autres.length ? repliable(autres.slice(0, 12).map(function (o) {
+      return '<a href="#/dossier/' + encodeURIComponent(o.numero) + '">' + esc(o.numero) + '</a> <span class="muet">' + esc(C.theme(o.theme)) + " · " + esc(C.dateCourte(o.date_sinistre)) + "</span>" +
         '<div class="petit">' + (o.meme_vehicule ? '<span class="pastille-mail info">Même véhicule</span> ' : '<span class="pastille-mail neutre">' + esc(o.immatriculation || o.contrat || "Autre contrat") + "</span> ") +
-        C.statut(o.statut) + (o.motif === "doublon" ? ' <span class="muet">doublon</span>' : "") + "</div></li>";
-    }).join("") + "</ul>" + (autres.length > 6 ? '<a class="petit" href="#/client/' + encodeURIComponent(c.ref) + '">Voir les ' + autres.length + " dossiers</a>" : "") : '<p class="muet petit">Aucun autre dossier pour ce client.</p>') +
+        C.statut(o.statut) + (o.motif === "doublon" ? ' <span class="muet">doublon</span>' : "") + "</div>";
+    }), 3, "liste-mini", "dossier", "dossiers") + (autres.length > 12 ? '<a class="petit" href="#/client/' + encodeURIComponent(c.ref) + '">Voir les ' + autres.length + " dossiers</a>" : "") : '<p class="muet petit">Aucun autre dossier pour ce client.</p>') +
     "</div></section>";
 }
 function vueClients() {

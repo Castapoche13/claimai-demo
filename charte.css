@@ -2,7 +2,7 @@
    l'orange seulement pour ce qui attend une décision. Chargée après les styles de la page. */
 :root {
   --encre: #0D0D12; --encre-2: #26262E; --gris: #5E5E6B; --gris-clair: #8A8A96;
-  --papier: #F7F7F8; --feuille: #FFFFFF; --feuille-2: #F4F4F6; --survol: #EEEEF1; --trait: #E4E4E8; --trait-fort: #C9C9D1;
+  --papier: #EEF0F3; --feuille: #FFFFFF; --feuille-2: #F6F7F9; --survol: #ECEEF2; --trait: #DCDFE5; --trait-fort: #BFC3CD;
   --bleu: #5B47E0; --bleu-fonce: #4634C4; --bleu-pale: #EFEDFD; --sur-bleu: #FFFFFF;
   --orange: #F04E23; --orange-texte: #C93A12; --jaune: #F04E23; --jaune-pale: #FEF0EB; --jaune-texte: #C93A12;
   --rouge: #D92D20; --rouge-texte: #B42318; --rouge-pale: #FEF3F2; --vert: #12B76A; --vert-texte: #027A48; --vert-pale: #ECFDF3;
@@ -203,3 +203,18 @@ button.tuile:hover, a.tuile:hover { border-color: var(--trait-fort); text-decora
 .tuile .sous { font-size: 12.5px; font-weight: 600; margin-top: 2px; }
 .tuile { display: flex; flex-direction: column; align-items: flex-start; justify-content: flex-start; }
 @media (max-width: 760px) { .bannette-table tr.haute td:first-child { box-shadow: none; } .bannette-table tr.haute { box-shadow: inset 3px 0 0 var(--orange); } }
+
+/* Délimitation : blocs nettement détachés du fond, en-têtes séparés du contenu */
+@media (prefers-color-scheme: light) { :root:not([data-theme="dark"]) .bloc, :root:not([data-theme="dark"]) .decision, :root:not([data-theme="dark"]) .tuile { border-color: #D5D8DF; box-shadow: 0 1px 2px rgba(13,13,18,.06), 0 2px 6px rgba(13,13,18,.04); } }
+:root[data-theme="light"] .bloc, :root[data-theme="light"] .decision, :root[data-theme="light"] .tuile { border-color: #D5D8DF; box-shadow: 0 1px 2px rgba(13,13,18,.06), 0 2px 6px rgba(13,13,18,.04); }
+.bloc-tete { background: var(--feuille-2); border-bottom: 1px solid var(--trait); }
+.info-liste dt { color: var(--gris); }
+.barre { background: var(--feuille); }
+.nav { border-right-color: var(--trait); }
+
+/* Listes repliables (garanties, autres dossiers du client) */
+.repliable ul { list-style: none; margin: 0; padding: 0; }
+.liste-garanties li + li { margin-top: 4px; }
+.repliable.replie .en-plus { display: none; }
+.btn-plus { border: 0; background: none; padding: 6px 0 0; color: var(--bleu); font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; }
+.btn-plus:hover { text-decoration: underline; }
