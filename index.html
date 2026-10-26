@@ -6,7 +6,7 @@
 <title>Console sinistres Klerio</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
 <style>
 /* ---------- Connexion ---------- */
@@ -708,19 +708,18 @@ function vueFile() {
     if (!filtres.some(function (f) { return f[0] === choix; })) choix = aMoi.length ? "moi" : "libres";
     if (["decider", "mails", "tiers"].indexOf(onglet) < 0) onglet = "decider";
 
-    var prenom = (moi.nom || "").split(/\s+/)[0];
-    var h = bandeauCorporel() + '<div class="accueil-tete"><div><h1>Bonjour' + (prenom ? " " + esc(prenom) : "") + '</h1><p>Espace ' + esc(C.ESPACES[S.branche].nom.toLowerCase()) +
-      ", " + esc(new Date().toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" })) + '</p></div><a class="btn primaire" href="#/declarer">Déclarer un sinistre</a></div>';
-    function tab(cle, lib, n, sous, urgent) {
-      return '<button type="button" role="tab" class="bannette' + (urgent ? " urgent" : "") + '" data-bannette="' + cle + '" aria-selected="' + (cle === onglet) + '" aria-controls="bannette-corps">' +
-        '<span class="n">' + n + '</span><span class="lib">' + esc(lib) + '</span><span class="sous">' + (sous ? esc(sous) : "&nbsp;") + "</span></button>";
+    var h = bandeauCorporel() + '<div class="corbeille-tete"><div><h1>Corbeille</h1><p>Espace ' + esc(C.ESPACES[S.branche].nom.toLowerCase()) +
+      ", " + esc(new Date().toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" })) + "</p></div>" +
+      '<div class="corbeille-droite"><a class="corbeille-stats" href="#/pilotage" title="Voir le pilotage"><span><b>' + (ind.clos_30j || 0) + "</b> clos sur 30 jours</span><span><b>" +
+        (ind.taux_sans_intervention != null ? C.nombre(ind.taux_sans_intervention, 0) + " %" : "–") + '</b> sans intervention</span></a><a class="btn primaire" href="#/declarer">Déclarer un sinistre</a></div></div>';
+    function tab(cle, lib, n, urgent) {
+      return '<button type="button" role="tab" class="bannette" data-bannette="' + cle + '" aria-selected="' + (cle === onglet) + '" aria-controls="bannette-corps">' +
+        esc(lib) + '<span class="badge-n' + (urgent ? " urgent" : "") + '">' + n + "</span></button>";
     }
-    h += '<section class="bloc accueil-bloc"><div class="bannettes" role="tablist" aria-label="Bannettes">' +
-      tab("decider", "À décider", file.length, prio ? prio + " prioritaire" + (prio > 1 ? "s" : "") : (renvoyes.length && resp ? renvoyes.length + " renvoyé" + (renvoyes.length > 1 ? "s" : "") : ""), file.length > 0) +
-      tab("mails", "Mails reçus", mails.length, mailsAction ? mailsAction + " à rattacher" : "", mailsAction > 0) +
-      tab("tiers", "Chez un tiers", tiers.length, "expert, garage, assuré", false) +
-      '<a class="bannettes-stats" href="#/pilotage"><span><b>' + (ind.clos_30j || 0) + "</b> terminés en 30 jours</span><span><b>" +
-        (ind.taux_sans_intervention != null ? C.nombre(ind.taux_sans_intervention, 0) + " %" : "–") + "</b> sans intervention</span></a>" +
+    h += '<section class="bloc accueil-bloc"><div class="bannettes" role="tablist" aria-label="Corbeilles">' +
+      tab("decider", "À décider", file.length, file.length > 0) +
+      tab("mails", "Mails reçus", mails.length, mailsAction > 0) +
+      tab("tiers", "Chez un tiers", tiers.length, false) +
       '</div><div id="bannette-corps" role="tabpanel"></div></section>';
     $("vue").innerHTML = h;
 
@@ -752,7 +751,7 @@ function vueFile() {
       if (cle === "decider") {
         h2 = '<div class="bannette-outils"><div class="filtre-file" role="group" aria-label="Filtrer">' +
           filtres.map(function (f) { return '<button type="button" data-filtre="' + f[0] + '" aria-pressed="' + (f[0] === choix) + '">' + esc(f[1]) + '<span class="n">' + f[2].length + "</span></button>"; }).join("") +
-          '</div><span class="muet petit">Cliquez une ligne pour ouvrir le dossier</span></div><div id="file-liste"></div>';
+          '</div><span class="outils-info">' + (prio ? '<span class="txt-prio">' + prio + " prioritaire" + (prio > 1 ? "s" : "") + "</span>" : "") + "</span></div><div id=\"file-liste\"></div>";
         if (dbl && (dbl.classes || []).length) {
           var n30 = dbl.classes.filter(function (d) { return Date.now() - new Date(d.recu_le).getTime() < 30 * 864e5; }).length;
           if (n30) h2 += '<p class="bannette-pied muet petit"><a href="#/doublons">' + n30 + " déclaration" + (n30 > 1 ? "s" : "") + " en double classée" + (n30 > 1 ? "s" : "") + " ces 30 derniers jours</a>, rattachée" + (n30 > 1 ? "s" : "") + " au dossier d'origine.</p>";
@@ -768,10 +767,10 @@ function vueFile() {
           };
         });
       } else if (cle === "mails") {
-        c.innerHTML = '<div class="bannette-outils"><span class="muet petit">Boîte sinistres : chaque mail est lu et traité dès son arrivée. Cliquez un mail pour le lire.</span></div>' + listeMails(mails);
+        c.innerHTML = '<div class="bannette-outils"><span class="outils-info">Boîte sinistres, lue à chaque arrivée' + (mailsAction ? ' · <span class="txt-prio">' + mailsAction + " à rattacher</span>" : "") + "</span></div>" + listeMails(mails);
         brancherMails();
       } else {
-        c.innerHTML = '<div class="bannette-outils"><span class="muet petit">Klerio relance seul, puis vous renvoie le dossier après trois relances sans réponse.</span></div>' +
+        c.innerHTML = '<div class="bannette-outils"><span class="outils-info">Relances automatiques ; retour vers vous après trois relances sans réponse</span></div>' +
           (tiers.length ? tableTiers(tiers.slice(0, 15)) + (tiers.length > 15 ? '<p class="bannette-pied"><a href="#/dossiers">Voir les ' + tiers.length + " dossiers en cours</a></p>" : "") : '<div class="vide">Aucun dossier en attente d\'un tiers.</div>');
         brancherLignes(c);
       }
@@ -783,23 +782,24 @@ function vueFile() {
 var FAMILLE_TYPE = { VOL: "t-vol", TENTATIVE_VOL: "t-vol", VOL_RETROUVE: "t-vol", BRIS_GLACE: "t-glace", INCENDIE: "t-nature", EVENEMENT_CLIMATIQUE: "t-nature", CATASTROPHE_NATURELLE: "t-nature", GARANTIE_ACCIDENT: "t-corporel" };
 function typeTag(t) { return '<span class="type-tag ' + (FAMILLE_TYPE[t] || "") + '">' + esc(C.theme(t)) + "</span>"; }
 function tableDecider(l) {
-  return '<div class="tableau-wrap"><table class="tableau bannette-table"><thead><tr><th class="c-prio"><span class="sr">Priorité</span></th><th>Dossier</th><th>Ce qui est attendu</th><th>Suivi par</th><th class="nb">Depuis</th></tr></thead><tbody>' +
+  return '<div class="tableau-wrap"><table class="tableau bannette-table"><thead><tr><th>N° dossier</th><th>Type</th><th>Tâche</th><th>Attribué à</th><th class="nb">Depuis</th></tr></thead><tbody>' +
     l.map(function (d) {
-      var a = attente(d), libre = !d.gestionnaire;
-      return '<tr data-n="' + esc(d.numero) + '" tabindex="0"><td class="c-prio">' + (d.priorite === "haute" ? '<span class="prio" title="Prioritaire"></span>' : "") + "</td>" +
-        '<td class="c-dossier"><b>' + esc(d.numero) + "</b><br>" + typeTag(d.theme) + "</td>" +
-        '<td class="c-quoi">' + esc(a[0]) + (a[1] ? "<small>" + esc(a[1]) + "</small>" : "") +
-          (d.renvoye_manager ? "<small>Renvoyé par " + esc(d.renvoye_manager.par) + " : " + esc(d.renvoye_manager.motif) + "</small>" : "") + "</td>" +
+      var a = attente(d), libre = !d.gestionnaire, hp = d.priorite === "haute";
+      return '<tr data-n="' + esc(d.numero) + '" tabindex="0"' + (hp ? ' class="haute"' : "") + '><td class="c-dossier"><span class="num-lien">' + esc(d.numero) + "</span>" + (hp ? '<span class="txt-prio petit">Prioritaire</span>' : "") + "</td>" +
+        '<td class="c-type">' + typeTag(d.theme) + "</td>" +
+        '<td class="c-quoi"><b>' + esc(a[0]) + "</b>" + (a[1] ? "<small>" + esc(a[1]) + "</small>" : "") +
+          (d.renvoye_manager ? '<small class="renvoi">Renvoyé par ' + esc(d.renvoye_manager.par) + " : " + esc(d.renvoye_manager.motif) + "</small>" : "") + "</td>" +
         '<td class="c-suivi">' + (libre ? '<button type="button" class="btn petit" data-prendre="' + esc(d.numero) + '">Prendre</button>' : esc(d.gestionnaire.nom)) + "</td>" +
-        '<td class="nb muet c-depuis">' + esc(C.depuis(d.depuis)) + "</td></tr>";
+        '<td class="nb c-depuis">' + esc(C.depuis(d.depuis)) + "</td></tr>";
     }).join("") + "</tbody></table></div>";
 }
 function tableTiers(l) {
-  return '<div class="tableau-wrap"><table class="tableau bannette-table"><thead><tr><th>Dossier</th><th>Ce qui est attendu</th><th>Statut</th><th class="nb">Depuis</th></tr></thead><tbody>' +
+  return '<div class="tableau-wrap"><table class="tableau bannette-table"><thead><tr><th>N° dossier</th><th>Type</th><th>En attente de</th><th>Statut</th><th class="nb">Depuis</th></tr></thead><tbody>' +
     l.map(function (d) {
-      return '<tr data-n="' + esc(d.numero) + '" tabindex="0"><td class="c-dossier"><b>' + esc(d.numero) + "</b><br>" + typeTag(d.theme) + "</td>" +
-        '<td class="c-quoi">' + esc(quiAttend(d)) + "<small>Sinistre du " + esc(C.dateCourte(d.date_sinistre)) + (d.code_postal ? ", " + esc(d.code_postal) : "") + "</small></td>" +
-        "<td>" + C.statut(d.statut) + '</td><td class="nb muet c-depuis">' + esc(C.depuis(d.maj)) + "</td></tr>";
+      return '<tr data-n="' + esc(d.numero) + '" tabindex="0"><td class="c-dossier"><span class="num-lien">' + esc(d.numero) + "</span></td>" +
+        '<td class="c-type">' + typeTag(d.theme) + "</td>" +
+        '<td class="c-quoi"><b>' + esc(quiAttend(d)) + "</b><small>Sinistre du " + esc(C.dateCourte(d.date_sinistre)) + (d.code_postal ? ", " + esc(d.code_postal) : "") + "</small></td>" +
+        "<td>" + C.statut(d.statut) + '</td><td class="nb c-depuis">' + esc(C.depuis(d.maj)) + "</td></tr>";
     }).join("") + "</tbody></table></div>";
 }
 // Mails reçus sur la boîte sinistres : chacun apparaît ici dès son arrivée, avec ce que Klerio en a fait
