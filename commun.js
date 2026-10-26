@@ -5,6 +5,9 @@
   // Adresse et clé publique du service de connexion : faites pour être visibles dans le navigateur
   var SUPABASE_URL = "https://okugbnabvlotasdsokco.supabase.co";
   var CLE_PUBLIQUE = "sb_publishable_ybKkc2FMkcVCBkJI50RAIQ_X6sCEPe4";
+  // Protection anti-robot de la connexion (captcha), si elle est activée dans Supabase (Authentication > Attack Protection).
+  // fournisseur : "turnstile" (Cloudflare) ou "hcaptcha" ; cle_site : la clé PUBLIQUE du site, jamais la clé secrète.
+  var CAPTCHA = { fournisseur: "turnstile", cle_site: "" };
 
   var STATUTS = {
     recu: ["Reçu", "encours"], analyse: ["Analysé", "encours"], contrat_verifie: ["Contrat vérifié", "encours"],
@@ -176,7 +179,7 @@
   var LOGO = '<svg width="22" height="22" viewBox="0 0 22 22" aria-hidden="true"><rect width="22" height="22" rx="6" style="fill:var(--encre)"/><path d="M7.5 5.5v11M7.5 11.5 14 5.5M10.2 9.3 14.5 16.5" style="stroke:var(--feuille)" stroke-width="2.2" stroke-linecap="round" fill="none"/></svg>';
 
   g.CA = {
-    API_DEFAUT: API_DEFAUT, SUPABASE_URL: SUPABASE_URL, CLE_PUBLIQUE: CLE_PUBLIQUE, STATUTS: STATUTS, THEMES: THEMES, MOTIFS: MOTIFS, ANOMALIES: ANOMALIES, COURRIERS: COURRIERS,
+    API_DEFAUT: API_DEFAUT, SUPABASE_URL: SUPABASE_URL, CAPTCHA: CAPTCHA, CLE_PUBLIQUE: CLE_PUBLIQUE, STATUTS: STATUTS, THEMES: THEMES, MOTIFS: MOTIFS, ANOMALIES: ANOMALIES, COURRIERS: COURRIERS,
     ROLES: ROLES, PIECES: PIECES, ESPACES: ESPACES, GARANTIES: GARANTIES, LIENS: LIENS, CLASSES: CLASSES, LOGO: LOGO,
     $: $, esc: esc, eur: eur, nombre: nombre, dateFr: dateFr, dateCourte: dateCourte, heure: heure, depuis: depuis,
     statut: statut, theme: theme, motif: motif, attendVous: attendVous, toast: toast, occupe: occupe, client: client,

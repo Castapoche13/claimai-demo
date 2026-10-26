@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=20261026e">
+<link rel="stylesheet" href="style.css?v=20261026f">
 <style>
 /* ---------- Connexion ---------- */
 .connexion { min-height: 100vh; display: grid; place-items: center; padding: 40px 16px; background: var(--feuille-2); }
@@ -384,8 +384,9 @@ a.tuile:hover { border-color: var(--trait-fort); text-decoration: none; }
 .tableau.fixe tbody tr:hover { background: none; }
 .tableau.appels td:first-child { white-space: nowrap; }
 
+#c-captcha { min-height: 65px; }
 </style>
-<link rel="stylesheet" href="charte.css?v=20261026e">
+<link rel="stylesheet" href="charte.css?v=20261026f">
 </head>
 <body>
 
@@ -404,6 +405,7 @@ a.tuile:hover { border-color: var(--trait-fort); text-decoration: none; }
       <details class="petit muet"><summary style="cursor:pointer">Réglage avancé</summary>
         <label class="champ" style="margin-top:10px">Adresse du service<input class="saisie" id="c-base" type="url" autocomplete="off"></label>
       </details>
+      <div id="c-captcha" class="captcha" hidden></div>
       <p class="erreur-form" id="c-err" role="alert"></p>
       <button class="btn primaire" id="c-btn" type="submit">Se connecter</button>
     </form>
@@ -472,7 +474,7 @@ a.tuile:hover { border-color: var(--trait-fort); text-decoration: none; }
 <div id="toast" class="toast" hidden role="status"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="commun.js?v=20261026e"></script>
+<script src="commun.js?v=20261026f"></script>
 <script>
 (function () {
 "use strict";
@@ -499,17 +501,52 @@ $("b-theme").addEventListener("click", function () {
 var sb = window.supabase.createClient(C.SUPABASE_URL, C.CLE_PUBLIQUE, { auth: { persistSession: true, storageKey: "claimai-auth", autoRefreshToken: true } });
 function jeton() { return sb.auth.getSession().then(function (r) { return r.data.session ? r.data.session.access_token : null; }); }
 
+/* Captcha de connexion : affiché seulement si une clé de site est réglée (commun.js) ou si Supabase en réclame un */
+var captcha = { id: null, jeton: null, charge: null };
+function chargerCaptcha() {
+  var cfg = C.CAPTCHA || {};
+  if (!cfg.cle_site) return Promise.resolve(false);
+  if (captcha.charge) return captcha.charge;
+  var turnstile = cfg.fournisseur !== "hcaptcha";
+  captcha.charge = new Promise(function (ok, ko) {
+    window.klerioCaptchaPret = function () { ok(true); };
+    var sc = document.createElement("script");
+    sc.src = turnstile ? "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit&onload=klerioCaptchaPret"
+      : "https://js.hcaptcha.com/1/api.js?render=explicit&onload=klerioCaptchaPret&hl=fr";
+    sc.async = true; sc.onerror = function () { captcha.charge = null; ko(new Error("Le contrôle anti-robot n'a pas pu se charger. Vérifiez la connexion internet puis rechargez la page.")); };
+    document.head.appendChild(sc);
+  }).then(function () {
+    var z = $("c-captcha"); z.hidden = false; z.innerHTML = "";
+    var opts = { sitekey: cfg.cle_site, theme: document.documentElement.dataset.theme === "dark" ? "dark" : "light",
+      callback: function (t) { captcha.jeton = t; $("c-err").textContent = ""; },
+      "expired-callback": function () { captcha.jeton = null; }, "error-callback": function () { captcha.jeton = null; } };
+    if (turnstile) { opts.language = "fr"; captcha.id = window.turnstile.render(z, opts); } else captcha.id = window.hcaptcha.render(z, opts);
+    return true;
+  });
+  return captcha.charge;
+}
+function reinitCaptcha() {
+  captcha.jeton = null;
+  if (captcha.id == null) return;
+  try { (C.CAPTCHA.fournisseur === "hcaptcha" ? window.hcaptcha : window.turnstile).reset(captcha.id); } catch (e) { }
+}
+chargerCaptcha().catch(function (x) { $("c-err").textContent = x.message; });
+
 $("form-connexion").addEventListener("submit", function (e) {
   e.preventDefault();
   var email = $("c-email").value.trim(), mdp = $("c-mdp").value, err = $("c-err");
   err.textContent = "";
   if (!email || !mdp) { err.textContent = "Saisissez votre email et votre mot de passe."; return; }
+  if (C.CAPTCHA && C.CAPTCHA.cle_site && !captcha.jeton) { err.textContent = "Cochez d'abord la case de vérification anti-robot, juste au-dessus."; return; }
   var b = $("c-btn"); C.occupe(b, true, "Connexion");
-  sb.auth.signInWithPassword({ email: email, password: mdp }).then(function (r) {
-    if (r.error) throw new Error(/captcha/i.test(r.error.message) ? "Connexion refusée par la protection anti-robot (captcha) du projet Supabase : désactivez-la dans Authentication > Attack Protection, ou contactez l'administrateur."
+  var opt = captcha.jeton ? { captchaToken: captcha.jeton } : undefined;
+  sb.auth.signInWithPassword({ email: email, password: mdp, options: opt }).then(function (r) {
+    if (r.error) throw new Error(/captcha/i.test(r.error.message)
+      ? (C.CAPTCHA && C.CAPTCHA.cle_site ? "La vérification anti-robot a expiré ou n'est pas valide : refaites-la puis reconnectez-vous."
+        : "La connexion exige une vérification anti-robot (captcha), qui n'est pas encore raccordée à cette console. Contactez l'administrateur.")
       : /invalid/i.test(r.error.message) ? "Email ou mot de passe incorrect." : r.error.message);
     return entrer(r.data.session);
-  }).catch(function (x) { err.textContent = x.message; }).finally(function () { C.occupe(b, false); });
+  }).catch(function (x) { err.textContent = x.message; reinitCaptcha(); }).finally(function () { C.occupe(b, false); });
 });
 
 $("form-mdp").addEventListener("submit", function (e) {
