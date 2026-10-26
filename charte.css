@@ -191,3 +191,15 @@ h1 { font-size: 24px; font-weight: 700; letter-spacing: -.01em; }
 .haut { border-bottom: 1px solid var(--trait); }
 .badge-n.urgent { color: #fff; }
 @media (max-width: 760px) { .bannette-table td { padding: 0; } .bannette { margin-right: 0; } .bannettes { padding: 0 6px; } }
+
+/* Chiffres du haut de l'accueil */
+.tuiles { gap: 12px; margin-bottom: 16px; }
+.tuile { border-radius: 12px; border: 1px solid var(--trait); background: var(--feuille); padding: 14px 18px; box-shadow: 0 1px 2px rgba(13,13,18,.04), 0 2px 8px rgba(13,13,18,.04); text-align: left; font: inherit; color: inherit; cursor: pointer; }
+button.tuile:hover, a.tuile:hover { border-color: var(--trait-fort); text-decoration: none; }
+.tuile .val { font-size: 28px; font-weight: 700; letter-spacing: -.02em; line-height: 1.1; color: var(--encre); }
+.tuile .lib { font-size: 13px; color: var(--gris); margin-top: 4px; }
+.tuile.vous { border-left: 1px solid var(--trait); }
+.tuile.vous .val, .tuile .sous { color: var(--orange-texte); }
+.tuile .sous { font-size: 12.5px; font-weight: 600; margin-top: 2px; }
+.tuile { display: flex; flex-direction: column; align-items: flex-start; justify-content: flex-start; }
+@media (max-width: 760px) { .bannette-table tr.haute td:first-child { box-shadow: none; } .bannette-table tr.haute { box-shadow: inset 3px 0 0 var(--orange); } }

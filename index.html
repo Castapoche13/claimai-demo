@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=20261026b">
+<link rel="stylesheet" href="style.css?v=20261026c">
 <style>
 /* ---------- Connexion ---------- */
 .connexion { min-height: 100vh; display: grid; place-items: center; padding: 40px 16px; background: var(--feuille-2); }
@@ -385,7 +385,7 @@ a.tuile:hover { border-color: var(--trait-fort); text-decoration: none; }
 .tableau.appels td:first-child { white-space: nowrap; }
 
 </style>
-<link rel="stylesheet" href="charte.css?v=20261026b">
+<link rel="stylesheet" href="charte.css?v=20261026c">
 </head>
 <body>
 
@@ -472,7 +472,7 @@ a.tuile:hover { border-color: var(--trait-fort); text-decoration: none; }
 <div id="toast" class="toast" hidden role="status"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="commun.js?v=20261026b"></script>
+<script src="commun.js?v=20261026c"></script>
 <script>
 (function () {
 "use strict";
@@ -709,9 +709,12 @@ function vueFile() {
     if (["decider", "mails", "tiers"].indexOf(onglet) < 0) onglet = "decider";
 
     var h = bandeauCorporel() + '<div class="corbeille-tete"><div><h1>Corbeille</h1><p>Espace ' + esc(C.ESPACES[S.branche].nom.toLowerCase()) +
-      ", " + esc(new Date().toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" })) + "</p></div>" +
-      '<div class="corbeille-droite"><a class="corbeille-stats" href="#/pilotage" title="Voir le pilotage"><span><b>' + (ind.clos_30j || 0) + "</b> clos sur 30 jours</span><span><b>" +
-        (ind.taux_sans_intervention != null ? C.nombre(ind.taux_sans_intervention, 0) + " %" : "–") + '</b> sans intervention</span></a><a class="btn primaire" href="#/declarer">Déclarer un sinistre</a></div></div>';
+      ", " + esc(new Date().toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" })) + '</p></div><a class="btn primaire" href="#/declarer">Déclarer un sinistre</a></div>';
+    h += '<div class="tuiles">' +
+      '<button type="button" class="tuile' + (file.length ? " vous" : "") + '" data-aller="decider"><div class="val">' + file.length + '</div><div class="lib">Attendent une décision</div>' + (prio ? '<div class="sous">dont ' + prio + " prioritaire" + (prio > 1 ? "s" : "") + "</div>" : "") + "</button>" +
+      '<button type="button" class="tuile" data-aller="tiers"><div class="val">' + tiers.length + '</div><div class="lib">Chez un expert, un garage ou l\'assuré</div></button>' +
+      '<a class="tuile" href="#/archives"><div class="val">' + (ind.clos_30j || 0) + '</div><div class="lib">Terminés ces 30 derniers jours</div></a>' +
+      '<a class="tuile" href="#/pilotage"><div class="val">' + (ind.taux_sans_intervention != null ? C.nombre(ind.taux_sans_intervention, 0) + " %" : "–") + '</div><div class="lib">Traités sans aucun clic</div></a></div>';
     function tab(cle, lib, n, urgent) {
       return '<button type="button" role="tab" class="bannette" data-bannette="' + cle + '" aria-selected="' + (cle === onglet) + '" aria-controls="bannette-corps">' +
         esc(lib) + '<span class="badge-n' + (urgent ? " urgent" : "") + '">' + n + "</span></button>";
@@ -776,6 +779,7 @@ function vueFile() {
       }
     }
     document.querySelectorAll("[data-bannette]").forEach(function (b) { b.onclick = function () { afficher(b.dataset.bannette); }; });
+    document.querySelectorAll("[data-aller]").forEach(function (b) { b.onclick = function () { afficher(b.dataset.aller); $("bannette-corps").scrollIntoView({ block: "nearest", behavior: "smooth" }); }; });
     afficher(onglet);
   }).catch(erreurVue);
 }
