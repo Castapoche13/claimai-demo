@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=20261027b">
+<link rel="stylesheet" href="style.css?v=20261027c">
 <style>
 /* ---------- Connexion ---------- */
 .connexion { min-height: 100vh; display: grid; place-items: center; padding: 40px 16px; background: var(--feuille-2); }
@@ -386,7 +386,7 @@ a.tuile:hover { border-color: var(--trait-fort); text-decoration: none; }
 
 #c-captcha { min-height: 65px; }
 </style>
-<link rel="stylesheet" href="charte.css?v=20261027b">
+<link rel="stylesheet" href="charte.css?v=20261027c">
 </head>
 <body>
 
@@ -474,7 +474,7 @@ a.tuile:hover { border-color: var(--trait-fort); text-decoration: none; }
 <div id="toast" class="toast" hidden role="status"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="commun.js?v=20261027b"></script>
+<script src="commun.js?v=20261027c"></script>
 <script>
 (function () {
 "use strict";
@@ -1158,10 +1158,10 @@ function afficherDossier(f) {
   h += blocPaiement(f);
   h += blocRecours(f);
   h += blocVehicule(f);
-  var nCour = (f.courriers || []).length, nNotes = (f.notes || []).length, nDocs = (f.documents_lus || []).length + (f.expertises || []).length;
+  var nMsg = filMessages(f).length, nDocs = (f.documents_lus || []).length + (f.expertises || []).length;
   h += ongletsFiche(f, [
-    ["echanges", "Échanges" + (nCour + nNotes + (f.mails_recus || []).length ? " (" + (nCour + nNotes + (f.mails_recus || []).length) + ")" : ""), blocMailsDossier(f) + blocSuivi(f) + blocCourriers(f)],
-    ["documents", "Documents" + (nDocs ? " (" + nDocs + ")" : ""), blocDocuments(f) + blocExpertises(f)],
+    ["echanges", "Messages" + (nMsg ? " (" + nMsg + ")" : ""), blocMessages(f)],
+    ["documents", "Documents" + (nDocs ? " (" + nDocs + ")" : ""), blocDepot(f) + blocDocuments(f) + blocExpertises(f)],
     ["agir", "Actions", blocGestion(f) + (aRR ? "" : blocRecoursRecus(f)) + (aVT ? "" : blocVictimes(f)) + (reclOuverte ? "" : blocReclamations(f))],
     ["ia", "Analyse", blocAnalyse(f, an, d)],
     ["journal", "Journal", blocJournal(f)]]);
@@ -1203,16 +1203,7 @@ var MODELES_MSG = {
   point: { dest: "assure", objet: "Où en est votre dossier",
     texte: "Votre dossier est en cours de traitement. \n\nNous revenons vers vous dès que possible." },
 };
-function remplirModele(cle) {
-  var m = MODELES_MSG[cle]; if (!m) return;
-  var d = $("g-courrier"), o = document.querySelector('[data-onglet="agir"]');
-  if (o) o.click();
-  if (d) d.open = true;
-  if ($("g-dest")) $("g-dest").value = m.dest;
-  if ($("g-objet")) $("g-objet").value = m.objet;
-  if ($("g-texte")) { $("g-texte").value = m.texte; $("g-texte").rows = 9; }
-  if (d) d.scrollIntoView({ behavior: "smooth", block: "center" });
-}
+function remplirModele(cle) { var m = MODELES_MSG[cle]; ouvrirComposeur(m ? { dest: m.dest, objet: m.objet, texte: m.texte, modele: cle } : {}); }
 function vehiculeConstat(cote, k, cases, assure) {
   return '<div class="vehicule-constat' + (assure ? " assure" : "") + '"><div class="vc-tete"><b>Véhicule ' + cote + "</b>" + (assure ? '<span class="pastille-mail info">Votre assuré</span>' : '<span class="pastille-mail neutre">Tiers</span>') + "</div>" +
     '<div class="muet petit">' + esc([k["immat_" + cote.toLowerCase()], k["assureur_" + cote.toLowerCase()]].filter(Boolean).join(" · ") || "Immatriculation non lue") + "</div>" +
@@ -1374,20 +1365,14 @@ function blocGestion(f) {
   var r = f.responsabilite_retenue, regleValide = (f.reglements || []).some(function (x) { return ["valide", "envoye", "confirme"].indexOf(x.statut) >= 0; });
   var enAttente = (f.validations_en_attente || []).length > 0;
   var h = '<section class="bloc" id="bloc-gestion"><div class="bloc-tete"><h2>Agir sur le dossier</h2><span class="muet petit">Sans retourner dans l\'outil de la compagnie</span></div><div class="bloc-corps pile">';
-  h += '<details id="g-courrier"' + (f.statut === "anomalie_gestionnaire" ? "" : "") + '><summary class="petit">Écrire à un intervenant</summary><div class="pile" style="margin-top:10px">' +
-    '<label class="champ">Partir d\'un modèle <span class="aide">le texte reste modifiable</span><select class="saisie" id="g-modele"><option value="">Message libre</option>' +
-    (f.theme === "ACCIDENT_TIERS" ? '<option value="constat">Demander le constat amiable signé</option>' : "") + '<option value="piece">Demander une pièce</option><option value="point">Faire le point avec l\'assuré</option></select></label>' +
-    '<div class="grille-2"><label class="champ">À<select class="saisie" id="g-dest"><option value="assure">L\'assuré</option><option value="garage">Le garage</option><option value="expert">L\'expert</option>' +
-    (f.theme === "ACCIDENT_TIERS" ? '<option value="assureur_adverse">L\'assureur adverse</option>' : "") + '</select></label>' +
-    '<label class="champ">Adresse <span class="aide">si elle n\'est pas connue</span><input class="saisie" id="g-email" type="email" placeholder="facultatif"></label></div>' +
-    '<label class="champ">Objet<input class="saisie" id="g-objet" maxlength="150"></label><label class="champ">Message<textarea class="saisie" id="g-texte" rows="4"></textarea></label>' +
-    '<div class="decision-actions"><button class="btn" id="g-envoyer">Envoyer</button><span class="muet petit">Le message part avec le lien sécurisé de la personne pour répondre ou envoyer un document.</span></div></div></details>';
   if (f.theme === "ACCIDENT_TIERS" && r && r.pct != null && !regleValide && !enAttente) {
     h += '<details><summary class="petit">Corriger la responsabilité (contestation, nouveau témoignage)</summary><div class="pile" style="margin-top:10px"><div class="grille-2"><label class="champ">Nouvelle part de l\'assuré<select class="saisie" id="g-pct">' +
       [0, 50, 100].filter(function (x) { return x !== Number(r.pct); }).map(function (x) { return '<option value="' + x + '">' + x + " %</option>"; }).join("") + '</select></label><div></div></div>' +
       '<label class="champ">Motif <span class="aide">envoyé à l\'assuré</span><input class="saisie" id="g-motif-resp"></label>' +
       '<div class="decision-actions"><button class="btn" id="g-resp">Corriger et prévenir l\'assuré</button><span class="muet petit">Le recours est recalculé tant qu\'il n\'est pas émis.</span></div></div></details>';
   }
+  // rien à corriger ici : les messages se trouvent dans l'onglet Messages
+  if (h.indexOf("<details") < 0) return "";
   return h + "</div></section>";
 }
 function brancherGestion(f) {
@@ -1397,17 +1382,12 @@ function brancherGestion(f) {
   };
   var val = function (id) { var x = $(id); return x ? x.value.trim() : ""; };
   var b;
-  if ((b = $("g-modele"))) b.onchange = function () { remplirModele(this.value); };
-  document.querySelectorAll("[data-demander-constat]").forEach(function (x) { x.onclick = function () { remplirModele("constat"); if ($("g-modele")) $("g-modele").value = "constat"; }; });
-  if ((b = $("g-envoyer"))) b.onclick = function () {
-    if (val("g-objet").length < 3 || val("g-texte").length < 10) return C.toast("Indiquez un objet et un message.", true);
-    envoyer(b, { action: "courrier", destinataire: val("g-dest"), email: val("g-email") || undefined, objet: val("g-objet"), texte: val("g-texte") }, "Message envoyé");
-  };
+  document.querySelectorAll("[data-demander-constat]").forEach(function (x) { x.onclick = function () { remplirModele("constat"); }; });
   if ((b = $("g-resp"))) b.onclick = function () {
     if (val("g-motif-resp").length < 10) return C.toast("Expliquez pourquoi la responsabilité change.", true);
     envoyer(b, { action: "responsabilite", pct: Number(val("g-pct")), motif: val("g-motif-resp") }, "Responsabilité corrigée, assuré prévenu");
   };
-  if ((b = $("g-ouvrir-courrier"))) b.onclick = function () { var o = document.querySelector('[data-onglet="agir"]'); if (o) o.click(); var d = $("g-courrier"); if (d) { d.open = true; d.scrollIntoView({ behavior: "smooth", block: "center" }); } };
+  if ((b = $("g-ouvrir-courrier"))) b.onclick = function () { ouvrirComposeur({}); };
   if ((b = $("g-ouvrir-reg"))) b.onclick = function () { $("g-reg").hidden = !$("g-reg").hidden; };
   if ((b = $("g-missionner"))) b.onclick = function () { envoyer(b, { action: "missionner" }, "Expert et garage missionnés"); };
   if ((b = $("g-reg-ok"))) b.onclick = function () {
@@ -2155,40 +2135,6 @@ var IMPACTS = { TIERS_SIGNALE: "Tiers signalé", PIECE_ANNONCEE: "Pièce annonc�
   DEMANDE_INFORMATION: "Demande d'information", RECLAMATION: "Réclamation", DESISTEMENT: "Désistement", RECOURS_ADVERSE: "Recours de l'assureur adverse",
   VEHICULE_RETROUVE: "Véhicule retrouvé", ENQUETE: "Enquête de police", MANIPULATION: "Tentative de manipulation : à vérifier", AUCUN_IMPACT: "Sans effet sur le dossier" };
 function options(o, choisi) { return Object.keys(o).map(function (k) { return '<option value="' + k + '"' + (k === choisi ? " selected" : "") + ">" + esc(o[k]) + "</option>"; }).join(""); }
-function blocSuivi(f) {
-  var notes = (f.notes || []).filter(function (n) { return !(n.analyse && n.analyse.reouverture); });
-  var h = '<section class="bloc" id="suivi"><div class="bloc-tete"><h2>Informations reçues' + (notes.length ? '<span class="compte">' + notes.length + "</span>" : "") +
-    '</h2><span class="muet petit">Appel, mail, courrier ou document reçu hors de Klerio</span></div><div class="bloc-corps pile">';
-  if (f.efface_le) return h + '<p class="muet">Données effacées chez Klerio : notez les nouvelles informations dans votre outil.</p></div></section>';
-  h += '<details id="d-note"' + (notes.length ? "" : " open") + '><summary class="petit">Noter un appel, un mail ou un courrier reçu</summary><form id="form-note" class="pile" novalidate style="margin-top:10px"><div class="grille-2"><label class="champ">Reçu par<select class="saisie" id="n-canal">' + options(CANAUX, "telephone") + "</select></label>" +
-    '<label class="champ">De la part de<select class="saisie" id="n-qui">' + options(INTERLOCUTEURS, "assure") + "</select></label></div>" +
-    '<p class="indice" id="n-police" hidden><b>Appel de la police ou de la gendarmerie.</b> Notez tout ce qu\'on vous apprend. Avant de donner vous-même une information, vérifiez que l\'appel vient bien du service en le rappelant par son standard officiel ; les données personnelles de l\'assuré ne se communiquent que sur réquisition écrite.</p>' +
-    '<label class="champ">Ce que la personne a dit ou écrit<textarea class="saisie" id="n-texte" rows="3" maxlength="8000" placeholder="Ex. : l\'assuré a déposé plainte hier et enverra le récépissé par mail."></textarea></label>' +
-    '<div class="decision-actions"><button class="btn primaire" id="n-ok">Enregistrer et analyser</button><span class="muet petit">Les suites proposées ne s\'appliquent qu\'après votre clic.</span></div></form></details>';
-  h += '<label class="depot-fiche" id="depot-fiche"><input type="file" id="depot-fichier" accept="application/pdf,image/jpeg,image/png,image/webp">' +
-    "<b>Déposer un document reçu</b> (rapport, facture, photo, PDF jusqu'à 8 Mo) : Klerio le lit et l'applique si tout concorde." +
-    (f.theme === "GARANTIE_ACCIDENT" ? "<br>Dossier corporel : le document est lu puis jamais conservé." : "") + "</label>";
-  h += notes.map(function (n) {
-    var an = n.analyse || {}, actions = n.actions || [];
-    var x = '<div class="note' + (n.statut === "a_traiter" ? " a-traiter" : "") + '"><div class="expertise-tete"><h3>' + esc(CANAUX[n.canal] || n.canal) +
-      (n.interlocuteur ? ", " + esc((INTERLOCUTEURS[n.interlocuteur] || n.interlocuteur).toLowerCase()) : "") + "</h3>" +
-      (n.statut === "a_traiter" ? '<span class="statut vous">À traiter</span>' : n.statut === "traitee" ? '<span class="statut ok">Traitée</span>' : "") + "</div>" +
-      '<p class="muet petit">Noté par ' + esc(String(n.auteur || "").replace(/^outil:/, "")) + " · " + esc(C.heure(n.cree_le)) + "</p>" +
-      (n.efface ? '<p class="muet">Contenu effacé.</p>' : '<div class="note-texte">' + esc(n.contenu) + "</div>");
-    if (an.indisponible) x += '<p class="muet petit">Analyse automatique indisponible : décidez de la suite vous-même.</p>';
-    if (an.resume) x += '<p class="formule">' + esc(an.resume) + "</p>";
-    if ((an.impacts || []).length) x += '<div class="impacts">' + an.impacts.map(function (i) { return '<span title="' + esc(i.detail || "") + '">' + esc(IMPACTS[i.code] || i.code) + "</span>"; }).join("") + "</div>";
-    if (actions.length) x += '<ul class="propositions">' + actions.map(function (a, i) {
-      var etat = a.statut === "faite" ? '<span class="statut ok">Fait</span>' : a.statut === "ignoree" ? '<span class="statut neutre">Ignoré</span>' :
-        '<button class="btn primaire petit" data-note="' + esc(n.id) + '" data-i="' + i + '" data-dec="faire">Faire</button><button class="btn petit" data-note="' + esc(n.id) + '" data-i="' + i + '" data-dec="ignorer">Ignorer</button>';
-      return "<li><span>" + esc(a.libelle || a.action) + "</span><small>" + esc(a.raison || "") + '</small><span class="boutons">' + etat + "</span></li>";
-    }).join("") + "</ul>";
-    if (n.statut === "a_traiter") x += '<div class="decision-actions" style="margin-top:10px"><button class="btn petit" data-traitee="' + esc(n.id) + '">Marquer comme traitée</button></div>';
-    return x + "</div>";
-  }).join("");
-  return h + "</div></section>";
-}
-
 function telechargerRecap(f, btn) {
   C.occupe(btn, true, "Préparation");
   jeton().then(function (j) {
@@ -2415,47 +2361,147 @@ function brancherActivites(f) {
     }).catch(function (x) { C.occupe(s, false); C.toast(x.message, true); });
   };
 }
-/* Mails reçus sur ce dossier : lecture et réponse sans quitter le dossier */
-function blocMailsDossier(f) {
-  var l = f.mails_recus || [];
-  if (!l.length) return "";
-  var fini = FINIS.indexOf(f.statut) >= 0;
-  var plus = Math.max(0, l.length - 3);
-  return '<section class="bloc"><div class="bloc-tete"><h2>Mails reçus<span class="compte">' + l.length + '</span></h2><span class="muet petit">Les plus récents d\'abord. Votre réponse part à l\'expéditeur et s\'ajoute aux courriers du dossier.</span></div><ul class="courriers" id="mails-dossier">' +
-    l.map(function (m, i) {
-      var pj = (m.pieces || []).map(function (p) { return p.nom; }).join(", ");
-      return "<li" + (i >= 3 ? ' class="ancien" hidden' : "") + '><details' + (i === 0 ? " open" : "") + '><summary><span class="objet">' + esc(m.objet || "(sans objet)") + '</span><span class="envoi">' + esc(C.ROLES[m.interlocuteur] || "Expéditeur") + '</span><span class="meta">De ' + esc(m.expediteur) +
-        (pj ? " · pièces : " + esc(pj) : "") + '</span><span class="meta" style="text-align:right">' + esc(C.heure(m.recu_le)) + "</span></summary>" +
-        '<div class="corps-courrier">' + esc(m.contenu || "(sans texte)") + "</div>" +
-        (fini ? "" : '<div class="reponse-mail"><button type="button" class="btn petit" data-repondre="' + esc(m.id) + '">Répondre</button>' +
-          '<form class="pile" data-form-rep="' + esc(m.id) + '" hidden novalidate><label class="champ">Votre réponse à ' + esc(m.expediteur) + ' <span class="aide">« Bonjour » et la signature du service sont ajoutés</span><textarea class="saisie" rows="5" maxlength="6000"></textarea></label>' +
-          '<div class="decision-actions"><button class="btn primaire" type="submit">Envoyer la réponse</button></div></form></div>') + "</details></li>";
-    }).join("") + "</ul>" + (plus ? '<div class="bloc-corps" style="padding-top:8px"><button type="button" class="btn petit" data-voir-plus="mails-dossier" data-lib="Voir les ' + plus + ' mails plus anciens">Voir les ' + plus + " mails plus anciens</button></div>" : "") + "</section>";
+/* Messages du dossier : un seul fil pour les mails reçus, les messages envoyés et les appels notés.
+   On y lit, on répond à un mail, on écrit un nouveau message ou on note un appel. */
+var DEST_MSG = { assure: "L'assuré", garage: "Le garage", expert: "L'expert", assureur_adverse: "L'assureur adverse" };
+function suitesNote(n) {
+  var an = n.analyse || {}, actions = n.actions || [], x = "";
+  if (an.indisponible) x += '<p class="muet petit">Analyse automatique indisponible : décidez de la suite vous-même.</p>';
+  if (an.resume) x += '<p class="formule">' + esc(an.resume) + "</p>";
+  if ((an.impacts || []).length) x += '<div class="impacts">' + an.impacts.map(function (i) { return '<span title="' + esc(i.detail || "") + '">' + esc(IMPACTS[i.code] || i.code) + "</span>"; }).join("") + "</div>";
+  if (actions.length) x += '<ul class="propositions">' + actions.map(function (a, i) {
+    var etat = a.statut === "faite" ? '<span class="statut ok">Fait</span>' : a.statut === "ignoree" ? '<span class="statut neutre">Ignoré</span>' :
+      '<button class="btn primaire petit" data-note="' + esc(n.id) + '" data-i="' + i + '" data-dec="faire">Faire</button><button class="btn petit" data-note="' + esc(n.id) + '" data-i="' + i + '" data-dec="ignorer">Ignorer</button>';
+    return "<li><span>" + esc(a.libelle || a.action) + "</span><small>" + esc(a.raison || "") + '</small><span class="boutons">' + etat + "</span></li>";
+  }).join("") + "</ul>";
+  if (n.statut === "a_traiter") x += '<div class="msg-outils"><button class="btn petit" data-traitee="' + esc(n.id) + '">Marquer comme traité</button></div>';
+  return x;
 }
-function brancherMailsDossier(f) {
-  document.querySelectorAll("[data-repondre]").forEach(function (b) {
-    b.onclick = function () { var fo = document.querySelector('[data-form-rep="' + b.dataset.repondre + '"]'); fo.hidden = !fo.hidden; if (!fo.hidden) fo.querySelector("textarea").focus(); };
+function filMessages(f) {
+  var mails = f.mails_recus || [], lies = {}, parId = {}, l = [];
+  (f.notes || []).forEach(function (n) { parId[n.id] = n; });
+  mails.forEach(function (m) { if (m.note_id && parId[m.note_id]) lies[m.note_id] = true; l.push({ sens: "recu", quand: m.recu_le, m: m, n: parId[m.note_id] || null }); });
+  (f.courriers || []).forEach(function (c) { l.push({ sens: "envoye", quand: c.envoye_le || c.cree_le, c: c }); });
+  (f.notes || []).forEach(function (n) { if (!lies[n.id] && !(n.analyse && n.analyse.reouverture)) l.push({ sens: "note", quand: n.cree_le, n: n }); });
+  return l.sort(function (a, b) { return new Date(b.quand) - new Date(a.quand); });
+}
+function ligneMessage(x, i, fini) {
+  var n = x.n, aTraiter = !!(n && n.statut === "a_traiter"), sens, qui, sous, objet, corps, outils = "", etat = "";
+  if (x.sens === "recu") {
+    var m = x.m, pj = (m.pieces || []).map(function (p) { return p.nom; }).join(", ");
+    sens = "Reçu"; qui = C.ROLES[m.interlocuteur] || "Expéditeur"; sous = m.expediteur; objet = m.objet || "(sans objet)";
+    corps = '<div class="corps-courrier">' + esc(m.contenu || "(sans texte)") + "</div>" + (pj ? '<p class="muet petit">Pièces jointes : ' + esc(pj) + " (lues par Klerio, voir l'onglet Documents)</p>" : "");
+    if (!fini) outils = '<button type="button" class="btn petit primaire" data-msg-repondre data-dest="' + esc(m.interlocuteur || "assure") + '" data-email="' + esc(m.expediteur || "") + '" data-objet="' + esc(m.objet || "") + '" data-qui="' + esc(m.expediteur || "") + '">Répondre</button>';
+  } else if (x.sens === "envoye") {
+    var c = x.c;
+    sens = "Envoyé"; qui = "À " + (C.ROLES[c.destinataire] || c.destinataire || "").toLowerCase(); sous = c.email || "sans adresse"; objet = c.objet || "";
+    etat = c.statut === "envoye" ? '<span class="msg-etat ok">Parti</span>' : c.statut === "erreur" ? '<span class="msg-etat ko">Échec de l\'envoi</span>' : '<span class="msg-etat">Boîte de test</span>';
+    corps = '<p class="muet petit">' + esc(C.COURRIERS[c.type] || c.type || "") + (c.statut === "envoye" && c.envoye_a ? ", envoyé à " + esc(c.envoye_a) : "") + "</p>" + '<div class="corps-courrier">' + esc(c.corps || "") + "</div>";
+    if (!fini && DEST_MSG[c.destinataire]) outils = '<button type="button" class="btn petit" data-msg-repondre data-relance="1" data-dest="' + esc(c.destinataire) + '" data-email="' + esc(c.email || "") + '" data-objet="' + esc(c.objet || "") + '">Relancer</button>';
+  } else {
+    sens = CANAUX[n.canal] || n.canal; qui = n.interlocuteur ? (INTERLOCUTEURS[n.interlocuteur] || n.interlocuteur) : "Note";
+    sous = "noté par " + String(n.auteur || "").replace(/^outil:/, "").replace(/^automatique:mail_recu$/, "Klerio"); objet = n.efface ? "Contenu effacé" : String(n.contenu || "").split("\n")[0];
+    corps = n.efface ? "" : '<div class="corps-courrier">' + esc(n.contenu) + "</div>";
+  }
+  if (n) corps += suitesNote(n);
+  return '<li class="msg-' + x.sens + (aTraiter ? " msg-a-traiter" : "") + '" data-sens="' + x.sens + '"' + (i >= 8 ? " hidden data-ancien" : "") + "><details" + (aTraiter ? " open" : "") + ">" +
+    '<summary><span class="msg-sens">' + esc(sens) + '</span><span class="msg-qui"><b>' + esc(qui) + '</b> <span class="muet">' + esc(sous) + '</span></span><span class="msg-date">' + esc(C.heure(x.quand)) + "</span>" +
+    '<span class="msg-objet">' + (aTraiter ? '<span class="statut vous">À traiter</span> ' : "") + esc(objet) + etat + "</span></summary>" +
+    '<div class="msg-corps">' + corps + (outils ? '<div class="msg-outils">' + outils + "</div>" : "") + "</div></details></li>";
+}
+function blocMessages(f) {
+  var fini = FINIS.indexOf(f.statut) >= 0 || !!f.efface_le, l = filMessages(f);
+  var compte = function (s) { return l.filter(function (x) { return x.sens === s; }).length; };
+  var h = '<section class="bloc" id="messages"><div class="bloc-tete"><h2>Messages' + (l.length ? '<span class="compte">' + l.length + "</span>" : "") + "</h2>" +
+    (f.efface_le ? "" : '<span class="actions"><button type="button" class="btn petit" id="b-note-ouvrir">Noter un appel</button>' + (fini ? "" : '<button type="button" class="btn petit primaire" id="b-msg-nouveau">Nouveau message</button>') + "</span>") + "</div>";
+  if (f.efface_le) return h + '<div class="bloc-corps"><p class="muet">Données effacées chez Klerio : notez les nouvelles informations dans votre outil.</p></div></section>';
+  if (!fini) {
+    h += '<form id="msg-form" class="msg-panneau pile" hidden novalidate><p class="muet petit" id="msg-contexte" hidden></p>' +
+      '<div class="grille-2"><label class="champ">À<select class="saisie" id="g-dest">' + Object.keys(DEST_MSG).filter(function (k) { return k !== "assureur_adverse" || f.theme === "ACCIDENT_TIERS"; })
+        .map(function (k) { return '<option value="' + k + '">' + esc(DEST_MSG[k]) + "</option>"; }).join("") + "</select></label>" +
+      '<label class="champ">Adresse <span class="aide">si elle n\'est pas connue</span><input class="saisie" id="g-email" type="email" placeholder="facultatif"></label></div>' +
+      '<label class="champ">Modèle <span class="aide">le texte reste modifiable</span><select class="saisie" id="g-modele"><option value="">Message libre</option>' +
+      (f.theme === "ACCIDENT_TIERS" ? '<option value="constat">Demander le constat amiable signé</option>' : "") + '<option value="piece">Demander une pièce</option><option value="point">Faire le point avec l\'assuré</option></select></label>' +
+      '<label class="champ">Objet<input class="saisie" id="g-objet" maxlength="150"></label><label class="champ">Message <span class="aide">« Bonjour » et la signature du service sont ajoutés</span><textarea class="saisie" id="g-texte" rows="6" maxlength="6000"></textarea></label>' +
+      '<div class="decision-actions"><button class="btn primaire" id="g-envoyer" type="submit">Envoyer</button><button class="btn" type="button" id="msg-annuler">Annuler</button><span class="muet petit">Le message part avec le lien sécurisé de la personne pour répondre ou envoyer un document.</span></div></form>';
+  }
+  {
+    h += '<div id="d-note" class="msg-panneau" hidden><form id="form-note" class="pile" novalidate><div class="grille-2"><label class="champ">Reçu par<select class="saisie" id="n-canal">' + options(CANAUX, "telephone") + "</select></label>" +
+      '<label class="champ">De la part de<select class="saisie" id="n-qui">' + options(INTERLOCUTEURS, "assure") + "</select></label></div>" +
+      '<p class="indice" id="n-police" hidden><b>Appel de la police ou de la gendarmerie.</b> Notez tout ce qu\'on vous apprend. Avant de donner vous-même une information, vérifiez que l\'appel vient bien du service en le rappelant par son standard officiel ; les données personnelles de l\'assuré ne se communiquent que sur réquisition écrite.</p>' +
+      '<label class="champ">Ce que la personne a dit ou écrit<textarea class="saisie" id="n-texte" rows="3" maxlength="8000" placeholder="Ex. : l\'assuré a déposé plainte hier et enverra le récépissé par mail."></textarea></label>' +
+      '<div class="decision-actions"><button class="btn primaire" id="n-ok">Enregistrer et analyser</button><button class="btn" type="button" id="note-annuler">Annuler</button><span class="muet petit">Les suites proposées ne s\'appliquent qu\'après votre clic.</span></div></form></div>';
+  }
+  if (!l.length) return h + '<div class="bloc-corps"><p class="muet">Aucun message pour l\'instant. Les mails reçus, les messages envoyés et les appels notés s\'afficheront ici.</p></div></section>';
+  var filtres = [["tout", "Tout", l.length], ["recu", "Reçus", compte("recu")], ["envoye", "Envoyés", compte("envoye")], ["note", "Appels et notes", compte("note")]].filter(function (x) { return x[2] || x[0] === "tout"; });
+  h += '<div class="msg-filtres"><div class="filtre-file" role="group" aria-label="Filtrer les messages">' + filtres.map(function (x) {
+    return '<button type="button" data-msg-filtre="' + x[0] + '" aria-pressed="' + (x[0] === "tout") + '">' + esc(x[1]) + '<span class="n">' + x[2] + "</span></button>"; }).join("") + "</div></div>";
+  h += '<ul class="fil-msg" id="fil-msg">' + l.map(function (x, i) { return ligneMessage(x, i, fini); }).join("") + "</ul>";
+  if (l.length > 8) h += '<div class="bloc-corps" style="padding-top:8px"><button type="button" class="btn petit" id="msg-plus">Voir les ' + (l.length - 8) + " messages plus anciens</button></div>";
+  return h + "</section>";
+}
+function ouvrirComposeur(o) {
+  o = o || {};
+  var on = document.querySelector('[data-onglet="echanges"]'); if (on) on.click();
+  var fo = $("msg-form"); if (!fo) return;
+  if ($("d-note")) $("d-note").hidden = true;
+  fo.hidden = false;
+  $("g-dest").value = DEST_MSG[o.dest] && document.querySelector('#g-dest option[value="' + o.dest + '"]') ? o.dest : "assure";
+  $("g-email").value = o.email || "";
+  $("g-modele").value = o.modele || "";
+  $("g-objet").value = o.objet || "";
+  $("g-texte").value = o.texte || "";
+  var cx = $("msg-contexte"); cx.hidden = !o.contexte; cx.textContent = o.contexte || "";
+  fo.scrollIntoView({ behavior: "smooth", block: "center" });
+  (o.objet ? $("g-texte") : $("g-objet")).focus();
+}
+function brancherMessages(f) {
+  var fo = $("msg-form"), b;
+  if ((b = $("b-msg-nouveau"))) b.onclick = function () { ouvrirComposeur({}); };
+  if ((b = $("msg-annuler"))) b.onclick = function () { fo.hidden = true; };
+  if ((b = $("b-note-ouvrir"))) b.onclick = function () { if (fo) fo.hidden = true; var d = $("d-note"); d.hidden = !d.hidden; if (!d.hidden) $("n-texte").focus(); };
+  if ((b = $("note-annuler"))) b.onclick = function () { $("d-note").hidden = true; };
+  if ((b = $("g-modele"))) b.onchange = function () { var m = MODELES_MSG[this.value]; if (!m) return; $("g-dest").value = m.dest; $("g-objet").value = m.objet; $("g-texte").value = m.texte; };
+  document.querySelectorAll("[data-msg-repondre]").forEach(function (x) {
+    x.onclick = function () {
+      var o = x.dataset.objet.replace(/^\s*((re|réponse|relance)\s*:\s*)+/i, "");
+      ouvrirComposeur({ dest: x.dataset.dest, email: x.dataset.email, objet: (x.dataset.relance ? "Relance : " : "Re : ") + o,
+        contexte: x.dataset.relance ? "Relance du message « " + o + " »" : "En réponse au mail de " + x.dataset.qui });
+    };
   });
-  document.querySelectorAll("[data-form-rep]").forEach(function (fo) {
-    fo.addEventListener("submit", function (e) {
-      e.preventDefault();
-      var t = fo.querySelector("textarea").value.trim(), ok = fo.querySelector("button[type=submit]");
-      if (t.length < 10) return C.toast("Écrivez votre réponse.", true);
-      C.occupe(ok, true, "Envoi");
-      api("repondre-mail", { body: { id: fo.dataset.formRep, texte: t } }).then(function (r) { C.toast("Réponse envoyée"); afficherDossier(r); })
-        .catch(function (x) { C.occupe(ok, false); C.toast(x.message, true); });
+  if (fo) fo.addEventListener("submit", function (e) {
+    e.preventDefault();
+    var v = function (id) { return $(id).value.trim(); }, ok = $("g-envoyer");
+    if (v("g-objet").length < 3 || v("g-texte").length < 10) return C.toast("Indiquez un objet et un message.", true);
+    C.occupe(ok, true, "Envoi");
+    api("gestion", { body: { numero: f.numero, action: "courrier", destinataire: v("g-dest"), email: v("g-email") || undefined, objet: v("g-objet"), texte: v("g-texte") } })
+      .then(function (r) { C.toast("Message envoyé"); rafraichirCompteur(); afficherDossier(r); })
+      .catch(function (x) { C.occupe(ok, false); C.toast(x.message, true); });
+  });
+  var filtre = "tout", plus = $("msg-plus"), tout = false;
+  function appliquer() {
+    var i = 0;
+    document.querySelectorAll("#fil-msg > li").forEach(function (li) {
+      var ok = filtre === "tout" || li.dataset.sens === filtre;
+      li.hidden = !ok || (!tout && i >= 8); if (ok) i++;
     });
+    if (plus) plus.hidden = tout || i <= 8;
+  }
+  document.querySelectorAll("[data-msg-filtre]").forEach(function (x) {
+    x.onclick = function () {
+      filtre = x.dataset.msgFiltre;
+      document.querySelectorAll("[data-msg-filtre]").forEach(function (y) { y.setAttribute("aria-pressed", String(y === x)); });
+      appliquer();
+    };
   });
+  if (plus) plus.onclick = function () { tout = true; appliquer(); };
 }
-function blocCourriers(f) {
-  var k = f.courriers || [];
-  if (!k.length) return "";
-  var plus = Math.max(0, k.length - 3);
-  return '<section class="bloc"><div class="bloc-tete"><h2>Courriers<span class="compte">' + k.length + '</span></h2><a class="btn discret" href="#/boites">Voir les boîtes de test</a></div><ul class="courriers" id="courriers">' + k.slice().reverse().map(function (c, i) {
-    var env = c.statut === "envoye" ? '<span class="envoi ok">Envoyé à ' + esc(c.envoye_a) + "</span>" : c.statut === "erreur" ? '<span class="envoi ko">Échec de l\'envoi</span>' : '<span class="envoi">Prêt, dans la boîte de test</span>';
-    return "<li" + (i >= 3 ? ' class="ancien" hidden' : "") + '><details><summary><span class="objet">' + esc(c.objet) + '</span>' + env + '<span class="meta">' + esc(C.COURRIERS[c.type] || c.type) + ", à " + esc(C.ROLES[c.destinataire] || c.destinataire) + " (" + esc(c.email || "sans adresse") + ')</span><span class="meta" style="text-align:right">' + esc(C.heure(c.cree_le)) + "</span></summary>" +
-      '<div class="corps-courrier">' + esc(c.corps) + "</div></details></li>";
-  }).join("") + "</ul>" + (plus ? '<div class="bloc-corps" style="padding-top:8px"><button type="button" class="btn petit" data-voir-plus="courriers" data-lib="Voir les ' + plus + ' courriers plus anciens">Voir les ' + plus + " courriers plus anciens</button></div>" : "") + "</section>";
+/* Dépôt d'un document reçu hors de Klerio */
+function blocDepot(f) {
+  if (FINIS.indexOf(f.statut) >= 0 || f.efface_le) return "";
+  return '<section class="bloc"><div class="bloc-corps"><label class="depot-fiche" id="depot-fiche" style="margin:0"><input type="file" id="depot-fichier" accept="application/pdf,image/jpeg,image/png,image/webp">' +
+    "<b>Déposer un document reçu</b> (rapport, facture, photo, PDF jusqu'à 8 Mo) : Klerio le lit et l'applique si tout concorde." +
+    (f.theme === "GARANTIE_ACCIDENT" ? "<br>Dossier corporel : le document est lu puis jamais conservé." : "") + "</label></div></section>";
 }
 
 var ACTIONS = { creation_dossier: "Dossier créé à partir de la déclaration", analyse_declaration: "Déclaration lue et qualifiée", controle_expertise: "Contrôle automatique du chiffrage",
@@ -2547,7 +2593,7 @@ function brancherFiche(f) {
   brancherReclamations(f);
   brancherGestion(f);
   brancherActivites(f);
-  brancherMailsDossier(f);
+  brancherMessages(f);
   brancherRecoursVictimes(f);
   brancherDoublon(f);
   var bv = $("b-verif-vol");
@@ -2687,7 +2733,7 @@ function brancherSuivi(f) {
   var bap = $("b-appel-police");
   if (bap) bap.onclick = function () {
     var o = document.querySelector('[data-onglet="echanges"]'); if (o) o.click();
-    var dn = $("d-note"); if (dn) dn.open = true;
+    var dn = $("d-note"); if (dn) dn.hidden = false; if ($("msg-form")) $("msg-form").hidden = true;
     $("n-canal").value = "telephone"; nq.value = "police"; $("n-police").hidden = false;
     $("n-texte").scrollIntoView({ behavior: "smooth", block: "center" }); $("n-texte").focus();
   };

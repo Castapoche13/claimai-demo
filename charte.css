@@ -247,3 +247,34 @@ button.tuile:hover, a.tuile:hover { border-color: var(--trait-fort); text-decora
   .activites li .btn { grid-column: 1 / -1; justify-self: start; }
   .fiche-tete-droite { align-items: flex-start; }
 }
+
+/* Messages du dossier : un seul fil (reçus, envoyés, appels notés) */
+.msg-panneau { padding: 16px; border-bottom: 1px solid var(--trait); background: var(--feuille-2); }
+.msg-filtres { padding: 10px 16px; border-bottom: 1px solid var(--trait); }
+.fil-msg { list-style: none; margin: 0; padding: 0; }
+.fil-msg > li + li { border-top: 1px solid var(--trait); }
+.fil-msg summary { display: grid; grid-template-columns: 92px minmax(0, 1fr) auto; gap: 3px 12px; padding: 11px 16px; cursor: pointer; list-style: none; align-items: baseline; }
+.fil-msg summary::-webkit-details-marker { display: none; }
+.fil-msg summary:hover { background: var(--feuille-2); }
+.fil-msg details[open] > summary { background: var(--feuille-2); }
+.msg-sens { grid-row: 1 / span 2; justify-self: start; font-size: 11.5px; font-weight: 600; padding: 2px 9px; border-radius: 999px; border: 1px solid var(--trait-fort); color: var(--gris); white-space: nowrap; }
+.msg-recu .msg-sens { color: var(--bleu); border-color: var(--bleu); }
+.msg-note .msg-sens { color: var(--encre); }
+.msg-qui { font-size: 13.5px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.msg-date { font-size: 12.5px; color: var(--gris); text-align: right; white-space: nowrap; }
+.msg-objet { grid-column: 2 / -1; font-size: 13px; color: var(--gris); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.msg-etat { margin-left: 8px; font-size: 12px; color: var(--gris); }
+.msg-etat.ok { color: var(--vert-texte, #1a7f37); }
+.msg-etat.ko { color: var(--orange); font-weight: 600; }
+.msg-a-traiter > details > summary { box-shadow: inset 3px 0 0 var(--orange); }
+.msg-corps { padding: 4px 16px 16px 120px; }
+.msg-corps .corps-courrier { padding: 0; margin-bottom: 8px; }
+.msg-outils { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+@media (max-width: 560px) {
+  .fil-msg summary { grid-template-columns: minmax(0, 1fr) auto; }
+  .msg-sens { grid-row: 1; grid-column: 1; }
+  .msg-date { grid-row: 1; grid-column: 2; }
+  .msg-qui, .msg-objet { grid-column: 1 / -1; }
+  .msg-corps { padding-left: 16px; }
+  .msg-filtres .filtre-file { display: flex; overflow-x: auto; }
+}
