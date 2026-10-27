@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=20261027a">
+<link rel="stylesheet" href="style.css?v=20261027b">
 <style>
 body { background: var(--papier); }
 .haut { background: var(--feuille); border-bottom: 1px solid var(--trait); }
@@ -75,14 +75,14 @@ form.carte-in { display: grid; gap: 18px; }
 @media (max-width: 560px) { .option { grid-template-columns: auto 1fr; } .option .montant { grid-column: 2; } }
 .pied { font-size: 12.5px; color: var(--gris); margin-top: 24px; line-height: 1.6; }
 </style>
-<link rel="stylesheet" href="charte.css?v=20261027a">
+<link rel="stylesheet" href="charte.css?v=20261027b">
 </head>
 <body>
 <header class="haut"><div class="haut-in"><div class="cie" id="cie">Service sinistres<small>Espace sécurisé</small></div>
   <span class="cadenas"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><rect x="2.5" y="6" width="9" height="6.5" rx="1.5" fill="currentColor"/><path d="M4.5 6V4.5a2.5 2.5 0 015 0V6" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>Lien personnel</span></div></header>
 <main id="main"><div class="carte"><div class="etat"><span class="tourne" style="display:inline-block;color:var(--bleu)"></span></div></div></main>
 <div id="toast" class="toast" hidden role="status"></div>
-<script src="commun.js?v=20261027a"></script>
+<script src="commun.js?v=20261027b"></script>
 <script>
 (function () {
 "use strict";
@@ -285,13 +285,12 @@ function blocValeur(c) {
   var val = c.valeur;
   if (!val || c.vei) return "";
   if (val.statut === "proposee") {
-    var t2 = (val.tour || 1) >= 2;
+    // vol : l'assuré confirme la valeur ; une question passe par un message au gestionnaire, pas par une contestation en ligne
     return '<div class="carte"><form class="carte-in" id="form-val" novalidate><h2>La valeur de votre véhicule</h2>' +
       '<p class="intro">' + introValeur(val) + " Si votre véhicule n'est pas retrouvé, votre indemnité sera de <b>" + esc(eur(val.net_eur)) + "</b>, franchise de " + esc(eur(val.franchise_eur)) + " déduite.</p>" +
-      '<div class="choix"><label class="option"><input type="radio" name="val" value="accepter"><b>J\'accepte cette valeur</b><span class="montant">' + esc(eur(val.net_eur)) + "</span><p>L'indemnité vous est versée à la fin du délai de recherche, une fois les dernières pièces reçues.</p></label>" +
-      '<label class="option"><input type="radio" name="val" value="contester"><b>' + (t2 ? "Je reste en désaccord" : "Je conteste la valeur") + "</b><span></span><p>" +
-        (t2 ? "Un gestionnaire reprend votre dossier." : "Expliquez pourquoi : l'expert réexamine son évaluation.") + "</p></label></div>" +
-      champsContestation(val) + '<div class="envoyer"><button class="btn primaire" id="b-val" type="submit">Envoyer ma réponse</button>' +
+      '<div class="choix"><label class="option"><input type="radio" name="val" value="accepter" checked><b>J\'accepte cette valeur</b><span class="montant">' + esc(eur(val.net_eur)) + "</span><p>L'indemnité vous est versée à la fin du délai de recherche, une fois les dernières pièces reçues.</p></label></div>" +
+      '<p class="petit muet">Une question sur ce montant ? Répondez au mail reçu : un gestionnaire vous répondra.</p>' +
+      '<div class="envoyer"><button class="btn primaire" id="b-val" type="submit">Confirmer</button>' +
       (val.echeance ? '<span class="muet petit">Avant le ' + esc(C.dateFr(val.echeance)) + "</span>" : "") + "</div></form></div>";
   }
   var txt = { reexamen: ["Votre contestation est chez l'expert", "Il réexamine son évaluation ; nous vous écrirons dès sa réponse. Pour appuyer votre demande, envoyez vos justificatifs en répondant au mail de confirmation."],
@@ -393,10 +392,8 @@ function brancherAssure() {
   var fval = $("form-val");
   if (fval) fval.addEventListener("submit", function (e) {
     e.preventDefault(); var x = document.querySelector('input[name="val"]:checked');
-    if (!x) return C.toast("Indiquez si vous acceptez ou contestez la valeur.", true);
-    if (x.value === "accepter") return envoyerChoix($("b-val"), { reponse_valeur: { decision: "accepter" } }, "Merci, votre accord est enregistré");
-    var r = contestation(); if (!r) return;
-    envoyerChoix($("b-val"), { reponse_valeur: r }, "Contestation envoyée : un mail de confirmation vous est adressé");
+    if (!x) return C.toast("Cochez « J'accepte cette valeur » pour confirmer.", true);
+    envoyerChoix($("b-val"), { reponse_valeur: { decision: "accepter" } }, "Merci, votre accord est enregistré");
   });
   var fv = $("form-vei");
   if (fv) fv.addEventListener("submit", function (e) {

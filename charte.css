@@ -148,7 +148,8 @@ a { color: var(--bleu); }
   .bannette-table tr { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 3px 10px; padding: 10px 14px; border-bottom: 1px solid var(--trait); }
   .bannette-table td { display: block; padding: 0; border: 0; width: auto; }
   .bannette-table .c-quoi { grid-column: 1 / -1; }
-  .bannette-table .c-depuis { display: none; }
+  .bannette-table .c-depuis { display: block; text-align: right; }
+  .bannette-table .c-depuis small { display: none; }
 }
 @media (max-width: 760px) { .btn { white-space: normal; text-align: center; height: auto; } .decision-corps, .decision-corps > * { min-width: 0; } }
 
@@ -218,3 +219,31 @@ button.tuile:hover, a.tuile:hover { border-color: var(--trait-fort); text-decora
 .repliable.replie .en-plus { display: none; }
 .btn-plus { border: 0; background: none; padding: 6px 0 0; color: var(--bleu); font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; }
 .btn-plus:hover { text-decoration: underline; }
+
+/* Accident avec tiers sans constat signé : demande à l'assuré */
+.encart-constat { display: flex; gap: 14px; align-items: center; justify-content: space-between; flex-wrap: wrap; border: 1px solid var(--trait-fort); border-left: 3px solid var(--orange); border-radius: var(--rayon); padding: 12px 14px; margin: 12px 0; background: var(--feuille-2); }
+.encart-constat p { margin: 4px 0 0; }
+
+/* Échéances des tâches */
+.echeance { display: inline-block; font-size: 12.5px; font-weight: 600; padding: 2px 8px; border-radius: 999px; border: 1px solid var(--trait); color: var(--gris); white-space: nowrap; }
+.echeance.retard { background: var(--orange); border-color: var(--orange); color: #fff; }
+.echeance.jour { border-color: var(--orange); color: var(--orange); }
+.echeance.proche { border-color: var(--encre); color: var(--encre); }
+.c-depuis small { display: block; margin-top: 3px; font-size: 11.5px; }
+.autres-act { color: var(--bleu) !important; cursor: help; }
+
+/* Activités du dossier */
+.activites { list-style: none; margin: 0; padding: 0; }
+.activites li { display: grid; grid-template-columns: 1fr auto auto; gap: 12px; align-items: center; padding: 11px 18px; border-top: 1px solid var(--trait); }
+.activites li:first-child { border-top: 0; }
+.activites li.a-venir { opacity: .7; }
+.act-lib { font-weight: 600; min-width: 0; }
+.act-lib small { display: block; font-weight: 400; font-size: 12px; margin-top: 2px; }
+.fiche-tete-droite { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
+.reponse-mail { padding: 0 16px 14px; }
+.reponse-mail form { margin-top: 10px; }
+@media (max-width: 560px) {
+  .activites li { grid-template-columns: 1fr auto; }
+  .activites li .btn { grid-column: 1 / -1; justify-self: start; }
+  .fiche-tete-droite { align-items: flex-start; }
+}

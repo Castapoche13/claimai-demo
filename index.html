@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=20261027a">
+<link rel="stylesheet" href="style.css?v=20261027b">
 <style>
 /* ---------- Connexion ---------- */
 .connexion { min-height: 100vh; display: grid; place-items: center; padding: 40px 16px; background: var(--feuille-2); }
@@ -386,7 +386,7 @@ a.tuile:hover { border-color: var(--trait-fort); text-decoration: none; }
 
 #c-captcha { min-height: 65px; }
 </style>
-<link rel="stylesheet" href="charte.css?v=20261027a">
+<link rel="stylesheet" href="charte.css?v=20261027b">
 </head>
 <body>
 
@@ -474,7 +474,7 @@ a.tuile:hover { border-color: var(--trait-fort); text-decoration: none; }
 <div id="toast" class="toast" hidden role="status"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="commun.js?v=20261027a"></script>
+<script src="commun.js?v=20261027b"></script>
 <script>
 (function () {
 "use strict";
@@ -718,6 +718,7 @@ function attente(d) {
   if (d.statut === "hors_perimetre") return ["Dossier sorti du circuit automatique", C.motif(d.motif)];
   if (d.document_a_verifier) return ["Document à vérifier", "Klerio l'a lu mais ne l'a pas appliqué seul : un contrôle a échoué"];
   if (d.information_a_traiter) return ["Information reçue à examiner", "Appel, mail ou courrier noté sur le dossier"];
+  if (d.rappel) return [d.rappel.attente ? "Fin de mise en attente" : "Rappel", d.rappel.texte];
   return [C.STATUTS[d.statut] ? C.STATUTS[d.statut][0] : d.statut, C.motif(d.motif)];
 }
 
@@ -824,16 +825,32 @@ function vueFile() {
 var FAMILLE_TYPE = { VOL: "t-vol", TENTATIVE_VOL: "t-vol", VOL_RETROUVE: "t-vol", BRIS_GLACE: "t-glace", INCENDIE: "t-nature", EVENEMENT_CLIMATIQUE: "t-nature", CATASTROPHE_NATURELLE: "t-nature", GARANTIE_ACCIDENT: "t-corporel" };
 function typeTag(t) { return '<span class="type-tag ' + (FAMILLE_TYPE[t] || "") + '">' + esc(C.theme(t)) + "</span>"; }
 function tableDecider(l) {
-  return '<div class="tableau-wrap"><table class="tableau bannette-table"><thead><tr><th>N° dossier</th><th>Type</th><th>Tâche</th><th>Attribué à</th><th class="nb">Depuis</th></tr></thead><tbody>' +
+  return '<div class="tableau-wrap"><table class="tableau bannette-table"><thead><tr><th>N° dossier</th><th>Type</th><th>Tâche</th><th>Attribué à</th><th class="nb">Échéance</th></tr></thead><tbody>' +
     l.map(function (d) {
-      var a = attente(d), libre = !d.gestionnaire, hp = d.priorite === "haute";
+      var a = attente(d), libre = !d.gestionnaire, hp = d.priorite === "haute", nAct = (d.activites || []).length;
       return '<tr data-n="' + esc(d.numero) + '" tabindex="0"' + (hp ? ' class="haute"' : "") + '><td class="c-dossier"><span class="num-lien">' + esc(d.numero) + "</span>" + (hp ? '<span class="txt-prio petit">Prioritaire</span>' : "") + "</td>" +
         '<td class="c-type">' + typeTag(d.theme) + "</td>" +
         '<td class="c-quoi"><b>' + esc(a[0]) + "</b>" + (a[1] ? "<small>" + esc(a[1]) + "</small>" : "") +
-          (d.renvoye_manager ? '<small class="renvoi">Renvoyé par ' + esc(d.renvoye_manager.par) + " : " + esc(d.renvoye_manager.motif) + "</small>" : "") + "</td>" +
+          (d.renvoye_manager ? '<small class="renvoi">Renvoyé par ' + esc(d.renvoye_manager.par) + " : " + esc(d.renvoye_manager.motif) + "</small>" : "") +
+          (nAct > 1 ? '<small class="autres-act" title="' + esc(d.activites.join("\n")) + '">+ ' + (nAct - 1) + " autre" + (nAct > 2 ? "s" : "") + " activité" + (nAct > 2 ? "s" : "") + "</small>" : "") + "</td>" +
         '<td class="c-suivi">' + (libre ? '<button type="button" class="btn petit" data-prendre="' + esc(d.numero) + '">Prendre</button>' : esc(d.gestionnaire.nom)) + "</td>" +
-        '<td class="nb c-depuis">' + esc(C.depuis(d.depuis)) + "</td></tr>";
+        '<td class="nb c-depuis">' + echeanceTag(d.echeance) + '<small class="muet">' + esc(C.depuis(d.depuis)) + "</small></td></tr>";
     }).join("") + "</tbody></table></div>";
+}
+// Échéance d'une tâche, comme dans les outils de gestion : en retard, aujourd'hui, J-1, J-2, puis la date
+function joursAvant(date) {
+  if (!date) return null;
+  var a = new Date(); a.setHours(12, 0, 0, 0);
+  var b = new Date(String(date).slice(0, 10) + "T12:00:00");
+  return Math.round((b - a) / 864e5);
+}
+function echeanceTag(date) {
+  var j = joursAvant(date);
+  if (j === null) return '<span class="echeance">–</span>';
+  if (j < 0) return '<span class="echeance retard" title="Échéance : ' + esc(C.dateFr(date)) + '">En retard de ' + (-j) + " j</span>";
+  if (j === 0) return '<span class="echeance jour" title="Échéance : aujourd\'hui">Aujourd\'hui</span>';
+  if (j <= 2) return '<span class="echeance proche" title="Échéance : ' + esc(C.dateFr(date)) + '">J-' + j + "</span>";
+  return '<span class="echeance">' + esc(C.dateCourte(date)) + "</span>";
 }
 function tableTiers(l) {
   return '<div class="tableau-wrap"><table class="tableau bannette-table"><thead><tr><th>N° dossier</th><th>Type</th><th>En attente de</th><th>Statut</th><th class="nb">Depuis</th></tr></thead><tbody>' +
@@ -1114,7 +1131,8 @@ function afficherDossier(f) {
   var h = '<a class="retour" href="#/file"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M8.5 3L4.5 7l4 4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>Retour à la file</a>';
   h += '<div class="fiche-tete"><div><h1>' + esc(f.numero) + '</h1><div class="sous"><span class="etiquette">' + esc(C.theme(f.theme)) + "</span>" + C.statut(f.statut) +
     '<span>Sinistre du ' + esc(C.dateFr(f.date_sinistre)) + "</span>" + (f.ref_externe ? "<span>Réf. compagnie " + esc(f.ref_externe) + "</span>" : "") + "</div></div>" +
-    '<div class="muet petit" style="text-align:right">Ouvert ' + esc(C.depuis(f.cree)) + "<br>Mis à jour " + esc(C.depuis(f.maj)) + "</div></div>";
+    '<div class="fiche-tete-droite"><div class="muet petit" style="text-align:right">Ouvert ' + esc(C.depuis(f.cree)) + "<br>Mis à jour " + esc(C.depuis(f.maj)) + "</div>" +
+    '<button type="button" class="btn petit" id="b-suivante" title="Ouvre le prochain dossier de votre corbeille, par échéance">Activité suivante</button></div></div>';
   h += '<section class="parcours" aria-label="Parcours du dossier">' + parcours(f) + '<p class="parcours-legende">' + esc(legendeParcours(f)) + "</p></section>";
   h += barreTitulaire(f);
 
@@ -1122,6 +1140,7 @@ function afficherDossier(f) {
   // en haut : ce qu'il faut faire et où en est le dossier ; en dessous, tout l'historique rangé par onglets
   var reclOuverte = (f.reclamations || []).some(function (r) { return r.statut === "ouverte"; });
   h += carteAction(f);
+  h += blocActivites(f);
   h += blocExplication(f);
   h += blocCloture(f);
   h += blocCatnat(f);
@@ -1141,7 +1160,7 @@ function afficherDossier(f) {
   h += blocVehicule(f);
   var nCour = (f.courriers || []).length, nNotes = (f.notes || []).length, nDocs = (f.documents_lus || []).length + (f.expertises || []).length;
   h += ongletsFiche(f, [
-    ["echanges", "Échanges" + (nCour + nNotes ? " (" + (nCour + nNotes) + ")" : ""), blocSuivi(f) + blocCourriers(f)],
+    ["echanges", "Échanges" + (nCour + nNotes + (f.mails_recus || []).length ? " (" + (nCour + nNotes + (f.mails_recus || []).length) + ")" : ""), blocMailsDossier(f) + blocSuivi(f) + blocCourriers(f)],
     ["documents", "Documents" + (nDocs ? " (" + nDocs + ")" : ""), blocDocuments(f) + blocExpertises(f)],
     ["agir", "Actions", blocGestion(f) + (aRR ? "" : blocRecoursRecus(f)) + (aVT ? "" : blocVictimes(f)) + (reclOuverte ? "" : blocReclamations(f))],
     ["ia", "Analyse", blocAnalyse(f, an, d)],
@@ -1174,6 +1193,26 @@ function afficherDossier(f) {
 
 /* Accident avec un autre véhicule : le constat, la proposition de Klerio et la part retenue par le gestionnaire */
 var PARTS_RESP = [[0, "0 %", "non responsable"], [50, "50 %", "partagée"], [100, "100 %", "responsable"]];
+function constatSigne(p) { var k = p && p.constat; return !!(k && k.joint !== false && k.signe_a !== false && k.signe_b !== false && p.source === "constat"); }
+// Messages prêts à envoyer depuis le dossier : le gestionnaire peut les modifier avant l'envoi
+var MODELES_MSG = {
+  constat: { dest: "assure", objet: "Votre accident : merci de nous envoyer le constat amiable signé",
+    texte: "Pour établir les responsabilités de votre accident, nous avons besoin du constat amiable signé par les deux conducteurs. Si vous en avez rempli un, envoyez-le-nous en réponse à ce message : une photo lisible des deux faces suffit.\n\nSi aucun constat n'a été rempli, indiquez-nous le nom de l'autre conducteur, l'immatriculation de son véhicule, le nom de son assureur et, s'il y en a, les coordonnées des témoins." },
+  piece: { dest: "assure", objet: "Votre dossier : une pièce nous manque",
+    texte: "Pour avancer sur votre dossier, nous avons besoin de la pièce suivante : \n\nVous pouvez nous l'envoyer en réponse à ce message ou depuis votre lien sécurisé." },
+  point: { dest: "assure", objet: "Où en est votre dossier",
+    texte: "Votre dossier est en cours de traitement. \n\nNous revenons vers vous dès que possible." },
+};
+function remplirModele(cle) {
+  var m = MODELES_MSG[cle]; if (!m) return;
+  var d = $("g-courrier"), o = document.querySelector('[data-onglet="agir"]');
+  if (o) o.click();
+  if (d) d.open = true;
+  if ($("g-dest")) $("g-dest").value = m.dest;
+  if ($("g-objet")) $("g-objet").value = m.objet;
+  if ($("g-texte")) { $("g-texte").value = m.texte; $("g-texte").rows = 9; }
+  if (d) d.scrollIntoView({ behavior: "smooth", block: "center" });
+}
 function vehiculeConstat(cote, k, cases, assure) {
   return '<div class="vehicule-constat' + (assure ? " assure" : "") + '"><div class="vc-tete"><b>Véhicule ' + cote + "</b>" + (assure ? '<span class="pastille-mail info">Votre assuré</span>' : '<span class="pastille-mail neutre">Tiers</span>') + "</div>" +
     '<div class="muet petit">' + esc([k["immat_" + cote.toLowerCase()], k["assureur_" + cote.toLowerCase()]].filter(Boolean).join(" · ") || "Immatriculation non lue") + "</div>" +
@@ -1188,6 +1227,8 @@ function carteResponsabilite(f, v) {
     '<p class="explication">' + esc(expl) + "</p>";
   if (al.length) h += '<div class="pile">' + al.map(function (a) { return '<div class="alerte"><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M8 4.5v4M8 10.8v.6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg><span>' + esc(a) + "</span></div>"; }).join("") + "</div>";
   if (p.constat) h += '<div class="constat">' + vehiculeConstat("A", k, p.cases_a || [], p.cote_assure === "A") + vehiculeConstat("B", k, p.cases_b || [], p.cote_assure === "B") + "</div>";
+  if (!constatSigne(p)) h += '<div class="encart-constat"><div><b>' + (p.constat ? "Constat non signé par les deux conducteurs" : "Pas de constat amiable") + '</b><p class="muet petit">Klerio ne fixe la responsabilité seul qu\'avec un constat signé par les deux conducteurs. L\'assuré a déjà reçu une demande avec son accusé de réception ; vous pouvez la renvoyer.</p></div>' +
+    '<button type="button" class="btn" data-demander-constat="1">Redemander le constat à l\'assuré</button></div>';
   h += '<fieldset class="parts"><legend>Part de responsabilité de votre assuré</legend><div class="parts-choix">' +
     PARTS_RESP.map(function (x) {
       return '<label class="part"><input type="radio" name="r-pct" value="' + x[0] + '"' + (Number(p.pct) === x[0] && p.pct != null ? " checked" : "") + "><span><b>" + x[1] + "</b>" + (x[2] ? "<small>" + x[2] + "</small>" : "") + "</span></label>";
@@ -1334,6 +1375,8 @@ function blocGestion(f) {
   var enAttente = (f.validations_en_attente || []).length > 0;
   var h = '<section class="bloc" id="bloc-gestion"><div class="bloc-tete"><h2>Agir sur le dossier</h2><span class="muet petit">Sans retourner dans l\'outil de la compagnie</span></div><div class="bloc-corps pile">';
   h += '<details id="g-courrier"' + (f.statut === "anomalie_gestionnaire" ? "" : "") + '><summary class="petit">Écrire à un intervenant</summary><div class="pile" style="margin-top:10px">' +
+    '<label class="champ">Partir d\'un modèle <span class="aide">le texte reste modifiable</span><select class="saisie" id="g-modele"><option value="">Message libre</option>' +
+    (f.theme === "ACCIDENT_TIERS" ? '<option value="constat">Demander le constat amiable signé</option>' : "") + '<option value="piece">Demander une pièce</option><option value="point">Faire le point avec l\'assuré</option></select></label>' +
     '<div class="grille-2"><label class="champ">À<select class="saisie" id="g-dest"><option value="assure">L\'assuré</option><option value="garage">Le garage</option><option value="expert">L\'expert</option>' +
     (f.theme === "ACCIDENT_TIERS" ? '<option value="assureur_adverse">L\'assureur adverse</option>' : "") + '</select></label>' +
     '<label class="champ">Adresse <span class="aide">si elle n\'est pas connue</span><input class="saisie" id="g-email" type="email" placeholder="facultatif"></label></div>' +
@@ -1354,6 +1397,8 @@ function brancherGestion(f) {
   };
   var val = function (id) { var x = $(id); return x ? x.value.trim() : ""; };
   var b;
+  if ((b = $("g-modele"))) b.onchange = function () { remplirModele(this.value); };
+  document.querySelectorAll("[data-demander-constat]").forEach(function (x) { x.onclick = function () { remplirModele("constat"); if ($("g-modele")) $("g-modele").value = "constat"; }; });
   if ((b = $("g-envoyer"))) b.onclick = function () {
     if (val("g-objet").length < 3 || val("g-texte").length < 10) return C.toast("Indiquez un objet et un message.", true);
     envoyer(b, { action: "courrier", destinataire: val("g-dest"), email: val("g-email") || undefined, objet: val("g-objet"), texte: val("g-texte") }, "Message envoyé");
@@ -2314,6 +2359,94 @@ function blocPieces(f) {
     }).join("") + "</ul></div></section>";
 }
 
+/* Activités du dossier : tout ce qui reste à faire, avec son échéance ; rappels et mise en attente */
+function blocActivites(f) {
+  var l = f.activites || [], fini = FINIS.indexOf(f.statut) >= 0 || f.efface_le, att = f.en_attente;
+  if (fini && !l.length) return "";
+  var lib = function (a) { var t = String(a.libelle || ""); return t.length > 110 ? t.slice(0, 108) + "…" : t; };
+  var h = '<section class="bloc" id="bloc-activites"><div class="bloc-tete"><h2>Activités<span class="compte">' + l.filter(function (a) { return !a.a_venir; }).length + '</span></h2>' +
+    (fini ? "" : '<button type="button" class="btn petit" id="b-rappel-ouvrir">Rappel ou mise en attente</button>') + "</div>";
+  if (att) h += '<div class="bloc-corps"><div class="encart-constat"><div><b>En attente jusqu\'au ' + esc(C.dateFr(att.le)) + "</b><p class=\"muet petit\">" + esc(att.texte) +
+    ". Le dossier est sorti de la corbeille ; il revient seul à cette date.</p></div><button type=\"button\" class=\"btn petit\" data-rappel-fait=\"" + esc(att.id) + '">Reprendre maintenant</button></div></div>';
+  h += l.length ? '<ul class="activites">' + l.map(function (a) {
+      var fait = (a.code === "rappel" || (a.code === "attente" && !a.a_venir)) ? '<button type="button" class="btn petit" data-rappel-fait="' + esc(a.id) + '">Fait</button>' : "";
+      if (a.code === "attente" && a.a_venir) return "";
+      return '<li' + (a.a_venir ? ' class="a-venir"' : "") + '><span class="act-lib">' + esc(lib(a)) + (a.legal ? '<small class="muet">délai légal</small>' : "") + (a.pour ? '<small class="muet">pour ' + esc(a.pour) + "</small>" : "") + "</span>" +
+        echeanceTag(a.echeance) + fait + "</li>";
+    }).join("") + "</ul>" : '<div class="bloc-corps"><p class="muet">Aucune activité en attente : Klerio suit le dossier.</p></div>';
+  if (!fini) h += '<form class="bloc-corps pile" id="form-rappel" hidden novalidate><div class="grille-2">' +
+    '<label class="champ">Le<input class="saisie" type="date" id="rp-le" min="' + new Date().toISOString().slice(0, 10) + '"></label>' +
+    '<label class="champ">À faire<input class="saisie" id="rp-texte" maxlength="300" placeholder="Ex. rappeler l\'assuré pour le constat"></label></div>' +
+    '<label class="case"><input type="checkbox" id="rp-attente"> Mettre le dossier en attente jusqu\'à cette date : il sort de la corbeille et revient seul (sauf délai légal)</label>' +
+    '<div class="decision-actions"><button class="btn primaire" type="submit" id="rp-ok">Enregistrer</button></div></form>';
+  return h + "</section>";
+}
+function brancherActivites(f) {
+  var b = $("b-rappel-ouvrir"), fr = $("form-rappel");
+  if (b && fr) b.onclick = function () { fr.hidden = !fr.hidden; if (!fr.hidden) $("rp-le").focus(); };
+  if (fr) fr.addEventListener("submit", function (e) {
+    e.preventDefault();
+    var le = $("rp-le").value, t = $("rp-texte").value.trim(), att = $("rp-attente").checked, ok = $("rp-ok");
+    if (!le) return C.toast("Choisissez la date.", true);
+    if (t.length < 3) return C.toast("Indiquez ce qu'il faudra faire.", true);
+    C.occupe(ok, true, "");
+    api("rappel", { body: { numero: f.numero, le: le, texte: t, attente: att } }).then(function (r) {
+      C.toast(att ? "Dossier en attente jusqu'au " + C.dateFr(le) : "Rappel enregistré pour le " + C.dateFr(le)); rafraichirCompteur(); afficherDossier(r);
+    }).catch(function (x) { C.occupe(ok, false); C.toast(x.message, true); });
+  });
+  document.querySelectorAll("[data-rappel-fait]").forEach(function (x) {
+    x.onclick = function () {
+      C.occupe(x, true, "");
+      api("rappel-fait", { body: { id: x.dataset.rappelFait } }).then(function (r) { C.toast("C'est noté"); rafraichirCompteur(); afficherDossier(r); })
+        .catch(function (e) { C.occupe(x, false); C.toast(e.message, true); });
+    };
+  });
+  var s = $("b-suivante");
+  if (s) s.onclick = function () {
+    C.occupe(s, true, "");
+    api("a-traiter" + qb()).then(function (l) {
+      var moi = (S.moi || {}).id;
+      var miens = (l || []).filter(function (d) { return d.numero !== f.numero && d.gestionnaire && d.gestionnaire.id === moi; });
+      var libres = (l || []).filter(function (d) { return d.numero !== f.numero && !d.gestionnaire; });
+      var n = miens[0] || libres[0];
+      C.occupe(s, false);
+      if (!n) return C.toast("Plus rien dans votre corbeille. Bien joué.");
+      ouvrirDossier(n.numero);
+    }).catch(function (x) { C.occupe(s, false); C.toast(x.message, true); });
+  };
+}
+/* Mails reçus sur ce dossier : lecture et réponse sans quitter le dossier */
+function blocMailsDossier(f) {
+  var l = f.mails_recus || [];
+  if (!l.length) return "";
+  var fini = FINIS.indexOf(f.statut) >= 0;
+  var plus = Math.max(0, l.length - 3);
+  return '<section class="bloc"><div class="bloc-tete"><h2>Mails reçus<span class="compte">' + l.length + '</span></h2><span class="muet petit">Les plus récents d\'abord. Votre réponse part à l\'expéditeur et s\'ajoute aux courriers du dossier.</span></div><ul class="courriers" id="mails-dossier">' +
+    l.map(function (m, i) {
+      var pj = (m.pieces || []).map(function (p) { return p.nom; }).join(", ");
+      return "<li" + (i >= 3 ? ' class="ancien" hidden' : "") + '><details' + (i === 0 ? " open" : "") + '><summary><span class="objet">' + esc(m.objet || "(sans objet)") + '</span><span class="envoi">' + esc(C.ROLES[m.interlocuteur] || "Expéditeur") + '</span><span class="meta">De ' + esc(m.expediteur) +
+        (pj ? " · pièces : " + esc(pj) : "") + '</span><span class="meta" style="text-align:right">' + esc(C.heure(m.recu_le)) + "</span></summary>" +
+        '<div class="corps-courrier">' + esc(m.contenu || "(sans texte)") + "</div>" +
+        (fini ? "" : '<div class="reponse-mail"><button type="button" class="btn petit" data-repondre="' + esc(m.id) + '">Répondre</button>' +
+          '<form class="pile" data-form-rep="' + esc(m.id) + '" hidden novalidate><label class="champ">Votre réponse à ' + esc(m.expediteur) + ' <span class="aide">« Bonjour » et la signature du service sont ajoutés</span><textarea class="saisie" rows="5" maxlength="6000"></textarea></label>' +
+          '<div class="decision-actions"><button class="btn primaire" type="submit">Envoyer la réponse</button></div></form></div>') + "</details></li>";
+    }).join("") + "</ul>" + (plus ? '<div class="bloc-corps" style="padding-top:8px"><button type="button" class="btn petit" data-voir-plus="mails-dossier" data-lib="Voir les ' + plus + ' mails plus anciens">Voir les ' + plus + " mails plus anciens</button></div>" : "") + "</section>";
+}
+function brancherMailsDossier(f) {
+  document.querySelectorAll("[data-repondre]").forEach(function (b) {
+    b.onclick = function () { var fo = document.querySelector('[data-form-rep="' + b.dataset.repondre + '"]'); fo.hidden = !fo.hidden; if (!fo.hidden) fo.querySelector("textarea").focus(); };
+  });
+  document.querySelectorAll("[data-form-rep]").forEach(function (fo) {
+    fo.addEventListener("submit", function (e) {
+      e.preventDefault();
+      var t = fo.querySelector("textarea").value.trim(), ok = fo.querySelector("button[type=submit]");
+      if (t.length < 10) return C.toast("Écrivez votre réponse.", true);
+      C.occupe(ok, true, "Envoi");
+      api("repondre-mail", { body: { id: fo.dataset.formRep, texte: t } }).then(function (r) { C.toast("Réponse envoyée"); afficherDossier(r); })
+        .catch(function (x) { C.occupe(ok, false); C.toast(x.message, true); });
+    });
+  });
+}
 function blocCourriers(f) {
   var k = f.courriers || [];
   if (!k.length) return "";
@@ -2413,6 +2546,8 @@ function brancherFiche(f) {
   brancherRecours(f);
   brancherReclamations(f);
   brancherGestion(f);
+  brancherActivites(f);
+  brancherMailsDossier(f);
   brancherRecoursVictimes(f);
   brancherDoublon(f);
   var bv = $("b-verif-vol");
@@ -2748,7 +2883,7 @@ function blocEquipePilotage(eq) {
   var g = eq.gestionnaires || [], auto = eq.decisions_automatiques_30j || 0, hum = eq.decisions_humaines_30j || 0;
   var presents = g.filter(function (x) { return x.actif && x.disponible && x.role === "gestionnaire"; }).length;
   var h = '<section class="bloc" style="margin-top:0"><div class="bloc-tete"><h2>Équipe</h2><span class="muet petit">' +
-    (eq.mode_repartition === "repartition" ? "Chaque dossier à vérifier part au gestionnaire disponible le moins chargé, dont le service et le plafond conviennent. " + presents + " gestionnaire" + (presents > 1 ? "s" : "") + " disponible" + (presents > 1 ? "s" : "") + "." : "File commune : chacun prend ses dossiers") + "</span>" +
+    (eq.mode_repartition === "repartition" ? "La plupart des dossiers sont traités seuls. Ceux qui demandent une personne partent automatiquement à celui du bon service qui en a reçu le moins aujourd'hui (temps partiel compris), puis il le garde jusqu'au bout. Les absents et ceux qui ne reçoivent pas de nouveaux dossiers sont sautés. " + presents + " gestionnaire" + (presents > 1 ? "s" : "") + " disponible" + (presents > 1 ? "s" : "") + "." : "File commune : chacun prend ses dossiers") + "</span>" +
     (eq.mode_repartition === "repartition" ? '<button type="button" class="btn petit primaire" id="b-repartir" title="Attribue les dossiers sans gestionnaire ou tenus par un absent, puis équilibre la charge">Répartir équitablement</button>' : "") + "</div>" +
     '<div class="bloc-corps"><div class="tuiles" style="margin-bottom:0">' +
     '<div class="tuile' + (eq.sans_titulaire ? " vous" : "") + '"><div class="val">' + (eq.sans_titulaire || 0) + '</div><div class="lib">Décisions sans gestionnaire attitré</div></div>' +
@@ -2757,13 +2892,22 @@ function blocEquipePilotage(eq) {
     '<div class="tuile"><div class="val">' + hum + '</div><div class="lib">Décisions humaines, 30 jours</div></div></div></div>';
   // les plus chargés d'abord ; 8 lignes, le reste derrière « voir plus » (équipes de 20 et plus)
   var tri = g.slice().sort(function (a, b) { return (b.a_traiter - a.a_traiter) || (b.en_cours - a.en_cours); }), plusG = tri.length - 8;
-  h += '<div class="tableau-wrap"><table class="tableau"><thead><tr><th>Gestionnaire</th><th class="nb">Suivis</th><th class="nb">À traiter</th><th class="nb">Décisions 30 j</th><th class="nb">Validé 30 j</th><th class="nb">Terminés 30 j</th><th>Disponibilité</th></tr></thead><tbody id="equipe-l">' +
+  h += '<div class="tableau-wrap"><table class="tableau"><thead><tr><th>Gestionnaire</th><th class="nb">Suivis</th><th class="nb">À traiter</th><th class="nb">Reçus aujourd\'hui</th><th>Nouveaux dossiers</th><th>Disponibilité</th><th></th></tr></thead><tbody id="equipe-l">' +
     tri.map(function (x, i) {
       var types = Object.keys(x.par_type || {}).map(function (k) { return C.theme(k) + " " + x.par_type[k]; }).join(", ");
+      var autres = g.filter(function (y) { return y.actif && y.id !== x.id && y.role !== "admin"; });
       return '<tr style="cursor:default"' + (i >= 8 ? ' class="ancien" hidden' : "") + '><td><b>' + esc(x.nom) + '</b><div class="muet petit">' + esc(ROLES_G[x.role] || x.role) + ", " + esc((SERVICES[x.service] || x.service).toLowerCase()) +
         (x.plafond_eur != null ? ", plafond " + esc(eur(x.plafond_eur)) : "") + " · " + esc(x.derniere_connexion ? "vu " + C.depuis(x.derniere_connexion) : "jamais connecté") + "</div>" +
-        (types ? '<div class="muet petit">' + esc(types) + "</div>" : "") + '</td><td class="nb">' + x.en_cours + '</td><td class="nb">' + (x.a_traiter ? "<b>" + x.a_traiter + "</b>" : 0) + '</td><td class="nb">' + x.decisions_30j + '</td><td class="nb">' + esc(eur(x.montant_valide_30j)) +
-        '</td><td class="nb">' + x.clos_30j + "</td><td>" + celluleDispo(x) + "</td></tr>";
+        '<div class="muet petit">' + x.decisions_30j + " décision" + (x.decisions_30j > 1 ? "s" : "") + " et " + x.clos_30j + " dossier" + (x.clos_30j > 1 ? "s" : "") + " terminé" + (x.clos_30j > 1 ? "s" : "") + " en 30 jours</div>" +
+        (types ? '<div class="muet petit">' + esc(types) + "</div>" : "") + '</td><td class="nb">' + x.en_cours + '</td><td class="nb">' + (x.a_traiter ? "<b>" + x.a_traiter + "</b>" : 0) + '</td><td class="nb">' + (x.recus_aujourdhui || 0) + "</td>" +
+        "<td>" + (x.actif && x.role !== "admin" ? '<label class="case" style="margin:0;white-space:nowrap"><input type="checkbox" data-recoit="' + esc(x.id) + '"' + (x.recoit_nouveaux !== false ? " checked" : "") + "> En reçoit</label>" +
+          '<select class="saisie" data-capacite="' + esc(x.id) + '" aria-label="Temps de travail" title="Part des nouveaux dossiers : un temps partiel en reçoit moins" style="width:auto;padding:3px 6px;font-size:13px;margin-top:4px">' +
+          [100, 80, 60, 50].map(function (p) { return '<option value="' + p + '"' + (p === (x.capacite_pct || 100) ? " selected" : "") + ">" + (p === 100 ? "Temps plein" : p + " %") + "</option>"; }).join("") +
+          ((x.capacite_pct && [100, 80, 60, 50].indexOf(x.capacite_pct) < 0) ? '<option value="' + x.capacite_pct + '" selected>' + x.capacite_pct + " %</option>" : "") + "</select>" : '<span class="muet">–</span>') + "</td>" +
+        "<td>" + celluleDispo(x) + "</td>" +
+        "<td>" + (x.en_cours && autres.length ? '<span class="actions" style="gap:6px;flex-wrap:nowrap"><select class="saisie" data-transf-vers="' + esc(x.id) + '" style="width:auto;max-width:170px;padding:3px 6px;font-size:13px" aria-label="Transférer à">' +
+          '<option value="">Répartir entre collègues</option>' + autres.map(function (y) { return '<option value="' + esc(y.id) + '">' + esc(y.nom) + "</option>"; }).join("") +
+          '</select><button type="button" class="btn petit" data-transf="' + esc(x.id) + '" data-nom="' + esc(x.nom) + '" data-n="' + x.en_cours + '">Transférer ses dossiers</button></span>' : "") + "</td></tr>";
     }).join("") + "</tbody></table></div>" +
     (plusG > 0 ? '<div class="bloc-corps" style="padding-top:8px"><button type="button" class="btn petit" data-voir-plus="equipe-l" data-lib="Voir les ' + plusG + ' autres gestionnaires">Voir les ' + plusG + " autres gestionnaires</button></div>" : "");
   if ((eq.renvoyes || []).length) {
@@ -2794,6 +2938,27 @@ function brancherEquipePilotage(eq) {
       vuePilotage();
     }).catch(function (x) { C.occupe(br, false); C.toast(x.message, true); });
   };
+  function regler(id, p, el) {
+    el.disabled = true;
+    api("regler-repartition", { body: Object.assign({ gestionnaire: id }, p) }).then(function (r) {
+      el.disabled = false;
+      C.toast(r.recoit_nouveaux ? r.gestionnaire + " reçoit les nouveaux dossiers" + (r.capacite_pct < 100 ? " (" + r.capacite_pct + " % du temps)" : "") : r.gestionnaire + " ne reçoit plus de nouveaux dossiers : il garde ceux qu'il suit");
+    }).catch(function (x) { el.disabled = false; C.toast(x.message, true); vuePilotage(); });
+  }
+  document.querySelectorAll("[data-recoit]").forEach(function (c) { c.onchange = function () { regler(c.dataset.recoit, { recoit_nouveaux: c.checked }, c); }; });
+  document.querySelectorAll("[data-capacite]").forEach(function (s) { s.onchange = function () { regler(s.dataset.capacite, { capacite_pct: Number(s.value) }, s); }; });
+  document.querySelectorAll("[data-transf]").forEach(function (b) {
+    b.onclick = function () {
+      var id = b.dataset.transf, sel = document.querySelector('[data-transf-vers="' + id + '"]');
+      var vers = sel.value, nomVers = vers ? sel.options[sel.selectedIndex].text : "ses collègues disponibles";
+      if (!confirm("Transférer les " + b.dataset.n + " dossiers en cours de " + b.dataset.nom + " à " + nomVers + " ?")) return;
+      C.occupe(b, true, "");
+      api("transferer-dossiers", { body: { de: id, vers: vers || null } }).then(function (r) {
+        C.toast(r.transferes + " dossier(s) de " + r.de + " transféré(s)" + (r.file_commune ? ", " + r.file_commune + " sans preneur laissé(s) en file commune" : ""));
+        vuePilotage();
+      }).catch(function (x) { C.occupe(b, false); C.toast(x.message, true); });
+    };
+  });
   document.querySelectorAll("[data-dispo]").forEach(function (b) {
     b.onclick = function () {
       var id = b.dataset.dispo, absent = b.dataset.etat === "absent", d = document.querySelector('[data-jusqu="' + id + '"]');
