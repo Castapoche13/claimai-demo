@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=20261026g">
+<link rel="stylesheet" href="style.css?v=20261027a">
 <style>
 body { background: var(--papier); }
 .haut { background: var(--feuille); border-bottom: 1px solid var(--trait); }
@@ -75,14 +75,14 @@ form.carte-in { display: grid; gap: 18px; }
 @media (max-width: 560px) { .option { grid-template-columns: auto 1fr; } .option .montant { grid-column: 2; } }
 .pied { font-size: 12.5px; color: var(--gris); margin-top: 24px; line-height: 1.6; }
 </style>
-<link rel="stylesheet" href="charte.css?v=20261026g">
+<link rel="stylesheet" href="charte.css?v=20261027a">
 </head>
 <body>
 <header class="haut"><div class="haut-in"><div class="cie" id="cie">Service sinistres<small>Espace sécurisé</small></div>
   <span class="cadenas"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><rect x="2.5" y="6" width="9" height="6.5" rx="1.5" fill="currentColor"/><path d="M4.5 6V4.5a2.5 2.5 0 015 0V6" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>Lien personnel</span></div></header>
 <main id="main"><div class="carte"><div class="etat"><span class="tourne" style="display:inline-block;color:var(--bleu)"></span></div></div></main>
 <div id="toast" class="toast" hidden role="status"></div>
-<script src="commun.js?v=20261026g"></script>
+<script src="commun.js?v=20261027a"></script>
 <script>
 (function () {
 "use strict";
@@ -244,6 +244,9 @@ function radio(nom, valeur, lib) { return '<label class="case"><input type="radi
 function blocQuestionnaireVol() {
   return '<div class="carte"><form class="carte-in" id="form-qv" novalidate><h2>Questionnaire sur le vol</h2>' +
     '<p class="intro">Quelques questions sur les circonstances, obligatoires pour traiter votre dossier. Répondez le plus précisément possible.</p>' +
+    '<fieldset class="champ"><legend>Comment le véhicule a-t-il disparu ?</legend>' + radio("qv-disp", "stationne", "Il a disparu alors qu'il était garé") +
+      radio("qv-disp", "violence", "On me l'a pris avec violence ou sous la menace") + radio("qv-disp", "remis", "Je l'avais confié ou remis à quelqu'un (acheteur pendant un essai, prêt, location) qui ne l'a pas rendu") +
+      radio("qv-disp", "inconnu", "Je ne sais pas") + "</fieldset>" +
     '<fieldset class="champ"><legend>Où se trouvaient les clés au moment du vol ?</legend>' + radio("qv-cles", "avec_moi", "Sur moi ou avec la personne qui utilisait le véhicule") +
       radio("qv-cles", "domicile", "À mon domicile") + radio("qv-cles", "dans_vehicule", "Dans ou sur le véhicule") + radio("qv-cles", "volees", "Elles ont été volées aussi (cambriolage, vol de sac...)") + "</fieldset>" +
     '<div class="grille-2"><label class="champ">Nombre de jeux de clés que vous pouvez remettre<input class="saisie" id="qv-nb" type="number" min="0" max="9" step="1" value="2"></label>' +
@@ -367,10 +370,11 @@ function brancherAssure() {
     fq.addEventListener("submit", function (e) {
       e.preventDefault();
       var cl = document.querySelector('input[name="qv-cles"]:checked'), st = document.querySelector('input[name="qv-st"]:checked');
-      if (!cl || !st) return C.toast("Indiquez où se trouvaient les clés et où le véhicule était stationné.", true);
+      var di = document.querySelector('input[name="qv-disp"]:checked');
+      if (!cl || !st || !di) return C.toast("Indiquez comment le véhicule a disparu, où se trouvaient les clés et où il était stationné.", true);
       var der = $("qv-der").value;
       if (der && new Date(der).getTime() > Date.now() + 60000) return C.toast("La date de dernière utilisation ne peut pas être dans le futur.", true);
-      envoyerChoix($("b-qv"), { questionnaire_vol: { cles: cl.value, nb_cles: Number($("qv-nb").value || 0), stationnement: st.value,
+      envoyerChoix($("b-qv"), { questionnaire_vol: { disparition: di.value, cles: cl.value, nb_cles: Number($("qv-nb").value || 0), stationnement: st.value,
         effraction_garage: st.value === "garage_ferme" ? $("qv-eff").checked : undefined, antivol: $("qv-antivol").checked, en_vente: $("qv-vente").checked,
         derniere_utilisation: $("qv-der").value || undefined, commentaire: $("qv-com").value.trim() || undefined } }, "Merci, vos réponses sont enregistrées");
     });

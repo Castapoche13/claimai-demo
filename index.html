@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=20261026g">
+<link rel="stylesheet" href="style.css?v=20261027a">
 <style>
 /* ---------- Connexion ---------- */
 .connexion { min-height: 100vh; display: grid; place-items: center; padding: 40px 16px; background: var(--feuille-2); }
@@ -386,7 +386,7 @@ a.tuile:hover { border-color: var(--trait-fort); text-decoration: none; }
 
 #c-captcha { min-height: 65px; }
 </style>
-<link rel="stylesheet" href="charte.css?v=20261026g">
+<link rel="stylesheet" href="charte.css?v=20261027a">
 </head>
 <body>
 
@@ -474,7 +474,7 @@ a.tuile:hover { border-color: var(--trait-fort); text-decoration: none; }
 <div id="toast" class="toast" hidden role="status"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="commun.js?v=20261026g"></script>
+<script src="commun.js?v=20261027a"></script>
 <script>
 (function () {
 "use strict";
@@ -2108,7 +2108,7 @@ var INTERLOCUTEURS_RECL = { assure: "Assuré", tiers: "Tiers", garage: "Réparat
 var IMPACTS = { TIERS_SIGNALE: "Tiers signalé", PIECE_ANNONCEE: "Pièce annoncée", PIECE_TRANSMISE: "Pièce transmise", CONTESTATION: "Contestation",
   NOUVEAU_DOMMAGE: "Nouveau dommage", BLESSURE_SIGNALEE: "Blessure signalée", CHANGEMENT_COORDONNEES: "Coordonnées modifiées",
   DEMANDE_INFORMATION: "Demande d'information", RECLAMATION: "Réclamation", DESISTEMENT: "Désistement", RECOURS_ADVERSE: "Recours de l'assureur adverse",
-  VEHICULE_RETROUVE: "Véhicule retrouvé", ENQUETE: "Enquête de police", AUCUN_IMPACT: "Sans effet sur le dossier" };
+  VEHICULE_RETROUVE: "Véhicule retrouvé", ENQUETE: "Enquête de police", MANIPULATION: "Tentative de manipulation : à vérifier", AUCUN_IMPACT: "Sans effet sur le dossier" };
 function options(o, choisi) { return Object.keys(o).map(function (k) { return '<option value="' + k + '"' + (k === choisi ? " selected" : "") + ">" + esc(o[k]) + "</option>"; }).join(""); }
 function blocSuivi(f) {
   var notes = (f.notes || []).filter(function (n) { return !(n.analyse && n.analyse.reouverture); });
@@ -3092,7 +3092,15 @@ function ongletDonnees(p) {
     '<p class="muet petit">Le comptable reçoit un mail par règlement validé (garage ou assuré), avec un lien sécurisé : montant, IBAN du référentiel, facture, et un ordre de virement SEPA déjà rempli à importer dans la banque. Il saisit ensuite la référence du virement, ce qui clôt le dossier et prévient l\'assuré et le garage du paiement. Restent toujours chez un gestionnaire : une facture au-dessus du montant de l\'expert, une facture déjà présentée sur un autre dossier, un garage hors réseau.</p></div></div>';
   h += '<div class="reglage"><div class="expl"><h3>Vol et véhicule irréparable</h3><p>L\'expert fixe la valeur du véhicule. Klerio fait l\'offre à l\'assuré, recueille son choix et ses pièces en ligne, puis calcule l\'indemnité.</p></div><div class="zone pile">' +
     '<label class="case"><input type="checkbox" id="s-indemnite"' + (p.indemnite_expert_auto ? " checked" : "") + '> Verser sans validation les indemnités fixées par l\'expert (véhicule irréparable), quel que soit le montant. Un vol est toujours validé par un gestionnaire.</label>' +
-    '<div class="grille-2">' + champNum("s-vei", "Délai de réponse de l'assuré à l'offre", "jours", p.delai_reponse_vei_jours) + '</div>' +
+    '<div class="grille-2">' + champNum("s-vei", "Délai de réponse de l'assuré à l'offre", "jours", p.delai_reponse_vei_jours) +
+      champNum("s-tolval", "Écart accepté sans réexamen quand l'assuré conteste la valeur", "%", p.tolerance_valeur_pct) + '</div>' +
+    '<p class="petit" style="margin-top:6px"><b>Ce que dit votre contrat sur les cas délicats</b></p>' +
+    '<label class="champ">Clés laissées dans ou sur le véhicule<select class="saisie" id="s-cles">' +
+      [["exclu", "Exclu : Klerio propose un refus, à confirmer par un gestionnaire"], ["franchise_majoree", "Couvert avec une franchise majorée"], ["couvert", "Couvert normalement"]].map(function (o) {
+        return '<option value="' + o[0] + '"' + ((p.vol_cles_regle || "exclu") === o[0] ? " selected" : "") + ">" + esc(o[1]) + "</option>"; }).join("") + "</select></label>" +
+    '<div class="grille-2">' + champNum("s-cles-fr", "Franchise majorée (clés laissées)", "€", p.vol_cles_franchise_eur) + "<div></div></div>" +
+    '<label class="case"><input type="checkbox" id="s-ruse"' + (p.vol_ruse_couvert ? " checked" : "") + '> Couvrir l\'escroquerie et l\'abus de confiance (véhicule remis à un faux acheteur, prêté ou loué et jamais rendu)</label>' +
+    '<label class="case"><input type="checkbox" id="s-access"' + (p.vol_accessoires_couverts ? " checked" : "") + '> Couvrir le vol des accessoires non d\'origine (jantes, autoradio, GPS ajoutés après l\'achat) sans déclaration au contrat</label>' +
     '<p class="muet petit">Le vol est le sinistre le plus exposé à la fraude : sans cette option, chaque indemnité au-dessus du seuil de règlement automatique est validée par un gestionnaire. Sans réponse de l\'assuré dans le délai, il est réputé conserver son véhicule irréparable, comme le prévoit la procédure.</p></div></div>';
   h += '<div class="reglage"><div class="expl"><h3>Organisation de l\'équipe</h3><p>Qui traite les dossiers qui demandent une décision.</p></div><div class="zone pile">' +
     '<label class="case"><input type="radio" name="s-mode" value="corbeille"' + (p.mode_repartition !== "repartition" ? " checked" : "") + '> File commune : chaque gestionnaire prend ses dossiers. Un dossier pris doit être traité, ou renvoyé au responsable avec un motif.</label>' +
@@ -3183,6 +3191,8 @@ function brancherRaccordement(admin) {
       reclamations_adresse: $("s-rec-adr").value.trim(), reclamations_email: $("s-rec-mail").value.trim(), mediateur: $("s-mediateur").value.trim(),
       compte_paiement_iban: $("s-iban-deb").value.trim(), compte_paiement_bic: $("s-bic-deb").value.trim(), compte_paiement_titulaire: $("s-tit-deb").value.trim(),
       indemnite_expert_auto: $("s-indemnite").checked, delai_reponse_vei_jours: Number($("s-vei").value),
+      tolerance_valeur_pct: Number($("s-tolval").value || 0), vol_cles_regle: $("s-cles").value, vol_cles_franchise_eur: Number($("s-cles-fr").value || 0),
+      vol_ruse_couvert: $("s-ruse").checked, vol_accessoires_couverts: $("s-access").checked,
       mode_repartition: m ? m.value : "corbeille", conservation: c ? c.value : "conserver", delai_effacement_jours: Number($("s-effacement").value) }, "Choix enregistrés");
   });
 }
