@@ -34,6 +34,7 @@
     theme_hors_perimetre: "Sinistre hors du circuit automatique",
     hors_perimetre_v1: "Avec tiers ou corporel : géré dans votre outil",
     arrete_cattech_absent: "Arrêté de catastrophe technologique à référencer",
+    prescription_a_verifier: "Sinistre de plus de 2 ans : prescription à vérifier",
     tiers_implique: "Un tiers est impliqué : responsabilité à établir",
     tiers_non_determine: "La présence d'un tiers n'est pas établie",
     analyse_incertaine: "Récit ambigu : l'analyse est peu sûre",
