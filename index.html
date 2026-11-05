@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=20261027c">
+<link rel="stylesheet" href="style.css?v=20261105a">
 <style>
 /* ---------- Connexion ---------- */
 .connexion { min-height: 100vh; display: grid; place-items: center; padding: 40px 16px; background: var(--feuille-2); }
@@ -386,7 +386,7 @@ a.tuile:hover { border-color: var(--trait-fort); text-decoration: none; }
 
 #c-captcha { min-height: 65px; }
 </style>
-<link rel="stylesheet" href="charte.css?v=20261027c">
+<link rel="stylesheet" href="charte.css?v=20261105a">
 </head>
 <body>
 
@@ -430,8 +430,8 @@ a.tuile:hover { border-color: var(--trait-fort); text-decoration: none; }
     <div class="marque" id="logo-n"></div>
     <div class="nav-assureur">Compagnie<b id="n-assureur"></b></div>
     <div class="espaces" id="n-espaces" role="group" aria-label="Espace de travail">
-      <button type="button" data-esp="materiel" aria-pressed="true">Matériel</button>
-      <button type="button" data-esp="corporel" aria-pressed="false">Corporel</button>
+      <button type="button" data-esp="contractuel" aria-pressed="true">Contractuel</button>
+      <button type="button" data-esp="tiers" aria-pressed="false" title="Accidents avec un tiers et dossiers corporels : prochaine version">Avec tiers</button>
     </div>
     <div class="espace-seul" id="n-espace-seul" hidden></div>
     <ul>
@@ -474,7 +474,7 @@ a.tuile:hover { border-color: var(--trait-fort); text-decoration: none; }
 <div id="toast" class="toast" hidden role="status"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="commun.js?v=20261027c"></script>
+<script src="commun.js?v=20261105a"></script>
 <script>
 (function () {
 "use strict";
@@ -591,14 +591,14 @@ var CONTRAT_ESSAI = { "AUTO-2025-0001": "ESSAI-AUTO-0001", "AUTO-2025-0004": "ES
   "AUTO-2024-0003": "ESSAI-AUTO-0003", "GA-2024-0005": "ESSAI-GA-0004", "GA-2025-0006": "ESSAI-GA-0004" };
 function contrat(n) { return S.env === "test" ? (CONTRAT_ESSAI[n] || n) : n; }
 
-/* ---------------- Espace : matériel (contractuel) ou corporel ---------------- */
+/* ---------------- Espace : contractuel (V1, traité par Klerio) ou avec tiers (plus tard) ---------------- */
 var ESP = "klerio-espace";
-S.branche = "materiel";
-try { if (localStorage.getItem(ESP) === "corporel") S.branche = "corporel"; } catch (e) { }
+S.branche = "contractuel";
+try { var esp0 = localStorage.getItem(ESP); if (esp0 === "tiers" || esp0 === "corporel") S.branche = "tiers"; } catch (e) { }
 function qb(prefixe) { return (prefixe || "?") + "branche=" + S.branche; }
 function afficherEspace() {
   var seul = S.moi && S.moi.service && S.moi.service !== "tous";
-  if (seul) S.branche = S.moi.service;
+  if (seul) S.branche = C.ESPACES[S.moi.service] ? S.moi.service : "contractuel";
   $("n-espaces").hidden = !!seul;
   $("n-espace-seul").hidden = !seul;
   if (seul) $("n-espace-seul").innerHTML = "Espace <b>" + esc(C.ESPACES[S.branche].nom) + "</b>";
@@ -615,7 +615,10 @@ document.querySelectorAll("[data-esp]").forEach(function (b) {
 });
 function estResponsable() { return S.moi && (S.moi.role === "superviseur" || S.moi.role === "admin"); }
 function bandeauCorporel() {
-  return S.branche === "corporel" ? '<div class="bandeau-corporel"><b>Espace corporel.</b> Ouvert sous réserve de la validation de votre compagnie : secret médical, accès réservés et hébergement des données de santé. Les pièces médicales ne sont jamais lues ni conservées par Klerio.</div>' : "";
+  if (S.branche !== "tiers") return "";
+  return '<div class="bandeau-corporel"><b>Accidents avec un tiers et dossiers corporels.</b> Cette première version de Klerio traite seule les sinistres contractuels, sans tiers. ' +
+    "Les dossiers avec un tiers ou un blessé sont renvoyés à votre outil habituel, avec un accusé de réception à l'assuré : vous les retrouvez dans Dossiers en cours, pour information. " +
+    "Leur traitement par Klerio arrivera dans une prochaine version (Raccordement, rubrique Réseau, contrats et règles).</div>";
 }
 
 function entrer(session) {
@@ -761,7 +764,7 @@ function vueFile() {
     h += '<section class="bloc accueil-bloc"><div class="bannettes" role="tablist" aria-label="Corbeilles">' +
       tab("decider", "À décider", file.length, file.length > 0) +
       tab("mails", "Mails reçus", mails.length, mailsAction > 0) +
-      tab("tiers", "Chez un tiers", tiers.length, false) +
+      tab("tiers", "En attente d'un intervenant", tiers.length, false) +
       '</div><div id="bannette-corps" role="tabpanel"></div></section>';
     $("vue").innerHTML = h;
 
@@ -822,7 +825,7 @@ function vueFile() {
     afficher(onglet);
   }).catch(erreurVue);
 }
-var FAMILLE_TYPE = { VOL: "t-vol", TENTATIVE_VOL: "t-vol", VOL_RETROUVE: "t-vol", BRIS_GLACE: "t-glace", INCENDIE: "t-nature", EVENEMENT_CLIMATIQUE: "t-nature", CATASTROPHE_NATURELLE: "t-nature", GARANTIE_ACCIDENT: "t-corporel" };
+var FAMILLE_TYPE = { VOL: "t-vol", TENTATIVE_VOL: "t-vol", VOL_RETROUVE: "t-vol", BRIS_GLACE: "t-glace", INCENDIE: "t-nature", EVENEMENT_CLIMATIQUE: "t-nature", CATASTROPHE_NATURELLE: "t-nature", CATASTROPHE_TECHNOLOGIQUE: "t-nature", GARANTIE_ACCIDENT: "t-corporel" };
 function typeTag(t) { return '<span class="type-tag ' + (FAMILLE_TYPE[t] || "") + '">' + esc(C.theme(t)) + "</span>"; }
 function tableDecider(l) {
   return '<div class="tableau-wrap"><table class="tableau bannette-table"><thead><tr><th>N° dossier</th><th>Type</th><th>Tâche</th><th>Attribué à</th><th class="nb">Échéance</th></tr></thead><tbody>' +
@@ -1706,7 +1709,7 @@ var ETAT_VT = { a_instruire: ["À instruire", "alerte"], en_cours: ["En cours", 
 var QUI_PHRASE = { conducteur_adverse: "Le conducteur de l'autre véhicule", passager_adverse: "Un passager de l'autre véhicule", passager_assure: "Un passager de notre assuré", pieton_cycliste: "Un piéton ou un cycliste", inconnue: "Une personne" };
 function blocVictimes(f) {
   var l = f.victimes_tiers || [];
-  if (f.branche === "corporel" || (f.theme !== "ACCIDENT_TIERS" && !l.length)) return "";
+  if (f.theme === "GARANTIE_ACCIDENT" || (f.theme !== "ACCIDENT_TIERS" && !l.length)) return "";
   if (f.efface_le && !l.length) return "";
   if (!l.length) {
     // rien de signalé : un simple lien discret
@@ -2079,7 +2082,7 @@ function carteAction(f) {
   if (f.statut === "hors_perimetre") {
     return '<section class="decision"><div class="decision-entete">À reprendre</div><div class="decision-corps"><h2>' + (f.motif === "reouverture" ? "Dossier rouvert" : "Ce dossier sort du circuit automatique") + '</h2><p class="explication">' + esc(C.motif(f.motif)) +
       ". Choisissez le type de sinistre pour le relancer dans le circuit, ou classez-le.</p>" +
-      '<div class="grille-2"><label class="champ">Type retenu<select class="saisie" id="r-theme">' + C.ESPACES.materiel.themes.concat(C.ESPACES.corporel.themes).map(function (k) { return '<option value="' + k + '"' + (k === f.theme ? " selected" : "") + ">" + esc(C.theme(k)) + "</option>"; }).join("") + '</select></label>' +
+      '<div class="grille-2"><label class="champ">Type retenu<select class="saisie" id="r-theme">' + C.ESPACES.contractuel.themes.concat(C.ESPACES.tiers.themes).map(function (k) { return '<option value="' + k + '"' + (k === f.theme ? " selected" : "") + ">" + esc(C.theme(k)) + "</option>"; }).join("") + '</select></label>' +
       '<label class="champ">' + (f.motif === "arrete_catnat_absent" ? "Arrêté" : "Commentaire") + '<input class="saisie" id="r-com" placeholder="' + (f.motif === "arrete_catnat_absent" ? "Ex. arrêté du 12 juin 2026" : "Ce que vous avez vérifié") + '"></label></div>' +
       (f.motif === "arrete_catnat_absent" ? '<div class="grille-2"><label class="champ">Publié au Journal officiel le <span class="aide">les délais légaux partent de cette date</span><input class="saisie" id="r-pub" type="date"></label><div></div></div>' : "") +
       '<div class="decision-actions"><button class="btn primaire" id="r-prendre">Reprendre dans le circuit</button><button class="btn" id="r-classer">Classer le dossier</button>' +
@@ -2789,6 +2792,8 @@ function brancherSuivi(f) {
 /* ---------------- Vue : Déclarer ---------------- */
 var MODELES = [
   { n: "Pare-brise fissuré", d: { numero_contrat: "AUTO-2025-0001", theme: "BRIS_GLACE", code_postal: "77140", ville: "Nemours", recit: "Un gravillon projeté par un camion sur la N7 a fissuré le pare-brise sur une vingtaine de centimètres. Aucun autre dégât sur le véhicule." } },
+  { n: "Collision avec un sanglier", d: { numero_contrat: "AUTO-2025-0004", theme: "COLLISION_ANIMAL", code_postal: "77300", ville: "Fontainebleau", recit: "Hier soir vers 22 h, sur la D607 en forêt de Fontainebleau, un sanglier a traversé devant moi. Je n'ai pas pu l'éviter : pare-chocs avant cassé, phare droit et capot enfoncés. L'animal est reparti dans les bois, personne n'est blessé." } },
+  { n: "Voiture brûlée pendant une émeute", d: { numero_contrat: "AUTO-2025-0001", theme: "ATTENTAT", code_postal: "77140", ville: "Nemours", recit: "Pendant les violences urbaines de la nuit dernière, ma voiture garée dans ma rue a été incendiée par des émeutiers. J'ai déposé plainte au commissariat ce matin." } },
   { n: "Choc contre un poteau", d: { numero_contrat: "AUTO-2025-0004", theme: "PERTE_CONTROLE_OBSTACLE_FIXE", code_postal: "77300", ville: "Fontainebleau", recit: "En manœuvrant sur le parking du supermarché, j'ai reculé dans un poteau en béton. Personne d'autre n'est impliqué. Le pare-chocs arrière et le hayon sont enfoncés." } },
   { n: "Voiture vandalisée", d: { numero_contrat: "AUTO-2025-0004", theme: "VANDALISME", code_postal: "77300", ville: "Fontainebleau", recit: "Pendant la nuit, ma voiture garée dans la rue a été rayée sur tout le côté passager et les deux rétroviseurs ont été cassés. J'ai déposé plainte au commissariat ce matin." } },
   { n: "Tentative de vol", d: { numero_contrat: "AUTO-2025-0001", theme: "TENTATIVE_VOL", code_postal: "77140", ville: "Nemours", recit: "Ce matin, la serrure de la portière conducteur était forcée et le neiman cassé. Le véhicule est toujours là mais ne démarre plus. Plainte déposée au commissariat." } },
@@ -2808,7 +2813,7 @@ function vueDeclarer() {
     '<div class="grille-3"><label class="champ">Numéro de contrat<input class="saisie" id="d-contrat" list="contrats" required></label>' +
     '<label class="champ">Type déclaré<select class="saisie" id="d-theme">' + C.ESPACES[S.branche].themes.concat(["AUTRE"]).map(function (k) { return '<option value="' + k + '">' + esc(C.theme(k)) + "</option>"; }).join("") + '</select></label>' +
     '<label class="champ">Date du sinistre<input class="saisie" id="d-date" type="date" required value="' + auj.toISOString().slice(0, 10) + '"></label></div>' +
-    '<datalist id="contrats">' + (S.branche === "corporel" ? (S.env === "test" ? ["ESSAI-GA-0004"] : ["GA-2024-0005", "GA-2025-0006"]) : (S.env === "test" ? ["ESSAI-AUTO-0001", "ESSAI-AUTO-0002", "ESSAI-AUTO-0003"] : ["AUTO-2025-0001", "AUTO-2025-0002", "AUTO-2024-0003", "AUTO-2025-0004"])).map(function (n) { return '<option value="' + n + '">'; }).join("") + '</datalist>' +
+    '<datalist id="contrats">' + (S.env === "test" ? ["ESSAI-AUTO-0001", "ESSAI-AUTO-0002", "ESSAI-AUTO-0003"] : ["AUTO-2025-0001", "AUTO-2025-0002", "AUTO-2024-0003", "AUTO-2025-0004"]).concat(S.branche === "tiers" ? (S.env === "test" ? ["ESSAI-GA-0004"] : ["GA-2024-0005", "GA-2025-0006"]) : []).map(function (n) { return '<option value="' + n + '">'; }).join("") + '</datalist>' +
     '<div class="grille-3"><label class="champ">Code postal du lieu<input class="saisie" id="d-cp" inputmode="numeric" maxlength="5" required></label><label class="champ">Commune<input class="saisie" id="d-ville"></label>' +
     '<label class="champ">Votre référence <span class="aide">facultatif</span><input class="saisie" id="d-ref"></label></div>' +
     '<div class="grille-3" id="d-ga" hidden><label class="champ">Âge de la victime<input class="saisie" id="d-age" type="number" min="0" max="120"></label>' +
@@ -2890,7 +2895,7 @@ function vuePilotage() {
   Promise.all([api("indicateurs" + qb()), estResponsable() ? api("pilotage-equipe" + qb()) : Promise.resolve(null),
                estResponsable() ? api("missions" + qb()).catch(function () { return null; }) : Promise.resolve(null),
                estResponsable() ? api("recette").catch(function () { return null; }) : Promise.resolve(null),
-               S.branche === "corporel" ? Promise.resolve(null) : api("recours").catch(function () { return null; })]).then(function (r) {
+               S.branche === "contractuel" ? Promise.resolve(null) : api("recours").catch(function () { return null; })]).then(function (r) {
     var i = r[0], eq = r[1], mi = r[2], rec = r[3], rc = r[4];
     compter(i);
     var h = bandeauCorporel() + '<div class="entete-vue"><div><h1>Pilotage</h1><p>Espace ' + esc(C.ESPACES[S.branche].nom.toLowerCase()) + " de " + esc(i.assureur) + ", hors jeux de test archivés.</p></div></div>";
@@ -2924,7 +2929,7 @@ function vuePilotage() {
   }).catch(erreurVue);
 }
 /* Pilotage de l'équipe : réservé aux superviseurs et administrateurs */
-var SERVICES = { materiel: "Matériel", corporel: "Corporel", tous: "Les deux" };
+var SERVICES = { contractuel: "Contractuel", tiers: "Avec tiers", tous: "Les deux" };
 function blocEquipePilotage(eq) {
   var g = eq.gestionnaires || [], auto = eq.decisions_automatiques_30j || 0, hum = eq.decisions_humaines_30j || 0;
   var presents = g.filter(function (x) { return x.actif && x.disponible && x.role === "gestionnaire"; }).length;
@@ -3101,7 +3106,7 @@ function barres(o, lib, vous) {
 var ROLES_G = { gestionnaire: "Gestionnaire", superviseur: "Superviseur", admin: "Administrateur" };
 function vueEquipe() {
   api("equipe").then(function (l) {
-    var h = '<div class="entete-vue"><div><h1>Équipe</h1><p>Chaque personne a son propre compte. Son service limite ce qu\'elle voit : matériel, corporel ou les deux. Son plafond limite les règlements qu\'elle peut valider seule ; au-delà, un superviseur valide.</p></div></div>';
+    var h = '<div class="entete-vue"><div><h1>Équipe</h1><p>Chaque personne a son propre compte. Son service limite ce qu\'elle voit : contractuel, avec tiers ou les deux. Son plafond limite les règlements qu\'elle peut valider seule ; au-delà, un superviseur valide.</p></div></div>';
     h += '<section class="bloc"><div class="bloc-tete"><h2>Comptes<span class="compte">' + l.length + '</span></h2></div><div class="tableau-wrap"><table class="tableau"><thead><tr><th>Nom</th><th>Email</th><th>Rôle</th><th>Service</th><th class="nb">Plafond de règlement</th><th>Dernière connexion</th><th>État</th><th></th></tr></thead><tbody>' +
       l.map(function (g) {
         return '<tr style="cursor:default"><td>' + esc(g.nom) + '</td><td class="muet">' + esc(g.email) + '</td><td><select class="saisie" data-role="' + g.id + '" style="min-width:150px">' +
@@ -3313,6 +3318,9 @@ function ongletDonnees(p) {
     '<label class="case"><input type="checkbox" id="s-ruse"' + (p.vol_ruse_couvert ? " checked" : "") + '> Couvrir l\'escroquerie et l\'abus de confiance (véhicule remis à un faux acheteur, prêté ou loué et jamais rendu)</label>' +
     '<label class="case"><input type="checkbox" id="s-access"' + (p.vol_accessoires_couverts ? " checked" : "") + '> Couvrir le vol des accessoires non d\'origine (jantes, autoradio, GPS ajoutés après l\'achat) sans déclaration au contrat</label>' +
     '<p class="muet petit">Le vol est le sinistre le plus exposé à la fraude : sans cette option, chaque indemnité au-dessus du seuil de règlement automatique est validée par un gestionnaire. Sans réponse de l\'assuré dans le délai, il est réputé conserver son véhicule irréparable, comme le prévoit la procédure.</p></div></div>';
+  h += '<div class="reglage"><div class="expl"><h3>Dossiers traités par Klerio</h3><p>La première version traite seule les sinistres contractuels, sans tiers. Les autres restent dans votre outil.</p></div><div class="zone pile">' +
+    '<label class="case"><input type="radio" name="s-perim" value="contractuel"' + (p.perimetre !== "complet" ? " checked" : "") + '> Contractuel seulement : bris de glace, vol, vandalisme, incendie, événements climatiques, catastrophes naturelles et technologiques, attentats, accident seul et collision avec un animal sauvage. Les accidents avec un tiers et les dossiers corporels sont renvoyés à votre outil.</label>' +
+    '<label class="case"><input type="radio" name="s-perim" value="complet"' + (p.perimetre === "complet" ? " checked" : "") + '> Tout, y compris les accidents avec un tiers et la Garantie Accident (version de test, à valider avec Klerio)</label></div></div>';
   h += '<div class="reglage"><div class="expl"><h3>Organisation de l\'équipe</h3><p>Qui traite les dossiers qui demandent une décision.</p></div><div class="zone pile">' +
     '<label class="case"><input type="radio" name="s-mode" value="corbeille"' + (p.mode_repartition !== "repartition" ? " checked" : "") + '> File commune : chaque gestionnaire prend ses dossiers. Un dossier pris doit être traité, ou renvoyé au responsable avec un motif.</label>' +
     '<label class="case"><input type="radio" name="s-mode" value="repartition"' + (p.mode_repartition === "repartition" ? " checked" : "") + '> Répartition automatique : chaque dossier va au gestionnaire du bon service qui en a le moins.</label></div></div>';
@@ -3396,7 +3404,7 @@ function brancherRaccordement(admin) {
       bris_glace_sans_expert_max: Number($("s-bg").value), delai_relance_jours: Number($("s-relance").value), ga_ecart_aipp_points: Number($("s-aipp").value), delai_vol_jours: Number($("s-vol").value), franchise_catnat_eur: Number($("s-catnat").value) }, "Règles enregistrées");
   });
   lier("s-ok2", function () {
-    var auto = $("s-auto").value, m = document.querySelector('[name="s-mode"]:checked'), c = document.querySelector('[name="s-cons"]:checked');
+    var auto = $("s-auto").value, m = document.querySelector('[name="s-mode"]:checked'), c = document.querySelector('[name="s-cons"]:checked'), pe = document.querySelector('[name="s-perim"]:checked');
     envoyer(this, "parametres", { reglement_auto_max_eur: auto === "" ? null : Number(auto), refus_automatique: $("s-refus").checked,
       paiement_garage_auto: $("s-garage").checked, email_comptabilite: $("s-compta").value.trim(),
       reclamations_adresse: $("s-rec-adr").value.trim(), reclamations_email: $("s-rec-mail").value.trim(), mediateur: $("s-mediateur").value.trim(),
@@ -3404,7 +3412,7 @@ function brancherRaccordement(admin) {
       indemnite_expert_auto: $("s-indemnite").checked, delai_reponse_vei_jours: Number($("s-vei").value),
       tolerance_valeur_pct: Number($("s-tolval").value || 0), vol_cles_regle: $("s-cles").value, vol_cles_franchise_eur: Number($("s-cles-fr").value || 0),
       vol_ruse_couvert: $("s-ruse").checked, vol_accessoires_couverts: $("s-access").checked,
-      mode_repartition: m ? m.value : "corbeille", conservation: c ? c.value : "conserver", delai_effacement_jours: Number($("s-effacement").value) }, "Choix enregistrés");
+      perimetre: pe ? pe.value : "contractuel", mode_repartition: m ? m.value : "corbeille", conservation: c ? c.value : "conserver", delai_effacement_jours: Number($("s-effacement").value) }, "Choix enregistrés");
   });
 }
 

@@ -18,9 +18,9 @@
     clos: ["Clos et payé", "ok"], classe_sans_suite: ["Classé", "neutre"]
   };
   var THEMES = {
-    BRIS_GLACE: "Bris de glace", PERTE_CONTROLE_OBSTACLE_FIXE: "Perte de contrôle", ACCIDENT_TIERS: "Accident avec un tiers", VANDALISME: "Vandalisme",
+    BRIS_GLACE: "Bris de glace", PERTE_CONTROLE_OBSTACLE_FIXE: "Accident seul", COLLISION_ANIMAL: "Animal sauvage", ACCIDENT_TIERS: "Accident avec un tiers", VANDALISME: "Vandalisme",
     TENTATIVE_VOL: "Tentative de vol", VOL: "Vol du véhicule", VOL_RETROUVE: "Vol, véhicule retrouvé", INCENDIE: "Incendie", EVENEMENT_CLIMATIQUE: "Grêle, tempête",
-    CATASTROPHE_NATURELLE: "Catastrophe naturelle",
+    CATASTROPHE_NATURELLE: "Catastrophe naturelle", CATASTROPHE_TECHNOLOGIQUE: "Catastrophe technologique", ATTENTAT: "Attentat, émeute",
     GARANTIE_ACCIDENT: "Garantie Accident", AUTRE: "Autre sinistre", NON_QUALIFIE: "Non qualifié"
   };
   var MOTIFS = {
@@ -32,6 +32,8 @@
     fraude_suspectee: "Suspicion de fraude : identité non confirmée ou contestée par le titulaire",
     theme_non_gere: "Type de sinistre non couvert par le circuit",
     theme_hors_perimetre: "Sinistre hors du circuit automatique",
+    hors_perimetre_v1: "Avec tiers ou corporel : géré dans votre outil",
+    arrete_cattech_absent: "Arrêté de catastrophe technologique à référencer",
     tiers_implique: "Un tiers est impliqué : responsabilité à établir",
     tiers_non_determine: "La présence d'un tiers n'est pas établie",
     analyse_incertaine: "Récit ambigu : l'analyse est peu sûre",
@@ -105,10 +107,13 @@
   var LIENS = { societaire: "Sociétaire", conjoint: "Conjoint", enfant_mineur: "Enfant mineur", enfant_etudiant: "Enfant étudiant",
     enfant_handicape: "Enfant en situation de handicap", personne_a_charge: "Personne à charge", conducteur_tiers: "Conducteur autorisé" };
   // Types de sinistre par espace : le matériel (contractuel) et le corporel, séparés dans toute la console
+  // V1 : Klerio traite seul les sinistres contractuels (sans tiers). Les accidents avec tiers et le corporel viendront ensuite.
   var ESPACES = {
-    materiel: { nom: "Matériel", themes: ["BRIS_GLACE", "PERTE_CONTROLE_OBSTACLE_FIXE", "ACCIDENT_TIERS", "VANDALISME", "TENTATIVE_VOL", "VOL", "VOL_RETROUVE", "INCENDIE", "EVENEMENT_CLIMATIQUE", "CATASTROPHE_NATURELLE"] },
-    corporel: { nom: "Corporel", themes: ["GARANTIE_ACCIDENT"] }
+    contractuel: { nom: "Contractuel", court: "Contractuel", themes: ["BRIS_GLACE", "VOL", "TENTATIVE_VOL", "VOL_RETROUVE", "VANDALISME", "INCENDIE", "EVENEMENT_CLIMATIQUE",
+      "CATASTROPHE_NATURELLE", "CATASTROPHE_TECHNOLOGIQUE", "ATTENTAT", "PERTE_CONTROLE_OBSTACLE_FIXE", "COLLISION_ANIMAL"] },
+    tiers: { nom: "Avec tiers", court: "Avec tiers", themes: ["ACCIDENT_TIERS", "GARANTIE_ACCIDENT"] }
   };
+
   var GARANTIES = { BRIS_GLACE: "Bris de glace", DOMMAGES_TOUS_ACCIDENTS: "Dommages tous accidents", VOL_VANDALISME: "Vol et vandalisme", VOL: "Vol",
     INCENDIE: "Incendie", EVENEMENTS_CLIMATIQUES: "Événements climatiques", CATASTROPHES_NATURELLES: "Catastrophes naturelles", GARANTIE_ACCIDENT: "Garantie Accident" };
   var CLASSES = { AS: "Vie privée (AS)", AW: "Circulation (AW)", AT: "Travail (AT)" };
