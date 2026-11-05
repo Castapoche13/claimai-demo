@@ -17,6 +17,10 @@
 .connexion form h2 { font-size: 18px; }
 .connexion .pied-connexion { text-align: center; font-size: 12.5px; color: var(--gris); max-width: 40ch; margin: 0 auto; }
 .erreur-form { color: var(--rouge-texte); font-size: 13px; min-height: 1.3em; }
+.mfa-qr { display: grid; gap: 8px; justify-items: center; text-align: center; }
+.mfa-qr img { background: #fff; padding: 8px; border-radius: 8px; border: 1px solid var(--trait); }
+.mfa-qr code { word-break: break-all; }
+#mfa-code { font-size: 20px; letter-spacing: .3em; text-align: center; font-variant-numeric: tabular-nums; }
 
 /* ---------- Structure ---------- */
 .app { display: grid; grid-template-columns: 228px minmax(0, 1fr); min-height: 100vh; }
@@ -420,6 +424,16 @@ a.tuile:hover { border-color: var(--trait-fort); text-decoration: none; }
       <p class="erreur-form" id="m-err" role="alert"></p>
       <button class="btn primaire" id="m-btn" type="submit">Enregistrer et continuer</button>
     </form>
+    <form id="form-mfa" novalidate hidden>
+      <div><h2 id="mfa-titre">Code de vérification</h2><p class="muet petit" id="mfa-intro" style="margin-top:4px"></p></div>
+      <div id="mfa-qr" class="mfa-qr" hidden></div>
+      <label class="champ">Code à 6 chiffres
+        <input class="saisie" id="mfa-code" inputmode="numeric" autocomplete="one-time-code" maxlength="7" required>
+      </label>
+      <p class="erreur-form" id="mfa-err" role="alert"></p>
+      <button class="btn primaire" id="mfa-btn" type="submit">Valider</button>
+      <button class="btn" id="mfa-sortir" type="button">Se déconnecter</button>
+    </form>
     <p class="pied-connexion">Aucun refus ni paiement ne part sans la validation d'un gestionnaire. Chaque action est enregistrée au journal du dossier.</p>
   </div>
 </section>
@@ -448,6 +462,7 @@ a.tuile:hover { border-color: var(--trait-fort); text-decoration: none; }
     <div class="nav-bas">
       <a href="outil-assureur.html">Ouvrir l'outil de la compagnie (démo)</a>
       <button type="button" id="b-theme">Changer de thème</button>
+      <button type="button" id="b-mfa" hidden>Activer la double authentification</button>
       <button type="button" id="b-deco">Se déconnecter</button>
     </div>
   </nav>
@@ -629,8 +644,15 @@ function entrer(session) {
     $("form-connexion").hidden = true; $("form-mdp").hidden = false; $("m-mdp").focus();
     return Promise.resolve();
   }
-  return api("moi").then(function (moi) {
+  return niveauMfa().then(function (a) {
+    // Compte protégé par une application : le code est demandé avant tout accès
+    if (a && a.nextLevel === "aal2" && a.currentLevel !== "aal2") return montrerMfa("saisie");
+    return api("moi").then(function (moi) {
     if (!moi || moi.type !== "gestionnaire") throw new Error("Ce compte n'a pas accès à la console.");
+    // Une application validée existe dès que la session peut monter au niveau aal2
+    var mfaActive = moi.mfa ? moi.mfa.active : !!(a && a.nextLevel === "aal2");
+    if ((moi.mfa ? moi.mfa.obligatoire : moi.role === "admin") && !mfaActive) return montrerMfa("activation");
+    $("b-mfa").hidden = mfaActive;
     S.moi = moi; S.gest = moi.email; S.assureur = moi.assureur;
     $("n-assureur").textContent = S.assureur; $("n-gest").textContent = moi.nom;
     $("n-avatar").textContent = moi.nom.split(/\s+/).map(function (x) { return x[0]; }).join("").slice(0, 2);
@@ -639,11 +661,74 @@ function entrer(session) {
     $("ecran-connexion").hidden = true; $("ecran-app").hidden = false;
     rafraichirCompteur();
     if (!location.hash || location.hash === "#") location.hash = "#/file"; else router();
+    });
   }).catch(function (x) {
-    sb.auth.signOut(); $("form-mdp").hidden = true; $("form-connexion").hidden = false;
+    sb.auth.signOut(); $("form-mdp").hidden = true; $("form-mfa").hidden = true; $("form-connexion").hidden = false;
+    $("ecran-connexion").hidden = false; $("ecran-app").hidden = true;
     $("c-err").textContent = x.status === 401 ? "Ce compte n'a pas accès à la console." : x.message;
   });
 }
+
+/* ---------------- Double authentification (application TOTP) ---------------- */
+var mfa = { facteur: null, volontaire: false };
+function niveauMfa() {
+  return sb.auth.mfa.getAuthenticatorAssuranceLevel().then(function (r) { return r && r.data; }).catch(function () { return null; });
+}
+function montrerMfa(mode) {
+  $("form-connexion").hidden = true; $("form-mdp").hidden = true; $("form-mfa").hidden = false;
+  $("ecran-connexion").hidden = false; $("ecran-app").hidden = true;
+  $("mfa-err").textContent = ""; $("mfa-code").value = ""; mfa.facteur = null;
+  var qr = $("mfa-qr");
+  $("mfa-sortir").textContent = mfa.volontaire ? "Plus tard" : "Se déconnecter";
+  if (mode === "saisie") {
+    $("mfa-titre").textContent = "Code de vérification";
+    $("mfa-intro").textContent = "Ouvrez votre application d'authentification et saisissez le code affiché pour Klerio.";
+    qr.hidden = true;
+    return sb.auth.mfa.listFactors().then(function (r) {
+      var f = (r.data && r.data.totp || []).filter(function (x) { return x.status === "verified"; })[0];
+      mfa.facteur = f ? f.id : null; $("mfa-code").focus();
+    });
+  }
+  $("mfa-titre").textContent = "Activez la double authentification";
+  $("mfa-intro").textContent = (mfa.volontaire ? "" : "Elle est obligatoire pour les administrateurs. ") +
+    "Scannez ce QR code avec une application d'authentification (Google Authenticator, Microsoft Authenticator…), puis saisissez le code à 6 chiffres qu'elle affiche.";
+  qr.hidden = false; qr.innerHTML = '<p class="petit muet">Préparation du QR code…</p>';
+  return sb.auth.mfa.listFactors().then(function (r) {
+    // Un enrôlement commencé puis abandonné bloquerait le suivant : on le retire
+    var inacheves = (r.data && r.data.all || []).filter(function (x) { return x.status !== "verified"; });
+    return Promise.all(inacheves.map(function (x) { return sb.auth.mfa.unenroll({ factorId: x.id }); }));
+  }).then(function () {
+    return sb.auth.mfa.enroll({ factorType: "totp", friendlyName: "Klerio " + new Date().toISOString().slice(0, 16) });
+  }).then(function (r) {
+    if (r.error) throw new Error(r.error.message);
+    mfa.facteur = r.data.id;
+    // Supabase renvoie le SVG brut derrière « data:image/svg+xml;utf-8, » : on le ré-encode proprement
+    var src = String(r.data.totp.qr_code || ""), i = src.indexOf("<svg");
+    if (i >= 0) src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(src.slice(i));
+    qr.innerHTML = '<img alt="QR code à scanner avec votre application" width="180" height="180" src="' + esc(src) + '">' +
+      '<p class="petit muet">Sans appareil photo, saisissez cette clé dans l\'application : <code>' + esc(r.data.totp.secret) + '</code></p>';
+    $("mfa-code").focus();
+  }).catch(function (x) { qr.innerHTML = ""; $("mfa-err").textContent = "Activation impossible : " + x.message; });
+}
+$("form-mfa").addEventListener("submit", function (e) {
+  e.preventDefault();
+  var code = $("mfa-code").value.replace(/\s/g, ""), err = $("mfa-err"); err.textContent = "";
+  if (!/^\d{6}$/.test(code)) { err.textContent = "Saisissez les 6 chiffres affichés par l'application."; return; }
+  if (!mfa.facteur) { err.textContent = "Aucune application n'est associée à ce compte : demandez à votre administrateur de réinitialiser votre double authentification."; return; }
+  var b = $("mfa-btn"); C.occupe(b, true, "Vérification");
+  sb.auth.mfa.challengeAndVerify({ factorId: mfa.facteur, code: code }).then(function (r) {
+    if (r.error) throw new Error(/invalid|expired/i.test(r.error.message) ? "Code incorrect ou expiré : saisissez celui affiché en ce moment." : r.error.message);
+    var vol = mfa.volontaire; mfa.volontaire = false;
+    $("form-mfa").hidden = true;
+    if (vol) C.toast("Double authentification activée");
+    return sb.auth.getSession().then(function (s) { return entrer(s.data.session); });
+  }).catch(function (x) { err.textContent = x.message; }).finally(function () { C.occupe(b, false); });
+});
+$("mfa-sortir").addEventListener("click", function () {
+  if (mfa.volontaire) { mfa.volontaire = false; $("form-mfa").hidden = true; $("ecran-connexion").hidden = true; $("ecran-app").hidden = false; return; }
+  sb.auth.signOut().finally(function () { location.hash = ""; location.reload(); });
+});
+$("b-mfa").addEventListener("click", function () { mfa.volontaire = true; montrerMfa("activation"); });
 
 $("b-deco").addEventListener("click", function () { sb.auth.signOut().finally(function () { location.hash = ""; location.reload(); }); });
 
@@ -3106,14 +3191,15 @@ function barres(o, lib, vous) {
 var ROLES_G = { gestionnaire: "Gestionnaire", superviseur: "Superviseur", admin: "Administrateur" };
 function vueEquipe() {
   api("equipe").then(function (l) {
-    var h = '<div class="entete-vue"><div><h1>Équipe</h1><p>Chaque personne a son propre compte. Son service limite ce qu\'elle voit : contractuel, avec tiers ou les deux. Son plafond limite les règlements qu\'elle peut valider seule ; au-delà, un superviseur valide.</p></div></div>';
-    h += '<section class="bloc"><div class="bloc-tete"><h2>Comptes<span class="compte">' + l.length + '</span></h2></div><div class="tableau-wrap"><table class="tableau"><thead><tr><th>Nom</th><th>Email</th><th>Rôle</th><th>Service</th><th class="nb">Plafond de règlement</th><th>Dernière connexion</th><th>État</th><th></th></tr></thead><tbody>' +
+    var h = '<div class="entete-vue"><div><h1>Équipe</h1><p>Chaque personne a son propre compte. Son service limite ce qu\'elle voit : contractuel, avec tiers ou les deux. Son plafond limite les règlements qu\'elle peut valider seule ; au-delà, un superviseur valide. La double authentification (un code affiché par une application sur téléphone) est obligatoire pour les administrateurs ; les autres peuvent l\'activer depuis le menu.</p></div></div>';
+    h += '<section class="bloc"><div class="bloc-tete"><h2>Comptes<span class="compte">' + l.length + '</span></h2></div><div class="tableau-wrap"><table class="tableau"><thead><tr><th>Nom</th><th>Email</th><th>Rôle</th><th>Service</th><th class="nb">Plafond de règlement</th><th>Dernière connexion</th><th>Double auth.</th><th>État</th><th></th></tr></thead><tbody>' +
       l.map(function (g) {
         return '<tr style="cursor:default"><td>' + esc(g.nom) + '</td><td class="muet">' + esc(g.email) + '</td><td><select class="saisie" data-role="' + g.id + '" style="min-width:150px">' +
           Object.keys(ROLES_G).map(function (k) { return '<option value="' + k + '"' + (k === g.role ? " selected" : "") + ">" + ROLES_G[k] + "</option>"; }).join("") + '</select></td>' +
           '<td><select class="saisie" data-service="' + g.id + '" style="min-width:120px">' + Object.keys(SERVICES).map(function (k) { return '<option value="' + k + '"' + (k === g.service ? " selected" : "") + ">" + SERVICES[k] + "</option>"; }).join("") + "</select></td>" +
           '<td class="nb"><input class="saisie" data-plafond="' + g.id + '" type="number" min="0" step="100" placeholder="Sans plafond" value="' + (g.plafond_eur == null ? "" : esc(g.plafond_eur)) + '" style="max-width:140px;text-align:right"></td>' +
-          '<td class="muet">' + esc(g.derniere_connexion ? C.depuis(g.derniere_connexion) : "Jamais") + '</td><td>' + (g.actif ? '<span class="statut ok">Actif</span>' : '<span class="statut neutre">Désactivé</span>') + '</td>' +
+          '<td class="muet">' + esc(g.derniere_connexion ? C.depuis(g.derniere_connexion) : "Jamais") + '</td><td>' + (g.mfa ? '<span class="statut ok">Activée</span>' + (S.moi && S.moi.mfa ? ' <button class="btn petit discret" data-mfa="' + g.id + '" data-nom="' + esc(g.nom) + '">Réinitialiser</button>' : '') : '<span class="statut neutre">' + (g.role === "admin" ? "À la prochaine connexion" : "Non activée") + '</span>') +
+          '</td><td>' + (g.actif ? '<span class="statut ok">Actif</span>' : '<span class="statut neutre">Désactivé</span>') + '</td>' +
           '<td class="nb"><button class="btn petit" data-enreg="' + g.id + '">Enregistrer</button> <button class="btn petit discret" data-actif="' + g.id + '" data-val="' + (!g.actif) + '">' + (g.actif ? "Désactiver" : "Réactiver") + "</button></td></tr>";
       }).join("") + "</tbody></table></div></section>";
     h += '<section class="bloc"><div class="bloc-tete"><h2>Ajouter une personne</h2></div><form class="bloc-corps pile" id="form-equipe" novalidate><div class="grille-3">' +
@@ -3129,6 +3215,14 @@ function vueEquipe() {
         C.occupe(b, true, "");
         api("equipe", { body: { id: id, role: document.querySelector('[data-role="' + id + '"]').value, service: document.querySelector('[data-service="' + id + '"]').value, plafond_eur: pl === "" ? null : Number(pl) } })
           .then(function () { C.toast("Compte mis à jour"); vueEquipe(); }).catch(function (x) { C.occupe(b, false); C.toast(x.message, true); });
+      };
+    });
+    document.querySelectorAll("[data-mfa]").forEach(function (b) {
+      b.onclick = function () {
+        if (!confirm("Réinitialiser la double authentification de " + b.dataset.nom + " ? À utiliser si son téléphone est perdu ou changé : à sa prochaine connexion, il associera une nouvelle application.")) return;
+        C.occupe(b, true, "");
+        api("equipe", { body: { id: b.dataset.mfa, action: "reinitialiser_mfa" } })
+          .then(function () { C.toast("Double authentification réinitialisée"); vueEquipe(); }).catch(function (x) { C.occupe(b, false); C.toast(x.message, true); });
       };
     });
     document.querySelectorAll("[data-actif]").forEach(function (b) {
