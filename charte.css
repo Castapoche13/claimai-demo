@@ -413,14 +413,7 @@ body { -webkit-font-smoothing: auto; }
 .msg-corps { min-width: 0; overflow-wrap: anywhere; }
 .lien-mail { font-size: 12.5px; color: var(--gris); margin: 0 0 8px; }
 .lien-mail span { margin-right: 6px; }
-/* Parcours du dossier : un bandeau noir, l'étape en cours en jaune constat */
-.parcours { background: #111113; border-color: #111113; color: #E4E4E7; }
-.parcours .route li, .parcours .route .qui { color: #A1A1AA; }
-.parcours .route li.fait, .parcours .route li.ici { color: #FFFFFF; }
-.parcours .route li::before { background: #3F3F46 !important; }
-.parcours .route li.fait::before, .parcours .route li.fait + li.ici::before, .parcours .route li.fait + li.fin::before { background: #E4E4E7 !important; }
-.parcours .route .pt { background: #111113; border-color: #52525B; }
-.parcours .route li.fait .pt { background: #E4E4E7; border-color: #E4E4E7; }
-.parcours .route li.ici .pt, .parcours .route li.ici.vous .pt { background: var(--constat); border-color: var(--constat); box-shadow: 0 0 0 4px rgba(217, 174, 69, .25); }
-.parcours .route li.ici.vous .qui { color: var(--constat); }
-.parcours .parcours-legende, .parcours p { color: #D4D4D8; border-color: #27272A !important; }
+/* Parcours du dossier : cadre noir, fond clair, l'étape en cours en jaune constat */
+.parcours { background: var(--feuille); border: 1.5px solid var(--encre); }
+.parcours .route li.ici .pt, .parcours .route li.ici.vous .pt { background: var(--constat); border-color: var(--encre); box-shadow: 0 0 0 4px rgba(217, 174, 69, .3); }
+.parcours .route li.ici.vous .qui { color: var(--encre); font-weight: 500; }
