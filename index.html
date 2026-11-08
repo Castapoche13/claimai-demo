@@ -391,7 +391,7 @@ a.tuile:hover { border-color: var(--trait-fort); text-decoration: none; }
 
 #c-captcha { min-height: 65px; }
 </style>
-<link rel="stylesheet" href="charte.css?v=20261108d">
+<link rel="stylesheet" href="charte.css?v=20261108e">
 </head>
 <body>
 
@@ -474,6 +474,7 @@ a.tuile:hover { border-color: var(--trait-fort); text-decoration: none; }
         <form class="recherche" id="form-recherche" role="search">
           <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><circle cx="7" cy="7" r="4.5" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M10.5 10.5L14 14" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
           <input class="saisie" id="q" type="search" placeholder="Plaque, n° de plainte, client, contrat, dossier…" aria-label="Rechercher un dossier">
+          <kbd class="touche" aria-hidden="true">Ctrl K</kbd>
         </form>
         <div class="env" role="group" aria-label="Environnement">
           <button type="button" id="env-prod" aria-pressed="true">Production</button>
@@ -512,6 +513,10 @@ $("b-theme").addEventListener("click", function () {
   var t = sombre ? "light" : "dark"; appliquerTheme(t); try { localStorage.setItem(THEME, t); } catch (e) { }
 });
 
+/* Raccourci : Ctrl K (ou Cmd K) place le curseur dans la recherche, comme dans les outils de gestion récents */
+document.addEventListener("keydown", function (e) {
+  if ((e.ctrlKey || e.metaKey) && (e.key === "k" || e.key === "K") && !$("ecran-app").hidden) { e.preventDefault(); $("q").focus(); $("q").select(); }
+});
 /* ---------------- Connexion : compte nominatif ---------------- */
 var sb = window.supabase.createClient(C.SUPABASE_URL, C.CLE_PUBLIQUE, { auth: { persistSession: true, storageKey: "claimai-auth", autoRefreshToken: true } });
 function jeton() { return sb.auth.getSession().then(function (r) { return r.data.session ? r.data.session.access_token : null; }); }
