@@ -422,3 +422,6 @@ body { -webkit-font-smoothing: auto; }
 /* Type de sinistre : juste un point de couleur devant le nom */
 .type-tag, .type-tag.t-glace, .type-tag.t-vol, .type-tag.t-degat, .type-tag.t-feu, .type-tag.t-nature, .type-tag.t-route, .type-tag.t-tiers { background: none !important; padding: 0; border-radius: 0; color: var(--encre-2) !important; font-weight: 400; font-size: 13px; gap: 8px; }
 .type-tag::before { width: 8px; height: 8px; }
+.vigil.activite li { grid-template-columns: 16px minmax(0, 1fr) auto; align-items: center; }
+.vigil.activite .type-tag { gap: 0; }
+.barre .gestionnaire .btn { margin-left: 4px; }

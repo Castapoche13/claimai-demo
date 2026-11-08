@@ -391,7 +391,7 @@ a.tuile:hover { border-color: var(--trait-fort); text-decoration: none; }
 
 #c-captcha { min-height: 65px; }
 </style>
-<link rel="stylesheet" href="charte.css?v=20261108i">
+<link rel="stylesheet" href="charte.css?v=20261108j">
 </head>
 <body>
 
@@ -481,7 +481,7 @@ a.tuile:hover { border-color: var(--trait-fort); text-decoration: none; }
           <button type="button" id="env-prod" aria-pressed="true">Production</button>
           <button type="button" id="env-essai" class="essai" aria-pressed="false">Essai</button>
         </div>
-        <div class="gestionnaire"><span class="avatar" id="n-avatar"></span><b id="n-gest"></b></div>
+        <div class="gestionnaire"><span class="avatar" id="n-avatar"></span><b id="n-gest"></b><button type="button" class="btn petit discret" id="b-compte" title="Se déconnecter pour se connecter avec un autre compte">Changer de compte</button></div>
       </div>
     </header>
     <main class="contenu" id="vue" tabindex="-1"></main>
@@ -519,7 +519,7 @@ document.addEventListener("keydown", function (e) {
   if ((e.ctrlKey || e.metaKey) && (e.key === "k" || e.key === "K") && !$("ecran-app").hidden) { e.preventDefault(); $("q").focus(); $("q").select(); }
 });
 /* ---------------- Connexion : compte nominatif ---------------- */
-var sb = window.supabase.createClient(C.SUPABASE_URL, C.CLE_PUBLIQUE, { auth: { persistSession: true, storageKey: "claimai-auth", autoRefreshToken: true } });
+var sb = window.supabase.createClient(C.SUPABASE_URL, C.CLE_PUBLIQUE, { auth: { persistSession: true, storageKey: "klerio-session", storage: window.sessionStorage, autoRefreshToken: true } });
 function jeton() { return sb.auth.getSession().then(function (r) { return r.data.session ? r.data.session.access_token : null; }); }
 
 /* Captcha de connexion : affiché seulement si une clé de site est réglée (commun.js) ou si Supabase en réclame un */
@@ -3035,7 +3035,7 @@ function vuePilotage() {
     if (!pm) { $("vue").innerHTML = h + pilotageSimple(i); return; }
     h += statsPilotage(pm) + '<div class="pil-pile">';
     h += '<div class="pil-grille"><section class="bloc">' + grapheFlux(pm) + '</section><section class="bloc">' + blocAge(pm) + "</section></div>";
-    h += blocEquipePilotage(eq, pm);
+    h += blocEquipePilotage(eq, pm) + blocActivite(eq);
     h += '<div class="pil-grille egale"><section class="bloc">' + blocMotifs(pm, eq, i) + '</section><section class="bloc">' + blocArgent(pm) + "</section></div>";
     h += blocVigilance(pm);
     if (mi) h += blocMissions(mi);
@@ -3287,6 +3287,26 @@ function brancherEquipePilotage(eq) {
       }).catch(function (x) { C.occupe(b, false); C.toast(x.message, true); });
     };
   });
+}
+
+/* Activité de l'équipe : ce que chacun vient de faire, mis à jour toutes les 30 secondes */
+var ACTIONS_H = { prise_dossier: "a pris le dossier", reaffectation: "a réaffecté le dossier", classement_sans_suite: "a classé sans suite le dossier",
+  reprise_gestionnaire: "a repris en main le dossier", information_recue: "a noté une information sur le dossier", renvoi_manager: "a renvoyé au responsable le dossier",
+  reouverture: "a rouvert le dossier", situation_tiers: "a précisé la situation du tiers sur le dossier", responsabilite_fixee: "a fixé la responsabilité sur le dossier",
+  vehicule_retrouve: "a signalé le véhicule retrouvé sur le dossier", action_information: "a donné suite à une information sur le dossier", reglage_repartition: "a modifié la répartition pour le dossier" };
+function libActivite(a) {
+  if (a.action === "changement_etat") return "a fait passer à « " + (C.STATUTS[a.statut] ? C.STATUTS[a.statut][0] : a.statut || "") + " » le dossier";
+  return ACTIONS_H[a.action] || String(a.action || "").replace(/_/g, " ") + ", dossier";
+}
+function blocActivite(eq) {
+  var l = eq.activite || [], centres = {};
+  (eq.gestionnaires || []).forEach(function (g) { centres[g.id] = g.centre || null; });
+  if (S.moi.role === "superviseur" && S.moi.centre) l = l.filter(function (a) { return centres[a.gestionnaire_id] === S.moi.centre; });
+  return '<section class="bloc"><div class="bloc-tete"><div><h2>Activité de l\'équipe</h2><p class="muet petit" style="margin-top:2px">Les dernières actions de chacun, mises à jour toutes les 30 secondes</p></div></div>' +
+    (l.length ? '<ul class="vigil activite">' + l.slice(0, 15).map(function (a) {
+      return '<li><span class="type-tag ' + (FAMILLE_TYPE[a.theme] || "") + '" title="' + esc(C.theme(a.theme)) + '"></span><span class="lib"><b>' + esc(a.qui || "Un gestionnaire") + "</b> " + esc(libActivite(a)) +
+        ' <a class="ref" href="#/dossier/' + esc(a.numero) + '">' + esc(a.numero) + '</a></span><span class="muet petit">' + esc(C.depuis(a.le)) + "</span></li>";
+    }).join("") + "</ul>" : '<div class="vide">Aucune action de l\'équipe ces 14 derniers jours.</div>') + "</section>";
 }
 
 /* Pourquoi un humain intervient, argent, vigilance */
@@ -3740,7 +3760,28 @@ function brancherRaccordement(admin) {
 }
 
 /* ---------------- Démarrage ---------------- */
-sb.auth.getSession().then(function (r) { if (r.data.session) entrer(r.data.session); });
+// Session de l'onglet : chaque onglet a son propre compte, et fermer le navigateur déconnecte.
+// Pendant la reprise d'une session, on n'affiche pas le formulaire (il ne doit pas « sauter » au bout de quelques secondes).
+(function () {
+  var f = $("form-connexion"), att = document.createElement("p");
+  att.className = "muet"; att.style.textAlign = "center"; att.textContent = "Ouverture de votre session…";
+  sb.auth.getSession().then(function (r) {
+    if (!r.data.session) return;
+    f.hidden = true; f.parentNode.insertBefore(att, f);
+    return entrer(r.data.session).finally(function () { att.remove(); if ($("ecran-app").hidden && $("form-mdp").hidden) f.hidden = false; });
+  });
+})();
+$("b-compte").addEventListener("click", function () { sb.auth.signOut().finally(function () { location.hash = ""; location.reload(); }); });
+// Accueil et Pilotage se mettent à jour seuls toutes les 30 secondes : le responsable voit le travail de l'équipe en direct
+setInterval(function () {
+  if (!S.moi || document.hidden || $("ecran-app").hidden) return;
+  var vue = location.hash.replace(/^#\/?/, "").split("/")[0] || "file";
+  if (vue !== "file" && vue !== "pilotage") return;
+  var a = document.activeElement;
+  if (a && /^(INPUT|SELECT|TEXTAREA)$/.test(a.tagName)) return;
+  if (document.querySelector('tr.gerer:not([hidden]), .mail-detail:not([hidden]), #table-flux:not([hidden])')) return;
+  var y = window.scrollY; router(); setTimeout(function () { window.scrollTo(0, y); }, 800);
+}, 30000);
 })();
 </script>
 </body>
