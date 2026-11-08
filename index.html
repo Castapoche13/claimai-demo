@@ -391,7 +391,7 @@ a.tuile:hover { border-color: var(--trait-fort); text-decoration: none; }
 
 #c-captcha { min-height: 65px; }
 </style>
-<link rel="stylesheet" href="charte.css?v=20261108c">
+<link rel="stylesheet" href="charte.css?v=20261108d">
 </head>
 <body>
 
@@ -839,7 +839,7 @@ function vueFile() {
     var h = bandeauCorporel() + '<div class="corbeille-tete"><div><h1>Corbeille</h1><p>Espace ' + esc(C.ESPACES[S.branche].nom.toLowerCase()) +
       ", " + esc(new Date().toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" })) + '</p></div><a class="btn primaire" href="#/declarer">Déclarer un sinistre</a></div>';
     h += '<div class="tuiles">' +
-      '<button type="button" class="tuile" data-aller="decider"><div class="val">' + file.length + '</div><div class="lib">Attendent une décision</div>' + "" + "</button>" +
+      '<button type="button" class="tuile forte" data-aller="decider"><div class="val">' + file.length + '</div><div class="lib">Attendent une décision</div>' + "" + "</button>" +
       '<button type="button" class="tuile" data-aller="tiers"><div class="val">' + tiers.length + '</div><div class="lib">Chez un expert, un garage ou l\'assuré</div></button>' +
       '<a class="tuile" href="#/archives"><div class="val">' + (ind.clos_30j || 0) + '</div><div class="lib">Terminés ces 30 derniers jours</div></a>' +
       '<a class="tuile" href="#/pilotage"><div class="val">' + (ind.taux_sans_intervention != null ? C.nombre(ind.taux_sans_intervention, 0) + " %" : "–") + '</div><div class="lib">Traités sans aucun clic</div></a></div>';
@@ -3039,7 +3039,7 @@ function statsPilotage(pm) {
   var dr = p.delai_reglement_jours, ts = p.taux_sans_intervention;
   return '<div class="pil-stats">' +
     '<div class="pil-stat"><div class="lib">Dossiers en cours</div><div class="val">' + (pm.en_cours || 0) + "</div>" + ecart(pm.en_cours, pm.en_cours_avant, "", true) + "</div>" +
-    '<div class="pil-stat"><div class="lib">À décider par l\'équipe</div><div class="val">' + (pm.a_decider || 0) + "</div>" +
+    '<div class="pil-stat forte"><div class="lib">À décider par l\'équipe</div><div class="val">' + (pm.a_decider || 0) + "</div>" +
       (pm.a_decider_plus_3j ? '<a class="delta" href="#/file">dont <b class="moins-bien">' + pm.a_decider_plus_3j + "</b> sans action depuis plus de " + J + " jours</a>"
         : '<div class="delta">Aucun dossier en attente depuis plus de ' + J + " jours</div>") + "</div>" +
     '<div class="pil-stat"><div class="lib">Délai jusqu\'au paiement</div><div class="val">' + (dr != null ? C.nombre(dr, 1) + "<small>jours</small>" : "–") + "</div>" +
