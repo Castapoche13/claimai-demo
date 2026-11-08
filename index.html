@@ -973,6 +973,14 @@ function listeAlertes(l, resp) {
         '<td class="nb muet">' + esc(C.depuis(a.le)) + "</td></tr>";
     }).join("") + "</tbody></table></div>";
 }
+// Les erreurs techniques de lecture sont traduites en une phrase qui dit quoi faire
+function precisionMail(m) {
+  var p = String(m.precision || "");
+  if (/401|x-api-key|authentication/i.test(p)) return "Klerio n'a pas pu lire ce mail : la clé de l'IA était refusée. Une fois la clé remplacée, cliquez sur Relancer la lecture.";
+  if (/HTTP 5\d\d|timeout|overloaded/i.test(p)) return "Klerio n'a pas pu lire ce mail : le service d'IA ne répondait pas. Cliquez sur Relancer la lecture.";
+  if (/HTTP \d{3}|\{"type"/.test(p)) return "Klerio n'a pas pu lire ce mail. Cliquez sur Relancer la lecture, ou indiquez le numéro du dossier.";
+  return p;
+}
 function listeMails(l) {
   if (!l.length) return '<div class="vide">Aucun mail reçu pour l\'instant' + (S.env === "test" ? "" : " dans cet environnement") + '.</div>';
   var plus = Math.max(0, l.length - 8);
@@ -991,7 +999,7 @@ function listeMails(l) {
     var relancer = ["demande_infos", "erreur", "ignore", "a_rattacher"].indexOf(m.statut) >= 0;
     return "<li" + (i >= 8 ? ' class="ancien" hidden' : "") + '><button type="button" class="ligne ligne-mail" data-mail="' + esc(m.id) + '" aria-expanded="false"><span class="repere"></span>' +
       '<span class="num">' + esc(m.expediteur || "?") + '<small>' + (msgs.length > 1 ? msgs.length + " messages" : "Mail reçu") + (nbPj ? ", " + nbPj + " pièce" + (nbPj > 1 ? "s jointes" : " jointe") : "") + (m.via ? " · via adresse de test" : "") + '</small></span>' +
-      '<span class="quoi">' + esc(msgs[0].objet || m.objet || "(sans objet)") + '<small>' + (m.numero ? esc(m.numero) + (m.theme ? " · " + esc(C.theme(m.theme)) : "") : esc(m.precision || "")) + '</small></span>' +
+      '<span class="quoi">' + esc(msgs[0].objet || m.objet || "(sans objet)") + '<small>' + (m.numero ? esc(m.numero) + (m.theme ? " · " + esc(C.theme(m.theme)) : "") : esc(precisionMail(m))) + '</small></span>' +
       '<span class="droite"><span class="pastille-mail ' + s[1] + '">' + esc(s[0]) + '</span><span>' + esc(C.depuis(m.recu_le)) + '</span></span></button>' +
       '<div class="mail-detail" id="md-' + esc(m.id) + '" hidden>' + fil +
         (m.verification ? '<p class="petit" style="margin:6px 0 0">' + esc(m.verification) + "</p>" : "") +
