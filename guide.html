@@ -7,7 +7,7 @@
 <meta name="description" content="Brancher l'outil de gestion des sinistres d'une compagnie sur Klerio : clés, déclarations, messages signés, recette.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
 <style>
 .haut { border-bottom: 1px solid var(--trait); background: var(--feuille); position: sticky; top: 0; z-index: 10; }
@@ -21,7 +21,7 @@
 .sommaire a { display: block; padding: 5px 8px; border-radius: 6px; color: var(--encre-2); font-size: 13px; }
 .sommaire a:hover { background: var(--survol); text-decoration: none; }
 .sommaire a.actif { background: var(--survol); color: var(--encre); font-weight: 500; }
-.sommaire .groupe { font-size: 11.5px; font-weight: 600; color: var(--gris); text-transform: uppercase; letter-spacing: .04em; padding: 14px 8px 4px; }
+.sommaire .groupe { font-size: 12.5px; font-weight: 500; color: var(--gris); padding: 16px 8px 4px; }
 main { padding: 32px 0 96px; min-width: 0; }
 main > section { padding-top: 8px; scroll-margin-top: 72px; }
 main > section + section { margin-top: 44px; border-top: 1px solid var(--trait); padding-top: 36px; }
@@ -32,9 +32,9 @@ main p, main li { color: var(--encre-2); max-width: 78ch; }
 main p + p { margin-top: 10px; }
 main ul, main ol.etapes { padding-left: 20px; display: grid; gap: 6px; margin: 10px 0; }
 .chapeau { font-size: 15.5px; color: var(--gris); margin-top: 8px; max-width: 70ch; }
-code, .mono { font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace; font-size: 12.5px; }
+code, .mono { font-family: var(--mono); font-size: 12.5px; }
 p code, li code, td code { background: var(--feuille-2); border: 1px solid var(--trait); border-radius: 4px; padding: 1px 5px; color: var(--encre); }
-pre { font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace; font-size: 12.5px; line-height: 1.55; background: var(--feuille-2); border: 1px solid var(--trait); border-radius: 8px; padding: 14px 16px; overflow-x: auto; margin: 12px 0; color: var(--encre); }
+pre { font-family: var(--mono); font-size: 12.5px; line-height: 1.55; background: var(--feuille-2); border: 1px solid var(--trait); border-radius: 8px; padding: 14px 16px; overflow-x: auto; margin: 12px 0; color: var(--encre); }
 .tab-code { border: 1px solid var(--trait); border-radius: 8px; margin: 12px 0; overflow: hidden; }
 .tab-code .langs { display: flex; gap: 2px; background: var(--feuille-2); border-bottom: 1px solid var(--trait); padding: 4px; overflow-x: auto; }
 .tab-code .langs button { border: 0; background: none; padding: 5px 10px; border-radius: 5px; font-size: 12.5px; font-weight: 500; color: var(--gris); cursor: pointer; white-space: nowrap; }
@@ -73,6 +73,7 @@ table.doc td:first-child { white-space: nowrap; }
   .haut-in .titre, .haut-in .sep { display: none; }
 }
 </style>
+<link rel="stylesheet" href="charte.css?v=20261108c">
 </head>
 <body>
 <header class="haut">

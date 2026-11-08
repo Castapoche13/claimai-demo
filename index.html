@@ -6,7 +6,7 @@
 <title>Console sinistres Klerio</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css?v=20261105a">
 <style>
 /* ---------- Connexion ---------- */
@@ -391,7 +391,7 @@ a.tuile:hover { border-color: var(--trait-fort); text-decoration: none; }
 
 #c-captcha { min-height: 65px; }
 </style>
-<link rel="stylesheet" href="charte.css?v=20261108a">
+<link rel="stylesheet" href="charte.css?v=20261108c">
 </head>
 <body>
 
@@ -455,7 +455,6 @@ a.tuile:hover { border-color: var(--trait-fort); text-decoration: none; }
       <li><a href="#/archives" data-vue="archives"><svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><rect x="2.5" y="3.5" width="13" height="3.5" rx="1" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M3.5 7v6.5a1 1 0 001 1h9a1 1 0 001-1V7M7.5 10h3" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>Archives</a></li>
       <li><a href="#/clients" data-vue="clients"><svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><circle cx="9" cy="6.5" r="3" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M3.5 15c.7-2.8 2.8-4.2 5.5-4.2s4.8 1.4 5.5 4.2" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>Clients</a></li>
       <li><a href="#/declarer" data-vue="declarer"><svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path d="M9 3.5v11M3.5 9h11" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>Déclarer un sinistre</a></li>
-      <li><a href="#/boites" data-vue="boites"><svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><rect x="2.5" y="4" width="13" height="10" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M3 5l6 5 6-5" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>Boîtes mail de test</a></li>
       <li><a href="#/pilotage" data-vue="pilotage"><svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path d="M3.5 14.5V9M9 14.5V4M14.5 14.5v-7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>Pilotage</a></li>
       <li><a href="#/raccordement" data-vue="raccordement"><svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path d="M7 11l4-4M6 8.5L4.5 10a2.5 2.5 0 003.5 3.5L9.5 12M12 9.5L13.5 8A2.5 2.5 0 0010 4.5L8.5 6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>Raccordement</a></li>
       <li id="n-equipe" hidden><a href="#/equipe" data-vue="equipe"><svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><circle cx="7" cy="6.5" r="2.5" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M2.5 14.5c.6-2.4 2.4-3.5 4.5-3.5s3.9 1.1 4.5 3.5M12 4.5a2.3 2.3 0 010 4.5M13.5 11.3c1.2.5 1.8 1.6 2 3.2" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>Équipe</a></li>
@@ -490,7 +489,7 @@ a.tuile:hover { border-color: var(--trait-fort); text-decoration: none; }
 <div id="toast" class="toast" hidden role="status"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="commun.js?v=20261105b"></script>
+<script src="commun.js?v=20261108c"></script>
 <script>
 (function () {
 "use strict";
@@ -981,7 +980,7 @@ function listeMails(l) {
     }).join("");
     var relancer = ["demande_infos", "erreur", "ignore", "a_rattacher"].indexOf(m.statut) >= 0;
     return "<li" + (i >= 8 ? ' class="ancien" hidden' : "") + '><button type="button" class="ligne ligne-mail" data-mail="' + esc(m.id) + '" aria-expanded="false"><span class="repere"></span>' +
-      '<span class="num">' + esc(m.expediteur || "?") + '<small>' + (msgs.length > 1 ? msgs.length + " messages" : "Mail reçu") + (nbPj ? " · 📎 " + nbPj : "") + (m.via ? " · via adresse de test" : "") + '</small></span>' +
+      '<span class="num">' + esc(m.expediteur || "?") + '<small>' + (msgs.length > 1 ? msgs.length + " messages" : "Mail reçu") + (nbPj ? ", " + nbPj + " pièce" + (nbPj > 1 ? "s jointes" : " jointe") : "") + (m.via ? " · via adresse de test" : "") + '</small></span>' +
       '<span class="quoi">' + esc(msgs[0].objet || m.objet || "(sans objet)") + '<small>' + (m.numero ? esc(m.numero) + (m.theme ? " · " + esc(C.theme(m.theme)) : "") : esc(m.precision || "")) + '</small></span>' +
       '<span class="droite"><span class="pastille-mail ' + s[1] + '">' + esc(s[0]) + '</span><span>' + esc(C.depuis(m.recu_le)) + '</span></span></button>' +
       '<div class="mail-detail" id="md-' + esc(m.id) + '" hidden>' + fil +
@@ -1080,7 +1079,7 @@ function vueDossiers() {
       $("f-n").textContent = l.length + " dossier" + (l.length > 1 ? "s" : "");
       $("f-table").innerHTML = l.length ? '<table class="tableau"><thead><tr><th>Dossier</th><th>Type</th><th>Contrat</th><th>Sinistre</th><th>Statut</th><th>Suivi par</th><th class="nb">Montant</th><th>Mis à jour</th></tr></thead><tbody>' +
         l.map(function (d) {
-          return '<tr data-n="' + esc(d.numero) + '" tabindex="0"><td><b>' + esc(d.numero) + '</b>' + (d.ref_externe ? '<div class="muet petit">' + esc(d.ref_externe) + "</div>" : "") + '</td><td>' + esc(C.theme(d.theme)) +
+          return '<tr data-n="' + esc(d.numero) + '" tabindex="0"><td><b class="ref">' + esc(d.numero) + '</b>' + (d.ref_externe ? '<div class="muet petit">' + esc(d.ref_externe) + "</div>" : "") + '</td><td>' + esc(C.theme(d.theme)) +
             '</td><td>' + esc(d.contrat || "Inconnu") + (d.immatriculation ? '<div class="muet petit">' + esc(d.immatriculation) + "</div>" : "") + '</td><td>' + esc(C.dateCourte(d.date_sinistre)) +
             '</td><td>' + C.statut(d.statut) + '</td><td class="muet">' + esc(d.gestionnaire || "Automatique") + '</td><td class="nb">' + esc(eur(d.montant)) + '</td><td class="muet">' + esc(C.depuis(d.maj)) + "</td></tr>";
         }).join("") + "</tbody></table>" : '<div class="vide"><b>Aucun dossier ne correspond</b>Modifiez la recherche ou le statut.</div>';
@@ -1125,7 +1124,7 @@ function vueArchives() {
     $("a-table").innerHTML = l.length ? '<table class="tableau"><thead><tr><th>Dossier</th><th>Type</th><th>Issue</th><th>Terminé le</th><th class="nb">Montant</th><th>Remis à votre outil</th><th>Données chez Klerio</th></tr></thead><tbody>' +
       l.map(function (d) {
         var cons = d.efface_le ? "Effacées le " + C.dateCourte(d.efface_le) : d.effacement_prevu ? "Effacement le " + C.dateCourte(d.effacement_prevu) : "Conservées";
-        return '<tr data-n="' + esc(d.numero) + '" tabindex="0"><td><b>' + esc(d.numero) + '</b>' + (d.ref_externe ? '<div class="muet petit">' + esc(d.ref_externe) + "</div>" : "") + '</td><td>' + esc(C.theme(d.theme)) +
+        return '<tr data-n="' + esc(d.numero) + '" tabindex="0"><td><b class="ref">' + esc(d.numero) + '</b>' + (d.ref_externe ? '<div class="muet petit">' + esc(d.ref_externe) + "</div>" : "") + '</td><td>' + esc(C.theme(d.theme)) +
           '</td><td>' + C.statut(d.statut) + '</td><td>' + esc(C.dateCourte(d.clos_le)) + '</td><td class="nb">' + esc(eur(d.montant)) +
           '</td><td>' + (d.archive_remise ? '<span class="statut ok">Oui</span>' : '<span class="statut neutre">En attente</span>') + '</td><td class="muet">' + esc(cons) + "</td></tr>";
       }).join("") + "</tbody></table>" : '<div class="vide"><b>Aucun dossier terminé</b>Les dossiers clos, refusés ou classés apparaîtront ici.</div>';
@@ -1274,7 +1273,7 @@ function afficherDossier(f) {
     "</dl></div></section>";
   var lienClient = ctr.assure_ref ? "#/client/" + encodeURIComponent(ctr.assure_ref) : "";
   h += '<section class="bloc"><div class="bloc-tete"><h3>Contrat</h3>' + (ctr.statut ? '<span class="statut ' + (ctr.statut === "actif" ? "ok" : "ko") + '">' + esc(ctr.statut === "actif" ? "Actif" : "Résilié") + "</span>" : "") + '</div><div class="bloc-corps">' +
-    (lienClient ? '<a class="btn primaire petit bouton-client" href="' + lienClient + '">Voir tout le client : dossiers, mails, pièces</a>' : "") +
+    (lienClient ? '<a class="btn petit bouton-client" href="' + lienClient + '">Voir tout le client : dossiers, mails, pièces</a>' : "") +
     (ctr.numero ? '<dl class="info-liste"><dt>Numéro</dt><dd>' + (lienClient ? '<a href="' + lienClient + '">' + esc(ctr.numero) + "</a>" : esc(ctr.numero)) + "</dd>" + (ctr.immatriculation ? "<dt>Véhicule</dt><dd>" + esc(ctr.immatriculation) + "</dd>" : "") +
       "<dt>Assuré</dt><dd>" + (lienClient ? '<a href="' + lienClient + '">' + esc(ctr.assure_ref) + "</a>" : esc(ctr.assure_ref)) + "</dd><dt>Effet</dt><dd>" + esc(C.dateCourte(ctr.date_effet)) + (ctr.date_fin ? " au " + esc(C.dateCourte(ctr.date_fin)) : "") + "</dd>" +
       "<dt>Garanties</dt><dd>" + ((ctr.garanties || []).length ? repliable((ctr.garanties || []).map(function (g) {
@@ -1604,7 +1603,7 @@ function vueDoublons() {
       (r.a_verifier ? " " + r.a_verifier + " doublon" + (r.a_verifier > 1 ? "s" : "") + " possible" + (r.a_verifier > 1 ? "s attendent" : " attend") + " votre vérification dans l\'accueil." : "") + "</p></div></div>" +
       '<section class="bloc"><div class="tableau-wrap">' + (l.length ? '<table class="tableau"><thead><tr><th>Déclaration</th><th>Doublon de</th><th>Type</th><th>Sinistre</th><th>Véhicule</th><th>Classé par</th><th>Reçu</th></tr></thead><tbody>' +
         l.map(function (d) {
-          return '<tr data-n="' + esc(d.numero) + '" tabindex="0"><td><b>' + esc(d.numero) + '</b></td><td><a href="#/dossier/' + encodeURIComponent(d.de || "") + '">' + esc(d.de || "") + "</a></td><td>" + esc(C.theme(d.theme)) +
+          return '<tr data-n="' + esc(d.numero) + '" tabindex="0"><td><b class="ref">' + esc(d.numero) + '</b></td><td><a href="#/dossier/' + encodeURIComponent(d.de || "") + '">' + esc(d.de || "") + "</a></td><td>" + esc(C.theme(d.theme)) +
             "</td><td>" + esc(C.dateCourte(d.date_sinistre)) + "</td><td>" + esc(d.contrat || "") + (d.immatriculation ? '<div class="muet petit">' + esc(d.immatriculation) + "</div>" : "") +
             '</td><td class="muet">' + (d.automatique ? "Klerio" : esc(String(d.par || "").replace(/^humain:/, ""))) + '</td><td class="muet">' + esc(C.depuis(d.recu_le)) + "</td></tr>";
         }).join("") + "</tbody></table>" : '<div class="vide"><b>Aucun doublon classé</b>Les déclarations en double apparaîtront ici.</div>') + "</div></section>";
@@ -2158,7 +2157,7 @@ function carteAction(f) {
     return '<section class="decision" id="carte-decision"><div class="decision-entete">Décision requise</div><div class="decision-corps"><h2>' + esc(titre) + "</h2>" +
       (expl ? '<p class="explication">' + esc(expl) + "</p>" : "") + corps +
       '<label class="champ">Commentaire <span class="aide">Obligatoire si vous écartez la proposition.</span><textarea class="saisie" id="d-com" rows="2" style="min-height:64px"></textarea></label>' +
-      '<div class="decision-actions"><button class="btn primaire" id="d-oui" data-v="' + esc(v.id) + '"' + (horsPlafond ? " disabled" : "") + '>' + esc(oui) + '</button><button class="btn danger" id="d-non" data-v="' + esc(v.id) + '">' + esc(non) + "</button>" +
+      '<div class="decision-actions"><button class="btn primaire" id="d-oui" data-v="' + esc(v.id) + '"' + (horsPlafond ? " disabled" : "") + '>' + esc(oui) + '</button><button class="btn" id="d-non" data-v="' + esc(v.id) + '">' + esc(non) + "</button>" +
         (p.code === "VIGILANCE_VOL" ? '<button class="btn discret" id="d-enquete">Confier à un enquêteur (facultatif)</button>' : "") + "</div>" +
       (loi ? '<p class="loi">' + esc(loi) + "</p>" : "") + '</div><div class="tampon" id="tampon" aria-hidden="true"></div></section>';
   }
@@ -2988,88 +2987,227 @@ function dessinerBoites() {
 }
 
 /* ---------------- Vue : Pilotage ---------------- */
+// Ce qu'un responsable de plateau regarde chaque matin : le stock et son ancienneté, le flux de la semaine, les délais,
+// la charge de chaque gestionnaire, ce qui fait sortir les dossiers du circuit automatique, l'argent et les points de vigilance.
 function vuePilotage() {
-  Promise.all([api("indicateurs" + qb()), estResponsable() ? api("pilotage-equipe" + qb()) : Promise.resolve(null),
-               estResponsable() ? api("missions" + qb()).catch(function () { return null; }) : Promise.resolve(null),
-               estResponsable() ? api("recette").catch(function () { return null; }) : Promise.resolve(null),
+  var resp = estResponsable();
+  Promise.all([api("indicateurs" + qb()), resp ? api("pilotage-equipe" + qb()) : Promise.resolve(null),
+               resp ? api("missions" + qb()).catch(function () { return null; }) : Promise.resolve(null),
+               resp ? api("recette").catch(function () { return null; }) : Promise.resolve(null),
                S.branche === "contractuel" ? Promise.resolve(null) : api("recours").catch(function () { return null; })]).then(function (r) {
-    var i = r[0], eq = r[1], mi = r[2], rec = r[3], rc = r[4];
+    var i = r[0] || {}, eq = r[1], mi = r[2], rec = r[3], rc = r[4], pm = eq && eq.pilotage;
     compter(i);
-    var h = bandeauCorporel() + '<div class="entete-vue"><div><h1>Pilotage</h1><p>Espace ' + esc(C.ESPACES[S.branche].nom.toLowerCase()) + " de " + esc(i.assureur) + ", hors jeux de test archivés.</p></div></div>";
-    if (rec && rec.lancee_le) {
-      var ko = (rec.resultats || []).filter(function (x) { return !x.ok; });
-      h += '<p class="indice' + (rec.ok ? " ok" : " ko") + '" style="margin:0 0 14px">Recette de nuit du ' + esc(C.dateFr(rec.lancee_le)) + " : " +
-        (rec.ok ? "les " + rec.nb_parcours + " parcours automatiques fonctionnent." : rec.nb_echecs + " parcours en échec (" + esc(ko.map(function (x) { return C.theme(x.parcours) || x.parcours; }).join(", ")) + "), prévenez Klerio.") + "</p>";
-    }
-    var delai = i.delai_moyen_cloture_heures;
-    h += '<div class="chiffres">' +
-      '<div class="chiffre"><div class="val">' + (i.en_cours || 0) + '</div><div class="lib">Dossiers en cours sur ' + (i.total || 0) + "</div></div>" +
-      '<div class="chiffre vous"><div class="val">' + (i.a_traiter || 0) + '</div><div class="lib">Attendent une décision</div></div>' +
-      '<div class="chiffre"><div class="val">' + (i.taux_sans_intervention != null ? C.nombre(i.taux_sans_intervention, 0) + " %" : "–") + '</div><div class="lib">Traités sans intervention</div></div>' +
-      '<div class="chiffre"><div class="val">' + (delai != null ? (delai < 48 ? C.nombre(delai, 1) + " h" : C.nombre(delai / 24, 1) + " j") : "–") + '</div><div class="lib">Délai moyen jusqu\'au paiement</div></div>' +
-      '<div class="chiffre"><div class="val">' + esc(eur(i.montant_regle)) + '</div><div class="lib">Réglé</div></div>' +
-      '<div class="chiffre"><div class="val">' + esc(eur(i.montant_en_cours)) + '</div><div class="lib">Engagé, pas encore payé</div></div></div>';
-    h += '<div class="deux"><section class="bloc"><div class="bloc-tete"><h2>Où en sont les dossiers</h2></div><div class="bloc-corps barres">' +
-      barres(i.par_statut, function (k) { return (C.STATUTS[k] || [k])[0]; }, function (k) { return C.attendVous(k); }) + "</div></section>" +
-      '<section class="bloc"><div class="bloc-tete"><h2>Par type de sinistre</h2></div><div class="bloc-corps barres">' + barres(i.par_theme, C.theme) + "</div></section></div>";
-    h += '<div class="deux"><section class="bloc"><div class="bloc-tete"><h2>Pourquoi un humain intervient</h2></div><div class="bloc-corps barres">' +
-      (Object.keys(i.par_motif || {}).length ? barres(i.par_motif, C.motif, function () { return true; }) : '<p class="muet">Aucun dossier en attente d\'un humain.</p>') + "</div></section>" +
-      '<section class="bloc"><div class="bloc-tete"><h2>Courriers et IA</h2></div><div class="bloc-corps"><dl class="info-liste">' +
-      "<dt>Courriers préparés</dt><dd>" + ((i.courriers || {}).total || 0) + "</dd><dt>Partis par email</dt><dd>" + ((i.courriers || {}).envoyes || 0) + "</dd>" +
-      "<dt>Échecs d'envoi</dt><dd>" + ((i.courriers || {}).erreurs || 0) + "</dd><dt>Déclarations lues par Claude</dt><dd>" + (i.analyses_ia || 0) + "</dd>" +
-      "<dt>Fiabilité moyenne</dt><dd>" + (i.confiance_moyenne != null ? Math.round(i.confiance_moyenne * 100) + " %" : "–") + "</dd></dl></div></section></div>";
-    if (eq) { var i0 = h.indexOf('<div class="deux">'); h = h.slice(0, i0) + '<div style="margin-top:16px">' + blocEquipePilotage(eq) + "</div>" + (mi ? blocMissions(mi) : "") + h.slice(i0); }
+    var esp = C.ESPACES[S.branche].nom.toLowerCase();
+    var h = bandeauCorporel() + '<div class="entete-vue"><div><h1>Pilotage</h1><p>Espace ' + esc(esp) +
+      (pm ? ", sur les 30 derniers jours comparés aux 30 précédents." : ".") + "</p></div>" + etatService(rec, pm) + "</div>";
+    if (!pm) { $("vue").innerHTML = h + pilotageSimple(i); return; }
+    h += statsPilotage(pm) + '<div class="pil-pile">';
+    h += '<div class="pil-grille"><section class="bloc">' + grapheFlux(pm) + '</section><section class="bloc">' + blocAge(pm) + "</section></div>";
+    h += blocEquipePilotage(eq, pm);
+    h += '<div class="pil-grille egale"><section class="bloc">' + blocMotifs(pm, eq, i) + '</section><section class="bloc">' + blocArgent(pm) + "</section></div>";
+    h += blocVigilance(pm);
+    if (mi) h += blocMissions(mi);
     if (rc && (rc.a_suivre || []).length) h += blocRecoursPilotage(rc);
-    $("vue").innerHTML = h;
+    $("vue").innerHTML = h + "</div>";
+    brancherGraphe(pm.semaines || []);
     brancherEquipePilotage(eq);
     brancherMissions();
   }).catch(erreurVue);
 }
-/* Pilotage de l'équipe : réservé aux superviseurs et administrateurs */
+function pl(n, s, p) { return n > 1 ? (p || s + "s") : s; }
+function duree(heures) {
+  if (heures == null) return "–";
+  return heures < 48 ? C.nombre(heures, heures < 10 ? 1 : 0) + " h" : C.nombre(heures / 24, 1) + " j";
+}
+function etatService(rec, pm) {
+  var ia = pm && pm.vigilance ? pm.vigilance.ia_echec_24h : 0;
+  if (ia) return '<span class="pil-etat ko">L\'IA n\'a pas pu analyser ' + ia + " dossier" + pl(ia, "") + " en 24 h</span>";
+  if (!rec || !rec.lancee_le) return "";
+  return rec.ok ? '<span class="pil-etat">Recette de nuit réussie, ' + rec.nb_parcours + " parcours vérifiés</span>"
+    : '<span class="pil-etat ko">' + rec.nb_echecs + " parcours en échec cette nuit, prévenez Klerio</span>";
+}
+// Écart avec les 30 jours précédents ; « mieux » dépend du sens de l'indicateur
+function ecart(val, avant, unite, mieuxSiBaisse, dec) {
+  if (val == null || avant == null) return '<div class="delta">Pas de comparaison possible</div>';
+  var d = val - avant, seuil = dec ? 0.05 : 0.5;
+  if (Math.abs(d) < seuil) return '<div class="delta">Stable vs 30 jours précédents</div>';
+  var bien = mieuxSiBaisse ? d < 0 : d > 0;
+  return '<div class="delta"><b class="' + (bien ? "mieux" : "moins-bien") + '">' + (d > 0 ? "+" : "−") + (unite === " €" ? eur(Math.round(Math.abs(d))).replace(/,00\s?€/, " €") : C.nombre(Math.abs(d), dec || 0) + unite) + "</b> vs 30 jours précédents</div>";
+}
+function statsPilotage(pm) {
+  var p = pm.periode || {}, J = pm.relance_jours || 3;
+  var dr = p.delai_reglement_jours, ts = p.taux_sans_intervention;
+  return '<div class="pil-stats">' +
+    '<div class="pil-stat"><div class="lib">Dossiers en cours</div><div class="val">' + (pm.en_cours || 0) + "</div>" + ecart(pm.en_cours, pm.en_cours_avant, "", true) + "</div>" +
+    '<div class="pil-stat"><div class="lib">À décider par l\'équipe</div><div class="val">' + (pm.a_decider || 0) + "</div>" +
+      (pm.a_decider_plus_3j ? '<a class="delta" href="#/file">dont <b class="moins-bien">' + pm.a_decider_plus_3j + "</b> sans action depuis plus de " + J + " jours</a>"
+        : '<div class="delta">Aucun dossier en attente depuis plus de ' + J + " jours</div>") + "</div>" +
+    '<div class="pil-stat"><div class="lib">Délai jusqu\'au paiement</div><div class="val">' + (dr != null ? C.nombre(dr, 1) + "<small>jours</small>" : "–") + "</div>" +
+      (dr != null ? ecart(dr, p.delai_reglement_jours_avant, " j", true, 1) : '<div class="delta">Aucun dossier payé sur la période</div>') + "</div>" +
+    '<div class="pil-stat"><div class="lib">Réglés sans intervention</div><div class="val">' + (ts != null ? C.nombre(ts, 0) + "<small>%</small>" : "–") + "</div>" +
+      (ts != null ? ecart(ts, p.taux_sans_intervention_avant, " pts", false, 0) : '<div class="delta">Aucun dossier terminé sur la période</div>') + "</div></div>";
+}
+
+/* Graphique principal : nouveaux dossiers et dossiers terminés par semaine (colonnes groupées, une seule échelle) */
+var MOIS_C = ["janv.", "févr.", "mars", "avr.", "mai", "juin", "juil.", "août", "sept.", "oct.", "nov.", "déc."];
+function semaineLib(iso, long) {
+  var d = new Date(iso + "T12:00:00");
+  return long ? "Semaine du " + d.getDate() + " " + d.toLocaleDateString("fr-FR", { month: "long" }) : d.getDate() + " " + MOIS_C[d.getMonth()];
+}
+function grapheFlux(pm) {
+  var s = pm.semaines || [], p = pm.periode || {};
+  var vide = !s.some(function (x) { return x.entrees || x.sorties; });
+  return '<div class="bloc-tete"><div><h2>Entrées et sorties de dossiers</h2><p class="muet petit" style="margin-top:2px">Par semaine, sur les 12 dernières semaines</p></div>' +
+    '<div class="pil-legende" aria-hidden="true"><span><i style="background:var(--serie-1)"></i>Nouveaux dossiers</span><span><i style="background:var(--serie-2)"></i>Dossiers terminés</span></div></div>' +
+    '<div class="bloc-corps">' + (vide ? '<div class="vide">Pas encore de dossier sur ces 12 semaines.</div>' :
+      '<div class="graphe" id="graphe-flux">' + svgFlux(s) + '<div class="graphe-bulle" id="bulle-flux" aria-hidden="true"></div></div>' +
+      '<p class="pil-resume">' + (p.entrees || 0) + " nouveau" + pl(p.entrees, "", "x") + " dossier" + pl(p.entrees, "") + " et " + (p.sorties || 0) + " terminé" + pl(p.sorties, "") +
+      " sur les 30 derniers jours. " + '<button type="button" class="btn-plus" id="b-table-flux" aria-expanded="false" aria-controls="table-flux">Voir les chiffres</button></p>' +
+      '<div id="table-flux" hidden>' + tableFlux(s) + "</div>") + "</div>";
+}
+function pasEchelle(max) {
+  var pas = [1, 2, 5, 10, 20, 25, 50, 100, 200, 250, 500, 1000];
+  for (var k = 0; k < pas.length; k++) if (max / pas[k] <= 4) return pas[k];
+  return Math.ceil(max / 4);
+}
+function colonne(x, yb, w, h, r, cl) {
+  if (h <= 0) return "";
+  r = Math.min(r, h, w / 2);
+  var y = yb - h;
+  return '<path class="' + cl + '" d="M' + x + " " + yb + "V" + (y + r) + "Q" + x + " " + y + " " + (x + r) + " " + y + "H" + (x + w - r) + "Q" + (x + w) + " " + y + " " + (x + w) + " " + (y + r) + "V" + yb + 'Z"/>';
+}
+function svgFlux(s) {
+  // sur téléphone, un repère plus étroit garde des libellés lisibles
+  var etroit = window.innerWidth < 700, W = etroit ? 360 : 720, H = etroit ? 220 : 240, ml = 30, mb = 28, mt = 8, n = s.length || 1, pasLib = etroit ? 3 : 2;
+  var max = Math.max.apply(null, s.map(function (x) { return Math.max(x.entrees, x.sorties); }).concat([1]));
+  var pas = pasEchelle(max), top = pas * Math.ceil(max / pas), ph = H - mb - mt, gw = (W - ml) / n, bw = Math.max(4, Math.min(16, (gw - (etroit ? 8 : 14)) / 2));
+  var y = function (v) { return mt + ph - v / top * ph; };
+  var g = "";
+  for (var t = 0; t <= top; t += pas) g += '<line class="grille-l" x1="' + ml + '" x2="' + W + '" y1="' + y(t) + '" y2="' + y(t) + '"/><text class="axe" x="' + (ml - 10) + '" y="' + (y(t) + 4) + '" text-anchor="end">' + t + "</text>";
+  s.forEach(function (x, i) {
+    var cx = ml + gw * i + gw / 2, x1 = cx - bw - 1, x2 = cx + 1;
+    g += '<g class="grp" data-i="' + i + '">' + colonne(x1, y(0), bw, y(0) - y(x.entrees), 4, "b1") + colonne(x2, y(0), bw, y(0) - y(x.sorties), 4, "b2") + "</g>";
+    if (i % pasLib === (n - 1) % pasLib) g += '<text class="axe" x="' + cx + '" y="' + (H - 8) + '" text-anchor="middle">' + esc(semaineLib(x.semaine)) + "</text>";
+    g += '<rect class="zone" data-i="' + i + '" x="' + (ml + gw * i) + '" y="' + mt + '" width="' + gw + '" height="' + ph + '"/>';
+  });
+  var der = s[s.length - 1] || {};
+  return '<svg viewBox="0 0 ' + W + " " + H + '" role="img" aria-label="Nouveaux dossiers et dossiers terminés par semaine. Dernière semaine : ' +
+    (der.entrees || 0) + " nouveaux, " + (der.sorties || 0) + ' terminés.">' + g + "</svg>";
+}
+function tableFlux(s) {
+  return '<table class="table-graphe"><thead><tr><th>Semaine</th><th>Nouveaux</th><th>Terminés</th><th>En cours en fin de semaine</th></tr></thead><tbody>' +
+    s.slice().reverse().map(function (x) { return "<tr><td>" + esc(semaineLib(x.semaine, true)) + "</td><td>" + x.entrees + "</td><td>" + x.sorties + "</td><td>" + x.stock + "</td></tr>"; }).join("") + "</tbody></table>";
+}
+function brancherGraphe(s) {
+  var zone = $("graphe-flux"), bulle = $("bulle-flux"), bt = $("b-table-flux");
+  if (bt) bt.onclick = function () {
+    var t = $("table-flux"), ouvert = !t.hidden; t.hidden = ouvert;
+    bt.setAttribute("aria-expanded", String(!ouvert)); bt.textContent = ouvert ? "Voir les chiffres" : "Masquer les chiffres";
+  };
+  if (!zone) return;
+  var svg = zone.querySelector("svg");
+  function montrer(i) {
+    var x = s[i]; if (!x) return;
+    svg.classList.add("survol");
+    svg.querySelectorAll("g.grp").forEach(function (g) { g.classList.toggle("actif", g.dataset.i === String(i)); });
+    bulle.innerHTML = "<b>" + esc(semaineLib(x.semaine, true)) + "</b>" +
+      '<span><em><i style="background:var(--serie-1)"></i>Nouveaux</em>' + x.entrees + "</span>" +
+      '<span><em><i style="background:var(--serie-2)"></i>Terminés</em>' + x.sorties + "</span>" +
+      "<span><em>En cours en fin de semaine</em>" + x.stock + "</span>";
+    var r = zone.getBoundingClientRect(), z = svg.querySelector('rect.zone[data-i="' + i + '"]').getBoundingClientRect();
+    var gauche = z.left - r.left + z.width / 2 + 12;
+    if (gauche + 180 > r.width) gauche = z.left - r.left + z.width / 2 - 192;
+    bulle.style.left = Math.max(0, gauche) + "px"; bulle.style.top = "8px"; bulle.classList.add("vue");
+  }
+  function cacher() { svg.classList.remove("survol"); bulle.classList.remove("vue"); }
+  svg.querySelectorAll("rect.zone").forEach(function (z) {
+    z.addEventListener("mouseenter", function () { montrer(Number(z.dataset.i)); });
+    z.addEventListener("click", function () { montrer(Number(z.dataset.i)); });
+  });
+  svg.addEventListener("mouseleave", cacher);
+}
+
+/* Listes classées avec barre fine */
+function rangs(l, lib, val, fort, fmt) {
+  if (!l.length) return '<div class="vide">Aucune donnée sur la période.</div>';
+  var max = Math.max.apply(null, l.map(val).concat([1]));
+  return '<div class="rangs">' + l.map(function (x) {
+    var v = val(x);
+    return '<div class="rang' + (fort && fort(x) ? " fort" : "") + '"><span class="lib">' + lib(x) + '</span><span class="n">' + (fmt ? fmt(v) : v) +
+      '</span><span class="piste"><span style="width:' + (v ? Math.max(2, v / max * 100) : 0) + '%"></span></span></div>';
+  }).join("") + "</div>";
+}
+function blocAge(pm) {
+  var l = pm.age_en_cours || [], vieux = l.slice(3).reduce(function (t, x) { return t + x.n; }, 0);
+  return '<div class="bloc-tete"><div><h2>Ancienneté des dossiers en cours</h2><p class="muet petit" style="margin-top:2px">Depuis la déclaration</p></div></div>' +
+    '<div class="bloc-corps">' + rangs(l, function (x) { return esc(x.tranche.charAt(0).toUpperCase() + x.tranche.slice(1)); },
+      function (x) { return x.n; }, function (x) { return l.indexOf(x) >= 3 && x.n > 0; }) +
+    '<p class="pil-note">' + (vieux ? vieux + " dossier" + pl(vieux, "") + " ouvert" + pl(vieux, "") + " depuis plus de 30 jours. " : "") +
+    (pm.plus_ancien_jours != null ? "Le plus ancien a " + pm.plus_ancien_jours + " jours. " : "") +
+    (pm.chez_intervenant ? pm.chez_intervenant + (pm.chez_intervenant > 1 ? " attendent" : " attend") + " un expert, un garage ou l'assuré. " : "") +
+    '<a href="#/dossiers">Voir les dossiers en cours</a></p></div>';
+}
+
+/* Équipe : la charge et les retards de chacun, les réglages derrière « Gérer » */
 var SERVICES = { contractuel: "Contractuel", tiers: "Avec tiers", tous: "Les deux" };
-function blocEquipePilotage(eq) {
-  var g = eq.gestionnaires || [], auto = eq.decisions_automatiques_30j || 0, hum = eq.decisions_humaines_30j || 0;
-  var presents = g.filter(function (x) { return x.actif && x.disponible && x.role === "gestionnaire"; }).length;
-  var h = '<section class="bloc" style="margin-top:0"><div class="bloc-tete"><h2>Équipe</h2><span class="muet petit">' +
-    (eq.mode_repartition === "repartition" ? "La plupart des dossiers sont traités seuls. Ceux qui demandent une personne partent automatiquement à celui du bon service qui en a reçu le moins aujourd'hui (temps partiel compris), puis il le garde jusqu'au bout. Les absents et ceux qui ne reçoivent pas de nouveaux dossiers sont sautés. " + presents + " gestionnaire" + (presents > 1 ? "s" : "") + " disponible" + (presents > 1 ? "s" : "") + "." : "File commune : chacun prend ses dossiers") + "</span>" +
-    (eq.mode_repartition === "repartition" ? '<button type="button" class="btn petit primaire" id="b-repartir" title="Attribue les dossiers sans gestionnaire ou tenus par un absent, puis équilibre la charge">Répartir équitablement</button>' : "") + "</div>" +
-    '<div class="bloc-corps"><div class="tuiles" style="margin-bottom:0">' +
-    '<div class="tuile' + (eq.sans_titulaire ? " vous" : "") + '"><div class="val">' + (eq.sans_titulaire || 0) + '</div><div class="lib">Décisions sans gestionnaire attitré</div></div>' +
-    '<div class="tuile' + ((eq.renvoyes || []).length ? " vous" : "") + '"><div class="val">' + (eq.renvoyes || []).length + '</div><div class="lib">Renvoyés au responsable</div></div>' +
-    '<div class="tuile"><div class="val">' + auto + '</div><div class="lib">Décisions automatiques, 30 jours</div></div>' +
-    '<div class="tuile"><div class="val">' + hum + '</div><div class="lib">Décisions humaines, 30 jours</div></div></div></div>';
-  // les plus chargés d'abord ; 8 lignes, le reste derrière « voir plus » (équipes de 20 et plus)
-  var tri = g.slice().sort(function (a, b) { return (b.a_traiter - a.a_traiter) || (b.en_cours - a.en_cours); }), plusG = tri.length - 8;
-  h += '<div class="tableau-wrap"><table class="tableau"><thead><tr><th>Gestionnaire</th><th class="nb">Suivis</th><th class="nb">À traiter</th><th class="nb">Reçus aujourd\'hui</th><th>Nouveaux dossiers</th><th>Disponibilité</th><th></th></tr></thead><tbody id="equipe-l">' +
-    tri.map(function (x, i) {
-      var types = Object.keys(x.par_type || {}).map(function (k) { return C.theme(k) + " " + x.par_type[k]; }).join(", ");
-      var autres = g.filter(function (y) { return y.actif && y.id !== x.id && y.role !== "admin"; });
-      return '<tr style="cursor:default"' + (i >= 8 ? ' class="ancien" hidden' : "") + '><td><b>' + esc(x.nom) + '</b><div class="muet petit">' + esc(ROLES_G[x.role] || x.role) + ", " + esc((SERVICES[x.service] || x.service).toLowerCase()) +
-        (x.plafond_eur != null ? ", plafond " + esc(eur(x.plafond_eur)) : "") + " · " + esc(x.derniere_connexion ? "vu " + C.depuis(x.derniere_connexion) : "jamais connecté") + "</div>" +
-        '<div class="muet petit">' + x.decisions_30j + " décision" + (x.decisions_30j > 1 ? "s" : "") + " et " + x.clos_30j + " dossier" + (x.clos_30j > 1 ? "s" : "") + " terminé" + (x.clos_30j > 1 ? "s" : "") + " en 30 jours</div>" +
-        (types ? '<div class="muet petit">' + esc(types) + "</div>" : "") + '</td><td class="nb">' + x.en_cours + '</td><td class="nb">' + (x.a_traiter ? "<b>" + x.a_traiter + "</b>" : 0) + '</td><td class="nb">' + (x.recus_aujourdhui || 0) + "</td>" +
-        "<td>" + (x.actif && x.role !== "admin" ? '<label class="case" style="margin:0;white-space:nowrap"><input type="checkbox" data-recoit="' + esc(x.id) + '"' + (x.recoit_nouveaux !== false ? " checked" : "") + "> En reçoit</label>" +
-          '<select class="saisie" data-capacite="' + esc(x.id) + '" aria-label="Temps de travail" title="Part des nouveaux dossiers : un temps partiel en reçoit moins" style="width:auto;padding:3px 6px;font-size:13px;margin-top:4px">' +
-          [100, 80, 60, 50].map(function (p) { return '<option value="' + p + '"' + (p === (x.capacite_pct || 100) ? " selected" : "") + ">" + (p === 100 ? "Temps plein" : p + " %") + "</option>"; }).join("") +
-          ((x.capacite_pct && [100, 80, 60, 50].indexOf(x.capacite_pct) < 0) ? '<option value="' + x.capacite_pct + '" selected>' + x.capacite_pct + " %</option>" : "") + "</select>" : '<span class="muet">–</span>') + "</td>" +
-        "<td>" + celluleDispo(x) + "</td>" +
-        "<td>" + (x.en_cours && autres.length ? '<span class="actions" style="gap:6px;flex-wrap:nowrap"><select class="saisie" data-transf-vers="' + esc(x.id) + '" style="width:auto;max-width:170px;padding:3px 6px;font-size:13px" aria-label="Transférer à">' +
-          '<option value="">Répartir entre collègues</option>' + autres.map(function (y) { return '<option value="' + esc(y.id) + '">' + esc(y.nom) + "</option>"; }).join("") +
-          '</select><button type="button" class="btn petit" data-transf="' + esc(x.id) + '" data-nom="' + esc(x.nom) + '" data-n="' + x.en_cours + '">Transférer ses dossiers</button></span>' : "") + "</td></tr>";
-    }).join("") + "</tbody></table></div>" +
-    (plusG > 0 ? '<div class="bloc-corps" style="padding-top:8px"><button type="button" class="btn petit" data-voir-plus="equipe-l" data-lib="Voir les ' + plusG + ' autres gestionnaires">Voir les ' + plusG + " autres gestionnaires</button></div>" : "");
+function blocEquipePilotage(eq, pm) {
+  var pg = pm.par_gestionnaire || {}, J = pm.relance_jours || 3, rep = eq.mode_repartition === "repartition";
+  var g = (eq.gestionnaires || []).filter(function (x) { return x.actif; });
+  g.forEach(function (x) { var e = pg[x.id] || {}; x.plus_ancien_jours = e.plus_ancien_jours; x.sans_action = e.sans_action || 0; x.delai_decision_heures = e.delai_decision_heures; });
+  var tri = g.slice().sort(function (a, b) { return (b.sans_action - a.sans_action) || (b.a_traiter - a.a_traiter) || (b.en_cours - a.en_cours); });
+  var h = '<section class="bloc"><div class="bloc-tete"><div><h2>Équipe</h2><p class="muet petit" style="margin-top:2px">' +
+    (rep ? "Les dossiers qui demandent une personne partent automatiquement aux présents, au prorata de leur temps de travail." : "File commune : chacun prend ses dossiers.") +
+    (eq.sans_titulaire ? " " + eq.sans_titulaire + " décision" + pl(eq.sans_titulaire, "") + " sans gestionnaire attitré." : "") + "</p></div>" +
+    (rep ? '<button type="button" class="btn petit" id="b-repartir" title="Attribue les dossiers sans gestionnaire ou tenus par un absent, puis équilibre la charge">Répartir équitablement</button>' : "") + "</div>";
+  if (!tri.length) return h + '<div class="vide">Aucun compte actif dans cette équipe.</div></section>';
+  h += '<div class="tableau-wrap"><table class="tableau equipe-t"><thead><tr><th>Gestionnaire</th><th class="nb">À décider</th><th class="nb" title="Dossiers à décider sans action depuis plus de ' + J + ' jours">Sans action</th>' +
+    '<th class="nb" title="Le dossier qui attend sa décision depuis le plus longtemps">Plus longue attente</th><th class="nb">En cours</th><th class="nb">Terminés 30 j</th><th class="nb" title="Temps moyen entre la demande de décision et la décision, 30 jours">Délai moyen</th><th>Présence</th><th></th></tr></thead><tbody>' +
+    tri.map(function (x) {
+      var presence = !x.disponible ? '<span class="presence absent">Absent' + (x.absent_jusqu_au ? " jusqu'au " + esc(C.dateCourte(x.absent_jusqu_au)) : "") + "</span>"
+        : '<span class="presence">Présent' + (x.role !== "admin" && x.recoit_nouveaux === false ? ", sans nouveaux dossiers" : "") + (x.capacite_pct && x.capacite_pct < 100 ? ", " + x.capacite_pct + " %" : "") + "</span>";
+      return '<tr style="cursor:default"><td class="qui"><b>' + esc(x.nom) + "</b><small title=\"" + esc(x.derniere_connexion ? "Vu " + C.depuis(x.derniere_connexion) : "Jamais connecté") + '">' + esc(ROLES_G[x.role] || x.role) + ", " + esc((SERVICES[x.service] || x.service).toLowerCase()) + "</small></td>" +
+        '<td class="nb">' + (x.a_traiter ? "<b>" + x.a_traiter + "</b>" : '<span class="muet">0</span>') + "</td>" +
+        '<td class="nb">' + (x.sans_action ? '<span class="alerte-n">' + x.sans_action + "</span>" : '<span class="muet">0</span>') + "</td>" +
+        '<td class="nb">' + (x.plus_ancien_jours != null ? x.plus_ancien_jours + " j" : '<span class="muet">–</span>') + "</td>" +
+        '<td class="nb">' + x.en_cours + '</td><td class="nb">' + x.clos_30j + '</td><td class="nb">' + duree(x.delai_decision_heures) + "</td>" +
+        "<td>" + presence + '</td><td class="nb"><button type="button" class="btn petit" data-gerer="' + esc(x.id) + '" aria-expanded="false">Gérer</button></td></tr>' +
+        '<tr class="gerer" data-pour="' + esc(x.id) + '" hidden><td colspan="9">' + panneauGestion(x, g) + "</td></tr>";
+    }).join("") + "</tbody></table></div>";
   if ((eq.renvoyes || []).length) {
-    h += '<div class="bloc-corps pile"><h3>Renvoyés au responsable</h3>' + eq.renvoyes.map(function (r) {
-      return '<div class="titulaire-barre" style="margin:0"><span><a href="#/dossier/' + esc(r.numero) + '"><b>' + esc(r.numero) + "</b></a> · " + esc(C.theme(r.theme)) + '<span class="muet"> : ' + esc(r.renvoi.par) + ", « " + esc(r.renvoi.motif) + " »</span></span>" +
-        '<span class="actions"><select class="saisie" style="max-width:220px" data-vers="' + esc(r.numero) + '"><option value="">File commune</option>' +
-        g.filter(function (x) { return x.actif; }).map(function (x) { return '<option value="' + esc(x.id) + '">' + esc(x.nom) + "</option>"; }).join("") +
+    h += '<div class="bloc-corps pile" style="border-top:1px solid var(--trait)"><h3>Renvoyés au responsable</h3>' + eq.renvoyes.map(function (r) {
+      return '<div class="titulaire-barre" style="margin:0"><span><a href="#/dossier/' + esc(r.numero) + '" class="ref">' + esc(r.numero) + "</a> " + esc(C.theme(r.theme)) + '<span class="muet"> : ' + esc(r.renvoi.par) + ", « " + esc(r.renvoi.motif) + " »</span></span>" +
+        '<span class="actions"><select class="saisie" style="max-width:220px" data-vers="' + esc(r.numero) + '" aria-label="Confier à"><option value="">File commune</option>' +
+        g.map(function (x) { return '<option value="' + esc(x.id) + '">' + esc(x.nom) + "</option>"; }).join("") +
         '</select><button class="btn petit primaire" data-reaff="' + esc(r.numero) + '">Réaffecter</button></span></div>';
     }).join("") + "</div>";
   }
   return h + "</section>";
 }
+function panneauGestion(x, g) {
+  var autres = g.filter(function (y) { return y.id !== x.id && y.role !== "admin"; });
+  var dispo = !x.disponible ? '<div class="actions"><span class="muet">Absent' + (x.absent_jusqu_au ? " jusqu'au " + esc(C.dateFr(x.absent_jusqu_au)) : "") + "</span>" +
+      '<button type="button" class="btn petit" data-dispo="' + esc(x.id) + '" data-etat="present">De retour</button></div>'
+    : '<div class="actions"><input type="date" class="saisie" style="width:150px" data-jusqu="' + esc(x.id) + '" aria-label="Absent jusqu\'au (facultatif)">' +
+      '<button type="button" class="btn petit" data-dispo="' + esc(x.id) + '" data-etat="absent" title="Ses dossiers à décider sont confiés aux collègues présents">Marquer absent</button></div>';
+  var nouveaux = x.role === "admin" ? '<p class="muet petit">Les administrateurs ne reçoivent pas de dossiers automatiquement.</p>'
+    : '<div class="actions"><label class="case" style="margin:0"><input type="checkbox" data-recoit="' + esc(x.id) + '"' + (x.recoit_nouveaux !== false ? " checked" : "") + "> Reçoit les nouveaux dossiers</label>" +
+      '<select class="saisie" style="width:auto" data-capacite="' + esc(x.id) + '" aria-label="Temps de travail">' +
+      [100, 80, 60, 50].map(function (p) { return '<option value="' + p + '"' + (p === (x.capacite_pct || 100) ? " selected" : "") + ">" + (p === 100 ? "Temps plein" : p + " % du temps") + "</option>"; }).join("") + "</select></div>";
+  var transf = x.en_cours && autres.length ? '<div class="actions"><select class="saisie" style="width:auto;max-width:220px" data-transf-vers="' + esc(x.id) + '" aria-label="Transférer à">' +
+      '<option value="">Entre les collègues présents</option>' + autres.map(function (y) { return '<option value="' + esc(y.id) + '">' + esc(y.nom) + "</option>"; }).join("") +
+      '</select><button type="button" class="btn petit" data-transf="' + esc(x.id) + '" data-nom="' + esc(x.nom) + '" data-n="' + x.en_cours + '">Transférer ses ' + x.en_cours + " dossiers</button></div>"
+    : '<p class="muet petit">' + (x.en_cours ? "Aucun collègue disponible pour reprendre ses dossiers." : "Aucun dossier en cours.") + "</p>";
+  return '<div class="gerer-grille"><div><h4>Présence</h4>' + dispo + "</div><div><h4>Nouveaux dossiers</h4>" + nouveaux + "</div><div><h4>Dossiers en cours</h4>" + transf + "</div></div>";
+}
 function brancherEquipePilotage(eq) {
   if (!eq) return;
+  document.querySelectorAll("[data-gerer]").forEach(function (b) {
+    b.onclick = function () {
+      var l = document.querySelector('tr[data-pour="' + b.dataset.gerer + '"]'), ouvert = !l.hidden;
+      l.hidden = ouvert; b.setAttribute("aria-expanded", String(!ouvert)); b.textContent = ouvert ? "Gérer" : "Fermer";
+      b.closest("tr").classList.toggle("gerer-ouvert", !ouvert);
+    };
+  });
   document.querySelectorAll("[data-reaff]").forEach(function (b) {
     b.onclick = function () {
       var n = b.dataset.reaff, v = document.querySelector('[data-vers="' + n + '"]').value;
@@ -3098,7 +3236,7 @@ function brancherEquipePilotage(eq) {
   document.querySelectorAll("[data-transf]").forEach(function (b) {
     b.onclick = function () {
       var id = b.dataset.transf, sel = document.querySelector('[data-transf-vers="' + id + '"]');
-      var vers = sel.value, nomVers = vers ? sel.options[sel.selectedIndex].text : "ses collègues disponibles";
+      var vers = sel.value, nomVers = vers ? sel.options[sel.selectedIndex].text : "ses collègues présents";
       if (!confirm("Transférer les " + b.dataset.n + " dossiers en cours de " + b.dataset.nom + " à " + nomVers + " ?")) return;
       C.occupe(b, true, "");
       api("transferer-dossiers", { body: { de: id, vers: vers || null } }).then(function (r) {
@@ -3112,18 +3250,60 @@ function brancherEquipePilotage(eq) {
       var id = b.dataset.dispo, absent = b.dataset.etat === "absent", d = document.querySelector('[data-jusqu="' + id + '"]');
       C.occupe(b, true, "");
       api("disponibilite", { body: { gestionnaire: id, disponible: !absent, jusqu_au: absent && d ? d.value || null : null } }).then(function (r) {
-        C.toast(r.gestionnaire + (r.disponible ? " est de nouveau disponible" : " est absent" + (r.dossiers_redistribues ? " : " + r.dossiers_redistribues + " dossier(s) confié(s) à ses collègues" : "")));
+        C.toast(r.gestionnaire + (r.disponible ? " est de nouveau présent" : " est absent" + (r.dossiers_redistribues ? " : " + r.dossiers_redistribues + " dossier(s) confié(s) à ses collègues" : "")));
         vuePilotage();
       }).catch(function (x) { C.occupe(b, false); C.toast(x.message, true); });
     };
   });
 }
-function celluleDispo(x) {
-  if (!x.actif) return '<span class="muet">Compte désactivé</span>';
-  if (!x.disponible) return '<span class="pastille-mail alerte">Absent' + (x.absent_jusqu_au ? " jusqu'au " + esc(C.dateFr(x.absent_jusqu_au)) : "") + "</span> " +
-    '<button type="button" class="btn petit" data-dispo="' + esc(x.id) + '" data-etat="present">De retour</button>';
-  return '<span class="actions" style="gap:6px;flex-wrap:nowrap"><input type="date" class="saisie" style="width:132px;padding:4px 6px;font-size:13px" data-jusqu="' + esc(x.id) + '" aria-label="Absent jusqu\'au" title="Absent jusqu\'au (facultatif)">' +
-    '<button type="button" class="btn petit" data-dispo="' + esc(x.id) + '" data-etat="absent" title="Ses dossiers à traiter sont confiés aux collègues disponibles">Marquer absent</button></span>';
+
+/* Pourquoi un humain intervient, argent, vigilance */
+function blocMotifs(pm, eq, i) {
+  var l = pm.motifs || [], auto = eq.decisions_automatiques_30j || 0, hum = eq.decisions_humaines_30j || 0;
+  return '<div class="bloc-tete"><div><h2>Pourquoi un humain intervient</h2><p class="muet petit" style="margin-top:2px">Dossiers sortis du circuit automatique, 30 jours</p></div></div>' +
+    '<div class="bloc-corps">' + rangs(l, function (x) { return esc(C.motif(x.motif)); }, function (x) { return x.n; }) +
+    '<p class="pil-note">' + auto + " décision" + pl(auto, "") + " automatique" + pl(auto, "") + " et " + hum + " prise" + pl(hum, "") + " par l'équipe en 30 jours." +
+    (i.confiance_moyenne != null ? " Fiabilité moyenne de l'IA : " + Math.round(i.confiance_moyenne * 100) + " %." : "") + "</p></div>";
+}
+function blocArgent(pm) {
+  var p = pm.periode || {}, l = pm.cout_moyen || [];
+  return '<div class="bloc-tete"><div><h2>Règlements</h2><p class="muet petit" style="margin-top:2px">Montants nets, franchise déduite</p></div></div>' +
+    '<div class="bloc-corps"><div class="argent"><div><div class="lib">Payé en 30 jours</div><div class="val">' + esc(eur(p.regle_eur || 0)) + "</div>" +
+    ecart(p.regle_eur, p.regle_eur_avant, " €", false, 0) + '</div><div><div class="lib">Validé, pas encore payé</div><div class="val">' + esc(eur(p.engage_eur || 0)) + "</div>" +
+    (p.regles_7j_pct != null ? '<div class="delta">' + p.regles_7j_pct + " % des dossiers payés en moins de 7 jours</div>" : "") + "</div></div>" +
+    '<h3 class="muet petit" style="font-weight:500;margin:0 0 12px">Coût moyen par type de sinistre, 90 jours</h3>' +
+    rangs(l, function (x) { return esc(C.theme(x.theme)) + ' <span class="muet">' + x.n + " dossier" + pl(x.n, "") + "</span>"; }, function (x) { return Number(x.moyen) || 0; }, null, function (v) { return esc(eur(v)); }) + "</div>";
+}
+function blocVigilance(pm) {
+  var v = pm.vigilance || {}, p = pm.periode || {};
+  var items = [
+    [v.reclamations_ouvertes, "Réclamation" + pl(v.reclamations_ouvertes, "") + " ouverte" + pl(v.reclamations_ouvertes, ""), v.reclamations_echeance_15j ? "dont " + v.reclamations_echeance_15j + " à répondre dans les 15 jours" : "Réponse due sous deux mois", null],
+    [v.fraude_a_examiner, "Vol" + pl(v.fraude_a_examiner, "") + " avec des signaux à vérifier", "L'indemnisation attend votre examen", "#/file"],
+    [v.prescription, "Sinistre" + pl(v.prescription, "") + " déclaré" + pl(v.prescription, "") + " plus de deux ans après les faits", "Prescription biennale à vérifier avant toute suite", "#/file"],
+    [v.ia_echec_24h, "Analyse" + pl(v.ia_echec_24h, "") + " de l'IA en échec en 24 heures", "Les dossiers passent à un gestionnaire ; vérifiez la clé API", "#/file"],
+    [v.courriers_erreur, "Courrier" + pl(v.courriers_erreur, "") + " non envoyé" + pl(v.courriers_erreur, ""), "Adresse refusée ou service d'envoi indisponible", null],
+    [v.doublons_30j, "Déclaration" + pl(v.doublons_30j, "") + " en double classée" + pl(v.doublons_30j, ""), "Rattachées au dossier d'origine, 30 jours", "#/doublons"],
+    [p.refus, "Refus prononcé" + pl(p.refus, "") + " en 30 jours", "Chacun validé par un gestionnaire", null],
+    [p.reouvertures, "Dossier" + pl(p.reouvertures, "") + " rouvert" + pl(p.reouvertures, "") + " en 30 jours", "Après une contestation ou un élément nouveau", null],
+  ].filter(function (x) { return x[0]; });
+  return '<section class="bloc"><div class="bloc-tete"><div><h2>Points de vigilance</h2><p class="muet petit" style="margin-top:2px">Ce qui engage la compagnie si personne ne le regarde</p></div></div>' +
+    (items.length ? '<ul class="vigil">' + items.map(function (x) {
+      return '<li><span class="n">' + x[0] + '</span><span class="lib">' + esc(x[1]) + "<small>" + esc(x[2]) + "</small></span>" + (x[3] ? '<a href="' + x[3] + '">Voir</a>' : "<span></span>") + "</li>";
+    }).join("") + "</ul>" : '<div class="vide">Rien à signaler.</div>') + "</section>";
+}
+// Pilotage d'un gestionnaire (sans les chiffres de l'équipe)
+function pilotageSimple(i) {
+  var d = i.delai_moyen_cloture_heures;
+  return '<div class="pil-stats">' +
+    '<div class="pil-stat"><div class="lib">Dossiers en cours</div><div class="val">' + (i.en_cours || 0) + "</div></div>" +
+    '<div class="pil-stat"><div class="lib">À décider</div><div class="val">' + (i.a_traiter || 0) + "</div></div>" +
+    '<div class="pil-stat"><div class="lib">Réglés sans intervention</div><div class="val">' + (i.taux_sans_intervention != null ? C.nombre(i.taux_sans_intervention, 0) + "<small>%</small>" : "–") + "</div></div>" +
+    '<div class="pil-stat"><div class="lib">Délai moyen jusqu\'au paiement</div><div class="val">' + (d != null ? duree(d) : "–") + "</div></div></div>" +
+    '<div class="pil-grille egale"><section class="bloc"><div class="bloc-tete"><h2>Par type de sinistre</h2></div><div class="bloc-corps">' +
+    rangs(Object.keys(i.par_theme || {}).map(function (k) { return { k: k, n: i.par_theme[k] }; }).sort(function (a, b) { return b.n - a.n; }), function (x) { return esc(C.theme(x.k)); }, function (x) { return x.n; }) +
+    '</div></section><section class="bloc"><div class="bloc-tete"><h2>Pourquoi un humain intervient</h2></div><div class="bloc-corps">' +
+    rangs(Object.keys(i.par_motif || {}).map(function (k) { return { k: k, n: i.par_motif[k] }; }).sort(function (a, b) { return b.n - a.n; }), function (x) { return esc(C.motif(x.k)); }, function (x) { return x.n; }) +
+    "</div></section></div>";
 }
 
 /* Missions expert / garage en cours : relancer ou confier à un autre intervenant */
@@ -3142,21 +3322,20 @@ function blocRecoursPilotage(rc) {
 }
 function blocMissions(mi) {
   var l = mi.missions || [], retard = l.filter(function (m) { return m.en_retard; }).length, dr = mi.delais_retour || {};
-  var h = '<section class="bloc"><div class="bloc-tete"><h2>Missions en cours<span class="compte">' + l.length + '</span></h2><span class="muet petit">Expertises et réparations confiées, sans retour pour l\'instant. En retard au-delà de ' + (mi.delai_relance_jours || 7) + " jours.</span></div>" +
-    '<div class="bloc-corps"><div class="tuiles" style="margin-bottom:0">' +
-    '<div class="tuile' + (retard ? " vous" : "") + '"><div class="val">' + retard + '</div><div class="lib">En retard</div></div>' +
-    '<div class="tuile"><div class="val">' + (dr.expertise != null ? C.nombre(dr.expertise, 1) + " j" : "–") + '</div><div class="lib">Retour moyen des experts, 90 jours</div></div>' +
-    '<div class="tuile"><div class="val">' + (dr.reparation != null ? C.nombre(dr.reparation, 1) + " j" : "–") + '</div><div class="lib">Facture moyenne des garages, 90 jours</div></div>' +
-    '<div class="tuile"><div class="val">' + (mi.par_prestataire || []).length + '</div><div class="lib">Intervenants sollicités</div></div></div></div>';
-  if (!l.length) return h + '<div class="bloc-corps"><p class="muet">Aucune mission en attente de retour.</p></div></section>';
+  var h = '<section class="bloc"><div class="bloc-tete"><div><h2>Intervenants<span class="compte">' + l.length + '</span></h2><p class="muet petit" style="margin-top:2px">Expertises et réparations confiées, sans retour pour l\'instant</p></div></div>' +
+    '<div class="bloc-corps" style="padding-bottom:8px"><div class="argent" style="grid-template-columns:repeat(3,minmax(0,1fr));margin:0">' +
+    '<div><div class="lib">En retard, au-delà de ' + (mi.delai_relance_jours || 7) + ' jours</div><div class="val">' + retard + "</div></div>" +
+    '<div><div class="lib">Retour moyen des experts, 90 jours</div><div class="val">' + (dr.expertise != null ? C.nombre(dr.expertise, 1) + " j" : "–") + "</div></div>" +
+    '<div><div class="lib">Facture moyenne des garages, 90 jours</div><div class="val">' + (dr.reparation != null ? C.nombre(dr.reparation, 1) + " j" : "–") + "</div></div></div></div>";
+  if (!l.length) return h + '<div class="vide">Aucune mission en attente de retour.</div></section>';
   var plus = l.length - 8;
   h += '<div class="tableau-wrap"><table class="tableau"><thead><tr><th>Dossier</th><th>Mission</th><th>Intervenant</th><th class="nb">Depuis</th><th class="nb">Relances</th><th></th></tr></thead><tbody id="missions-l">' +
     l.map(function (m, i) {
-      return '<tr style="cursor:default"' + (i >= 8 ? ' class="ancien" hidden' : "") + '><td><a href="#/dossier/' + esc(m.numero) + '"><b>' + esc(m.numero) + '</b></a><div class="muet petit">' + esc(C.theme(m.theme)) + "</div></td>" +
+      return '<tr style="cursor:default"' + (i >= 8 ? ' class="ancien" hidden' : "") + '><td><a href="#/dossier/' + esc(m.numero) + '" class="ref">' + esc(m.numero) + '</a><div class="muet petit">' + esc(C.theme(m.theme)) + "</div></td>" +
         "<td>" + esc(TYPES_MISSION[m.type] || m.type) + "</td><td>" + esc(m.prestataire || "") + '<div class="muet petit">' + esc(m.email || "") + "</div></td>" +
-        '<td class="nb">' + (m.en_retard ? '<b class="txt-ko">' : "") + C.nombre(m.age_jours, 0) + " j" + (m.en_retard ? "</b>" : "") + "</td>" +
+        '<td class="nb">' + (m.en_retard ? '<span class="alerte-n">' : "") + C.nombre(m.age_jours, 0) + " j" + (m.en_retard ? "</span>" : "") + "</td>" +
         '<td class="nb">' + (m.relances || 0) + (m.derniere_relance ? '<div class="muet petit">' + esc(C.depuis(m.derniere_relance)) + "</div>" : "") + "</td>" +
-        '<td><span class="actions" style="gap:6px;justify-content:flex-end"><button type="button" class="btn petit" data-relancer-m="' + esc(m.id) + '">Relancer</button>' +
+        '<td><span class="actions" style="gap:8px;justify-content:flex-end"><button type="button" class="btn petit" data-relancer-m="' + esc(m.id) + '">Relancer</button>' +
         '<button type="button" class="btn petit" data-autre-m="' + esc(m.id) + '">Confier à un autre</button></span><div data-choix-m="' + esc(m.id) + '"></div></td></tr>';
     }).join("") + "</tbody></table></div>" +
     (plus > 0 ? '<div class="bloc-corps" style="padding-top:8px"><button type="button" class="btn petit" data-voir-plus="missions-l" data-lib="Voir les ' + plus + ' autres missions">Voir les ' + plus + " autres missions</button></div>" : "");
@@ -3204,7 +3383,7 @@ var ROLES_G = { gestionnaire: "Gestionnaire", superviseur: "Superviseur", admin:
 function vueEquipe() {
   api("equipe").then(function (l) {
     var h = '<div class="entete-vue"><div><h1>Équipe</h1><p>Chaque personne a son propre compte. Son service limite ce qu\'elle voit : contractuel, avec tiers ou les deux. Son plafond limite les règlements qu\'elle peut valider seule ; au-delà, un superviseur valide.</p></div></div>';
-    h += '<section class="bloc"><div class="bloc-tete"><h2>Comptes<span class="compte">' + l.length + '</span></h2></div><div class="tableau-wrap"><table class="tableau"><thead><tr><th>Nom</th><th>Email</th><th>Rôle</th><th>Service</th><th class="nb">Plafond de règlement</th><th>Dernière connexion</th><th>État</th><th></th></tr></thead><tbody>' +
+    h += '<section class="bloc"><div class="bloc-tete"><h2>Comptes<span class="compte">' + l.length + '</span></h2></div><div class="tableau-wrap"><table class="tableau comptes-t"><thead><tr><th>Nom</th><th>Email</th><th>Rôle</th><th>Service</th><th class="nb">Plafond de règlement</th><th>Dernière connexion</th><th>État</th><th></th></tr></thead><tbody>' +
       l.map(function (g) {
         return '<tr style="cursor:default"><td>' + esc(g.nom) + '</td><td class="muet">' + esc(g.email) + '</td><td><select class="saisie" data-role="' + g.id + '" style="min-width:150px">' +
           Object.keys(ROLES_G).map(function (k) { return '<option value="' + k + '"' + (k === g.role ? " selected" : "") + ">" + ROLES_G[k] + "</option>"; }).join("") + '</select></td>' +
