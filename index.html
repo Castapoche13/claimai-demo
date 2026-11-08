@@ -16,6 +16,7 @@
 .connexion form { background: var(--feuille); border: 1px solid var(--trait); border-radius: 10px; padding: 28px; display: grid; gap: 16px; }
 .connexion form h2 { font-size: 18px; }
 .connexion .pied-connexion { text-align: center; font-size: 12.5px; color: var(--gris); max-width: 40ch; margin: 0 auto; }
+.alertes-titre { font-size: 13px; font-weight: 600; color: var(--encre-2); margin: 16px 16px 8px; }
 .erreur-form { color: var(--rouge-texte); font-size: 13px; min-height: 1.3em; }
 .mfa-qr { display: grid; gap: 8px; justify-items: center; text-align: center; }
 .mfa-qr img { background: #fff; padding: 8px; border-radius: 8px; border: 1px solid var(--trait); }
@@ -809,7 +810,7 @@ function attente(d) {
 }
 
 /* ---------------- Vue : Accueil ---------------- */
-// Trois bannettes, comme dans un outil de gestion : ce qui attend une décision, les mails reçus, ce qui attend un tiers.
+// Trois bannettes : ce qui attend une décision, les alertes (relances, mails sans dossier), ce qui attend un tiers.
 // Un seul tableau affiché à la fois ; les chiffres sont portés par les onglets eux-mêmes.
 var FILTRE_FILE = "klerio-filtre-file", BANNETTE = "klerio-bannette";
 var MAIL_A_TRAITER = ["a_rattacher", "erreur"];
@@ -824,7 +825,10 @@ function vueFile() {
     var renvoyes = file.filter(function (d) { return d.renvoye_manager; });
     var tiers = encours.filter(function (d) { return d.statut === "mission_envoyee" || d.statut === "attente_pieces" || d.statut === "reglement_envoye"; });
     var prio = file.filter(function (d) { return d.priorite === "haute"; }).length;
-    var mailsAction = mails.filter(function (m) { return MAIL_A_TRAITER.indexOf(m.statut) >= 0; }).length;
+    // Alertes : les relances de Klerio sur des dossiers qui attendent, et les mails qu'aucun dossier n'a pu recevoir.
+    // Les autres mails se lisent et se répondent dans leur dossier (onglet Messages).
+    var horsDossier = mails.filter(function (m) { return MAIL_A_TRAITER.indexOf(m.statut) >= 0; });
+    var relances = (ind.alertes || []).filter(function (a) { return resp || !S.moi || a.pour === S.moi.email; });
     var filtres = [["moi", "À moi", aMoi], ["libres", "À prendre", libres]];
     if (resp || autres.length) filtres.push(["equipe", "Toute l'équipe", file]);
     if (resp && renvoyes.length) filtres.unshift(["renvoyes", "Renvoyés", renvoyes]);
@@ -846,7 +850,7 @@ function vueFile() {
     }
     h += '<section class="bloc accueil-bloc"><div class="bannettes" role="tablist" aria-label="Corbeilles">' +
       tab("decider", "À décider", file.length, false) +
-      tab("mails", "Mails reçus", mails.length, false) +
+      tab("mails", "Alertes", relances.length + horsDossier.length, false) +
       tab("tiers", "En attente d'un intervenant", tiers.length, false) +
       '</div><div id="bannette-corps" role="tabpanel"></div></section>';
     $("vue").innerHTML = h;
@@ -895,8 +899,12 @@ function vueFile() {
           };
         });
       } else if (cle === "mails") {
-        c.innerHTML = '<div class="bannette-outils"><span class="outils-info">Boîte sinistres, lue à chaque arrivée' + (mailsAction ? ' · <span class="txt-prio">' + mailsAction + " à rattacher</span>" : "") + "</span></div>" + listeMails(mails);
+        c.innerHTML = '<div class="bannette-outils"><span class="outils-info">Relances sur les dossiers qui attendent, mails sans dossier. Les autres mails sont dans leur dossier, onglet Messages.</span></div>' +
+          (relances.length || horsDossier.length ? "" : '<div class="vide">Rien à signaler.</div>') +
+          (relances.length ? listeAlertes(relances, resp) : "") +
+          (horsDossier.length ? '<h3 class="alertes-titre">Mails à rattacher à un dossier</h3>' + listeMails(horsDossier) : "");
         brancherMails();
+        brancherLignes(c);
       } else {
         c.innerHTML = '<div class="bannette-outils"><span class="outils-info">Relances automatiques ; retour vers vous après trois relances sans réponse</span></div>' +
           (tiers.length ? tableTiers(tiers.slice(0, 15)) + (tiers.length > 15 ? '<p class="bannette-pied"><a href="#/dossiers">Voir les ' + tiers.length + " dossiers en cours</a></p>" : "") : '<div class="vide">Aucun dossier en attente d\'un tiers.</div>');
@@ -947,6 +955,15 @@ function tableTiers(l) {
 // Mails reçus sur la boîte sinistres : chacun apparaît ici dès son arrivée, avec ce que Klerio en a fait
 var MAIL_STATUT = { recu: ["En cours de lecture", "info"], dossier_cree: ["Dossier ouvert", "ok"], rattache: ["Ajouté au dossier", "ok"],
   demande_infos: ["Infos demandées à l'expéditeur", "attente"], a_rattacher: ["À rattacher à un dossier", "alerte"], ignore: ["Ignoré", "neutre"], erreur: ["Erreur de lecture", "alerte"] };
+function listeAlertes(l, resp) {
+  return '<h3 class="alertes-titre">Dossiers sans action</h3><div class="tableau-wrap"><table class="tableau bannette-table"><thead><tr><th>N° dossier</th><th>Type</th><th>Relance</th>' + (resp ? "<th>Envoyée à</th>" : "") + '<th class="nb">Le</th></tr></thead><tbody>' +
+    l.map(function (a) {
+      return '<tr data-n="' + esc(a.numero) + '" tabindex="0"><td class="c-dossier"><span class="num-lien">' + esc(a.numero) + "</span></td>" +
+        '<td class="c-type">' + typeTag(a.theme) + "</td><td>" + esc(String(a.objet || "").replace(/^Dossier [^:]+ : (.)/, function (_, c) { return c.toUpperCase(); })) + "</td>" +
+        (resp ? '<td class="muet">' + esc(a.pour || "") + "</td>" : "") +
+        '<td class="nb muet">' + esc(C.depuis(a.le)) + "</td></tr>";
+    }).join("") + "</tbody></table></div>";
+}
 function listeMails(l) {
   if (!l.length) return '<div class="vide">Aucun mail reçu pour l\'instant' + (S.env === "test" ? "" : " dans cet environnement") + '.</div>';
   var plus = Math.max(0, l.length - 8);
