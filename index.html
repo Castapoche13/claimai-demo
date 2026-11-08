@@ -391,7 +391,7 @@ a.tuile:hover { border-color: var(--trait-fort); text-decoration: none; }
 
 #c-captcha { min-height: 65px; }
 </style>
-<link rel="stylesheet" href="charte.css?v=20261108e">
+<link rel="stylesheet" href="charte.css?v=20261108f">
 </head>
 <body>
 
@@ -920,7 +920,10 @@ function vueFile() {
     afficher(onglet);
   }).catch(erreurVue);
 }
-var FAMILLE_TYPE = { VOL: "t-vol", TENTATIVE_VOL: "t-vol", VOL_RETROUVE: "t-vol", BRIS_GLACE: "t-glace", INCENDIE: "t-nature", EVENEMENT_CLIMATIQUE: "t-nature", CATASTROPHE_NATURELLE: "t-nature", CATASTROPHE_TECHNOLOGIQUE: "t-nature", GARANTIE_ACCIDENT: "t-corporel" };
+// Un repère de couleur par famille de sinistre, le même partout dans la console
+var FAMILLE_TYPE = { BRIS_GLACE: "t-glace", VOL: "t-vol", TENTATIVE_VOL: "t-vol", VOL_RETROUVE: "t-vol", VANDALISME: "t-degat", ATTENTAT: "t-degat",
+  INCENDIE: "t-feu", EVENEMENT_CLIMATIQUE: "t-nature", CATASTROPHE_NATURELLE: "t-nature", CATASTROPHE_TECHNOLOGIQUE: "t-nature",
+  PERTE_CONTROLE_OBSTACLE_FIXE: "t-route", COLLISION_ANIMAL: "t-route", ACCIDENT_TIERS: "t-tiers", GARANTIE_ACCIDENT: "t-tiers" };
 function typeTag(t) { return '<span class="type-tag ' + (FAMILLE_TYPE[t] || "") + '">' + esc(C.theme(t)) + "</span>"; }
 function tableDecider(l) {
   return '<div class="tableau-wrap"><table class="tableau bannette-table"><thead><tr><th>N° dossier</th><th>Type</th><th>Tâche</th><th>Attribué à</th><th class="nb">Échéance</th></tr></thead><tbody>' +
@@ -1084,7 +1087,7 @@ function vueDossiers() {
       $("f-n").textContent = l.length + " dossier" + (l.length > 1 ? "s" : "");
       $("f-table").innerHTML = l.length ? '<table class="tableau"><thead><tr><th>Dossier</th><th>Type</th><th>Contrat</th><th>Sinistre</th><th>Statut</th><th>Suivi par</th><th class="nb">Montant</th><th>Mis à jour</th></tr></thead><tbody>' +
         l.map(function (d) {
-          return '<tr data-n="' + esc(d.numero) + '" tabindex="0"><td><b class="ref">' + esc(d.numero) + '</b>' + (d.ref_externe ? '<div class="muet petit">' + esc(d.ref_externe) + "</div>" : "") + '</td><td>' + esc(C.theme(d.theme)) +
+          return '<tr data-n="' + esc(d.numero) + '" tabindex="0"><td><b class="ref">' + esc(d.numero) + '</b>' + (d.ref_externe ? '<div class="muet petit">' + esc(d.ref_externe) + "</div>" : "") + '</td><td>' + typeTag(d.theme) +
             '</td><td>' + esc(d.contrat || "Inconnu") + (d.immatriculation ? '<div class="muet petit">' + esc(d.immatriculation) + "</div>" : "") + '</td><td>' + esc(C.dateCourte(d.date_sinistre)) +
             '</td><td>' + C.statut(d.statut) + '</td><td class="muet">' + esc(d.gestionnaire || "Automatique") + '</td><td class="nb">' + esc(eur(d.montant)) + '</td><td class="muet">' + esc(C.depuis(d.maj)) + "</td></tr>";
         }).join("") + "</tbody></table>" : '<div class="vide"><b>Aucun dossier ne correspond</b>Modifiez la recherche ou le statut.</div>';
@@ -1129,7 +1132,7 @@ function vueArchives() {
     $("a-table").innerHTML = l.length ? '<table class="tableau"><thead><tr><th>Dossier</th><th>Type</th><th>Issue</th><th>Terminé le</th><th class="nb">Montant</th><th>Remis à votre outil</th><th>Données chez Klerio</th></tr></thead><tbody>' +
       l.map(function (d) {
         var cons = d.efface_le ? "Effacées le " + C.dateCourte(d.efface_le) : d.effacement_prevu ? "Effacement le " + C.dateCourte(d.effacement_prevu) : "Conservées";
-        return '<tr data-n="' + esc(d.numero) + '" tabindex="0"><td><b class="ref">' + esc(d.numero) + '</b>' + (d.ref_externe ? '<div class="muet petit">' + esc(d.ref_externe) + "</div>" : "") + '</td><td>' + esc(C.theme(d.theme)) +
+        return '<tr data-n="' + esc(d.numero) + '" tabindex="0"><td><b class="ref">' + esc(d.numero) + '</b>' + (d.ref_externe ? '<div class="muet petit">' + esc(d.ref_externe) + "</div>" : "") + '</td><td>' + typeTag(d.theme) +
           '</td><td>' + C.statut(d.statut) + '</td><td>' + esc(C.dateCourte(d.clos_le)) + '</td><td class="nb">' + esc(eur(d.montant)) +
           '</td><td>' + (d.archive_remise ? '<span class="statut ok">Oui</span>' : '<span class="statut neutre">En attente</span>') + '</td><td class="muet">' + esc(cons) + "</td></tr>";
       }).join("") + "</tbody></table>" : '<div class="vide"><b>Aucun dossier terminé</b>Les dossiers clos, refusés ou classés apparaîtront ici.</div>';
@@ -1233,7 +1236,7 @@ function brancherOnglets() {
 function afficherDossier(f) {
   var ctr = f.contrat || {}, d = f.details || {}, an = f.analyse && f.analyse.detail || {};
   var h = '<a class="retour" href="#/file"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M8.5 3L4.5 7l4 4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>Retour à la file</a>';
-  h += '<div class="fiche-tete"><div><h1>' + esc(f.numero) + '</h1><div class="sous"><span class="etiquette">' + esc(C.theme(f.theme)) + "</span>" + C.statut(f.statut) +
+  h += '<div class="fiche-tete"><div><h1>' + esc(f.numero) + '</h1><div class="sous">' + typeTag(f.theme) + C.statut(f.statut) +
     '<span>Sinistre du ' + esc(C.dateFr(f.date_sinistre)) + "</span>" + (f.ref_externe ? "<span>Réf. compagnie " + esc(f.ref_externe) + "</span>" : "") + "</div></div>" +
     '<div class="fiche-tete-droite"><div class="muet petit" style="text-align:right">Ouvert ' + esc(C.depuis(f.cree)) + "<br>Mis à jour " + esc(C.depuis(f.maj)) + "</div>" +
     '<button type="button" class="btn petit" id="b-suivante" title="Ouvre le prochain dossier de votre corbeille, par échéance">Activité suivante</button></div></div>';
