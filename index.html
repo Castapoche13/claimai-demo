@@ -15,6 +15,8 @@
 .connexion-boite .marque { justify-content: center; }
 .connexion form { background: var(--feuille); border: 1px solid var(--trait); border-radius: 10px; padding: 28px; display: grid; gap: 16px; }
 .connexion form h2 { font-size: 18px; }
+#b-champs { display: grid; gap: 16px; }
+#b-champs[hidden] { display: none; }
 .connexion .pied-connexion { text-align: center; font-size: 12.5px; color: var(--gris); max-width: 40ch; margin: 0 auto; }
 .alertes-titre { font-size: 13px; font-weight: 600; color: var(--encre-2); margin: 16px 16px 8px; }
 .erreur-form { color: var(--rouge-texte); font-size: 13px; min-height: 1.3em; }
@@ -425,6 +427,23 @@ a.tuile:hover { border-color: var(--trait-fort); text-decoration: none; }
       <p class="erreur-form" id="m-err" role="alert"></p>
       <button class="btn primaire" id="m-btn" type="submit">Enregistrer et continuer</button>
     </form>
+    <form id="form-bienvenue" novalidate hidden>
+      <div><h2>Bienvenue</h2><p class="muet petit" id="b-intro" style="margin-top:4px">Vérification du lien…</p></div>
+      <div id="b-champs" hidden>
+        <label class="champ">Adresse email professionnelle
+          <input class="saisie" id="b-email" type="email" autocomplete="username" readonly>
+        </label>
+        <label class="champ">Choisissez votre mot de passe <span class="aide">12 caractères minimum</span>
+          <input class="saisie" id="b-mdp" type="password" autocomplete="new-password" required minlength="12">
+        </label>
+        <label class="champ">Confirmation
+          <input class="saisie" id="b-mdp2" type="password" autocomplete="new-password" required>
+        </label>
+      </div>
+      <p class="erreur-form" id="b-err" role="alert"></p>
+      <button class="btn primaire" id="b-btn" type="submit" hidden>Créer mon compte</button>
+      <button class="btn" id="b-connexion" type="button" hidden>Aller à la connexion</button>
+    </form>
     <form id="form-mfa" novalidate hidden>
       <div><h2 id="mfa-titre">Code de vérification</h2><p class="muet petit" id="mfa-intro" style="margin-top:4px"></p></div>
       <div id="mfa-qr" class="mfa-qr" hidden></div>
@@ -667,7 +686,7 @@ function entrer(session) {
     }).catch(function () { });
     $("n-assureur").textContent = S.assureur; $("n-gest").textContent = moi.nom;
     $("n-avatar").textContent = moi.nom.split(/\s+/).map(function (x) { return x[0]; }).join("").slice(0, 2);
-    $("n-equipe").hidden = moi.role !== "admin";
+    $("n-equipe").hidden = !(moi.role === "admin" || (moi.role === "superviseur" && moi.centre));
     afficherEspace(); surveiller();
     $("ecran-connexion").hidden = true; $("ecran-app").hidden = false;
     rafraichirCompteur();
@@ -3431,66 +3450,121 @@ function barres(o, lib, vous) {
 }
 
 /* ---------------- Vue : Équipe ---------------- */
+// Comptes et invitations : l'administrateur voit toute la compagnie, un superviseur seulement son centre (contrôlé par le serveur)
 var ROLES_G = { gestionnaire: "Gestionnaire", superviseur: "Superviseur", admin: "Administrateur" };
+function equipeApi(action, corps) {
+  return C.client(C.SUPABASE_URL + "/functions/v1", jeton)("klerio-equipe", { body: Object.assign({ action: action }, corps || {}) });
+}
+var filtreEq = { centre: "", role: "" };
 function vueEquipe() {
-  api("equipe").then(function (l) {
-    var h = '<div class="entete-vue"><div><h1>Équipe</h1><p>Chaque personne a son propre compte. Son centre de gestion sépare les équipes : un superviseur ne voit que son centre, et les dossiers ne passent jamais d\'un centre à l\'autre. Son service limite ce qu\'elle voit : contractuel, avec tiers ou les deux. Son plafond limite les règlements qu\'elle peut valider seule ; au-delà, un superviseur valide.</p></div></div>';
-    h += '<section class="bloc"><div class="bloc-tete"><h2>Comptes<span class="compte">' + l.length + '</span></h2></div><div class="tableau-wrap"><table class="tableau comptes-t"><thead><tr><th>Nom</th><th>Email</th><th>Rôle</th><th>Centre</th><th>Service</th><th class="nb">Plafond de règlement</th><th>Dernière connexion</th><th>État</th><th></th></tr></thead><tbody>' +
-      l.map(function (g) {
-        return '<tr style="cursor:default"><td>' + esc(g.nom) + '</td><td class="muet">' + esc(g.email) + '</td><td><select class="saisie" data-role="' + g.id + '" style="min-width:150px">' +
-          Object.keys(ROLES_G).map(function (k) { return '<option value="' + k + '"' + (k === g.role ? " selected" : "") + ">" + ROLES_G[k] + "</option>"; }).join("") + '</select></td>' +
-          '<td><input class="saisie" data-centre="' + g.id + '" list="liste-centres" placeholder="Aucun" value="' + esc(g.centre || "") + '" style="min-width:140px"></td>' +
-          '<td><select class="saisie" data-service="' + g.id + '" style="min-width:120px">' + Object.keys(SERVICES).map(function (k) { return '<option value="' + k + '"' + (k === g.service ? " selected" : "") + ">" + SERVICES[k] + "</option>"; }).join("") + "</select></td>" +
-          '<td class="nb"><input class="saisie" data-plafond="' + g.id + '" type="number" min="0" step="100" placeholder="Sans plafond" value="' + (g.plafond_eur == null ? "" : esc(g.plafond_eur)) + '" style="max-width:140px;text-align:right"></td>' +
-          '<td class="muet">' + esc(g.derniere_connexion ? C.depuis(g.derniere_connexion) : "Jamais") + '</td><td>' + (g.actif ? '<span class="statut ok">Actif</span>' : '<span class="statut neutre">Désactivé</span>') + '</td>' +
-          '<td class="nb"><button class="btn petit" data-enreg="' + g.id + '">Enregistrer</button> <button class="btn petit discret" data-actif="' + g.id + '" data-val="' + (!g.actif) + '">' + (g.actif ? "Désactiver" : "Réactiver") + "</button></td></tr>";
-      }).join("") + "</tbody></table></div></section>" +
-      '<datalist id="liste-centres">' + l.map(function (g) { return g.centre; }).filter(function (c, i, a) { return c && a.indexOf(c) === i; }).map(function (c) { return '<option value="' + esc(c) + '">'; }).join("") + "</datalist>";
-    h += '<section class="bloc"><div class="bloc-tete"><h2>Ajouter une personne</h2></div><form class="bloc-corps pile" id="form-equipe" novalidate><div class="grille-3">' +
-      '<label class="champ">Nom<input class="saisie" id="e-nom" required></label><label class="champ">Email professionnel<input class="saisie" id="e-email" type="email" required></label>' +
-      '<label class="champ">Rôle<select class="saisie" id="e-role">' + Object.keys(ROLES_G).map(function (k) { return '<option value="' + k + '">' + ROLES_G[k] + "</option>"; }).join("") + '</select></label></div>' +
-      '<div class="grille-3"><label class="champ">Service<select class="saisie" id="e-service">' + Object.keys(SERVICES).map(function (k) { return '<option value="' + k + '">' + SERVICES[k] + "</option>"; }).join("") + '</select></label>' +
-      '<label class="champ">Plafond de règlement <span class="aide">en €, vide = sans plafond</span><input class="saisie" id="e-plafond" type="number" min="0" step="100" value="1500"></label>' +
-      '<label class="champ">Centre de gestion <span class="aide">ex. Île-de-France, Lyon</span><input class="saisie" id="e-centre" list="liste-centres"></label></div>' +
-      '<div class="decision-actions"><button class="btn primaire" id="e-ok" type="submit">Créer le compte</button></div><div id="e-res"></div></form></section>';
-    $("vue").innerHTML = h;
-    document.querySelectorAll("[data-enreg]").forEach(function (b) {
-      b.onclick = function () {
-        var id = b.dataset.enreg, pl = document.querySelector('[data-plafond="' + id + '"]').value;
-        C.occupe(b, true, "");
-        api("equipe", { body: { id: id, role: document.querySelector('[data-role="' + id + '"]').value, service: document.querySelector('[data-service="' + id + '"]').value, plafond_eur: pl === "" ? null : Number(pl), centre: document.querySelector('[data-centre="' + id + '"]').value.trim() } })
-          .then(function () { C.toast("Compte mis à jour"); vueEquipe(); }).catch(function (x) { C.occupe(b, false); C.toast(x.message, true); });
-      };
-    });
-    document.querySelectorAll("[data-mfa]").forEach(function (b) {
-      b.onclick = function () {
-        if (!confirm("Réinitialiser la double authentification de " + b.dataset.nom + " ? À utiliser si son téléphone est perdu ou changé : à sa prochaine connexion, il associera une nouvelle application.")) return;
-        C.occupe(b, true, "");
-        api("equipe", { body: { id: b.dataset.mfa, action: "reinitialiser_mfa" } })
-          .then(function () { C.toast("Double authentification réinitialisée"); vueEquipe(); }).catch(function (x) { C.occupe(b, false); C.toast(x.message, true); });
-      };
-    });
-    document.querySelectorAll("[data-actif]").forEach(function (b) {
-      b.onclick = function () {
-        api("equipe", { body: { id: b.dataset.actif, actif: b.dataset.val === "true" } })
-          .then(function () { C.toast(b.dataset.val === "true" ? "Compte réactivé" : "Compte désactivé"); vueEquipe(); }).catch(function (x) { C.toast(x.message, true); });
-      };
-    });
-    $("form-equipe").addEventListener("submit", function (e) {
-      e.preventDefault();
-      var b = $("e-ok"), pl = $("e-plafond").value;
-      C.occupe(b, true, "Création");
-      var centre = $("e-centre").value.trim();
-      api("equipe", { body: { nom: $("e-nom").value.trim(), email: $("e-email").value.trim(), role: $("e-role").value, service: $("e-service").value, plafond_eur: pl === "" ? null : Number(pl) } }).then(function (r) {
-        C.occupe(b, false);
-        // le centre se règle juste après la création du compte
-        var cree = (r.equipe || []).filter(function (g) { return g.email === r.cree.email; })[0];
-        if (centre && cree) api("equipe", { body: { id: cree.id, centre: centre } }).catch(function (x) { C.toast(x.message, true); });
-        $("e-res").innerHTML = '<div class="alerte"><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.5" fill="none" stroke="currentColor" stroke-width="1.5"/></svg><span>Compte créé pour <b>' + esc(r.cree.email) + "</b>. Mot de passe provisoire, à transmettre en main propre : <b>" + esc(r.cree.mot_de_passe_provisoire) + "</b>. Il sera changé à la première connexion et n'est plus affiché ensuite.</span></div>";
-        api("equipe").then(function () { });
-      }).catch(function (x) { C.occupe(b, false); C.toast(x.message, true); });
-    });
-  }).catch(function (x) { erreurVue(x.status === 403 ? new Error("Réservé aux administrateurs.") : x); });
+  equipeApi("liste").then(rendreEquipe).catch(function (x) { erreurVue(x.status === 403 ? new Error(x.message) : x); });
+}
+function optionsHtml(o, choisi) { return Object.keys(o).map(function (k) { return '<option value="' + esc(k) + '"' + (k === choisi ? " selected" : "") + ">" + esc(o[k]) + "</option>"; }).join(""); }
+function rendreEquipe(d, envoi) {
+  if (!/^#\/equipe/.test(location.hash)) return;
+  var admin = d.moi.role === "admin", tous = d.membres;
+  var membres = tous.filter(function (g) {
+    return (!filtreEq.centre || (filtreEq.centre === "-" ? !g.centre : g.centre === filtreEq.centre)) && (!filtreEq.role || g.role === filtreEq.role);
+  });
+  var h = '<div class="entete-vue"><div><h1>Équipe</h1><p>' + (admin
+    ? "Tous les comptes de la compagnie, tous centres confondus. Pour ajouter quelqu'un, saisissez son email professionnel : il reçoit un mail avec un lien pour choisir son mot de passe. Un superviseur gère lui-même les gestionnaires de son centre."
+    : "Les comptes du centre " + esc(d.moi.centre) + ". Vous pouvez inviter un gestionnaire dans votre centre, régler son service et son plafond, ou désactiver son compte. Les superviseurs et les autres centres sont gérés par l'administrateur.") + "</p></div></div>";
+
+  // Inviter
+  h += '<section class="bloc"><div class="bloc-tete"><h2>Inviter une personne</h2></div><form class="bloc-corps pile" id="form-invit" novalidate><div class="grille-3">' +
+    '<label class="champ">Nom<input class="saisie" id="i-nom" autocomplete="off" required></label>' +
+    '<label class="champ">Email professionnel<input class="saisie" id="i-email" type="email" autocomplete="off" placeholder="prenom.nom@compagnie.fr" required></label>' +
+    (admin ? '<label class="champ">Rôle<select class="saisie" id="i-role">' + optionsHtml(ROLES_G, "gestionnaire") + "</select></label>"
+           : '<label class="champ">Centre<input class="saisie" value="' + esc(d.moi.centre) + '" disabled></label>') + "</div>" +
+    '<div class="grille-3">' + (admin ? '<label class="champ">Centre de gestion <span class="aide">ex. Île-de-France, Lyon</span><input class="saisie" id="i-centre" list="liste-centres" value="' + esc(filtreEq.centre && filtreEq.centre !== "-" ? filtreEq.centre : "") + '"></label>' : "") +
+    '<label class="champ">Service<select class="saisie" id="i-service">' + optionsHtml(SERVICES, "tous") + "</select></label>" +
+    '<label class="champ">Plafond de règlement <span class="aide">en €' + (admin || d.moi.plafond_eur == null ? ", vide = sans plafond" : ", " + esc(C.nombre(d.moi.plafond_eur, 0)) + " € au plus") + '</span><input class="saisie" id="i-plafond" type="number" min="0" step="100" value="1500"></label></div>' +
+    '<div class="decision-actions"><button class="btn primaire" id="i-ok" type="submit">Envoyer l\'invitation</button></div><p class="muet petit">La personne reçoit un mail sur cette adresse, avec un lien pour choisir son mot de passe. Le lien est personnel, sert une seule fois et expire au bout de 7 jours.</p><div id="i-res">' + messageEnvoi(envoi) + "</div></form></section>";
+
+  // Invitations en attente
+  if (d.invitations.length) h += '<section class="bloc"><div class="bloc-tete"><h2>Invitations en attente<span class="compte">' + d.invitations.length + '</span></h2></div><div class="tableau-wrap"><table class="tableau"><thead><tr><th>Nom</th><th>Email</th><th>Rôle</th><th>Centre</th><th>Invitée par</th><th>État</th><th></th></tr></thead><tbody>' +
+    d.invitations.map(function (i) {
+      var etat = i.expiree ? '<span class="statut ko">Lien expiré</span>' : i.erreur_envoi ? '<span class="statut ko">Mail non parti</span><div class="muet petit" style="max-width:32ch">' + esc(i.erreur_envoi) + "</div>"
+        : '<span class="statut neutre">Envoyée ' + esc(C.depuis(i.envoye_le || i.created_at)) + "</span>";
+      return '<tr style="cursor:default"><td>' + esc(i.nom) + '</td><td class="muet">' + esc(i.email) + "</td><td>" + esc(ROLES_G[i.role] || i.role) + "</td><td>" + esc(i.centre || "Aucun") + '</td><td class="muet">' + esc(i.invite_par_nom || "") + "</td><td>" + etat + "</td>" +
+        '<td class="nb"><button class="btn petit" data-renvoyer="' + esc(i.id) + '">Renvoyer</button> <button class="btn petit discret" data-annuler="' + esc(i.id) + '" data-nom="' + esc(i.nom) + '">Annuler</button></td></tr>';
+    }).join("") + "</tbody></table></div></section>";
+
+  // Comptes
+  var filtres = admin ? '<div class="filtres"><select class="saisie" id="f-centre" aria-label="Centre"><option value="">Tous les centres</option>' +
+    d.centres.map(function (c) { return '<option value="' + esc(c) + '"' + (c === filtreEq.centre ? " selected" : "") + ">" + esc(c) + "</option>"; }).join("") +
+    '<option value="-"' + (filtreEq.centre === "-" ? " selected" : "") + '>Sans centre</option></select><select class="saisie" id="f-role" aria-label="Rôle"><option value="">Tous les rôles</option>' + optionsHtml(ROLES_G, filtreEq.role) + "</select></div>" : "";
+  h += '<section class="bloc"><div class="bloc-tete"><h2>Comptes<span class="compte">' + membres.length + (membres.length !== tous.length ? " sur " + tous.length : "") + "</span></h2>" + filtres + '</div><div class="tableau-wrap"><table class="tableau comptes-t"><thead><tr><th>Nom</th><th>Email</th><th>Rôle</th><th>Centre</th><th>Service</th><th class="nb">Plafond de règlement</th><th>Dernière connexion</th><th>État</th><th></th></tr></thead><tbody>' +
+    membres.map(function (g) {
+      var modifiable = admin || (g.role === "gestionnaire" && g.id !== d.moi.id);
+      var role = admin ? '<select class="saisie" data-role="' + g.id + '" style="min-width:150px">' + optionsHtml(ROLES_G, g.role) + "</select>" : esc(ROLES_G[g.role] || g.role);
+      var centre = admin ? '<input class="saisie" data-centre="' + g.id + '" list="liste-centres" placeholder="Aucun" value="' + esc(g.centre || "") + '" style="min-width:140px">' : '<span style="white-space:nowrap">' + esc(g.centre || "") + "</span>";
+      var service = modifiable ? '<select class="saisie" data-service="' + g.id + '" style="min-width:120px">' + optionsHtml(SERVICES, g.service) + "</select>" : esc(SERVICES[g.service] || g.service);
+      var plafond = modifiable ? '<input class="saisie" data-plafond="' + g.id + '" type="number" min="0" step="100" placeholder="Sans plafond" value="' + (g.plafond_eur == null ? "" : esc(g.plafond_eur)) + '" style="max-width:140px;text-align:right">'
+        : (g.plafond_eur == null ? '<span class="muet">Sans plafond</span>' : esc(C.nombre(g.plafond_eur, 0)) + " €");
+      return '<tr style="cursor:default"><td>' + esc(g.nom) + (g.id === d.moi.id ? ' <span class="muet petit">(vous)</span>' : "") + '</td><td class="muet">' + esc(g.email) + "</td><td>" + role + "</td><td>" + centre + "</td><td>" + service + '</td><td class="nb">' + plafond + "</td>" +
+        '<td class="muet">' + esc(g.derniere_connexion ? C.depuis(g.derniere_connexion) : "Jamais") + "</td><td>" + (g.actif ? '<span class="statut ok">Actif</span>' : '<span class="statut neutre">Désactivé</span>') + "</td>" +
+        '<td class="nb">' + (modifiable ? '<button class="btn petit" data-enreg="' + g.id + '">Enregistrer</button> <button class="btn petit discret" data-actif="' + g.id + '" data-val="' + (!g.actif) + '" data-nom="' + esc(g.nom) + '">' + (g.actif ? "Désactiver" : "Réactiver") + "</button>" : "") + "</td></tr>";
+    }).join("") + (membres.length ? "" : '<tr><td colspan="9"><div class="vide">Aucun compte pour ce filtre.</div></td></tr>') + "</tbody></table></div></section>" +
+    '<datalist id="liste-centres">' + d.centres.map(function (c) { return '<option value="' + esc(c) + '">'; }).join("") + "</datalist>";
+  $("vue").innerHTML = h;
+
+  var recharger = function (r, envoi2) { rendreEquipe(r && r.membres ? r : d, envoi2); };
+  var maj = function (b, corps, msg) {
+    C.occupe(b, true, "");
+    // l'administrateur modifie par la route equipe ; le superviseur par klerio-equipe, qui vérifie son centre
+    (admin ? api("equipe", { body: corps }).then(function () { return equipeApi("liste"); }) : equipeApi("modifier", corps))
+      .then(function (r) { C.toast(msg); recharger(r); }).catch(function (x) { C.occupe(b, false); C.toast(x.message, true); });
+  };
+  if (admin) {
+    $("f-centre").onchange = function () { filtreEq.centre = this.value; rendreEquipe(d); };
+    $("f-role").onchange = function () { filtreEq.role = this.value; rendreEquipe(d); };
+  }
+  document.querySelectorAll("[data-enreg]").forEach(function (b) {
+    b.onclick = function () {
+      var id = b.dataset.enreg, pl = document.querySelector('[data-plafond="' + id + '"]').value;
+      var corps = { id: id, service: document.querySelector('[data-service="' + id + '"]').value, plafond_eur: pl === "" ? null : Number(pl) };
+      if (admin) { corps.role = document.querySelector('[data-role="' + id + '"]').value; corps.centre = document.querySelector('[data-centre="' + id + '"]').value.trim(); }
+      maj(b, corps, "Compte mis à jour");
+    };
+  });
+  document.querySelectorAll("[data-actif]").forEach(function (b) {
+    b.onclick = function () {
+      var on = b.dataset.val === "true";
+      if (!on && !confirm("Désactiver le compte de " + b.dataset.nom + " ? Il ne pourra plus se connecter. Ses dossiers restent dans le centre et peuvent être réattribués.")) return;
+      maj(b, { id: b.dataset.actif, actif: on }, on ? "Compte réactivé" : "Compte désactivé");
+    };
+  });
+  document.querySelectorAll("[data-renvoyer]").forEach(function (b) {
+    b.onclick = function () {
+      C.occupe(b, true, "");
+      equipeApi("renvoyer", { id: b.dataset.renvoyer }).then(function (r) { recharger(r, r.envoi); }).catch(function (x) { C.occupe(b, false); C.toast(x.message, true); });
+    };
+  });
+  document.querySelectorAll("[data-annuler]").forEach(function (b) {
+    b.onclick = function () {
+      if (!confirm("Annuler l'invitation de " + b.dataset.nom + " ? Le lien qu'il a reçu ne fonctionnera plus.")) return;
+      C.occupe(b, true, "");
+      equipeApi("annuler", { id: b.dataset.annuler }).then(function (r) { C.toast("Invitation annulée"); recharger(r); }).catch(function (x) { C.occupe(b, false); C.toast(x.message, true); });
+    };
+  });
+  $("form-invit").addEventListener("submit", function (e) {
+    e.preventDefault();
+    var b = $("i-ok"), pl = $("i-plafond").value, nom = $("i-nom").value.trim(), email = $("i-email").value.trim();
+    if (!nom || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { $("i-res").innerHTML = messageEnvoi({ erreur_saisie: "Saisissez le nom et une adresse email valide." }); return; }
+    C.occupe(b, true, "Envoi");
+    equipeApi("inviter", { nom: nom, email: email, role: admin ? $("i-role").value : "gestionnaire", centre: admin ? $("i-centre").value.trim() : d.moi.centre,
+      service: $("i-service").value, plafond_eur: pl === "" ? null : Number(pl) })
+      .then(function (r) { recharger(r, r.envoi); })
+      .catch(function (x) { C.occupe(b, false); $("i-res").innerHTML = messageEnvoi({ erreur_saisie: x.message }); });
+  });
+}
+function messageEnvoi(e) {
+  if (!e) return "";
+  var icone = '<svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.5" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>';
+  if (e.erreur_saisie) return '<p class="erreur-form" role="alert">' + esc(e.erreur_saisie) + "</p>";
+  if (e.envoye) return '<div class="alerte" role="status">' + icone + "<span>Invitation envoyée à <b>" + esc(e.email) + "</b>. Dès qu'il aura choisi son mot de passe, son compte apparaîtra dans la liste.</span></div>";
+  return '<div class="alerte" role="alert">' + icone + "<span>L'invitation pour <b>" + esc(e.email) + "</b> est enregistrée, mais le mail n'est pas parti : " + esc(e.erreur || "erreur inconnue") + ". Réessayez avec « Renvoyer ».</span></div>";
 }
 
 /* ---------------- Vue : Raccordement ---------------- */
@@ -3759,12 +3833,53 @@ function brancherRaccordement(admin) {
   });
 }
 
+/* ---------------- Invitation : l'invité choisit son mot de passe ---------------- */
+// Lien reçu par mail : …/index.html#/invitation/<jeton>. Le compte n'existe qu'après ce formulaire.
+var invitation = (location.hash.match(/^#\/invitation\/([\w-]{30,100})$/) || [])[1] || null;
+function allerConnexion(email) {
+  history.replaceState(null, "", location.pathname);
+  $("form-bienvenue").hidden = true; $("form-connexion").hidden = false;
+  if (email) { $("c-email").value = email; $("c-mdp").focus(); }
+}
+if (invitation) {
+  $("form-connexion").hidden = true; $("form-bienvenue").hidden = false;
+  $("b-connexion").onclick = function () { allerConnexion(); };
+  // un autre compte ouvert dans cet onglet est fermé : l'invité arrive sur sa propre page
+  sb.auth.signOut().catch(function () { }).then(function () { return equipeApi("voir", { jeton: invitation }); }).then(function (v) {
+    var role = { admin: "administrateur", superviseur: "superviseur" }[v.role] || "gestionnaire";
+    $("b-intro").textContent = (v.invite_par ? v.invite_par + " vous invite" : "Vous êtes invité") + " à rejoindre la console sinistres de " + v.compagnie +
+      (v.centre ? ", centre " + v.centre : "") + ", en tant que " + role + ". Choisissez votre mot de passe pour activer votre compte.";
+    $("b-email").value = v.email; $("b-champs").hidden = false; $("b-btn").hidden = false; $("b-mdp").focus();
+  }).catch(function (x) {
+    $("b-intro").textContent = "Ce lien ne permet pas de créer un compte.";
+    $("b-err").textContent = x.message; $("b-connexion").hidden = false;
+  });
+  $("form-bienvenue").addEventListener("submit", function (e) {
+    e.preventDefault();
+    var m1 = $("b-mdp").value, m2 = $("b-mdp2").value, err = $("b-err"), email = $("b-email").value;
+    err.textContent = "";
+    if (m1.length < 12) { err.textContent = "12 caractères minimum."; return; }
+    if (m1 !== m2) { err.textContent = "Les deux saisies sont différentes."; return; }
+    var b = $("b-btn"); C.occupe(b, true, "Création du compte");
+    equipeApi("accepter", { jeton: invitation, mot_de_passe: m1 }).then(function () {
+      invitation = null;
+      return sb.auth.signInWithPassword({ email: email, password: m1 }).then(function (r) {
+        history.replaceState(null, "", location.pathname + "#/file");
+        if (r.error) { allerConnexion(email); $("c-err").textContent = "Compte créé. Connectez-vous avec votre mot de passe."; return; }
+        $("form-bienvenue").hidden = true;
+        return entrer(r.data.session);
+      });
+    }).catch(function (x) { err.textContent = x.message; }).finally(function () { C.occupe(b, false); });
+  });
+}
+
 /* ---------------- Démarrage ---------------- */
 // Session de l'onglet : chaque onglet a son propre compte, et fermer le navigateur déconnecte.
 // Pendant la reprise d'une session, on n'affiche pas le formulaire (il ne doit pas « sauter » au bout de quelques secondes).
 (function () {
   var f = $("form-connexion"), att = document.createElement("p");
   att.className = "muet"; att.style.textAlign = "center"; att.textContent = "Ouverture de votre session…";
+  if (invitation) return;
   sb.auth.getSession().then(function (r) {
     if (!r.data.session) return;
     f.hidden = true; f.parentNode.insertBefore(att, f);
