@@ -659,6 +659,12 @@ function entrer(session) {
     // Connexion par email et mot de passe seulement : la double authentification n'est plus imposée ni proposée
     $("b-mfa").hidden = true;
     S.moi = moi; S.gest = moi.email; S.assureur = moi.assureur;
+    // superviseur d'un centre : la carte « gestionnaire → centre » sert à ne montrer que son centre
+    S.centres = null;
+    if (moi.role === "superviseur" && moi.centre) api("pilotage-equipe").then(function (eq) {
+      S.centres = {}; (eq.gestionnaires || []).forEach(function (g) { S.centres[g.id] = g.centre || null; });
+      if (/^#\/(file)?$/.test(location.hash || "#/file")) router();
+    }).catch(function () { });
     $("n-assureur").textContent = S.assureur; $("n-gest").textContent = moi.nom;
     $("n-avatar").textContent = moi.nom.split(/\s+/).map(function (x) { return x[0]; }).join("").slice(0, 2);
     $("n-equipe").hidden = moi.role !== "admin";
@@ -825,6 +831,7 @@ function vueFile() {
     var file = r[0] || [], encours = r[1] || [], ind = r[2] || {}, dbl = r[3], mails = ind.mails_recus || [];
     compter(ind);
     var moi = S.moi || {}, resp = estResponsable();
+    if (moi.role === "superviseur" && moi.centre && S.centres) file = file.filter(function (d) { return !d.gestionnaire || S.centres[d.gestionnaire.id] === moi.centre; });
     var aMoi = file.filter(function (d) { return d.gestionnaire && d.gestionnaire.id === moi.id; });
     var libres = file.filter(function (d) { return !d.gestionnaire; });
     var autres = file.filter(function (d) { return d.gestionnaire && d.gestionnaire.id !== moi.id; });
@@ -3177,7 +3184,7 @@ function blocAge(pm) {
 var SERVICES = { contractuel: "Contractuel", tiers: "Avec tiers", tous: "Les deux" };
 function blocEquipePilotage(eq, pm) {
   var pg = pm.par_gestionnaire || {}, J = pm.relance_jours || 3, rep = eq.mode_repartition === "repartition";
-  var g = (eq.gestionnaires || []).filter(function (x) { return x.actif; });
+  var g = (eq.gestionnaires || []).filter(function (x) { return x.actif && (!(S.moi.role === "superviseur" && S.moi.centre) || x.centre === S.moi.centre); });
   g.forEach(function (x) { var e = pg[x.id] || {}; x.plus_ancien_jours = e.plus_ancien_jours; x.sans_action = e.sans_action || 0; x.delai_decision_heures = e.delai_decision_heures; });
   var tri = g.slice().sort(function (a, b) { return (b.sans_action - a.sans_action) || (b.a_traiter - a.a_traiter) || (b.en_cours - a.en_cours); });
   var h = '<section class="bloc"><div class="bloc-tete"><div><h2>Équipe</h2><p class="muet petit" style="margin-top:2px">' +
@@ -3190,7 +3197,7 @@ function blocEquipePilotage(eq, pm) {
     tri.map(function (x) {
       var presence = !x.disponible ? '<span class="presence absent">Absent' + (x.absent_jusqu_au ? " jusqu'au " + esc(C.dateCourte(x.absent_jusqu_au)) : "") + "</span>"
         : '<span class="presence">Présent' + (x.role !== "admin" && x.recoit_nouveaux === false ? ", sans nouveaux dossiers" : "") + (x.capacite_pct && x.capacite_pct < 100 ? ", " + x.capacite_pct + " %" : "") + "</span>";
-      return '<tr style="cursor:default"><td class="qui"><b>' + esc(x.nom) + "</b><small title=\"" + esc(x.derniere_connexion ? "Vu " + C.depuis(x.derniere_connexion) : "Jamais connecté") + '">' + esc(ROLES_G[x.role] || x.role) + ", " + esc((SERVICES[x.service] || x.service).toLowerCase()) + "</small></td>" +
+      return '<tr style="cursor:default"><td class="qui"><b>' + esc(x.nom) + "</b><small title=\"" + esc(x.derniere_connexion ? "Vu " + C.depuis(x.derniere_connexion) : "Jamais connecté") + '">' + esc(ROLES_G[x.role] || x.role) + ", " + esc(x.centre || (SERVICES[x.service] || x.service).toLowerCase()) + "</small></td>" +
         '<td class="nb">' + (x.a_traiter ? "<b>" + x.a_traiter + "</b>" : '<span class="muet">0</span>') + "</td>" +
         '<td class="nb">' + (x.sans_action ? '<span class="alerte-n">' + x.sans_action + "</span>" : '<span class="muet">0</span>') + "</td>" +
         '<td class="nb">' + (x.plus_ancien_jours != null ? x.plus_ancien_jours + " j" : '<span class="muet">–</span>') + "</td>" +
@@ -3407,28 +3414,31 @@ function barres(o, lib, vous) {
 var ROLES_G = { gestionnaire: "Gestionnaire", superviseur: "Superviseur", admin: "Administrateur" };
 function vueEquipe() {
   api("equipe").then(function (l) {
-    var h = '<div class="entete-vue"><div><h1>Équipe</h1><p>Chaque personne a son propre compte. Son service limite ce qu\'elle voit : contractuel, avec tiers ou les deux. Son plafond limite les règlements qu\'elle peut valider seule ; au-delà, un superviseur valide.</p></div></div>';
-    h += '<section class="bloc"><div class="bloc-tete"><h2>Comptes<span class="compte">' + l.length + '</span></h2></div><div class="tableau-wrap"><table class="tableau comptes-t"><thead><tr><th>Nom</th><th>Email</th><th>Rôle</th><th>Service</th><th class="nb">Plafond de règlement</th><th>Dernière connexion</th><th>État</th><th></th></tr></thead><tbody>' +
+    var h = '<div class="entete-vue"><div><h1>Équipe</h1><p>Chaque personne a son propre compte. Son centre de gestion sépare les équipes : un superviseur ne voit que son centre, et les dossiers ne passent jamais d\'un centre à l\'autre. Son service limite ce qu\'elle voit : contractuel, avec tiers ou les deux. Son plafond limite les règlements qu\'elle peut valider seule ; au-delà, un superviseur valide.</p></div></div>';
+    h += '<section class="bloc"><div class="bloc-tete"><h2>Comptes<span class="compte">' + l.length + '</span></h2></div><div class="tableau-wrap"><table class="tableau comptes-t"><thead><tr><th>Nom</th><th>Email</th><th>Rôle</th><th>Centre</th><th>Service</th><th class="nb">Plafond de règlement</th><th>Dernière connexion</th><th>État</th><th></th></tr></thead><tbody>' +
       l.map(function (g) {
         return '<tr style="cursor:default"><td>' + esc(g.nom) + '</td><td class="muet">' + esc(g.email) + '</td><td><select class="saisie" data-role="' + g.id + '" style="min-width:150px">' +
           Object.keys(ROLES_G).map(function (k) { return '<option value="' + k + '"' + (k === g.role ? " selected" : "") + ">" + ROLES_G[k] + "</option>"; }).join("") + '</select></td>' +
+          '<td><input class="saisie" data-centre="' + g.id + '" list="liste-centres" placeholder="Aucun" value="' + esc(g.centre || "") + '" style="min-width:140px"></td>' +
           '<td><select class="saisie" data-service="' + g.id + '" style="min-width:120px">' + Object.keys(SERVICES).map(function (k) { return '<option value="' + k + '"' + (k === g.service ? " selected" : "") + ">" + SERVICES[k] + "</option>"; }).join("") + "</select></td>" +
           '<td class="nb"><input class="saisie" data-plafond="' + g.id + '" type="number" min="0" step="100" placeholder="Sans plafond" value="' + (g.plafond_eur == null ? "" : esc(g.plafond_eur)) + '" style="max-width:140px;text-align:right"></td>' +
           '<td class="muet">' + esc(g.derniere_connexion ? C.depuis(g.derniere_connexion) : "Jamais") + '</td><td>' + (g.actif ? '<span class="statut ok">Actif</span>' : '<span class="statut neutre">Désactivé</span>') + '</td>' +
           '<td class="nb"><button class="btn petit" data-enreg="' + g.id + '">Enregistrer</button> <button class="btn petit discret" data-actif="' + g.id + '" data-val="' + (!g.actif) + '">' + (g.actif ? "Désactiver" : "Réactiver") + "</button></td></tr>";
-      }).join("") + "</tbody></table></div></section>";
+      }).join("") + "</tbody></table></div></section>" +
+      '<datalist id="liste-centres">' + l.map(function (g) { return g.centre; }).filter(function (c, i, a) { return c && a.indexOf(c) === i; }).map(function (c) { return '<option value="' + esc(c) + '">'; }).join("") + "</datalist>";
     h += '<section class="bloc"><div class="bloc-tete"><h2>Ajouter une personne</h2></div><form class="bloc-corps pile" id="form-equipe" novalidate><div class="grille-3">' +
       '<label class="champ">Nom<input class="saisie" id="e-nom" required></label><label class="champ">Email professionnel<input class="saisie" id="e-email" type="email" required></label>' +
       '<label class="champ">Rôle<select class="saisie" id="e-role">' + Object.keys(ROLES_G).map(function (k) { return '<option value="' + k + '">' + ROLES_G[k] + "</option>"; }).join("") + '</select></label></div>' +
       '<div class="grille-3"><label class="champ">Service<select class="saisie" id="e-service">' + Object.keys(SERVICES).map(function (k) { return '<option value="' + k + '">' + SERVICES[k] + "</option>"; }).join("") + '</select></label>' +
-      '<label class="champ">Plafond de règlement <span class="aide">en €, vide = sans plafond</span><input class="saisie" id="e-plafond" type="number" min="0" step="100" value="1500"></label></div>' +
+      '<label class="champ">Plafond de règlement <span class="aide">en €, vide = sans plafond</span><input class="saisie" id="e-plafond" type="number" min="0" step="100" value="1500"></label>' +
+      '<label class="champ">Centre de gestion <span class="aide">ex. Île-de-France, Lyon</span><input class="saisie" id="e-centre" list="liste-centres"></label></div>' +
       '<div class="decision-actions"><button class="btn primaire" id="e-ok" type="submit">Créer le compte</button></div><div id="e-res"></div></form></section>';
     $("vue").innerHTML = h;
     document.querySelectorAll("[data-enreg]").forEach(function (b) {
       b.onclick = function () {
         var id = b.dataset.enreg, pl = document.querySelector('[data-plafond="' + id + '"]').value;
         C.occupe(b, true, "");
-        api("equipe", { body: { id: id, role: document.querySelector('[data-role="' + id + '"]').value, service: document.querySelector('[data-service="' + id + '"]').value, plafond_eur: pl === "" ? null : Number(pl) } })
+        api("equipe", { body: { id: id, role: document.querySelector('[data-role="' + id + '"]').value, service: document.querySelector('[data-service="' + id + '"]').value, plafond_eur: pl === "" ? null : Number(pl), centre: document.querySelector('[data-centre="' + id + '"]').value.trim() } })
           .then(function () { C.toast("Compte mis à jour"); vueEquipe(); }).catch(function (x) { C.occupe(b, false); C.toast(x.message, true); });
       };
     });
@@ -3450,8 +3460,12 @@ function vueEquipe() {
       e.preventDefault();
       var b = $("e-ok"), pl = $("e-plafond").value;
       C.occupe(b, true, "Création");
+      var centre = $("e-centre").value.trim();
       api("equipe", { body: { nom: $("e-nom").value.trim(), email: $("e-email").value.trim(), role: $("e-role").value, service: $("e-service").value, plafond_eur: pl === "" ? null : Number(pl) } }).then(function (r) {
         C.occupe(b, false);
+        // le centre se règle juste après la création du compte
+        var cree = (r.equipe || []).filter(function (g) { return g.email === r.cree.email; })[0];
+        if (centre && cree) api("equipe", { body: { id: cree.id, centre: centre } }).catch(function (x) { C.toast(x.message, true); });
         $("e-res").innerHTML = '<div class="alerte"><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.5" fill="none" stroke="currentColor" stroke-width="1.5"/></svg><span>Compte créé pour <b>' + esc(r.cree.email) + "</b>. Mot de passe provisoire, à transmettre en main propre : <b>" + esc(r.cree.mot_de_passe_provisoire) + "</b>. Il sera changé à la première connexion et n'est plus affiché ensuite.</span></div>";
         api("equipe").then(function () { });
       }).catch(function (x) { C.occupe(b, false); C.toast(x.message, true); });
