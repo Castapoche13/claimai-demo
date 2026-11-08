@@ -398,3 +398,29 @@ button.tuile.forte:hover { border-color: var(--forte); opacity: .94; }
 :root[data-theme="dark"] .type-tag { background: rgba(255,255,255,.06); color: var(--encre-2); }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .type-tag { background: rgba(255,255,255,.06); color: var(--encre-2); } }
 .fiche-tete .sous .type-tag { margin-right: 4px; }
+
+/* Plus de contraste : fond plus présent, texte plus noir, parcours sur fond noir */
+:root:not([data-theme="dark"]) { --papier: #E8E8E4; --feuille-2: #F5F5F2; --survol: #EBEBE7; --trait: #DDDDD8; --trait-fort: #C4C4BE;
+  --encre: #09090B; --encre-2: #27272A; --gris: #4B4B53; --gris-clair: #66666D; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --papier: #0C0C0E; --encre: #F4F4F5; --encre-2: #DEDEE2; --gris: #AEAEB6; } }
+:root[data-theme="dark"] { --papier: #0C0C0E; --encre: #F4F4F5; --encre-2: #DEDEE2; --gris: #AEAEB6; }
+body { -webkit-font-smoothing: auto; }
+.nav { background: #FFFFFF; }
+:root[data-theme="dark"] .nav { background: var(--feuille); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .nav { background: var(--feuille); } }
+.bloc, .decision, .tuile, .pil-stat { border-color: #D6D6D1; box-shadow: 0 1px 2px rgba(9, 9, 11, .05), 0 4px 12px rgba(9, 9, 11, .04); }
+.corps-courrier { color: var(--encre); overflow-wrap: anywhere; word-break: break-word; }
+.msg-corps { min-width: 0; overflow-wrap: anywhere; }
+.lien-mail { font-size: 12.5px; color: var(--gris); margin: 0 0 8px; }
+.lien-mail span { margin-right: 6px; }
+/* Parcours du dossier : un bandeau noir, l'étape en cours en jaune constat */
+.parcours { background: #111113; border-color: #111113; color: #E4E4E7; }
+.parcours .route li, .parcours .route .qui { color: #A1A1AA; }
+.parcours .route li.fait, .parcours .route li.ici { color: #FFFFFF; }
+.parcours .route li::before { background: #3F3F46 !important; }
+.parcours .route li.fait::before, .parcours .route li.fait + li.ici::before, .parcours .route li.fait + li.fin::before { background: #E4E4E7 !important; }
+.parcours .route .pt { background: #111113; border-color: #52525B; }
+.parcours .route li.fait .pt { background: #E4E4E7; border-color: #E4E4E7; }
+.parcours .route li.ici .pt, .parcours .route li.ici.vous .pt { background: var(--constat); border-color: var(--constat); box-shadow: 0 0 0 4px rgba(217, 174, 69, .25); }
+.parcours .route li.ici.vous .qui { color: var(--constat); }
+.parcours .parcours-legende, .parcours p { color: #D4D4D8; border-color: #27272A !important; }

@@ -391,7 +391,7 @@ a.tuile:hover { border-color: var(--trait-fort); text-decoration: none; }
 
 #c-captcha { min-height: 65px; }
 </style>
-<link rel="stylesheet" href="charte.css?v=20261108f">
+<link rel="stylesheet" href="charte.css?v=20261108g">
 </head>
 <body>
 
@@ -972,6 +972,11 @@ function listeAlertes(l, resp) {
         (resp ? '<td class="muet">' + esc(a.pour || "") + "</td>" : "") +
         '<td class="nb muet">' + esc(C.depuis(a.le)) + "</td></tr>";
     }).join("") + "</tbody></table></div>";
+}
+// Dans la console, le lien sécurisé écrit en clair est retiré du texte : le destinataire le reçoit sous forme de bouton
+function sansLien(t) {
+  return String(t).replace(/\n*Pour répondre ou transmettre un document, utilisez votre lien sécurisé :\s*\S+/g, "")
+    .replace(/\n*Lien sécurisé pour répondre en ligne :\s*\S+/g, "").replace(/\n{3,}/g, "\n\n");
 }
 // Les erreurs techniques de lecture sont traduites en une phrase qui dit quoi faire
 function precisionMail(m) {
@@ -2513,7 +2518,9 @@ function ligneMessage(x, i, fini) {
     var c = x.c;
     sens = "Envoyé"; qui = "À " + (C.ROLES[c.destinataire] || c.destinataire || "").toLowerCase(); sous = c.email || "sans adresse"; objet = c.objet || "";
     etat = c.statut === "envoye" ? '<span class="msg-etat ok">Parti</span>' : c.statut === "erreur" ? '<span class="msg-etat ko">Échec de l\'envoi</span>' : '<span class="msg-etat">Boîte de test</span>';
-    corps = '<p class="muet petit">' + esc(C.COURRIERS[c.type] || c.type || "") + (c.statut === "envoye" && c.envoye_a ? ", envoyé à " + esc(c.envoye_a) : "") + "</p>" + '<div class="corps-courrier">' + esc(c.corps || "") + "</div>";
+    corps = '<p class="muet petit">' + esc(C.COURRIERS[c.type] || c.type || "") + (c.statut === "envoye" && c.envoye_a ? ", envoyé à " + esc(c.envoye_a) : "") + "</p>" + '<div class="corps-courrier">' + esc(sansLien(c.corps || "")) + "</div>" +
+      (c.lien ? '<p class="lien-mail"><span>Le mail contient un bouton « ' + (c.destinataire === "comptabilite" ? "Ouvrir le bon à payer" : "Répondre en ligne") + ' » vers un espace sécurisé.</span>' +
+        (S.env === "test" ? ' <a href="' + esc(c.lien) + '" target="_blank" rel="noopener">Ouvrir cet espace (essai)</a>' : "") + "</p>" : "");
     if (!fini && DEST_MSG[c.destinataire]) outils = '<button type="button" class="btn petit" data-msg-repondre data-relance="1" data-dest="' + esc(c.destinataire) + '" data-email="' + esc(c.email || "") + '" data-objet="' + esc(c.objet || "") + '">Relancer</button>';
   } else {
     sens = CANAUX[n.canal] || n.canal; qui = n.interlocuteur ? (INTERLOCUTEURS[n.interlocuteur] || n.interlocuteur) : "Note";
