@@ -278,3 +278,9 @@ button.tuile:hover, a.tuile:hover { border-color: var(--trait-fort); text-decora
   .msg-corps { padding-left: 16px; }
   .msg-filtres .filtre-file { display: flex; overflow-x: auto; }
 }
+
+/* Corbeille calme : pas de mention « prioritaire » ni d'orange sur les compteurs et les échéances, la date suffit */
+.nav .compteur { background: var(--survol); color: var(--encre-2); font-weight: 600; }
+.badge-n.urgent { background: var(--survol); color: var(--encre-2); }
+.txt-prio { color: inherit; font-weight: 500; }
+.echeance { padding: 0; border: 0; border-radius: 0; background: none; font-weight: 500; color: var(--encre-2); }

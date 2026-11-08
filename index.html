@@ -390,7 +390,7 @@ a.tuile:hover { border-color: var(--trait-fort); text-decoration: none; }
 
 #c-captcha { min-height: 65px; }
 </style>
-<link rel="stylesheet" href="charte.css?v=20261105a">
+<link rel="stylesheet" href="charte.css?v=20261108a">
 </head>
 <body>
 
@@ -735,15 +735,15 @@ function compter(ind) {
   c.textContent = n; c.hidden = !n;
 }
 function rafraichirCompteur() { api("indicateurs" + qb()).then(compter).catch(function () { }); }
-// Alerte : un nouveau dossier prioritaire apparaît (vérifié toutes les 2 minutes)
+// Alerte : un nouveau dossier vous est attribué (vérifié toutes les 2 minutes)
 var vus = null, minuterie = null;
 function verifierPriorites() {
   if (!api) return;
   api("a-traiter" + qb()).then(function (l) {
-    var hauts = (l || []).filter(function (d) { return d.priorite === "haute" && (!d.gestionnaire || (S.moi && d.gestionnaire.id === S.moi.id)); }).map(function (d) { return d.numero; });
+    var hauts = (l || []).filter(function (d) { return d.gestionnaire && S.moi && d.gestionnaire.id === S.moi.id; }).map(function (d) { return d.numero; });
     if (vus) {
       var neufs = hauts.filter(function (n) { return vus.indexOf(n) < 0; });
-      if (neufs.length) C.toast(neufs.length > 1 ? neufs.length + " nouveaux dossiers prioritaires : " + neufs.slice(0, 3).join(", ") : "Nouveau dossier prioritaire : " + neufs[0]);
+      if (neufs.length) C.toast(neufs.length > 1 ? neufs.length + " nouveaux dossiers pour vous : " + neufs.slice(0, 3).join(", ") : "Nouveau dossier pour vous : " + neufs[0]);
     }
     vus = hauts;
     document.title = (hauts.length ? "(" + hauts.length + ") " : "") + (S.env === "test" ? "[Essai] " : "") + "Console sinistres Klerio";
@@ -836,7 +836,7 @@ function vueFile() {
     var h = bandeauCorporel() + '<div class="corbeille-tete"><div><h1>Corbeille</h1><p>Espace ' + esc(C.ESPACES[S.branche].nom.toLowerCase()) +
       ", " + esc(new Date().toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" })) + '</p></div><a class="btn primaire" href="#/declarer">Déclarer un sinistre</a></div>';
     h += '<div class="tuiles">' +
-      '<button type="button" class="tuile' + (file.length ? " vous" : "") + '" data-aller="decider"><div class="val">' + file.length + '</div><div class="lib">Attendent une décision</div>' + (prio ? '<div class="sous">dont ' + prio + " prioritaire" + (prio > 1 ? "s" : "") + "</div>" : "") + "</button>" +
+      '<button type="button" class="tuile" data-aller="decider"><div class="val">' + file.length + '</div><div class="lib">Attendent une décision</div>' + "" + "</button>" +
       '<button type="button" class="tuile" data-aller="tiers"><div class="val">' + tiers.length + '</div><div class="lib">Chez un expert, un garage ou l\'assuré</div></button>' +
       '<a class="tuile" href="#/archives"><div class="val">' + (ind.clos_30j || 0) + '</div><div class="lib">Terminés ces 30 derniers jours</div></a>' +
       '<a class="tuile" href="#/pilotage"><div class="val">' + (ind.taux_sans_intervention != null ? C.nombre(ind.taux_sans_intervention, 0) + " %" : "–") + '</div><div class="lib">Traités sans aucun clic</div></a></div>';
@@ -845,8 +845,8 @@ function vueFile() {
         esc(lib) + '<span class="badge-n' + (urgent ? " urgent" : "") + '">' + n + "</span></button>";
     }
     h += '<section class="bloc accueil-bloc"><div class="bannettes" role="tablist" aria-label="Corbeilles">' +
-      tab("decider", "À décider", file.length, file.length > 0) +
-      tab("mails", "Mails reçus", mails.length, mailsAction > 0) +
+      tab("decider", "À décider", file.length, false) +
+      tab("mails", "Mails reçus", mails.length, false) +
       tab("tiers", "En attente d'un intervenant", tiers.length, false) +
       '</div><div id="bannette-corps" role="tabpanel"></div></section>';
     $("vue").innerHTML = h;
@@ -879,7 +879,7 @@ function vueFile() {
       if (cle === "decider") {
         h2 = '<div class="bannette-outils"><div class="filtre-file" role="group" aria-label="Filtrer">' +
           filtres.map(function (f) { return '<button type="button" data-filtre="' + f[0] + '" aria-pressed="' + (f[0] === choix) + '">' + esc(f[1]) + '<span class="n">' + f[2].length + "</span></button>"; }).join("") +
-          '</div><span class="outils-info">' + (prio ? '<span class="txt-prio">' + prio + " prioritaire" + (prio > 1 ? "s" : "") + "</span>" : "") + "</span></div><div id=\"file-liste\"></div>";
+          '</div><span class="outils-info">' + "" + "</span></div><div id=\"file-liste\"></div>";
         if (dbl && (dbl.classes || []).length) {
           var n30 = dbl.classes.filter(function (d) { return Date.now() - new Date(d.recu_le).getTime() < 30 * 864e5; }).length;
           if (n30) h2 += '<p class="bannette-pied muet petit"><a href="#/doublons">' + n30 + " déclaration" + (n30 > 1 ? "s" : "") + " en double classée" + (n30 > 1 ? "s" : "") + " ces 30 derniers jours</a>, rattachée" + (n30 > 1 ? "s" : "") + " au dossier d'origine.</p>";
@@ -914,7 +914,7 @@ function tableDecider(l) {
   return '<div class="tableau-wrap"><table class="tableau bannette-table"><thead><tr><th>N° dossier</th><th>Type</th><th>Tâche</th><th>Attribué à</th><th class="nb">Échéance</th></tr></thead><tbody>' +
     l.map(function (d) {
       var a = attente(d), libre = !d.gestionnaire, hp = d.priorite === "haute", nAct = (d.activites || []).length;
-      return '<tr data-n="' + esc(d.numero) + '" tabindex="0"' + (hp ? ' class="haute"' : "") + '><td class="c-dossier"><span class="num-lien">' + esc(d.numero) + "</span>" + (hp ? '<span class="txt-prio petit">Prioritaire</span>' : "") + "</td>" +
+      return '<tr data-n="' + esc(d.numero) + '" tabindex="0"' + "" + '><td class="c-dossier"><span class="num-lien">' + esc(d.numero) + "</span>" + "" + "</td>" +
         '<td class="c-type">' + typeTag(d.theme) + "</td>" +
         '<td class="c-quoi"><b>' + esc(a[0]) + "</b>" + (a[1] ? "<small>" + esc(a[1]) + "</small>" : "") +
           (d.renvoye_manager ? '<small class="renvoi">Renvoyé par ' + esc(d.renvoye_manager.par) + " : " + esc(d.renvoye_manager.motif) + "</small>" : "") +
@@ -933,9 +933,6 @@ function joursAvant(date) {
 function echeanceTag(date) {
   var j = joursAvant(date);
   if (j === null) return '<span class="echeance">–</span>';
-  if (j < 0) return '<span class="echeance retard" title="Échéance : ' + esc(C.dateFr(date)) + '">En retard de ' + (-j) + " j</span>";
-  if (j === 0) return '<span class="echeance jour" title="Échéance : aujourd\'hui">Aujourd\'hui</span>';
-  if (j <= 2) return '<span class="echeance proche" title="Échéance : ' + esc(C.dateFr(date)) + '">J-' + j + "</span>";
   return '<span class="echeance">' + esc(C.dateCourte(date)) + "</span>";
 }
 function tableTiers(l) {
@@ -1027,7 +1024,7 @@ setInterval(function () {
 function ligneFile(d, extra) {
   var a = attente(d), libre = !d.gestionnaire;
   return '<li><a class="ligne vous" href="#/dossier/' + esc(d.numero) + '"><span class="repere"></span>' +
-    '<span class="num">' + (d.priorite === "haute" ? '<span class="prio" title="Prioritaire"></span>' : "") + esc(d.numero) + '<small>' + esc(C.theme(d.theme)) + (d.contrat ? ", " + esc(d.contrat) : "") + '</small></span>' +
+    '<span class="num">' + "" + esc(d.numero) + '<small>' + esc(C.theme(d.theme)) + (d.contrat ? ", " + esc(d.contrat) : "") + '</small></span>' +
     '<span class="quoi">' + esc(a[0]) + (a[1] ? '<small>' + esc(a[1]) + '</small>' : "") + (extra || "") +
     '<span class="titulaire">' + (libre ? 'File commune · <button type="button" class="lien-prendre" data-prendre="' + esc(d.numero) + '">Prendre ce dossier</button>' : "Suivi par " + esc(d.gestionnaire.nom)) + "</span></span>" +
     '<span class="droite">' + C.statut(d.statut) + '<span>' + esc(C.depuis(d.depuis)) + '</span></span></a></li>';
@@ -3380,7 +3377,7 @@ function ongletDonnees(p) {
     champNum("s-ecart", "Écart devis et expertise", "%", p.seuil_ecart_prix_pct) + champNum("s-fact", "Écart facture et expertise", "%", p.ecart_facture_expertise_pct) +
     champNum("s-taux", "Taux horaire maximum", "€", p.taux_horaire_max_eur) + champNum("s-bg", "Bris de glace sans expert, jusqu'à", "€", p.bris_glace_sans_expert_max) +
     champNum("s-relance", "Relance sans réponse après", "jours", p.delai_relance_jours) + champNum("s-aipp", "Écart AIPP et barème toléré", "points", p.ga_ecart_aipp_points) +
-    champNum("s-vol", "Délai de recherche d'un véhicule volé", "jours", p.delai_vol_jours) + champNum("s-catnat", "Franchise légale catastrophe naturelle", "€", p.franchise_catnat_eur) +
+    champNum("s-vol", "Délai de recherche d'un véhicule volé", "jours", p.delai_vol_jours) + champNum("s-relg", "Relance du gestionnaire quand un dossier attend", "jours", p.relance_gestionnaire_jours == null ? 3 : p.relance_gestionnaire_jours) + champNum("s-catnat", "Franchise légale catastrophe naturelle", "€", p.franchise_catnat_eur) +
     '</div><p class="muet petit">Unité de compte de la Garantie Accident : ' + esc(eur(p.uc_eur)) + '.</p><div class="decision-actions"><button class="btn primaire" id="s-ok">Enregistrer les règles</button></div></div></div>';
   h += '<div class="reglage"><div class="expl"><h3>Automatisation</h3><p>Ce que Klerio fait seul, sans clic. Les cas douteux et les anomalies reviennent toujours à un gestionnaire.</p></div><div class="zone pile">' +
     '<div class="grille-2"><label class="champ">Règlement automatique jusqu\'à <span class="aide">en €, vide = tout faire valider</span><input class="saisie" id="s-auto" type="number" min="0" step="100" value="' + esc(p.reglement_auto_max_eur == null ? "" : p.reglement_auto_max_eur) + '"></label></div>' +
@@ -3492,7 +3489,7 @@ function brancherRaccordement(admin) {
   lier("i-contrats-ok", function () { importer(this, "i-contrats", "contrats", function (r) { return r.contrats + " contrat(s) à jour"; }); });
   lier("s-ok", function () {
     envoyer(this, "parametres", { seuil_ecart_prix_pct: Number($("s-ecart").value), ecart_facture_expertise_pct: Number($("s-fact").value), taux_horaire_max_eur: Number($("s-taux").value),
-      bris_glace_sans_expert_max: Number($("s-bg").value), delai_relance_jours: Number($("s-relance").value), ga_ecart_aipp_points: Number($("s-aipp").value), delai_vol_jours: Number($("s-vol").value), franchise_catnat_eur: Number($("s-catnat").value) }, "Règles enregistrées");
+      bris_glace_sans_expert_max: Number($("s-bg").value), delai_relance_jours: Number($("s-relance").value), ga_ecart_aipp_points: Number($("s-aipp").value), delai_vol_jours: Number($("s-vol").value), relance_gestionnaire_jours: Number($("s-relg").value), franchise_catnat_eur: Number($("s-catnat").value) }, "Règles enregistrées");
   });
   lier("s-ok2", function () {
     var auto = $("s-auto").value, m = document.querySelector('[name="s-mode"]:checked'), c = document.querySelector('[name="s-cons"]:checked'), pe = document.querySelector('[name="s-perim"]:checked');
