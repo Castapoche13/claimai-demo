@@ -413,7 +413,12 @@ body { -webkit-font-smoothing: auto; }
 .msg-corps { min-width: 0; overflow-wrap: anywhere; }
 .lien-mail { font-size: 12.5px; color: var(--gris); margin: 0 0 8px; }
 .lien-mail span { margin-right: 6px; }
-/* Parcours du dossier : cadre noir, fond clair, l'étape en cours en jaune constat */
-.parcours { background: var(--feuille); border: 1.5px solid var(--encre); }
-.parcours .route li.ici .pt, .parcours .route li.ici.vous .pt { background: var(--constat); border-color: var(--encre); box-shadow: 0 0 0 4px rgba(217, 174, 69, .3); }
+/* Parcours du dossier : une carte comme les autres, les étapes faites en noir, l'étape en cours en jaune constat */
+.parcours { background: var(--feuille); border: 1px solid #D6D6D1; border-radius: var(--rayon-carte); box-shadow: 0 1px 2px rgba(9, 9, 11, .05), 0 4px 12px rgba(9, 9, 11, .04); }
+.parcours .route li.fait, .parcours .route li.ici { color: var(--encre); }
+.parcours .route li.ici .pt, .parcours .route li.ici.vous .pt { background: var(--constat); border-color: var(--constat); box-shadow: 0 0 0 4px rgba(217, 174, 69, .25); }
 .parcours .route li.ici.vous .qui { color: var(--encre); font-weight: 500; }
+
+/* Type de sinistre : juste un point de couleur devant le nom */
+.type-tag, .type-tag.t-glace, .type-tag.t-vol, .type-tag.t-degat, .type-tag.t-feu, .type-tag.t-nature, .type-tag.t-route, .type-tag.t-tiers { background: none !important; padding: 0; border-radius: 0; color: var(--encre-2) !important; font-weight: 400; font-size: 13px; gap: 8px; }
+.type-tag::before { width: 8px; height: 8px; }
