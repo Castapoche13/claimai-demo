@@ -3,9 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<link rel="icon" type="image/svg+xml" href="icones/icone.svg">
-<link rel="icon" type="image/png" sizes="32x32" href="icones/favicon-32.png">
-<link rel="apple-touch-icon" href="icones/apple-touch-icon.png">
+<link rel="icon" id="favicon" href="data:,">
 <meta name="robots" content="noindex">
 <title>Espace sécurisé sinistres</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -78,14 +76,22 @@ form.carte-in { display: grid; gap: 18px; }
 @media (max-width: 560px) { .option { grid-template-columns: auto 1fr; } .option .montant { grid-column: 2; } }
 .pied { font-size: 12.5px; color: var(--gris); margin-top: 24px; line-height: 1.6; }
 </style>
-<link rel="stylesheet" href="charte.css?v=20261108j">
+<link rel="stylesheet" href="charte.css?v=20261109b">
+<style>
+/* Espace aux couleurs de l'assureur : la couleur de la compagnie remplace celle de l'outil */
+:root { --marque: #1E3A5F; }
+:root, :root[data-theme] { --primaire: var(--marque) !important; --sur-primaire: #FFFFFF !important; --constat: var(--marque) !important; }
+.btn.primaire:hover { background: var(--marque) !important; border-color: var(--marque) !important; filter: brightness(1.12); }
+.haut { border-top: 3px solid var(--marque); }
+.haut .cie img { display: block; height: 30px; width: auto; margin-bottom: 4px; }
+</style>
 </head>
 <body>
 <header class="haut"><div class="haut-in"><div class="cie" id="cie">Service sinistres<small>Espace sécurisé</small></div>
   <span class="cadenas"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><rect x="2.5" y="6" width="9" height="6.5" rx="1.5" fill="currentColor"/><path d="M4.5 6V4.5a2.5 2.5 0 015 0V6" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>Lien personnel</span></div></header>
 <main id="main"><div class="carte"><div class="etat"><span class="tourne" style="display:inline-block;color:var(--bleu)"></span></div></div></main>
 <div id="toast" class="toast" hidden role="status"></div>
-<script src="commun.js?v=20261108c"></script>
+<script src="commun.js?v=20261109a"></script>
 <script>
 (function () {
 "use strict";
@@ -131,7 +137,7 @@ function boutonCopier(id, valeur, lib) {
 }
 function origineValidation(r) {
   var p = r.valide_par || "";
-  if (p === "automatique:garage_partenaire") return ["Payable sans autre validation", "Garage partenaire, montant contrôlé par Klerio"];
+  if (p === "automatique:garage_partenaire") return ["Payable sans autre validation", "Garage partenaire, montant contrôlé automatiquement"];
   if (p === "automatique:reglement_sous_seuil") return ["Validé automatiquement", "Sous le seuil de règlement automatique de votre compagnie"];
   if (p.indexOf("automatique:") === 0) return ["Validé automatiquement", ""];
   return ["Validé par un gestionnaire", p.replace(/^humain:|^outil:/, "")];
@@ -145,7 +151,7 @@ function sepaTexte(s, max) {
 function ordreSepa(c) {
   var r = c.reglement || {}, b = c.beneficiaire || {}, d = c.debiteur || {}, f = c.facture || {};
   var maintenant = new Date(), iso = maintenant.toISOString().slice(0, 19), jour = iso.slice(0, 10);
-  var id = sepaTexte("KLERIO-" + c.numero + "-" + maintenant.getTime(), 35), montant = Number(r.montant_net).toFixed(2);
+  var id = sepaTexte("SIN-" + c.numero + "-" + maintenant.getTime(), 35), montant = Number(r.montant_net).toFixed(2);
   var libelle = sepaTexte("SINISTRE " + c.numero + (f.numero ? " FACT " + f.numero : ""), 140);
   var agentDeb = d.bic ? "<BIC>" + xmlEsc(d.bic) + "</BIC>" : "<Othr><Id>NOTPROVIDED</Id></Othr>";
   return '<?xml version="1.0" encoding="UTF-8"?>\n' +
@@ -190,7 +196,7 @@ function afficherComptable(c) {
       '<p class="intro">Téléchargez l\'ordre de virement déjà rempli (montant, IBAN du bénéficiaire, libellé, n° de facture) et importez-le dans votre banque ou votre logiciel de paiement : il ne reste qu\'à le signer. Format SEPA standard, accepté par les banques françaises.</p>' +
       (deb.iban ? '<p class="muet petit">Compte débité : ' + esc(deb.titulaire || "") + " · " + esc(groupes(deb.iban)) + "</p>" +
         '<p style="margin-top:10px"><button type="button" class="btn primaire" id="b-sepa">Télécharger l\'ordre de virement (SEPA)</button></p>'
-        : '<p class="indice ko">Le compte qui paie les sinistres n\'est pas encore renseigné dans les réglages de Klerio (Raccordement, Paiement des garages) : ajoutez-le pour obtenir l\'ordre de virement prérempli.</p>') +
+        : '<p class="indice ko">Le compte qui paie les sinistres n\'est pas encore renseigné dans les réglages de l\'outil sinistres (Raccordement, Paiement des garages) : ajoutez-le pour obtenir l\'ordre de virement prérempli.</p>') +
       "</div></div>";
   }
   if (c.reponse_attendue) {
@@ -260,7 +266,7 @@ function blocQuestionnaireVol() {
     '<label class="case"><input type="checkbox" id="qv-antivol"> Le véhicule avait un antivol ou une alarme en service</label>' +
     '<label class="case"><input type="checkbox" id="qv-vente"> Le véhicule était en vente</label>' +
     '<label class="champ">Autre précision <span class="aide">facultatif</span><textarea class="saisie" id="qv-com" rows="2" maxlength="1000"></textarea></label>' +
-    '<div class="envoyer"><button class="btn primaire" id="b-qv" type="submit">Envoyer mes réponses</button><span class="muet petit">Klerio vérifie ensuite votre dossier, sans délai supplémentaire.</span></div></form></div>';
+    '<div class="envoyer"><button class="btn primaire" id="b-qv" type="submit">Envoyer mes réponses</button><span class="muet petit">Le service sinistres vérifie ensuite votre dossier, sans délai supplémentaire.</span></div></form></div>';
 }
 // Déclaration faite depuis une autre adresse que celle du contrat : le titulaire confirme d'un clic
 function blocConfirmationIdentite() {
@@ -461,7 +467,12 @@ function afficherDeclarant(c) {
 }
 
 function afficher(c) {
-  $("cie").innerHTML = esc(c.assureur || "Service sinistres") + "<small>Service sinistres, espace sécurisé</small>";
+  var mq = c.marque || {}, coul = /^#[0-9a-fA-F]{6}$/.test(mq.couleur || "") ? mq.couleur : "#1E3A5F";
+  document.documentElement.style.setProperty("--marque", coul);
+  $("cie").innerHTML = (mq.logo_url && /^https:\/\//.test(mq.logo_url) ? '<img src="' + esc(mq.logo_url) + '" alt="' + esc(c.assureur || "") + '">' : esc(c.assureur || "Service sinistres")) + "<small>Service sinistres, espace sécurisé</small>";
+  // icône d'onglet : l'initiale de la compagnie sur sa couleur
+  var ini = String(c.assureur || "S").replace(/^(Mutuelle|Assurances?|Groupe)\s+(d[eu'] ?|des |la |l')?/i, "").charAt(0).toUpperCase() || "S";
+  $("favicon").href = "data:image/svg+xml," + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect width="32" height="32" rx="8" fill="' + coul + '"/><text x="16" y="22" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="18" font-weight="700" fill="#fff">' + ini.replace(/[<>&"]/g, "") + "</text></svg>");
   document.title = "Dossier " + c.numero + ", " + (c.assureur || "service sinistres");
   if (c.role === "comptable") { document.title = "Bon à payer " + c.numero; return afficherComptable(c); }
   if (c.role === "declarant") { document.title = "Vérification, dossier " + c.numero; return afficherDeclarant(c); }
