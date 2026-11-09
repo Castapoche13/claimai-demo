@@ -14,9 +14,10 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css?v=20261105a">
-<link rel="stylesheet" href="charte.css?v=20261108j">
+<link rel="stylesheet" href="charte.css?v=20261109b">
 <style>
 body { background: var(--papier); }
+/* ---------- Connexion ---------- */
 .op-connexion { min-height: 100vh; display: grid; place-items: center; padding: 40px 16px;
   background: radial-gradient(1100px 600px at 50% -10%, rgba(217,174,69,.16), transparent 60%), radial-gradient(800px 500px at 50% 110%, rgba(46,77,158,.18), transparent 60%), #0E0E10; }
 .op-carte { width: min(380px, 100%); display: grid; gap: 28px; justify-items: center; }
@@ -32,38 +33,139 @@ body { background: var(--papier); }
 .op-connexion .erreur-form { color: #F28B82; }
 .op-connexion .btn.primaire { height: 44px; justify-content: center; background: #D9AE45; color: #09090B; border-color: #D9AE45; font-weight: 600; }
 .op-connexion .btn.primaire:hover { background: #E4BC57; }
-.op-tete { position: sticky; top: 0; z-index: 5; display: flex; align-items: center; gap: 16px; padding: 12px 24px; background: var(--feuille); border-bottom: 1px solid var(--trait); }
-.op-tete .marque { display: flex; align-items: center; gap: 8px; font-weight: 600; }
-.op-tete .role { font-size: 12.5px; color: var(--gris); border-left: 1px solid var(--trait); padding-left: 12px; }
-.op-tete .droite { margin-left: auto; display: flex; align-items: center; gap: 12px; font-size: 13.5px; }
-.op-page { max-width: 1240px; margin: 0 auto; padding: 28px 24px 64px; display: grid; gap: 20px; }
-.op-chiffres { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
-.op-chiffres .c { background: var(--feuille); border: 1px solid var(--trait); border-radius: 14px; padding: 16px 18px; }
-.op-chiffres .c b { display: block; font-size: 28px; font-weight: 600; letter-spacing: -0.02em; }
-.op-chiffres .c span { font-size: 13px; color: var(--gris); }
-.op-chiffres .c.alerte-c b { color: var(--rouge, #b42318); }
-.onglets { display: flex; gap: 2px; border-bottom: 1px solid var(--trait); overflow-x: auto; }
-.onglets a { padding: 10px 14px; font-size: 14px; font-weight: 500; color: var(--gris); border-bottom: 2px solid transparent; margin-bottom: -1px; white-space: nowrap; text-decoration: none; }
-.onglets a:hover { color: var(--encre); }
+.op-connexion .btn:not(.primaire) { height: 44px; justify-content: center; background: transparent; color: #ECECEE; border: 1px solid rgba(255,255,255,.16); }
+.op-connexion .btn:not(.primaire):hover { background: rgba(255,255,255,.06); }
+
+/* ---------- Cadre : menu à gauche, page à droite ---------- */
+.ad { display: grid; grid-template-columns: 232px minmax(0, 1fr); min-height: 100vh; }
+.ad[hidden] { display: none; }
+.ad-menu { position: sticky; top: 0; height: 100vh; display: flex; flex-direction: column; gap: 24px; padding: 18px 12px; background: var(--feuille); border-right: 1px solid var(--trait); }
+.ad-marque { display: flex; align-items: center; gap: 10px; padding: 2px 8px; font-weight: 600; font-size: 15px; color: var(--encre); }
+.ad-marque svg { width: 26px; height: 26px; flex: none; }
+.ad-marque small { display: block; font-size: 12px; font-weight: 400; color: var(--gris); margin-top: 1px; }
+.ad-menu ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
+.ad-menu ul a { display: flex; align-items: center; gap: 10px; height: 36px; padding: 0 10px; border-radius: 9px; color: var(--encre-2); font-size: 14px; text-decoration: none; }
+.ad-menu ul a svg { color: var(--gris); flex: none; }
+.ad-menu ul a:hover { background: var(--survol); color: var(--encre); }
+.ad-menu ul a[aria-current="page"] { background: var(--papier); color: var(--encre); font-weight: 500; box-shadow: inset 3px 0 0 #D9AE45; }
+.ad-menu ul a[aria-current="page"] svg { color: #B8892A; }
+.ad-menu .n { margin-left: auto; font-family: var(--mono); font-size: 12px; color: var(--gris); }
+.ad-menu .n.chaud { min-width: 20px; height: 20px; padding: 0 6px; border-radius: 999px; display: grid; place-items: center; background: #D9AE45; color: #17130A; font-weight: 600; }
+.ad-bas { margin-top: auto; display: grid; gap: 6px; padding: 12px 10px 0; border-top: 1px solid var(--trait); }
+.ad-bas b { font-size: 13.5px; font-weight: 500; color: var(--encre); }
+.ad-bas span { font-size: 12.5px; color: var(--gris); overflow: hidden; text-overflow: ellipsis; }
+.ad-bas button { justify-self: start; border: 0; background: none; padding: 2px 0; font: inherit; font-size: 13px; color: var(--gris); cursor: pointer; }
+.ad-bas button:hover { color: var(--encre); }
+.ad-page { padding: 32px 40px 72px; max-width: 1180px; width: 100%; display: grid; gap: 24px; align-content: start; }
+
+/* ---------- En-tête de page ---------- */
+.ad-tete { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+.ad-tete h1 { font-size: 26px; line-height: 32px; font-weight: 500; letter-spacing: -0.01em; }
+.ad-tete p { margin: 6px 0 0; color: var(--gris); }
+.ad-fil { font-size: 13px; color: var(--gris); margin-bottom: 8px; }
+.ad-fil a { color: var(--gris); }
+.ad-fil a:hover { color: var(--encre); }
+.pill { display: inline-flex; align-items: center; gap: 6px; height: 22px; padding: 0 9px; border-radius: 999px; font-size: 12px; font-weight: 500; vertical-align: middle; white-space: nowrap; }
+.pill::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+.pill.ok { color: var(--vert-texte); background: var(--vert-pale); }
+.pill.essai { color: var(--jaune-texte); background: var(--jaune-pale); }
+.pill.ko { color: var(--rouge-texte); background: var(--rouge-pale); }
+.pill.neutre { color: var(--gris); background: var(--survol); }
+
+/* ---------- Bande de chiffres : un seul cadre, quatre cases ---------- */
+.ad-bande { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); background: var(--feuille); border: 1px solid var(--trait); border-radius: 14px; }
+.ad-bande > div { padding: 18px 20px; display: grid; gap: 4px; align-content: start; }
+.ad-bande > div + div { border-left: 1px solid var(--trait); }
+.ad-bande .l { font-size: 13px; color: var(--gris); }
+.ad-bande .v { font-size: 28px; line-height: 34px; font-weight: 500; letter-spacing: -0.02em; color: var(--encre); font-variant-numeric: tabular-nums; }
+.ad-bande .s { font-size: 12.5px; color: var(--gris); }
+.ad-bande .s b { color: var(--encre-2); font-weight: 500; }
+
+/* ---------- À traiter ---------- */
+.ad-taches { list-style: none; margin: 0; padding: 0; }
+.ad-taches li { display: grid; grid-template-columns: 10px minmax(0, 1fr) auto; gap: 14px; align-items: center; padding: 14px 20px; border-top: 1px solid var(--trait); }
+.ad-taches li:first-child { border-top: 0; }
+.ad-taches .pt { width: 8px; height: 8px; border-radius: 50%; background: var(--gris-clair); }
+.ad-taches .pt.rouge { background: var(--rouge); box-shadow: 0 0 0 4px var(--rouge-pale); }
+.ad-taches .pt.or { background: #D9AE45; box-shadow: 0 0 0 4px rgba(217,174,69,.16); }
+.ad-taches b { display: block; font-weight: 500; color: var(--encre); }
+.ad-taches span { display: block; font-size: 13px; color: var(--gris); margin-top: 1px; }
+.ad-calme { display: flex; align-items: center; gap: 12px; padding: 18px 20px; color: var(--gris); }
+.ad-calme svg { color: var(--vert); flex: none; }
+
+/* ---------- Tableau des clients ---------- */
+.ad-t { width: 100%; border-collapse: collapse; }
+.ad-t th { text-align: left; font-size: 12.5px; font-weight: 500; color: var(--gris); padding: 10px 14px; border-bottom: 1px solid var(--trait); white-space: nowrap; }
+.ad-t td { padding: 13px 14px; border-bottom: 1px solid var(--trait); vertical-align: middle; }
+.ad-t tr:last-child td { border-bottom: 0; }
+.ad-t th:first-child, .ad-t td:first-child { padding-left: 20px; }
+.ad-t th:last-child, .ad-t td:last-child { padding-right: 20px; }
+.ad-t .nb { text-align: right; font-variant-numeric: tabular-nums; }
+.ad-t td small { display: block; font-size: 12.5px; color: var(--gris); margin-top: 1px; }
+.ad-t tbody tr[data-client] { cursor: pointer; }
+.ad-t tbody tr[data-client]:hover td { background: var(--feuille-2); }
+.ad-t .fl { color: var(--gris-clair); width: 20px; }
+.ad-t tbody tr[data-client]:hover .fl { color: var(--encre); }
+.sante { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; white-space: nowrap; }
+.sante::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--vert); }
+.sante.or::before { background: #D9AE45; } .sante.rouge::before { background: var(--rouge); } .sante.gris::before { background: var(--gris-clair); }
+.ad-outils { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; padding: 12px 20px; border-bottom: 1px solid var(--trait); }
+.ad-outils .saisie { max-width: 280px; height: 34px; }
+.seg { display: inline-flex; padding: 3px; border-radius: 10px; background: var(--survol); }
+.seg button { border: 0; background: none; padding: 5px 12px; border-radius: 7px; font: inherit; font-size: 13px; font-weight: 500; color: var(--gris); cursor: pointer; }
+.seg button[aria-pressed="true"] { background: var(--feuille); color: var(--encre); box-shadow: 0 0 0 1px var(--trait); }
+
+/* ---------- Fiche client ---------- */
+.onglets { display: flex; gap: 4px; border-bottom: 1px solid var(--trait); overflow-x: auto; }
+.onglets a { padding: 10px 12px; font-size: 14px; font-weight: 500; color: var(--gris); border-bottom: 2px solid transparent; margin-bottom: -1px; white-space: nowrap; text-decoration: none; }
+.onglets a:hover { color: var(--encre); text-decoration: none; }
 .onglets a[aria-current="page"] { color: var(--encre); border-bottom-color: #D9AE45; }
-.carte-equipe .tableau { width: 100%; }
-.carte-equipe .tableau td { padding: 10px 14px; }
-.carte-centre span { line-height: 1.45; }
-.cartes-centres { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px; }
-.carte-centre { text-align: left; display: grid; gap: 4px; background: var(--feuille); border: 1px solid var(--trait); border-radius: 14px; padding: 16px 18px; cursor: pointer; font: inherit; color: inherit; }
-.carte-centre b { font-size: 16px; }
-.carte-centre span { font-size: 13px; color: var(--gris); }
-.carte-centre:hover { border-color: var(--trait-fort); }
-.carte-centre.active { border-color: #D9AE45; box-shadow: 0 0 0 3px rgba(217,174,69,.18); }
-.carte-equipe { border: 1px solid var(--trait); border-radius: 12px; overflow: hidden; }
-.carte-equipe .ce-tete { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 12px 14px; background: var(--feuille-2); border-bottom: 1px solid var(--trait); }
-.carte-equipe .tableau td { padding-top: 10px; padding-bottom: 10px; }
-tr.choisi td { background: var(--feuille-2); }
-.demande { border-top: 1px solid var(--trait); padding: 14px 20px; display: grid; gap: 6px; }
+.onglets .n { font-family: var(--mono); font-size: 12px; color: var(--gris); margin-left: 6px; }
+.org { display: grid; grid-template-columns: 240px minmax(0, 1fr); gap: 20px; align-items: start; }
+.ad-page .bloc + .bloc { margin-top: 0; }
+.org-centres { list-style: none; margin: 0; padding: 6px; display: grid; gap: 2px; }
+.org-centres button { width: 100%; text-align: left; border: 0; background: none; padding: 10px 12px; border-radius: 9px; font: inherit; color: var(--encre-2); cursor: pointer; display: grid; gap: 2px; }
+.org-centres button b { font-weight: 500; color: var(--encre); }
+.org-centres button span { font-size: 12.5px; color: var(--gris); }
+.org-centres button:hover { background: var(--survol); }
+.org-centres button[aria-pressed="true"] { background: var(--papier); box-shadow: inset 3px 0 0 #D9AE45; }
+.equipe + .equipe { border-top: 1px solid var(--trait); }
+.equipe-tete { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 14px 20px 10px; }
+.equipe-tete h3 { font-size: 15px; font-weight: 500; }
+.equipe-tete .muet { font-size: 13px; }
+.equipe-tete .droite { margin-left: auto; display: flex; gap: 8px; align-items: center; }
+.equipe-tete label { display: flex; align-items: center; gap: 8px; }
+.ad-page .bloc-tete { display: flex; align-items: center; justify-content: space-between; flex-wrap: nowrap; gap: 12px; }
+.ad-page .bloc-tete h2 { flex: 1 1 auto; min-width: 0; }
+.bloc-tete .sous { font-size: 13px; font-weight: 400; color: var(--gris); margin-left: 8px; }
+.ad-t select[data-role] { min-width: 150px; }
+.ad-t select[data-equipe] { min-width: 230px; }
+.equipe .ad-t td { padding-top: 10px; padding-bottom: 10px; }
+.ligne-form { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.ligne-form .saisie { height: 36px; }
+.ad-t .saisie { height: 32px; padding-top: 0; padding-bottom: 0; }
+.demande { padding: 16px 20px; display: grid; gap: 8px; border-top: 1px solid var(--trait); }
 .demande:first-child { border-top: 0; }
 .demande .qui { font-size: 13px; color: var(--gris); }
-.demande p { white-space: pre-wrap; margin: 0; }
-@media (max-width: 760px) { .op-chiffres { grid-template-columns: repeat(2, minmax(0, 1fr)); } .op-tete .role { display: none; } }
+.demande p { white-space: pre-wrap; margin: 0; color: var(--encre-2); }
+.demande .rep { display: grid; gap: 8px; margin-top: 4px; }
+.demande .rep .ligne-form { justify-content: flex-end; }
+.grille-3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+.pile { display: grid; gap: 16px; }
+.ad-journal td:first-child { white-space: nowrap; color: var(--gris); }
+
+@media (max-width: 960px) {
+  .ad { grid-template-columns: 1fr; }
+  .ad-menu { position: static; height: auto; flex-direction: row; flex-wrap: wrap; align-items: center; gap: 12px; padding: 12px 16px; border-right: 0; border-bottom: 1px solid var(--trait); }
+  .ad-menu ul { display: flex; overflow-x: auto; }
+  .ad-bas { display: none; }
+  .ad-page { padding: 24px 16px 56px; }
+  .ad-bande { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .ad-bande > div:nth-child(3) { border-left: 0; }
+  .ad-bande > div:nth-child(n+3) { border-top: 1px solid var(--trait); }
+  .org, .grille-3 { grid-template-columns: 1fr; }
+  .ad-t .masque-m { display: none; }
+}
 </style>
 </head>
 <body>
@@ -73,11 +175,20 @@ tr.choisi td { background: var(--feuille-2); }
   <form id="f-c" novalidate>
     <label class="champ">Email<input class="saisie" id="c-email" type="email" autocomplete="username" required></label>
     <label class="champ">Mot de passe<input class="saisie" id="c-mdp" type="password" autocomplete="current-password" required></label>
+    <div class="oubli-l"><button type="button" class="lien-oubli" id="c-oubli">Mot de passe oublié ?</button></div>
     <p class="erreur-form" id="c-err" role="alert"></p>
     <button class="btn primaire" id="c-btn" type="submit">Se connecter</button>
   </form>
+  <form id="f-o" novalidate hidden>
+    <div><p style="margin:0;font-weight:600;color:#F3F3F1">Mot de passe oublié</p><p style="margin:4px 0 0;font-size:13px;color:#A2A2AA">Vous recevrez un lien pour choisir un nouveau mot de passe.</p></div>
+    <label class="champ">Email<input class="saisie" id="o-email" type="email" autocomplete="username" required></label>
+    <p class="erreur-form" id="o-err" role="alert"></p>
+    <p class="ok-form" id="o-ok" role="status" hidden></p>
+    <button class="btn primaire" id="o-btn" type="submit">Recevoir le lien</button>
+    <button class="btn" id="o-retour" type="button">Retour à la connexion</button>
+  </form>
   <form id="f-m" novalidate hidden>
-    <p style="margin:0;font-weight:600">Choisissez votre mot de passe (12 caractères minimum)</p>
+    <p style="margin:0;font-weight:600" id="m-titre">Choisissez votre mot de passe (12 caractères minimum)</p>
     <label class="champ">Nouveau mot de passe<input class="saisie" id="m-1" type="password" autocomplete="new-password"></label>
     <label class="champ">Confirmation<input class="saisie" id="m-2" type="password" autocomplete="new-password"></label>
     <p class="erreur-form" id="m-err" role="alert"></p>
@@ -86,26 +197,32 @@ tr.choisi td { background: var(--feuille-2); }
   </div>
 </section>
 
-<div id="ecran-a" hidden>
-  <header class="op-tete"><span class="marque" id="logo"></span><span class="role">Klerio Admin</span>
-    <span class="droite"><span id="op-nom"></span><button class="btn petit discret" id="b-sortir" type="button">Se déconnecter</button></span></header>
-  <main class="op-page" id="vue"></main>
+<div class="ad" id="ecran-a" hidden>
+  <aside class="ad-menu">
+    <div class="ad-marque"><svg viewBox="0 0 22 22" aria-hidden="true"><rect width="22" height="22" rx="6" fill="#D9AE45"/><path d="M7.5 5.5v11M7.5 11.5 14 5.5M10.2 9.3 14.5 16.5" stroke="#09090B" stroke-width="2.2" stroke-linecap="round" fill="none"/></svg><div>Klerio Admin<small>Espace Klerio</small></div></div>
+    <ul>
+      <li><a href="#/accueil" data-vue="accueil"><span id="i-accueil"></span>Vue d'ensemble</a></li>
+      <li><a href="#/clients" data-vue="clients"><span id="i-clients"></span>Clients<span class="n" id="n-clients"></span></a></li>
+      <li><a href="#/support" data-vue="support"><span id="i-support"></span>Support<span class="n" id="n-support"></span></a></li>
+      <li><a href="#/journal" data-vue="journal"><span id="i-journal"></span>Journal</a></li>
+    </ul>
+    <div class="ad-bas"><b id="op-nom"></b><span id="op-mail"></span><button type="button" id="b-theme">Changer de thème</button><button type="button" id="b-sortir">Se déconnecter</button></div>
+  </aside>
+  <main class="ad-page" id="vue"></main>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="commun.js?v=20261108c"></script>
+<script src="commun.js?v=20261109a"></script>
 <script>
 var C = window.CA, $ = C.$, esc = C.esc;
-$("logo").innerHTML = C.LOGO + "<span>Klerio</span>";
 var sb = window.supabase.createClient(C.SUPABASE_URL, C.CLE_PUBLIQUE, { auth: { persistSession: true, storageKey: "klerio-operateur", storage: window.sessionStorage, autoRefreshToken: true } });
 var jeton = function () { return sb.auth.getSession().then(function (r) { return r.data.session ? r.data.session.access_token : null; }); };
 var op = function (action, corps) { return C.client(C.SUPABASE_URL + "/functions/v1", jeton)("klerio-plateforme", { body: Object.assign({ action: action }, corps || {}) }); };
 var ROLES = { admin: "Administrateur", superviseur: "Manager", gestionnaire: "Gestionnaire" };
-var etat = { clients: [], support: [], global: {}, fiche: null, onglet: null, centre: null, ouvrir: false };
 
 function entrer() {
   return op("moi").then(function (m) {
-    $("op-nom").textContent = m.nom; $("ecran-c").hidden = true; $("ecran-a").hidden = false; charger();
+    etat.moi = m.nom; $("op-nom").textContent = m.nom; $("op-mail").textContent = m.email; $("ecran-c").hidden = true; $("ecran-a").hidden = false; charger();
   }).catch(function (x) { sb.auth.signOut(); $("ecran-c").hidden = false; $("ecran-a").hidden = true; $("c-err").textContent = x.message; });
 }
 $("f-c").addEventListener("submit", function (e) {
@@ -125,132 +242,298 @@ $("f-m").addEventListener("submit", function (e) {
     .catch(function (x) { err.textContent = x.message; }).finally(function () { C.occupe($("m-btn"), false); });
 });
 $("b-sortir").onclick = function () { sb.auth.signOut().finally(function () { location.reload(); }); };
-sb.auth.getSession().then(function (r) { if (r.data.session) entrer(); });
+
+C.yeux();
+$("c-oubli").addEventListener("click", function () { $("f-c").hidden = true; $("f-o").hidden = false; $("o-err").textContent = ""; $("o-ok").hidden = true; $("o-email").value = $("c-email").value.trim(); $("o-email").focus(); });
+$("o-retour").addEventListener("click", function () { $("f-o").hidden = true; $("f-c").hidden = false; $("c-mdp").focus(); });
+$("f-o").addEventListener("submit", function (e) {
+  e.preventDefault(); var email = $("o-email").value.trim(), b = $("o-btn"); $("o-err").textContent = ""; $("o-ok").hidden = true;
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { $("o-err").textContent = "Saisissez votre adresse email."; return; }
+  C.occupe(b, true, "Envoi");
+  C.client(C.SUPABASE_URL + "/functions/v1", null)("klerio-plateforme", { body: { action: "oubli", email: email, espace: "admin" } }).then(function (r) {
+    $("o-ok").textContent = r.message; $("o-ok").hidden = false; b.dataset.l = "Renvoyer le lien";
+  }).catch(function (x) { $("o-err").textContent = x.message; }).finally(function () { C.occupe(b, false); });
+});
+// Lien reçu par mail : on vérifie le jeton puis on demande le nouveau mot de passe
+var reinit = (location.hash.match(/^#\/reinitialiser\/(.+)$/) || [])[1];
+if (reinit) {
+  history.replaceState(null, "", location.pathname); $("f-c").hidden = true;
+  sb.auth.signOut().catch(function () { }).then(function () { return sb.auth.verifyOtp({ token_hash: decodeURIComponent(reinit), type: "recovery" }); }).then(function (r) {
+    if (r.error) throw r.error;
+    $("m-titre").textContent = "Choisissez votre nouveau mot de passe (12 caractères minimum)"; $("f-m").hidden = false; $("m-1").focus();
+  }).catch(function () { $("f-c").hidden = false; $("c-err").textContent = "Ce lien a expiré ou a déjà servi. Demandez-en un nouveau."; });
+} else sb.auth.getSession().then(function (r) { if (r.data.session) entrer(); });
 if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(function () { });
 
-function charger() {
-  return Promise.all([op("clients"), op("global")]).then(function (r) { etat.clients = r[0].clients || []; etat.support = r[0].support || []; etat.global = r[1] || {}; rendre(); }).catch(function (x) { C.toast(x.message, true); });
-}
-function nomClient(id) { var c = etat.clients.filter(function (x) { return x.id === id; })[0]; return c ? c.nom : ""; }
-var STATUT_K = { essai: ["Essai", "neutre"], actif: ["Actif", "ok"], suspendu: ["Suspendu", "ko"], resilie: ["Résilié", "ko"] };
-function chiffre(v, l, alerte) { return '<div class="c' + (alerte ? " alerte-c" : "") + '"><b>' + v + "</b><span>" + l + "</span></div>"; }
-function quand(t) { return t ? C.depuis(t) : "Jamais"; }
-
-function rendre() {
-  if (etat.fiche) return rendreFiche(etat.fiche);
-  var g = etat.global || {};
-  var h = '<div class="entete-vue"><div><h1>Vue d\'ensemble</h1><p>Vos clients, leur activité et le support. Aucun contenu de dossier n\'est visible ici.</p></div><button class="btn primaire" id="b-ouvrir" type="button">Ouvrir un client</button></div>';
-  h += '<div class="op-chiffres">' + chiffre(g.clients || 0, "Clients") + chiffre(g.clients_actifs || 0, "Contrats actifs") + chiffre(C.eur(g.revenu_annuel || 0).replace(",00", ""), "Revenu annuel des contrats actifs") + chiffre(etat.support.length, "Demandes de support ouvertes", etat.support.length) + "</div>";
-  h += '<div class="op-chiffres">' + chiffre(g.comptes || 0, "Comptes actifs") + chiffre(g.connectes_7j || 0, "Connectés ces 7 jours") + chiffre(g.dossiers_en_cours || 0, "Dossiers en cours") + chiffre(g.dossiers_30j || 0, "Dossiers reçus en 30 jours") + "</div>";
-  if (etat.ouvrir) h += '<section class="bloc"><div class="bloc-tete"><h2>Ouvrir un client</h2></div><form class="bloc-corps pile" id="f-o" novalidate><div class="grille-3">' +
-    '<label class="champ">Compagnie<input class="saisie" id="o-nom" placeholder="Ex. Mutuelle du Loing"></label><label class="champ">Premier administrateur<input class="saisie" id="o-anom" placeholder="Prénom Nom"></label>' +
-    '<label class="champ">Son email professionnel<input class="saisie" id="o-amail" type="email" placeholder="prenom.nom@compagnie.fr"></label></div>' +
-    '<div class="decision-actions"><button class="btn primaire" id="o-ok" type="submit">Créer le client et inviter l\'administrateur</button><button class="btn discret" id="o-annuler" type="button">Annuler</button></div></form></section>';
-  if (etat.support.length) h += '<section class="bloc"><div class="bloc-tete"><h2>Demandes de support<span class="compte">' + etat.support.length + "</span></h2></div>" + etat.support.map(blocDemande).join("") + "</section>";
-  h += '<section class="bloc"><div class="bloc-tete"><h2>Clients<span class="compte">' + etat.clients.length + '</span></h2></div><div class="tableau-wrap"><table class="tableau"><thead><tr><th>Compagnie</th><th class="nb">Comptes</th><th class="nb">Managers</th><th class="nb">Gestionnaires</th><th class="nb">Équipes</th><th class="nb">Dossiers en cours</th><th class="nb">Reçus 30 j</th><th>Dernière connexion</th><th>État</th></tr></thead><tbody>' +
-    (etat.clients.map(function (c) {
-      var e = !c.admins ? '<span class="statut ko">Sans administrateur</span>' : c.support_ouvert ? '<span class="statut ko">' + c.support_ouvert + " demande(s)</span>" : c.invitations ? '<span class="statut neutre">' + c.invitations + " invitation(s)</span>" : '<span class="statut ok">En ordre</span>';
-      return '<tr data-client="' + esc(c.id) + '" style="cursor:pointer"><td><b>' + esc(c.nom) + '</b></td><td class="nb">' + c.comptes + '</td><td class="nb">' + c.managers + '</td><td class="nb">' + c.gestionnaires + '</td><td class="nb">' + c.equipes + '</td><td class="nb">' + c.dossiers_en_cours + '</td><td class="nb">' + c.dossiers_30j + '</td><td class="muet">' + esc(quand(c.derniere_connexion)) + "</td><td>" + e + "</td></tr>";
-    }).join("") || '<tr><td colspan="9"><div class="vide">Aucun client pour l\'instant.</div></td></tr>') + "</tbody></table></div></section>";
-  if ((g.journal || []).length) h += '<section class="bloc"><div class="bloc-tete"><h2>Vos dernières actions</h2></div>' + tableJournal(g.journal, true) + "</section>";
-  $("vue").innerHTML = h;
-  $("b-ouvrir").onclick = function () { etat.ouvrir = true; rendre(); $("o-nom").focus(); };
-  if ($("f-o")) {
-    $("o-annuler").onclick = function () { etat.ouvrir = false; rendre(); };
-    $("f-o").addEventListener("submit", function (e) {
-      e.preventDefault(); var b = $("o-ok"); C.occupe(b, true, "Création");
-      op("ouvrir_client", { nom: $("o-nom").value, admin_nom: $("o-anom").value, admin_email: $("o-amail").value }).then(function (r) {
-        etat.ouvrir = false; etat.fiche = r; etat.onglet = "structure";
-        C.toast(r.envoi && r.envoi.envoye ? "Client créé, invitation envoyée" : "Client créé, mais le mail n'est pas parti", !(r.envoi && r.envoi.envoye));
-        charger();
-      }).catch(function (x) { C.occupe(b, false); C.toast(x.message, true); });
-    });
-  }
-  brancherDemandes();
-  document.querySelectorAll("[data-client]").forEach(function (tr) { tr.onclick = function () { ouvrirClient(tr.dataset.client); }; });
-}
-function blocDemande(s) {
-  return '<div class="demande"><b>' + esc(s.sujet) + '</b><span class="qui">' + esc(nomClient(s.assureur_id)) + " · " + esc(s.nom || "") + " (" + esc(ROLES[s.role] || s.role || "") + ", " + esc(s.email || "") + ") · " + esc(C.depuis(s.created_at)) + "</span><p>" + esc(s.message) + "</p>" +
-    (s.statut && s.statut !== "ouverte" ? "" : '<div class="decision-actions"><textarea class="saisie" data-rep="' + esc(s.id) + '" rows="2" placeholder="Réponse envoyée par mail (facultatif)" style="flex:1;min-width:240px"></textarea><button class="btn petit" data-traiter="' + esc(s.id) + '">Marquer traitée</button></div>') + "</div>";
-}
-function brancherDemandes() {
-  document.querySelectorAll("[data-traiter]").forEach(function (b) {
-    b.onclick = function () {
-      var id = b.dataset.traiter, rep = document.querySelector('[data-rep="' + id + '"]').value.trim(); C.occupe(b, true, "");
-      op("support_traiter", { id: id, reponse: rep || null }).then(function () { C.toast(rep ? "Réponse envoyée" : "Demande traitée"); if (etat.fiche) ouvrirClient(etat.fiche.client.id); else charger(); }).catch(function (x) { C.occupe(b, false); C.toast(x.message, true); });
-    };
-  });
-}
+var etat;
+/* ================= Klerio Admin : clients, support, journal ================= */
+var ICONES = {
+  accueil: '<path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/>',
+  clients: '<path d="M4 21V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v16"/><path d="M16 9h2a2 2 0 0 1 2 2v10"/><path d="M8 7h4M8 11h4M8 15h4M3 21h18"/>',
+  support: '<path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.4A8 8 0 1 1 21 12Z"/>',
+  journal: '<path d="M12 8v4l3 2"/><circle cx="12" cy="12" r="9"/>'
+};
+var ic = function (n) { return '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + ICONES[n] + "</svg>"; };
+var FLECHE = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>';
+var CONTRAT = { essai: ["Essai", "essai"], actif: ["Actif", "ok"], suspendu: ["Suspendu", "ko"], resilie: ["Résilié", "neutre"] };
 var LIB_ACTION = { ouvrir_client: "Client ouvert", inviter_admin: "Administrateur invité", renvoyer: "Invitation renvoyée", reinitialiser: "Lien de mot de passe envoyé", activer: "Compte activé ou désactivé", role: "Rôle changé",
   support_traiter: "Demande de support traitée", contrat: "Contrat modifié", renommer_client: "Client renommé", deplacer: "Personne déplacée", equipe_creer: "Équipe créée", equipe_renommer: "Équipe renommée", equipe_manager: "Manager d'équipe changé", equipe_supprimer: "Équipe supprimée" };
+var LIB_CHAMP = { nom: "nom", email: "email", role: "rôle", centre: "centre", equipe_id: "équipe", manager_id: "manager", statut: "statut", offre: "offre", debut: "début", fin: "échéance", prix_annuel_eur: "prix annuel", utilisateurs_max: "utilisateurs prévus", contact_nom: "contact", contact_email: "email du contact", reponse: "réponse", actif: "actif", admin_nom: "administrateur", admin_email: "email de l'administrateur" };
+var ONGLETS = [["organisation", "Organisation"], ["comptes", "Comptes"], ["contrat", "Contrat"], ["support", "Support"], ["journal", "Journal"]];
+var etat = { clients: [], support: [], global: {}, fiche: null, onglet: "organisation", centre: null, filtre: "tous", cherche: "", ouvrir: false };
+var THEME = "claimai-theme";
+["accueil", "clients", "support", "journal"].forEach(function (n) { $("i-" + n).outerHTML = ic(n); });
+function appliquerTheme(t) { if (t) document.documentElement.setAttribute("data-theme", t); else document.documentElement.removeAttribute("data-theme"); }
+try { appliquerTheme(localStorage.getItem(THEME)); } catch (e) { }
+
+function quand(t) { return t ? C.depuis(t) : "Jamais"; }
+function nomClient(id) { var c = etat.clients.filter(function (x) { return x.id === id; })[0]; return c ? c.nom : ""; }
+function plur(n, un, plus) { return n + " " + (n > 1 ? (plus || un + "s") : un); }
+function jours(d) { return d ? Math.round((new Date(d) - Date.now()) / 864e5) : null; }
+
+// Santé d'un client : ce qui bloque d'abord, puis ce qui demande un geste, puis l'activité
+function sante(c) {
+  var k = c.contrat || {}, j = jours(k.fin);
+  if (!c.admins) return ["rouge", "Sans administrateur"];
+  if (c.invitations_echec) return ["rouge", "Invitation non partie"];
+  if (c.support_ouvert) return ["or", plur(c.support_ouvert, "demande") + " de support"];
+  if (k.statut === "actif" && j !== null && j <= 30) return ["or", j < 0 ? "Contrat échu" : "Échéance dans " + plur(j, "jour")];
+  if (c.invitations_expirees) return ["or", plur(c.invitations_expirees, "invitation expirée", "invitations expirées")];
+  if (c.comptes && !c.connectes_7j) return ["gris", "Personne connecté depuis 7 jours"];
+  if (c.invitations) return ["gris", plur(c.invitations, "invitation") + " en attente"];
+  return ["ok", "En ordre"];
+}
+// Ce qui attend un geste de votre part, du plus urgent au moins urgent
+function taches() {
+  var t = [];
+  etat.support.forEach(function (s) { t.push({ n: 1, pt: "or", titre: s.sujet, sous: nomClient(s.assureur_id) + " · " + (s.nom || "") + " · " + C.depuis(s.created_at), bouton: "Répondre", lien: "#/support" }); });
+  etat.clients.forEach(function (c) {
+    var k = c.contrat || {}, j = jours(k.fin), l = "#/client/" + c.id;
+    if (!c.admins) t.push({ n: 0, pt: "rouge", titre: "Aucun administrateur actif", sous: c.nom + (c.invitations ? " · invitation envoyée, pas encore acceptée" : " · personne ne peut gérer les accès"), bouton: c.invitations ? "Voir l'invitation" : "Inviter", lien: l + "/comptes" });
+    if (c.invitations_echec) t.push({ n: 0, pt: "rouge", titre: plur(c.invitations_echec, "invitation") + " sans mail envoyé", sous: c.nom + " · l'adresse a été refusée ou l'envoi a échoué", bouton: "Renvoyer", lien: l + "/comptes" });
+    if (c.invitations_expirees) t.push({ n: 2, pt: "or", titre: plur(c.invitations_expirees, "invitation expirée", "invitations expirées"), sous: c.nom + " · le lien de 7 jours n'a pas servi", bouton: "Renvoyer", lien: l + "/comptes" });
+    if (k.statut === "actif" && j !== null && j <= 30) t.push({ n: 2, pt: "or", titre: j < 0 ? "Contrat échu depuis " + plur(-j, "jour") : "Contrat à renouveler dans " + plur(j, "jour"), sous: c.nom + (k.offre ? " · " + k.offre : ""), bouton: "Voir le contrat", lien: l + "/contrat" });
+    if (c.comptes && !c.connectes_7j) t.push({ n: 3, pt: "gris", titre: "Aucune connexion depuis 7 jours", sous: c.nom + " · " + plur(c.comptes, "compte actif", "comptes actifs"), bouton: "Voir les comptes", lien: l + "/comptes" });
+  });
+  return t.sort(function (a, b) { return a.n - b.n; });
+}
+
+function charger() {
+  return Promise.all([op("clients"), op("global")]).then(function (r) {
+    etat.clients = r[0].clients || []; etat.support = r[0].support || []; etat.global = r[1] || {};
+    var n = $("n-support"); n.textContent = etat.support.length || ""; n.className = "n" + (etat.support.length ? " chaud" : "");
+    $("n-clients").textContent = etat.clients.length || "";
+    router();
+  }).catch(function (x) { C.toast(x.message, true); });
+}
+function router() {
+  var p = location.hash.replace(/^#\/?/, "").split("/"), v = p[0] || "accueil";
+  document.querySelectorAll(".ad-menu ul a").forEach(function (a) { a.toggleAttribute("aria-current", a.dataset.vue === (v === "client" ? "clients" : v)); if (a.hasAttribute("aria-current")) a.setAttribute("aria-current", "page"); });
+  if (v === "client" && p[1]) return ouvrirClient(p[1], p[2]);
+  etat.fiche = null;
+  ({ accueil: vueAccueil, clients: vueClients, support: vueSupport, journal: vueJournal }[v] || vueAccueil)();
+  window.scrollTo(0, 0);
+}
+window.addEventListener("hashchange", function () { if (!$("ecran-a").hidden) router(); });
+
+/* ---------- Vue d'ensemble ---------- */
+function vueAccueil() {
+  var g = etat.global || {}, t = taches();
+  var essai = etat.clients.filter(function (c) { return (c.contrat || {}).statut !== "actif"; }).length;
+  var date = new Date().toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" });
+  var h = '<div class="ad-tete"><div><h1>Bonjour ' + esc((etat.moi || "").split(" ")[0]) + "</h1><p>" + esc(date.charAt(0).toUpperCase() + date.slice(1)) + ". Aucun contenu de dossier n'est visible ici.</p></div>" +
+    '<button class="btn primaire" type="button" data-ouvrir>Ouvrir un client</button></div>';
+  h += formOuvrir();
+  h += '<section class="bloc"><div class="bloc-tete"><h2>À traiter<span class="compte">' + t.length + "</span></h2></div>" +
+    (t.length ? '<ul class="ad-taches">' + t.slice(0, 8).map(function (x) {
+      return '<li><span class="pt ' + x.pt + '"></span><div><b>' + esc(x.titre) + "</b><span>" + esc(x.sous) + '</span></div><a class="btn petit" href="' + esc(x.lien) + '">' + esc(x.bouton) + "</a></li>";
+    }).join("") + "</ul>" : '<div class="ad-calme"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m8 12 3 3 5-6"/></svg>Rien à traiter : tous vos clients sont en ordre.</div>') + "</section>";
+  h += '<div class="ad-bande">' +
+    case_("Clients", g.clients || 0, "<b>" + (g.clients_actifs || 0) + "</b> sous contrat, " + essai + " en essai ou à signer") +
+    case_("Revenu annuel", C.eur(g.revenu_annuel || 0).replace(",00", ""), "contrats actifs, hors taxes") +
+    case_("Utilisateurs", g.comptes || 0, "<b>" + (g.connectes_7j || 0) + "</b> connectés ces 7 jours") +
+    case_("Dossiers en cours", g.dossiers_en_cours || 0, "<b>" + (g.dossiers_30j || 0) + "</b> reçus en 30 jours") + "</div>";
+  h += '<section class="bloc"><div class="bloc-tete"><h2>Clients<span class="compte">' + etat.clients.length + '</span></h2><a class="btn petit discret" href="#/clients">Tous les clients</a></div>' + tableClients(etat.clients.slice(0, 6)) + "</section>";
+  $("vue").innerHTML = h; brancherOuvrir();
+}
+function case_(l, v, s) { return '<div><span class="l">' + l + '</span><span class="v">' + v + '</span><span class="s">' + s + "</span></div>"; }
+
+function tableClients(l) {
+  if (!l.length) return '<div class="vide">Aucun client pour l\'instant. Ouvrez le premier avec le bouton en haut de la page.</div>';
+  return '<div class="tableau-wrap"><table class="ad-t"><thead><tr><th>Compagnie</th><th>Contrat</th><th class="nb">Utilisateurs</th><th class="nb masque-m">Dossiers en cours</th><th class="masque-m">Dernière activité</th><th>État</th><th></th></tr></thead><tbody>' +
+    l.map(function (c) {
+      var k = c.contrat || {}, st = CONTRAT[k.statut || "essai"] || CONTRAT.essai, s = sante(c);
+      return '<tr data-client="' + esc(c.id) + '" tabindex="0"><td><b>' + esc(c.nom) + "</b><small>" + esc(k.offre || "Offre non renseignée") + '</small></td><td><span class="pill ' + st[1] + '">' + st[0] + "</span></td>" +
+        '<td class="nb">' + c.comptes + (k.utilisateurs_max ? '<span class="muet"> / ' + k.utilisateurs_max + "</span>" : "") + "<small>" + plur(c.connectes_7j || 0, "actif") + " cette semaine</small></td>" +
+        '<td class="nb masque-m">' + c.dossiers_en_cours + "<small>" + c.dossiers_30j + ' en 30 j</small></td><td class="masque-m muet">' + esc(quand(c.derniere_connexion)) + '</td><td><span class="sante ' + s[0] + '">' + esc(s[1]) + '</span></td><td class="fl">' + FLECHE + "</td></tr>";
+    }).join("") + "</tbody></table></div>";
+}
+function brancherClients() {
+  document.querySelectorAll("tr[data-client]").forEach(function (tr) {
+    tr.onclick = function () { location.hash = "#/client/" + tr.dataset.client; };
+    tr.onkeydown = function (e) { if (e.key === "Enter") tr.onclick(); };
+  });
+}
+function formOuvrir() {
+  if (!etat.ouvrir) return "";
+  return '<section class="bloc"><div class="bloc-tete"><h2>Ouvrir un client</h2></div><form class="bloc-corps pile" id="nc-f" novalidate><div class="grille-3">' +
+    '<label class="champ">Compagnie<input class="saisie" id="nc-nom" placeholder="Ex. Mutuelle du Loing"></label><label class="champ">Premier administrateur<input class="saisie" id="nc-anom" placeholder="Prénom Nom"></label>' +
+    '<label class="champ">Son email professionnel<input class="saisie" id="nc-amail" type="email" placeholder="prenom.nom@compagnie.fr"></label></div>' +
+    '<p class="muet petit" style="margin:0">Le client est créé en essai. L\'administrateur reçoit aussitôt un mail pour activer son compte.</p>' +
+    '<div class="ligne-form"><button class="btn primaire" id="nc-ok" type="submit">Créer le client et inviter l\'administrateur</button><button class="btn discret" id="nc-annuler" type="button">Annuler</button></div></form></section>';
+}
+function brancherOuvrir() {
+  brancherClients();
+  document.querySelectorAll("[data-ouvrir]").forEach(function (b) { b.onclick = function () { etat.ouvrir = true; router(); $("nc-nom").focus(); }; });
+  if (!$("nc-f")) return;
+  $("nc-annuler").onclick = function () { etat.ouvrir = false; router(); };
+  $("nc-f").addEventListener("submit", function (e) {
+    e.preventDefault(); var b = $("nc-ok"); C.occupe(b, true, "Création");
+    op("ouvrir_client", { nom: $("nc-nom").value, admin_nom: $("nc-anom").value, admin_email: $("nc-amail").value }).then(function (r) {
+      etat.ouvrir = false;
+      C.toast(r.envoi && r.envoi.envoye ? "Client créé, invitation envoyée" : "Client créé, mais le mail n'est pas parti", !(r.envoi && r.envoi.envoye));
+      return charger().then(function () { location.hash = "#/client/" + r.client.id; });
+    }).catch(function (x) { C.occupe(b, false); C.toast(x.message, true); });
+  });
+}
+
+/* ---------- Clients ---------- */
+var FILTRES = [["tous", "Tous"], ["actif", "Sous contrat"], ["essai", "Essai"], ["surveiller", "À surveiller"]];
+function vueClients() {
+  var h = '<div class="ad-tete"><div><h1>Clients</h1><p>Chaque compagnie, son contrat et l\'activité de ses équipes.</p></div><button class="btn primaire" type="button" data-ouvrir>Ouvrir un client</button></div>' + formOuvrir();
+  h += '<section class="bloc"><div class="ad-outils"><input class="saisie" id="cl-cherche" type="search" placeholder="Rechercher une compagnie" value="' + esc(etat.cherche) + '"><div class="seg" role="group" aria-label="Filtrer">' +
+    FILTRES.map(function (f) { return '<button type="button" data-filtre="' + f[0] + '" aria-pressed="' + (etat.filtre === f[0]) + '">' + f[1] + "</button>"; }).join("") + '</div></div><div id="cl-liste"></div></section>';
+  $("vue").innerHTML = h;
+  var liste = function () {
+    var q = etat.cherche.trim().toLowerCase();
+    var l = etat.clients.filter(function (c) {
+      var st = (c.contrat || {}).statut || "essai";
+      if (q && c.nom.toLowerCase().indexOf(q) < 0) return false;
+      if (etat.filtre === "actif") return st === "actif";
+      if (etat.filtre === "essai") return st === "essai";
+      if (etat.filtre === "surveiller") return sante(c)[0] !== "ok";
+      return true;
+    });
+    $("cl-liste").innerHTML = l.length || !etat.clients.length ? tableClients(l) : '<div class="vide">Aucun client ne correspond.</div>';
+    brancherClients();
+  };
+  $("cl-cherche").oninput = function () { etat.cherche = this.value; liste(); };
+  document.querySelectorAll("[data-filtre]").forEach(function (b) { b.onclick = function () { etat.filtre = b.dataset.filtre; document.querySelectorAll("[data-filtre]").forEach(function (x) { x.setAttribute("aria-pressed", String(x === b)); }); liste(); }; });
+  liste(); brancherOuvrir();
+}
+
+/* ---------- Support ---------- */
+function vueSupport() {
+  var h = '<div class="ad-tete"><div><h1>Support</h1><p>Les demandes envoyées depuis la page Aide de Klerio. Votre réponse part par mail, depuis votre adresse.</p></div></div>';
+  h += '<section class="bloc">' + (etat.support.map(function (s) { return blocDemande(s, true); }).join("") || '<div class="ad-calme"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m8 12 3 3 5-6"/></svg>Aucune demande en attente.</div>') + "</section>";
+  $("vue").innerHTML = h; brancherDemandes();
+}
+function blocDemande(s, avecClient) {
+  var ouverte = !s.statut || s.statut === "ouverte";
+  return '<div class="demande"><div><b>' + esc(s.sujet) + "</b> " + (ouverte ? '<span class="pill essai">À traiter</span>' : '<span class="pill neutre">Traitée</span>') + '</div><span class="qui">' +
+    (avecClient ? '<a href="#/client/' + esc(s.assureur_id) + '">' + esc(nomClient(s.assureur_id)) + "</a> · " : "") + esc(s.nom || "") + ", " + esc(ROLES[s.role] || s.role || "") + " · " + esc(s.email || "") + " · " + esc(C.depuis(s.created_at)) + "</span><p>" + esc(s.message) + "</p>" +
+    (ouverte ? '<div class="rep"><textarea class="saisie" data-rep="' + esc(s.id) + '" rows="3" placeholder="Votre réponse à ' + esc(s.nom || "cette personne") + '"></textarea><div class="ligne-form"><button class="btn discret petit" data-classer="' + esc(s.id) + '">Classer sans répondre</button><button class="btn primaire petit" data-repondre="' + esc(s.id) + '">Envoyer la réponse</button></div></div>' : "") + "</div>";
+}
+function brancherDemandes() {
+  var fin = function (b, msg) { return function () { C.toast(msg); etat.fiche = null; charger(); }; };
+  document.querySelectorAll("[data-repondre]").forEach(function (b) {
+    b.onclick = function () {
+      var id = b.dataset.repondre, rep = document.querySelector('[data-rep="' + id + '"]').value.trim();
+      if (!rep) return C.toast("Écrivez votre réponse, ou classez la demande sans répondre", true);
+      C.occupe(b, true, "Envoi"); op("support_traiter", { id: id, reponse: rep }).then(fin(b, "Réponse envoyée")).catch(function (x) { C.occupe(b, false); C.toast(x.message, true); });
+    };
+  });
+  document.querySelectorAll("[data-classer]").forEach(function (b) {
+    b.onclick = function () { C.occupe(b, true, ""); op("support_traiter", { id: b.dataset.classer, reponse: null }).then(fin(b, "Demande classée")).catch(function (x) { C.occupe(b, false); C.toast(x.message, true); }); };
+  });
+}
+
+/* ---------- Journal ---------- */
+function vueJournal() {
+  var j = (etat.global || {}).journal || [];
+  $("vue").innerHTML = '<div class="ad-tete"><div><h1>Journal</h1><p>Chaque modification faite depuis Klerio Admin, avec son auteur. Les consultations ne sont pas notées.</p></div></div>' +
+    '<section class="bloc">' + (j.length ? tableJournal(j, true) : '<div class="vide">Aucune action pour l\'instant.</div>') + "</section>";
+}
 function tableJournal(l, avecClient) {
-  return '<div class="tableau-wrap"><table class="tableau"><tbody>' + l.map(function (j) {
-    var d = j.details || {}, det = Object.keys(d).filter(function (k) { return ["id", "assureur_id"].indexOf(k) < 0 && d[k] !== null && d[k] !== ""; }).map(function (k) { return k + " : " + d[k]; }).join(", ");
-    return '<tr style="cursor:default"><td class="muet" style="white-space:nowrap">' + esc(C.heure(j.created_at)) + "</td>" + (avecClient ? "<td>" + esc(j.client || "") + "</td>" : "") + "<td><b>" + esc(LIB_ACTION[j.action] || j.action) + '</b><div class="muet petit">' + esc(det.slice(0, 160)) + '</div></td><td class="muet">' + esc(j.operateur) + "</td></tr>";
+  return '<div class="tableau-wrap"><table class="ad-t ad-journal"><thead><tr><th>Quand</th>' + (avecClient ? "<th>Client</th>" : "") + '<th>Action</th><th class="masque-m">Par</th></tr></thead><tbody>' + l.map(function (j) {
+    var d = j.details || {}, det = Object.keys(d).filter(function (k) { return ["id", "assureur_id"].indexOf(k) < 0 && d[k] !== null && d[k] !== ""; }).map(function (k) { return (LIB_CHAMP[k] || k) + " : " + d[k]; }).join(", ");
+    return "<tr><td>" + esc(C.depuis(j.created_at)) + "</td>" + (avecClient ? "<td>" + (j.assureur_id ? '<a href="#/client/' + esc(j.assureur_id) + '">' + esc(j.client || "") + "</a>" : "") + "</td>" : "") +
+      "<td><b>" + esc(LIB_ACTION[j.action] || j.action) + "</b>" + (det ? "<small>" + esc(det.slice(0, 160)) + "</small>" : "") + '</td><td class="muet masque-m">' + esc(j.operateur) + "</td></tr>";
   }).join("") + "</tbody></table></div>";
 }
 
-function ouvrirClient(id) {
-  op("client", { id: id }).then(function (f) { etat.fiche = f; etat.onglet = etat.onglet || "structure"; etat.centre = null; rendreFiche(f); window.scrollTo(0, 0); }).catch(function (x) { C.toast(x.message, true); });
+/* ---------- Fiche d'un client ---------- */
+function ouvrirClient(id, onglet) {
+  if (onglet) etat.onglet = onglet;
+  var memeClient = etat.fiche && etat.fiche.client.id === id;
+  if (memeClient) return rendreFiche(etat.fiche);
+  op("client", { id: id }).then(function (f) { etat.fiche = f; etat.centre = null; if (!onglet) etat.onglet = "organisation"; rendreFiche(f); window.scrollTo(0, 0); }).catch(function (x) { C.toast(x.message, true); location.hash = "#/clients"; });
 }
 function maj(p, msg) {
   return p.then(function (r) { if (r && r.client) etat.fiche = r; if (r && r.envoi) C.toast(r.envoi.envoye ? "Mail envoyé à " + r.envoi.email : "Mail non parti : " + (r.envoi.erreur || ""), !r.envoi.envoye); else if (msg) C.toast(msg); rendreFiche(etat.fiche); })
     .catch(function (x) { C.toast(x.message, true); rendreFiche(etat.fiche); });
 }
-var ONGLETS = [["structure", "Centres et équipes"], ["comptes", "Comptes"], ["contrat", "Contrat"], ["support", "Support"], ["journal", "Journal"]];
-
 function rendreFiche(f) {
-  var s = f.structure || {}, k = s.contrat || {}, st = STATUT_K[k.statut || "essai"];
+  var s = f.structure || {}, k = s.contrat || {}, st = CONTRAT[k.statut || "essai"] || CONTRAT.essai;
   var actifs = f.comptes.filter(function (g) { return g.actif; });
-  var h = '<p><a href="#" id="b-retour" class="muet">← Tous les clients</a></p><div class="entete-vue"><div><h1>' + esc(f.client.nom) + ' <span class="statut ' + st[1] + '" style="font-size:13px;vertical-align:middle">' + st[0] + "</span></h1><p>Client depuis le " + esc(C.dateCourte(f.client.created_at)) +
-    (k.offre ? " · offre " + esc(k.offre) : "") + (k.fin ? " · échéance le " + esc(C.dateCourte(k.fin)) : "") + "</p></div></div>";
-  var gest = actifs.filter(function (g) { return g.role === "gestionnaire"; }).length, man = actifs.filter(function (g) { return g.role === "superviseur"; }).length, adm = actifs.filter(function (g) { return g.role === "admin"; }).length;
+  var n = function (r) { return actifs.filter(function (g) { return g.role === r; }).length; };
+  var centres = (s.centres || []).filter(function (c) { return c.nom; }).length;
   var enCours = (s.centres || []).reduce(function (a, c) { return a + c.dossiers_en_cours; }, 0);
-  h += '<div class="op-chiffres">' + chiffre((s.centres || []).filter(function (c) { return c.nom; }).length, "Centres") + chiffre(f.equipes.length, "Équipes") + chiffre(adm + " · " + man + " · " + gest, "Admin. · managers · gestionnaires", !adm) + chiffre(enCours, "Dossiers en cours") + "</div>";
-  h += '<nav class="onglets">' + ONGLETS.map(function (o) { return '<a href="#" data-onglet="' + o[0] + '"' + (o[0] === etat.onglet ? ' aria-current="page"' : "") + ">" + o[1] + (o[0] === "support" && f.support.filter(function (x) { return x.statut === "ouverte"; }).length ? " •" : "") + "</a>"; }).join("") + "</nav>";
-  h += ({ structure: ongletStructure, comptes: ongletComptes, contrat: ongletContrat, support: ongletSupport, journal: ongletJournal }[etat.onglet] || ongletStructure)(f);
+  var recus = (s.centres || []).reduce(function (a, c) { return a + c.dossiers_30j; }, 0);
+  var ouvertes = f.support.filter(function (x) { return x.statut === "ouverte"; }).length;
+  var h = '<div><div class="ad-fil"><a href="#/clients">Clients</a> / ' + esc(f.client.nom) + '</div><div class="ad-tete"><div><h1>' + esc(f.client.nom) + ' <span class="pill ' + st[1] + '">' + st[0] + "</span></h1><p>Client depuis le " + esc(C.dateCourte(f.client.created_at)) +
+    (k.offre ? ", offre " + esc(k.offre) : "") + (k.fin ? ", échéance le " + esc(C.dateCourte(k.fin)) : "") + "</p></div></div></div>";
+  h += '<div class="ad-bande">' + case_("Organisation", centres, plur(centres, "centre").replace(/^\d+ /, "") + ", " + plur(f.equipes.length, "équipe")) +
+    case_("Utilisateurs actifs", actifs.length, (n("admin") ? plur(n("admin"), "admin") : '<b style="color:var(--rouge-texte)">aucun admin</b>') + ", " + plur(n("superviseur"), "manager") + ", " + plur(n("gestionnaire"), "gestionnaire")) +
+    case_("Dossiers en cours", enCours, "<b>" + recus + "</b> reçus en 30 jours") +
+    case_("Invitations", f.invitations.length, f.invitations.filter(function (i) { return i.expiree; }).length ? "dont " + f.invitations.filter(function (i) { return i.expiree; }).length + " expirée(s)" : "en attente d'acceptation") + "</div>";
+  h += '<nav class="onglets">' + ONGLETS.map(function (o) {
+    var c = o[0] === "comptes" ? f.comptes.length : o[0] === "support" ? ouvertes : 0;
+    return '<a href="#/client/' + esc(f.client.id) + "/" + o[0] + '"' + (o[0] === etat.onglet ? ' aria-current="page"' : "") + ">" + o[1] + (c ? '<span class="n">' + c + "</span>" : "") + "</a>";
+  }).join("") + "</nav>";
+  h += ({ organisation: ongletOrganisation, comptes: ongletComptes, contrat: ongletContrat, support: ongletSupport, journal: ongletJournal }[etat.onglet] || ongletOrganisation)(f);
   $("vue").innerHTML = h;
-  $("b-retour").onclick = function (e) { e.preventDefault(); etat.fiche = null; etat.onglet = null; charger(); };
-  document.querySelectorAll("[data-onglet]").forEach(function (a) { a.onclick = function (e) { e.preventDefault(); etat.onglet = a.dataset.onglet; rendreFiche(f); }; });
   brancherFiche(f);
 }
 
-function ongletStructure(f) {
-  var s = f.structure || {}, charge = s.charge || {};
-  var centres = (s.centres || []);
-  var h = '<div class="cartes-centres">' + centres.map(function (c) {
-    return '<button type="button" class="carte-centre' + (etat.centre === (c.nom || "") ? " active" : "") + '" data-centre="' + esc(c.nom || "") + '"><b>' + esc(c.nom || "Sans centre") + "</b><span>" + c.equipes.length + " équipe(s) · " + c.managers + " manager(s) · " + c.gestionnaires + " gestionnaire(s)</span><span>" + c.dossiers_en_cours + " dossiers en cours · " + c.dossiers_30j + " reçus en 30 j</span></button>";
-  }).join("") + "</div>";
+function ongletOrganisation(f) {
+  var s = f.structure || {}, charge = s.charge || {}, centres = s.centres || [];
+  if (!centres.length) return '<section class="bloc"><div class="vide">Pas encore de centre ni d\'équipe. L\'administrateur du client les crée depuis Klerio, ou vous pouvez créer une équipe ici.<div class="ligne-form" style="justify-content:center;margin-top:14px"><input class="saisie" id="eq-centre" placeholder="Centre, ex. Île-de-France" style="max-width:220px"><input class="saisie" id="eq-nouveau" placeholder="Nom de l\'équipe" style="max-width:220px"><button class="btn" id="eq-creer">Créer l\'équipe</button></div></div></section>';
+  if (etat.centre === null || !centres.some(function (c) { return (c.nom || "") === etat.centre; })) etat.centre = centres[0].nom || "";
   var c = centres.filter(function (x) { return (x.nom || "") === etat.centre; })[0];
-  if (c) {
-    var managers = f.comptes.filter(function (g) { return g.role === "superviseur" && g.actif; });
-    h += '<section class="bloc"><div class="bloc-tete"><h2>' + esc(c.nom || "Sans centre") + '</h2></div><div class="bloc-corps pile">' +
-      (c.equipes.length ? c.equipes.map(function (e) {
-        var membres = f.comptes.filter(function (g) { return g.equipe_id === e.id; });
-        return '<div class="carte-equipe"><div class="ce-tete"><input class="saisie" data-eq-nom="' + esc(e.id) + '" value="' + esc(e.nom) + '" style="max-width:260px;font-weight:600"><button class="btn petit" data-eq-renommer="' + esc(e.id) + '">Renommer</button>' +
-          '<label class="muet petit" style="margin-left:auto">Manager <select class="saisie" data-eq-manager="' + esc(e.id) + '" style="min-width:180px"><option value="">Aucun</option>' + managers.map(function (m) { return '<option value="' + esc(m.id) + '"' + (m.id === e.manager_id ? " selected" : "") + ">" + esc(m.nom) + "</option>"; }).join("") + "</select></label>" +
-          (membres.filter(function (g) { return g.actif; }).length ? "" : '<button class="btn petit discret" data-eq-suppr="' + esc(e.id) + '">Supprimer</button>') + "</div>" +
-          '<table class="tableau"><tbody>' + (membres.map(function (g) {
-            return "<tr><td>" + esc(g.nom) + (g.id === e.manager_id ? ' <span class="muet petit">(manager)</span>' : "") + '</td><td class="muet">' + esc(g.email) + "</td><td>" + esc(ROLES[g.role]) + '</td><td class="nb">' + (charge[g.id] || 0) + ' en cours</td><td class="muet">' + esc(quand(g.derniere_connexion)) + "</td><td>" + (g.actif ? '<span class="statut ok">Actif</span>' : '<span class="statut neutre">Désactivé</span>') + "</td></tr>";
-          }).join("") || '<tr><td><span class="muet">Aucun membre</span></td></tr>') + "</tbody></table></div>";
-      }).join("") : '<p class="muet">Aucune équipe dans ce centre.</p>') +
-      '<div class="decision-actions"><input class="saisie" id="eq-nouveau" placeholder="Nom de la nouvelle équipe" style="max-width:280px"><button class="btn" id="eq-creer" data-c="' + esc(c.nom || "") + '">Créer l\'équipe dans ce centre</button></div></div></section>';
-  } else h += '<p class="muet">Cliquez sur un centre pour voir ses équipes et leurs membres.</p>';
+  var managers = f.comptes.filter(function (g) { return g.role === "superviseur" && g.actif; });
+  var h = '<div class="org"><section class="bloc"><ul class="org-centres">' + centres.map(function (x) {
+    return '<li><button type="button" data-centre-choisi="' + esc(x.nom || "") + '" aria-pressed="' + ((x.nom || "") === etat.centre) + '"><b>' + esc(x.nom || "Sans centre") + "</b><span>" + plur(x.equipes.length, "équipe") + ", " + plur(x.gestionnaires + x.managers, "personne") + "</span><span>" + plur(x.dossiers_en_cours, "dossier") + " en cours</span></button></li>";
+  }).join("") + "</ul></section>";
+  h += '<section class="bloc"><div class="bloc-tete"><h2>' + esc(c.nom || "Sans centre") + '<span class="sous">' + plur(c.equipes.length, "équipe") + "</span></h2></div>" +
+    (c.equipes.length ? c.equipes.map(function (e) {
+      e = f.equipes.filter(function (x) { return x.id === e.id; })[0] || e;
+      var membres = f.comptes.filter(function (g) { return g.equipe_id === e.id; });
+      return '<div class="equipe"><div class="equipe-tete"><h3>' + esc(e.nom) + '</h3><span class="muet">' + plur(membres.length, "membre") + '</span><div class="droite"><label class="muet petit">Manager <select class="saisie" data-eq-manager="' + esc(e.id) + '" style="min-width:170px;height:32px"><option value="">Aucun</option>' +
+        managers.map(function (m) { return '<option value="' + esc(m.id) + '"' + (m.id === e.manager_id ? " selected" : "") + ">" + esc(m.nom) + "</option>"; }).join("") + "</select></label>" +
+        '<button class="btn petit discret" data-eq-renommer="' + esc(e.id) + '" data-nom="' + esc(e.nom) + '">Renommer</button>' + (membres.some(function (g) { return g.actif; }) ? "" : '<button class="btn petit discret" data-eq-suppr="' + esc(e.id) + '">Supprimer</button>') + "</div></div>" +
+        (membres.length ? '<table class="ad-t"><tbody>' + membres.map(function (g) {
+          return "<tr><td><b>" + esc(g.nom) + "</b>" + (g.id === e.manager_id ? ' <span class="pill essai">Manager</span>' : "") + "<small>" + esc(g.email) + '</small></td><td class="masque-m">' + esc(ROLES[g.role]) + '</td><td class="nb">' + plur(charge[g.id] || 0, "dossier") + '</td><td class="muet masque-m">' + esc(quand(g.derniere_connexion)) + "</td><td>" + (g.actif ? '<span class="sante">Actif</span>' : '<span class="sante gris">Désactivé</span>') + "</td></tr>";
+        }).join("") + "</tbody></table>" : '<p class="muet" style="margin:0;padding:0 20px 16px">Personne dans cette équipe.</p>') + "</div>";
+    }).join("") : '<div class="vide">Aucune équipe dans ce centre.</div>') +
+    '<div class="bloc-corps" style="border-top:1px solid var(--trait)"><div class="ligne-form"><input class="saisie" id="eq-nouveau" placeholder="Nom de la nouvelle équipe" style="max-width:280px"><button class="btn" id="eq-creer" data-c="' + esc(c.nom || "") + '">Créer l\'équipe dans ce centre</button></div></div></section></div>';
   return h;
 }
 function ongletComptes(f) {
   var opts = function (sel) { return '<option value="">Sans équipe</option>' + f.equipes.map(function (e) { return '<option value="' + esc(e.id) + '"' + (e.id === sel ? " selected" : "") + ">" + esc(e.nom) + " (" + esc(e.centre) + ")</option>"; }).join(""); };
   var charge = (f.structure || {}).charge || {};
-  var h = '<section class="bloc"><div class="tableau-wrap"><table class="tableau"><thead><tr><th>Nom</th><th>Email</th><th>Rôle</th><th>Équipe</th><th>Centre</th><th class="nb">En cours</th><th>Dernière connexion</th><th>État</th><th></th></tr></thead><tbody>' +
-    (f.comptes.map(function (g) {
-      return '<tr style="cursor:default"><td>' + esc(g.nom) + '</td><td class="muet">' + esc(g.email) + '</td><td><select class="saisie" data-role="' + esc(g.id) + '">' + Object.keys(ROLES).map(function (r) { return '<option value="' + r + '"' + (r === g.role ? " selected" : "") + ">" + ROLES[r] + "</option>"; }).join("") + "</select></td>" +
-        '<td><select class="saisie" data-equipe="' + esc(g.id) + '" style="min-width:170px">' + opts(g.equipe_id) + '</select></td><td><input class="saisie" data-centre="' + esc(g.id) + '" value="' + esc(g.centre || "") + '" placeholder="Aucun" style="max-width:140px"></td><td class="nb">' + (charge[g.id] || 0) + '</td><td class="muet">' + esc(quand(g.derniere_connexion)) + "</td>" +
-        "<td>" + (g.actif ? '<span class="statut ok">Actif</span>' : '<span class="statut neutre">Désactivé</span>') + '</td><td class="nb" style="white-space:nowrap"><button class="btn petit" data-mdp="' + esc(g.id) + '" data-nom="' + esc(g.nom) + '">Lien mot de passe</button> <button class="btn petit discret" data-actif="' + esc(g.id) + '" data-val="' + (!g.actif) + '" data-nom="' + esc(g.nom) + '">' + (g.actif ? "Désactiver" : "Réactiver") + "</button></td></tr>";
-    }).join("") || '<tr><td colspan="9"><div class="vide">Aucun compte activé.</div></td></tr>') + "</tbody></table></div></section>";
-  if (f.invitations.length) h += '<section class="bloc"><div class="bloc-tete"><h2>Invitations en attente</h2></div><div class="tableau-wrap"><table class="tableau"><tbody>' + f.invitations.map(function (i) {
-    return "<tr><td>" + esc(i.nom) + '</td><td class="muet">' + esc(i.email) + "</td><td>" + esc(ROLES[i.role] || i.role) + '</td><td class="muet">par ' + esc(i.invite_par_nom || "") + "</td><td>" + (i.expiree ? '<span class="statut ko">Lien expiré</span>' : i.erreur_envoi ? '<span class="statut ko">Mail non parti</span>' : '<span class="statut neutre">Envoyée ' + esc(C.depuis(i.envoye_le)) + "</span>") + '</td><td class="nb"><button class="btn petit" data-renvoyer="' + esc(i.id) + '">Renvoyer</button></td></tr>';
+  var h = "";
+  if (f.invitations.length) h += '<section class="bloc"><div class="bloc-tete"><h2>Invitations en attente<span class="compte">' + f.invitations.length + '</span></h2></div><div class="tableau-wrap"><table class="ad-t"><tbody>' + f.invitations.map(function (i) {
+    return "<tr><td><b>" + esc(i.nom) + "</b><small>" + esc(i.email) + "</small></td><td>" + esc(ROLES[i.role] || i.role) + '</td><td class="muet masque-m">Invité par ' + esc(i.invite_par_nom || "") + "</td><td>" +
+      (i.expiree ? '<span class="sante rouge">Lien expiré</span>' : i.erreur_envoi ? '<span class="sante rouge">Mail non parti</span>' : '<span class="sante gris">Envoyée ' + esc(C.depuis(i.envoye_le)) + "</span>") + '</td><td class="nb"><button class="btn petit" data-renvoyer="' + esc(i.id) + '">Renvoyer</button></td></tr>';
   }).join("") + "</tbody></table></div></section>";
-  h += '<section class="bloc"><div class="bloc-tete"><h2>Inviter un administrateur</h2></div><form class="bloc-corps" id="f-adm" novalidate><div class="decision-actions"><input class="saisie" id="a-nom" placeholder="Prénom Nom" style="max-width:240px"><input class="saisie" id="a-mail" type="email" placeholder="prenom.nom@compagnie.fr" style="max-width:300px"><button class="btn" id="a-ok" type="submit">Envoyer l\'invitation</button></div></form></section>';
+  h += '<section class="bloc"><div class="bloc-tete"><h2>Comptes<span class="compte">' + f.comptes.length + '</span></h2></div><div class="tableau-wrap"><table class="ad-t"><thead><tr><th>Personne</th><th>Rôle</th><th>Équipe</th><th class="nb masque-m">Dossiers</th><th class="masque-m">Connexion</th><th></th></tr></thead><tbody>' +
+    (f.comptes.map(function (g) {
+      return "<tr><td><b>" + esc(g.nom) + "</b>" + (g.actif ? "" : ' <span class="pill neutre">Désactivé</span>') + "<small>" + esc(g.email) + '</small></td><td><select class="saisie" data-role="' + esc(g.id) + '">' + Object.keys(ROLES).map(function (r) { return '<option value="' + r + '"' + (r === g.role ? " selected" : "") + ">" + ROLES[r] + "</option>"; }).join("") + "</select></td>" +
+        '<td><select class="saisie" data-equipe="' + esc(g.id) + '" style="min-width:180px">' + opts(g.equipe_id) + '</select></td><td class="nb masque-m">' + (charge[g.id] || 0) + '</td><td class="muet masque-m">' + esc(quand(g.derniere_connexion)) + "</td>" +
+        '<td class="nb" style="white-space:nowrap"><button class="btn petit" data-mdp="' + esc(g.id) + '" data-nom="' + esc(g.nom) + '">Lien mot de passe</button> <button class="btn petit discret" data-actif="' + esc(g.id) + '" data-val="' + (!g.actif) + '" data-nom="' + esc(g.nom) + '">' + (g.actif ? "Désactiver" : "Réactiver") + "</button></td></tr>";
+    }).join("") || '<tr><td colspan="6"><div class="vide">Aucun compte activé pour l\'instant.</div></td></tr>') + "</tbody></table></div></section>";
+  h += '<section class="bloc"><div class="bloc-tete"><h2>Inviter un administrateur</h2></div><form class="bloc-corps pile" id="f-adm" novalidate><p class="muet petit" style="margin:0">L\'administrateur crée ensuite les accès de ses managers, qui invitent leurs gestionnaires.</p><div class="ligne-form"><input class="saisie" id="a-nom" placeholder="Prénom Nom" style="max-width:220px"><input class="saisie" id="a-mail" type="email" placeholder="prenom.nom@compagnie.fr" style="max-width:300px"><button class="btn primaire" id="a-ok" type="submit">Envoyer l\'invitation</button></div></form></section>';
   return h;
 }
 function ongletContrat(f) {
@@ -258,28 +541,30 @@ function ongletContrat(f) {
   var v = function (x) { return esc(x == null ? "" : x); };
   return '<section class="bloc"><form class="bloc-corps pile" id="f-k" novalidate><div class="grille-3">' +
     '<label class="champ">Nom du client<input class="saisie" id="k-client" value="' + v(f.client.nom) + '"></label>' +
-    '<label class="champ">Statut<select class="saisie" id="k-statut">' + Object.keys(STATUT_K).map(function (s) { return '<option value="' + s + '"' + ((k.statut || "essai") === s ? " selected" : "") + ">" + STATUT_K[s][0] + "</option>"; }).join("") + "</select></label>" +
+    '<label class="champ">Statut<select class="saisie" id="k-statut">' + Object.keys(CONTRAT).map(function (s) { return '<option value="' + s + '"' + ((k.statut || "essai") === s ? " selected" : "") + ">" + CONTRAT[s][0] + "</option>"; }).join("") + "</select></label>" +
     '<label class="champ">Offre<input class="saisie" id="k-offre" value="' + v(k.offre) + '" placeholder="Ex. Contractuel, pilote 6 mois"></label></div><div class="grille-3">' +
     '<label class="champ">Début<input class="saisie" id="k-debut" type="date" value="' + v(k.debut) + '"></label><label class="champ">Échéance<input class="saisie" id="k-fin" type="date" value="' + v(k.fin) + '"></label>' +
     '<label class="champ">Prix annuel HT (€)<input class="saisie" id="k-prix" type="number" min="0" step="100" value="' + v(k.prix_annuel_eur) + '"></label></div><div class="grille-3">' +
     '<label class="champ">Utilisateurs prévus<input class="saisie" id="k-max" type="number" min="0" value="' + v(k.utilisateurs_max) + '"></label><label class="champ">Contact chez le client<input class="saisie" id="k-cnom" value="' + v(k.contact_nom) + '"></label>' +
     '<label class="champ">Email du contact<input class="saisie" id="k-cmail" type="email" value="' + v(k.contact_email) + '"></label></div>' +
     '<label class="champ">Notes<textarea class="saisie" id="k-notes" rows="4">' + v(k.notes) + "</textarea></label>" +
-    '<div class="decision-actions"><button class="btn primaire" id="k-ok" type="submit">Enregistrer</button>' + (k.maj_le ? '<span class="muet petit">Modifié ' + esc(C.depuis(k.maj_le)) + "</span>" : "") + "</div></form></section>";
+    '<div class="ligne-form"><button class="btn primaire" id="k-ok" type="submit">Enregistrer le contrat</button>' + (k.maj_le ? '<span class="muet petit">Modifié ' + esc(C.depuis(k.maj_le)) + "</span>" : "") + "</div></form></section>";
 }
-function ongletSupport(f) { return '<section class="bloc">' + (f.support.map(blocDemande).join("") || '<div class="vide">Aucune demande de support de ce client.</div>') + "</section>"; }
-function ongletJournal(f) { var j = (f.structure || {}).journal || []; return '<section class="bloc">' + (j.length ? tableJournal(j, false) : '<div class="vide">Aucune action de votre part chez ce client.</div>') + "</section>"; }
+function ongletSupport(f) { return '<section class="bloc">' + (f.support.map(function (s) { return blocDemande(s, false); }).join("") || '<div class="vide">Aucune demande de support de ce client.</div>') + "</section>"; }
+function ongletJournal(f) { var j = (f.structure || {}).journal || []; return '<section class="bloc">' + (j.length ? tableJournal(j, false) : '<div class="vide">Aucune modification faite chez ce client depuis Klerio Admin.</div>') + "</section>"; }
 
 function brancherFiche(f) {
   var id = f.client.id;
-  document.querySelectorAll("[data-centre]").forEach(function (b) { if (b.tagName === "BUTTON") b.onclick = function () { etat.centre = b.dataset.centre; rendreFiche(f); }; });
-  document.querySelectorAll("[data-eq-renommer]").forEach(function (b) { b.onclick = function () { maj(op("equipe_renommer", { id: b.dataset.eqRenommer, nom: document.querySelector('[data-eq-nom="' + b.dataset.eqRenommer + '"]').value }), "Équipe renommée"); }; });
+  document.querySelectorAll("[data-centre-choisi]").forEach(function (b) { b.onclick = function () { etat.centre = b.dataset.centreChoisi; rendreFiche(f); }; });
+  document.querySelectorAll("[data-eq-renommer]").forEach(function (b) { b.onclick = function () { var nom = prompt("Nouveau nom de l'équipe", b.dataset.nom); if (nom && nom.trim() && nom.trim() !== b.dataset.nom) maj(op("equipe_renommer", { id: b.dataset.eqRenommer, nom: nom.trim() }), "Équipe renommée"); }; });
   document.querySelectorAll("[data-eq-manager]").forEach(function (s) { s.onchange = function () { maj(op("equipe_manager", { id: s.dataset.eqManager, manager_id: s.value || null }), "Manager changé"); }; });
   document.querySelectorAll("[data-eq-suppr]").forEach(function (b) { b.onclick = function () { if (confirm("Supprimer cette équipe vide ?")) maj(op("equipe_supprimer", { id: b.dataset.eqSuppr }), "Équipe supprimée"); }; });
-  if ($("eq-creer")) $("eq-creer").onclick = function () { maj(op("equipe_creer", { assureur_id: id, centre: this.dataset.c, nom: $("eq-nouveau").value }), "Équipe créée"); };
+  if ($("eq-creer")) $("eq-creer").onclick = function () {
+    var centre = $("eq-centre") ? $("eq-centre").value : this.dataset.c;
+    maj(op("equipe_creer", { assureur_id: id, centre: centre, nom: $("eq-nouveau").value }), "Équipe créée");
+  };
   document.querySelectorAll("select[data-role]").forEach(function (s) { s.onchange = function () { maj(op("role", { id: s.dataset.role, role: s.value }), "Rôle changé"); }; });
   document.querySelectorAll("select[data-equipe]").forEach(function (s) { s.onchange = function () { maj(op("deplacer", { id: s.dataset.equipe, equipe_id: s.value || null }), "Équipe changée"); }; });
-  document.querySelectorAll("input[data-centre]").forEach(function (i) { i.onchange = function () { maj(op("deplacer", { id: i.dataset.centre, centre: i.value }), "Centre changé"); }; });
   document.querySelectorAll("[data-mdp]").forEach(function (b) { b.onclick = function () { if (confirm("Envoyer à " + b.dataset.nom + " un lien pour choisir un nouveau mot de passe ?")) { C.occupe(b, true, ""); maj(op("reinitialiser", { id: b.dataset.mdp })); } }; });
   document.querySelectorAll("[data-actif]").forEach(function (b) { b.onclick = function () { var on = b.dataset.val === "true"; if (on || confirm("Désactiver le compte de " + b.dataset.nom + " ? Il ne pourra plus se connecter.")) maj(op("activer", { id: b.dataset.actif, actif: on }), on ? "Compte réactivé" : "Compte désactivé"); }; });
   document.querySelectorAll("[data-renvoyer]").forEach(function (b) { b.onclick = function () { C.occupe(b, true, ""); maj(op("renvoyer", { id: b.dataset.renvoyer })); }; });
@@ -289,10 +574,14 @@ function brancherFiche(f) {
     var nom = $("k-client").value.trim(), suite = nom && nom !== f.client.nom ? op("renommer_client", { assureur_id: id, nom: nom }) : Promise.resolve();
     maj(suite.then(function () { return op("contrat", { assureur_id: id, statut: $("k-statut").value, offre: $("k-offre").value, debut: $("k-debut").value, fin: $("k-fin").value,
       prix_annuel_eur: $("k-prix").value === "" ? null : Number($("k-prix").value), utilisateurs_max: $("k-max").value === "" ? null : Number($("k-max").value),
-      contact_nom: $("k-cnom").value, contact_email: $("k-cmail").value, notes: $("k-notes").value }); }), "Contrat enregistré");
+      contact_nom: $("k-cnom").value, contact_email: $("k-cmail").value, notes: $("k-notes").value }); }), "Contrat enregistré").then(function () { charger(); });
   });
   brancherDemandes();
 }
+$("b-theme").onclick = function () {
+  var sombre = document.documentElement.getAttribute("data-theme") === "dark" || (!document.documentElement.getAttribute("data-theme") && matchMedia("(prefers-color-scheme: dark)").matches);
+  var t = sombre ? "light" : "dark"; appliquerTheme(t); try { localStorage.setItem(THEME, t); } catch (e) { }
+};
 </script>
 </body>
 </html>

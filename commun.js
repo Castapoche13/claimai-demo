@@ -179,6 +179,25 @@
     };
   }
 
+
+  // Œil « afficher le mot de passe » sur chaque champ mot de passe de la page
+  var OEIL = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg>';
+  var OEIL_BARRE = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.6 5.1A10.4 10.4 0 0 1 12 5c6.4 0 10 7 10 7a17.6 17.6 0 0 1-3.2 4.1M6.6 6.6C3.7 8.5 2 12 2 12s3.6 7 10 7a9.7 9.7 0 0 0 5.4-1.6"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/><path d="m3 3 18 18"/></svg>';
+  function yeux(racine) {
+    (racine || document).querySelectorAll('input[type="password"]:not([data-oeil])').forEach(function (i) {
+      i.setAttribute("data-oeil", "1");
+      var z = document.createElement("span"); z.className = "mdp-zone"; i.parentNode.insertBefore(z, i); z.appendChild(i);
+      var b = document.createElement("button"); b.type = "button"; b.className = "mdp-oeil"; b.setAttribute("aria-pressed", "false"); b.setAttribute("aria-label", "Afficher le mot de passe"); b.innerHTML = OEIL;
+      b.addEventListener("click", function () {
+        var voir = i.type === "password"; i.type = voir ? "text" : "password";
+        b.setAttribute("aria-pressed", String(voir)); b.setAttribute("aria-label", voir ? "Masquer le mot de passe" : "Afficher le mot de passe"); b.innerHTML = voir ? OEIL_BARRE : OEIL;
+        i.focus();
+      });
+      z.appendChild(b);
+      if (i.form) i.form.addEventListener("submit", function () { if (i.type === "text") b.click(); });
+    });
+  }
+
   var SESSION = "claimai-gestion-v1";
   function lireSession() { try { return JSON.parse(localStorage.getItem(SESSION) || "null"); } catch (e) { return null; } }
   function ecrireSession(s) { try { localStorage.setItem(SESSION, JSON.stringify(s)); } catch (e) { } }
@@ -191,6 +210,6 @@
     ROLES: ROLES, PIECES: PIECES, ESPACES: ESPACES, GARANTIES: GARANTIES, LIENS: LIENS, CLASSES: CLASSES, LOGO: LOGO,
     $: $, esc: esc, eur: eur, nombre: nombre, dateFr: dateFr, dateCourte: dateCourte, heure: heure, depuis: depuis,
     statut: statut, theme: theme, motif: motif, attendVous: attendVous, toast: toast, occupe: occupe, client: client,
-    lireSession: lireSession, ecrireSession: ecrireSession, oublierSession: oublierSession
+    lireSession: lireSession, ecrireSession: ecrireSession, oublierSession: oublierSession, yeux: yeux
   };
 })(window);

@@ -419,7 +419,7 @@ a.tuile:hover { border-color: var(--trait-fort); text-decoration: none; }
 
 #c-captcha { min-height: 65px; }
 </style>
-<link rel="stylesheet" href="charte.css?v=20261108j">
+<link rel="stylesheet" href="charte.css?v=20261109b">
 </head>
 <body>
 
@@ -434,12 +434,23 @@ a.tuile:hover { border-color: var(--trait-fort); text-decoration: none; }
       <label class="champ">Mot de passe
         <input class="saisie" id="c-mdp" type="password" autocomplete="current-password" required>
       </label>
+      <div class="oubli-l"><button type="button" class="lien-oubli" id="c-oubli">Mot de passe oublié ?</button></div>
       <input id="c-base" type="hidden">
       <div id="c-captcha" class="captcha" hidden></div>
       <p class="erreur-form" id="c-err" role="alert"></p>
       <button class="btn primaire" id="c-btn" type="submit">Se connecter</button>
       <div class="sep-c">ou</div>
       <button class="btn" id="c-ms" type="button"><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><rect x="1" y="1" width="6.5" height="6.5" fill="#f25022"/><rect x="8.5" y="1" width="6.5" height="6.5" fill="#7fba00"/><rect x="1" y="8.5" width="6.5" height="6.5" fill="#00a4ef"/><rect x="8.5" y="8.5" width="6.5" height="6.5" fill="#ffb900"/></svg>Se connecter avec Microsoft</button>
+    </form>
+    <form id="form-oubli" novalidate hidden>
+      <div><h2>Mot de passe oublié</h2><p class="muet petit" style="margin-top:4px">Indiquez votre adresse professionnelle : vous recevrez un lien pour choisir un nouveau mot de passe.</p></div>
+      <label class="champ">Adresse email professionnelle
+        <input class="saisie" id="o-email" type="email" autocomplete="username" required>
+      </label>
+      <p class="erreur-form" id="o-err" role="alert"></p>
+      <p class="ok-form" id="o-ok" role="status" hidden></p>
+      <button class="btn primaire" id="o-btn" type="submit">Recevoir le lien</button>
+      <button class="btn" id="o-retour" type="button">Retour à la connexion</button>
     </form>
     <form id="form-mdp" novalidate hidden>
       <div><h2>Choisissez votre mot de passe</h2><p class="muet petit" style="margin-top:4px">Le mot de passe provisoire qui vous a été remis ne servira plus.</p></div>
@@ -537,7 +548,7 @@ a.tuile:hover { border-color: var(--trait-fort); text-decoration: none; }
 <div id="toast" class="toast" hidden role="status"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="commun.js?v=20261108c"></script>
+<script src="commun.js?v=20261109a"></script>
 <script>
 (function () {
 "use strict";
@@ -1073,7 +1084,10 @@ function listeMails(l) {
         '<pre class="mail-texte">' + esc(x.contenu || "(texte non disponible pour ce mail)") + "</pre>" +
         (pjx ? '<p class="muet petit">Pièces jointes : ' + pjx + "</p>" : "");
     }).join("");
-    var relancer = ["demande_infos", "erreur", "ignore", "a_rattacher"].indexOf(m.statut) >= 0;
+    // La boîte sinistres ne garde les mails reçus qu'environ un mois : au-delà, ils ne peuvent plus être relus
+    var relisible = ["demande_infos", "erreur", "ignore", "a_rattacher"].indexOf(m.statut) >= 0;
+    var perime = relisible && Date.now() - new Date(m.recu_le).getTime() > 28 * 864e5;
+    var relancer = relisible && !perime;
     return "<li" + (i >= 8 ? ' class="ancien" hidden' : "") + '><button type="button" class="ligne ligne-mail" data-mail="' + esc(m.id) + '" aria-expanded="false"><span class="repere"></span>' +
       '<span class="num">' + esc(m.expediteur || "?") + '<small>' + (msgs.length > 1 ? msgs.length + " messages" : "Mail reçu") + (nbPj ? ", " + nbPj + " pièce" + (nbPj > 1 ? "s jointes" : " jointe") : "") + (m.via ? " · via adresse de test" : "") + '</small></span>' +
       '<span class="quoi">' + esc(msgs[0].objet || m.objet || "(sans objet)") + '<small>' + (m.numero ? esc(m.numero) + (m.theme ? " · " + esc(C.theme(m.theme)) : "") : esc(precisionMail(m))) + '</small></span>' +
@@ -1082,6 +1096,7 @@ function listeMails(l) {
         (m.verification ? '<p class="petit" style="margin:6px 0 0">' + esc(m.verification) + "</p>" : "") +
         (m.precision && m.numero ? '<p class="muet petit">' + esc(m.precision) + "</p>" : "") +
         '<div class="mail-actions">' + (m.numero ? '<a class="btn petit" href="#/dossier/' + esc(m.numero) + '">Ouvrir le dossier ' + esc(m.numero) + "</a>" : "") +
+        (perime ? '<p class="muet petit" style="margin:0;flex-basis:100%">Ce mail a plus d\'un mois : il ne peut plus être relu. Demandez à l\'expéditeur de le renvoyer, ou rattachez-le à son dossier.</p>' : "") +
         (relancer ? '<button type="button" class="btn petit" data-relancer-mail="' + esc(m.id) + '" title="Klerio relit toute la conversation, sans renvoyer de mail à l\'expéditeur">Relancer la lecture</button>' : "") +
         (hesite && m.statut !== "rattache" && m.statut !== "dossier_cree" ? '<input class="saisie mono" id="mr-' + esc(m.id) + '" placeholder="N° de dossier" aria-label="Numéro du dossier">' +
           '<button type="button" class="btn primaire petit" data-rattacher="' + esc(m.id) + '">Rattacher à ce dossier</button>' : "") + "</div>" +
@@ -1112,7 +1127,10 @@ function brancherMails() {
         var st = (MAIL_STATUT[r.statut] || [r.statut])[0];
         C.toast(r.statut === "dossier_cree" ? "Dossier ouvert : " + ((r.detail || {}).numero || "") : st + ((r.detail || {}).manquants ? " : il manque " + r.detail.manquants.join(", ") : ""));
         vueFile();
-      }).catch(function (x) { C.occupe(b, false); C.toast(x.message, true); });
+      }).catch(function (x) {
+        C.occupe(b, false);
+        C.toast(x.status >= 500 && x.status !== 502 ? "Klerio n'a pas pu relire ce mail. Demandez à l'expéditeur de le renvoyer, ou rattachez-le à son dossier." : x.message, true);
+      });
     };
   });
   document.querySelectorAll("[data-rattacher]").forEach(function (b) {
@@ -4038,6 +4056,28 @@ if (invitation) {
   });
 }
 
+
+/* ---------------- Mot de passe oublié ---------------- */
+C.yeux();
+$("c-oubli").addEventListener("click", function () {
+  $("form-connexion").hidden = true; $("form-oubli").hidden = false; $("o-err").textContent = ""; $("o-ok").hidden = true;
+  $("o-email").value = $("c-email").value.trim(); $("o-email").focus();
+});
+$("o-retour").addEventListener("click", function () {
+  $("form-oubli").hidden = true; $("form-connexion").hidden = false;
+  if ($("o-email").value.trim()) $("c-email").value = $("o-email").value.trim();
+  $("c-mdp").focus();
+});
+$("form-oubli").addEventListener("submit", function (e) {
+  e.preventDefault(); var email = $("o-email").value.trim(), b = $("o-btn");
+  $("o-err").textContent = ""; $("o-ok").hidden = true;
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { $("o-err").textContent = "Saisissez votre adresse email professionnelle."; return; }
+  C.occupe(b, true, "Envoi");
+  C.client(C.SUPABASE_URL + "/functions/v1", null)("klerio-plateforme", { body: { action: "oubli", email: email, espace: "console" } }).then(function (r) {
+    $("o-ok").textContent = r.message + " Pensez à regarder dans les indésirables."; $("o-ok").hidden = false; b.dataset.l = "Renvoyer le lien";
+  }).catch(function (x) { $("o-err").textContent = x.message; }).finally(function () { C.occupe(b, false); });
+});
+
 /* ---------------- Démarrage ---------------- */
 if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(function () { });
 // Installation comme application (icône sur le bureau, fenêtre à part) : le navigateur propose, on affiche le bouton
@@ -4058,7 +4098,7 @@ $("b-installer").addEventListener("click", function () { if (invitInstall) { inv
       if (r.error) throw r.error;
       $("form-mdp").querySelector("p").textContent = "Choisissez votre nouveau mot de passe. L'ancien ne servira plus.";
       $("form-mdp").hidden = false; $("m-mdp").focus();
-    }).catch(function () { f.hidden = false; $("c-err").textContent = "Ce lien a expiré ou a déjà servi. Demandez-en un nouveau au support."; });
+    }).catch(function () { f.hidden = false; $("c-err").textContent = "Ce lien a expiré ou a déjà servi. Demandez-en un nouveau avec « Mot de passe oublié ? »."; });
     return;
   }
   sb.auth.getSession().then(function (r) {

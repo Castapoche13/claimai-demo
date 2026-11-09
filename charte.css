@@ -425,3 +425,79 @@ body { -webkit-font-smoothing: auto; }
 .vigil.activite li { grid-template-columns: 16px minmax(0, 1fr) auto; align-items: center; }
 .vigil.activite .type-tag { gap: 0; }
 .barre .gestionnaire .btn { margin-left: 4px; }
+
+/* Thème sombre adouci : surfaces graphite, traits fins, l'or pour ce qui est actif. Le thème clair n'est pas touché. */
+:root[data-theme="dark"] { --papier: #0E0E10; --feuille: #151518; --feuille-2: #1A1A1E; --survol: #212126; --trait: #24242A; --trait-fort: #303037;
+  --encre: #ECECEE; --encre-2: #C8C8CE; --gris: #9A9AA3; --gris-clair: #76767E; --grille: #212126;
+  --primaire: #D9AE45; --sur-primaire: #17130A; --cadre-fort: #ECECEE;
+  --forte: #1C1910; --forte-texte: #B9A878; --sur-forte: #F4F4F5; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --papier: #0E0E10; --feuille: #151518; --feuille-2: #1A1A1E; --survol: #212126; --trait: #24242A; --trait-fort: #303037;
+  --encre: #ECECEE; --encre-2: #C8C8CE; --gris: #9A9AA3; --gris-clair: #76767E; --grille: #212126;
+  --primaire: #D9AE45; --sur-primaire: #17130A; --cadre-fort: #ECECEE;
+  --forte: #1C1910; --forte-texte: #B9A878; --sur-forte: #F4F4F5; } }
+:root[data-theme="dark"] .bloc, :root[data-theme="dark"] .decision, :root[data-theme="dark"] .tuile, :root[data-theme="dark"] .pil-stat, :root[data-theme="dark"] .parcours { border-color: var(--trait); box-shadow: none; }
+:root[data-theme="dark"] .tuile.forte, :root[data-theme="dark"] .pil-stat.forte { border-color: rgba(217, 174, 69, .38); background: linear-gradient(180deg, #211C10, #18160F); }
+:root[data-theme="dark"] button.tuile.forte:hover { border-color: rgba(217, 174, 69, .6); opacity: 1; }
+:root[data-theme="dark"] button.tuile:hover, :root[data-theme="dark"] a.tuile:hover { border-color: var(--trait-fort); }
+:root[data-theme="dark"] .btn { box-shadow: none; }
+:root[data-theme="dark"] .btn:hover { background: var(--survol); border-color: #3A3A42; }
+:root[data-theme="dark"] .btn.primaire:hover { background: #E4BD5C; border-color: #E4BD5C; }
+:root[data-theme="dark"] .btn.discret:hover { background: var(--survol); }
+:root[data-theme="dark"] .espaces, :root[data-theme="dark"] .filtre-file, :root[data-theme="dark"] .nav .espaces { background: #111114; box-shadow: inset 0 0 0 1px var(--trait); }
+:root[data-theme="dark"] .espaces button[aria-pressed="true"], :root[data-theme="dark"] .filtre-file button[aria-pressed="true"], :root[data-theme="dark"] .nav .espaces button[aria-pressed="true"] { background: var(--survol); color: var(--encre); box-shadow: inset 0 0 0 1px #34343B; }
+:root[data-theme="dark"] .filtre-file button[aria-pressed="true"] .n { color: var(--constat); }
+:root[data-theme="dark"] .env { background: #111114; border-color: var(--trait); }
+:root[data-theme="dark"] .env button[aria-pressed="true"] { background: var(--survol); box-shadow: inset 0 0 0 1px #34343B; color: var(--encre); }
+:root[data-theme="dark"] .env button.essai[aria-pressed="true"] { color: var(--constat); }
+:root[data-theme="dark"] .saisie, :root[data-theme="dark"] .recherche input { background: #111114; border-color: var(--trait-fort); }
+:root[data-theme="dark"] .touche { background: transparent; border-color: var(--trait-fort); }
+:root[data-theme="dark"] .avatar { background: var(--feuille-2); border-color: var(--trait-fort); }
+:root[data-theme="dark"] .nav { background: #121215; border-right-color: var(--trait); }
+:root[data-theme="dark"] .nav ul a[aria-current="page"] { background: rgba(217, 174, 69, .08); color: #F4F4F5; }
+:root[data-theme="dark"] .nav ul a[aria-current="page"] svg { color: var(--constat); }
+:root[data-theme="dark"] .nav ul a:hover { background: var(--survol); }
+:root[data-theme="dark"] .barre { background: rgba(14, 14, 16, .85); }
+:root[data-theme="dark"] .tableau tbody tr:hover { background: rgba(255, 255, 255, .025); }
+:root[data-theme="dark"] .graphe-bulle { background: #1A1A1E; border-color: var(--trait-fort); box-shadow: 0 8px 24px rgba(0, 0, 0, .45); }
+@media (prefers-color-scheme: dark) {
+:root:not([data-theme="light"]) .bloc, :root:not([data-theme="light"]) .decision, :root:not([data-theme="light"]) .tuile, :root:not([data-theme="light"]) .pil-stat, :root:not([data-theme="light"]) .parcours { border-color: var(--trait); box-shadow: none; }
+:root:not([data-theme="light"]) .tuile.forte, :root:not([data-theme="light"]) .pil-stat.forte { border-color: rgba(217, 174, 69, .38); background: linear-gradient(180deg, #211C10, #18160F); }
+:root:not([data-theme="light"]) button.tuile.forte:hover { border-color: rgba(217, 174, 69, .6); opacity: 1; }
+:root:not([data-theme="light"]) button.tuile:hover, :root:not([data-theme="light"]) a.tuile:hover { border-color: var(--trait-fort); }
+:root:not([data-theme="light"]) .btn { box-shadow: none; }
+:root:not([data-theme="light"]) .btn:hover { background: var(--survol); border-color: #3A3A42; }
+:root:not([data-theme="light"]) .btn.primaire:hover { background: #E4BD5C; border-color: #E4BD5C; }
+:root:not([data-theme="light"]) .btn.discret:hover { background: var(--survol); }
+:root:not([data-theme="light"]) .espaces, :root:not([data-theme="light"]) .filtre-file, :root:not([data-theme="light"]) .nav .espaces { background: #111114; box-shadow: inset 0 0 0 1px var(--trait); }
+:root:not([data-theme="light"]) .espaces button[aria-pressed="true"], :root:not([data-theme="light"]) .filtre-file button[aria-pressed="true"], :root:not([data-theme="light"]) .nav .espaces button[aria-pressed="true"] { background: var(--survol); color: var(--encre); box-shadow: inset 0 0 0 1px #34343B; }
+:root:not([data-theme="light"]) .filtre-file button[aria-pressed="true"] .n { color: var(--constat); }
+:root:not([data-theme="light"]) .env { background: #111114; border-color: var(--trait); }
+:root:not([data-theme="light"]) .env button[aria-pressed="true"] { background: var(--survol); box-shadow: inset 0 0 0 1px #34343B; color: var(--encre); }
+:root:not([data-theme="light"]) .env button.essai[aria-pressed="true"] { color: var(--constat); }
+:root:not([data-theme="light"]) .saisie, :root:not([data-theme="light"]) .recherche input { background: #111114; border-color: var(--trait-fort); }
+:root:not([data-theme="light"]) .touche { background: transparent; border-color: var(--trait-fort); }
+:root:not([data-theme="light"]) .avatar { background: var(--feuille-2); border-color: var(--trait-fort); }
+:root:not([data-theme="light"]) .nav { background: #121215; border-right-color: var(--trait); }
+:root:not([data-theme="light"]) .nav ul a[aria-current="page"] { background: rgba(217, 174, 69, .08); color: #F4F4F5; }
+:root:not([data-theme="light"]) .nav ul a[aria-current="page"] svg { color: var(--constat); }
+:root:not([data-theme="light"]) .nav ul a:hover { background: var(--survol); }
+:root:not([data-theme="light"]) .barre { background: rgba(14, 14, 16, .85); }
+:root:not([data-theme="light"]) .tableau tbody tr:hover { background: rgba(255, 255, 255, .025); }
+:root:not([data-theme="light"]) .graphe-bulle { background: #1A1A1E; border-color: var(--trait-fort); box-shadow: 0 8px 24px rgba(0, 0, 0, .45); }
+}
+:root[data-theme="dark"] .rang .piste span { background: #5C5C66; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .rang .piste span { background: #5C5C66; } }
+
+/* Mot de passe : œil pour afficher la saisie, lien « oublié » */
+.mdp-zone { position: relative; display: block; }
+.mdp-zone .saisie { width: 100%; padding-right: 46px; }
+.mdp-oeil { position: absolute; right: 4px; top: 50%; transform: translateY(-50%); width: 36px; height: 36px; display: grid; place-items: center; border: 0; border-radius: 8px; background: none; color: var(--gris); cursor: pointer; }
+.mdp-oeil:hover { color: var(--encre); background: var(--survol); }
+.connexion .mdp-oeil, .op-connexion .mdp-oeil { color: #8C8C94; }
+.connexion .mdp-oeil:hover, .op-connexion .mdp-oeil:hover { color: #F3F3F1; background: rgba(255, 255, 255, .07); }
+.oubli-l { display: flex; justify-content: flex-end; margin-top: -8px; }
+.lien-oubli { border: 0; background: none; padding: 2px 0; font: inherit; font-size: 13px; color: #D9AE45; cursor: pointer; }
+.lien-oubli:hover { text-decoration: underline; text-underline-offset: 3px; }
+.ok-form { margin: 0; padding: 10px 12px; border-radius: 10px; font-size: 13px; line-height: 19px; color: #CDEBD9; background: rgba(76, 195, 138, .1); border: 1px solid rgba(76, 195, 138, .25); }
+.ok-form[hidden] { display: none; }
+.connexion .erreur-form:empty, .op-connexion .erreur-form:empty { display: none; }
