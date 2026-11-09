@@ -3,6 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" type="image/svg+xml" href="icones/icone.svg">
+<link rel="icon" type="image/png" sizes="32x32" href="icones/favicon-32.png">
+<link rel="apple-touch-icon" href="icones/apple-touch-icon.png">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#FFFFFF">
+<meta name="apple-mobile-web-app-title" content="Klerio">
 <title>Console sinistres Klerio</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -483,6 +489,7 @@ a.tuile:hover { border-color: var(--trait-fort); text-decoration: none; }
     </ul>
     <div class="nav-bas">
       <a href="outil-assureur.html">Ouvrir l'outil de la compagnie (démo)</a>
+      <button type="button" id="b-installer" hidden>Installer Klerio sur cet ordinateur</button>
       <button type="button" id="b-theme">Changer de thème</button>
       <button type="button" id="b-mfa" hidden>Activer la double authentification</button>
       <button type="button" id="b-deco">Se déconnecter</button>
@@ -3967,6 +3974,12 @@ if (invitation) {
 }
 
 /* ---------------- Démarrage ---------------- */
+if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(function () { });
+// Installation comme application (icône sur le bureau, fenêtre à part) : le navigateur propose, on affiche le bouton
+var invitInstall = null;
+window.addEventListener("beforeinstallprompt", function (e) { e.preventDefault(); invitInstall = e; $("b-installer").hidden = false; });
+window.addEventListener("appinstalled", function () { $("b-installer").hidden = true; C.toast("Klerio est installé : ouvrez-le depuis votre bureau ou le menu Démarrer"); });
+$("b-installer").addEventListener("click", function () { if (invitInstall) { invitInstall.prompt(); invitInstall = null; this.hidden = true; } });
 // Session de l'onglet : chaque onglet a son propre compte, et fermer le navigateur déconnecte.
 // Pendant la reprise d'une session, on n'affiche pas le formulaire (il ne doit pas « sauter » au bout de quelques secondes).
 (function () {
