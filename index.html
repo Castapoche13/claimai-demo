@@ -3042,11 +3042,19 @@ function dessinerBoites() {
 // la charge de chaque gestionnaire, ce qui fait sortir les dossiers du circuit automatique, l'argent et les points de vigilance.
 function vuePilotage() {
   var resp = estResponsable();
-  Promise.all([api("indicateurs" + qb()), resp ? api("pilotage-equipe" + qb()) : Promise.resolve(null),
+  var manager = S.moi && S.moi.role === "superviseur";
+  var pil = !resp ? Promise.resolve(null) : manager
+    ? equipeApi("pilotage", { branche: S.branche }).catch(function (x) { if (x.status === 409) return { sansEquipe: true }; throw x; })
+    : api("pilotage-equipe" + qb());
+  Promise.all([api("indicateurs" + qb()), pil,
                resp ? api("missions" + qb()).catch(function () { return null; }) : Promise.resolve(null),
                resp ? api("recette").catch(function () { return null; }) : Promise.resolve(null),
                S.branche === "contractuel" ? Promise.resolve(null) : api("recours").catch(function () { return null; })]).then(function (r) {
     var i = r[0] || {}, eq = r[1], mi = r[2], rec = r[3], rc = r[4], pm = eq && eq.pilotage;
+    if (eq && eq.sansEquipe) {
+      $("vue").innerHTML = '<div class="entete-vue"><div><h1>Pilotage</h1></div></div><section class="bloc"><div class="vide"><b>Choisissez d\'abord votre équipe</b>Le pilotage montre les chiffres de votre équipe. Prenez une équipe de votre centre ou créez-la dans l\'onglet Équipe.<p style="margin-top:14px"><a class="btn primaire" href="#/equipe">Choisir mon équipe</a></p></div></section>';
+      return;
+    }
     compter(i);
     var esp = C.ESPACES[S.branche].nom.toLowerCase();
     var h = bandeauCorporel() + '<div class="entete-vue"><div><h1>Pilotage</h1><p>Espace ' + esc(esp) +
@@ -3453,7 +3461,7 @@ function barres(o, lib, vous) {
 // Comptes et invitations : l'administrateur voit toute la compagnie, un superviseur seulement son centre (contrôlé par le serveur)
 var ROLES_G = { gestionnaire: "Gestionnaire", superviseur: "Superviseur", admin: "Administrateur" };
 function equipeApi(action, corps) {
-  return C.client(C.SUPABASE_URL + "/functions/v1", jeton)("klerio-equipe", { body: Object.assign({ action: action }, corps || {}) });
+  return C.client(C.SUPABASE_URL + "/functions/v1", jeton, entetesEnv)("klerio-equipe", { body: Object.assign({ action: action }, corps || {}) });
 }
 var filtreEq = { centre: "", role: "" };
 function vueEquipe() {
@@ -3468,13 +3476,21 @@ function rendreEquipe(d, envoi) {
   });
   var h = '<div class="entete-vue"><div><h1>Équipe</h1><p>' + (admin
     ? "Tous les comptes de la compagnie, tous centres confondus. Pour ajouter quelqu'un, saisissez son email professionnel : il reçoit un mail avec un lien pour choisir son mot de passe. Un superviseur gère lui-même les gestionnaires de son centre."
-    : "Votre équipe, au centre " + esc(d.moi.centre) + ". Invitez un nouveau gestionnaire par mail, ou prenez dans votre équipe quelqu'un qui travaille déjà dans votre centre. Vous réglez son service et son plafond, et vous pouvez désactiver son compte.") + "</p></div></div>";
-  var mgrNom = function (id) { var m = (d.managers || []).filter(function (x) { return x.id === id; })[0]; return m ? m.nom : ""; };
-  var optsManagers = function (choisi) { return '<option value="">Aucune équipe</option>' + (d.managers || []).map(function (m) { return '<option value="' + esc(m.id) + '"' + (m.id === choisi ? " selected" : "") + ">" + esc(m.nom) + (m.centre ? " (" + esc(m.centre) + ")" : "") + "</option>"; }).join(""); };
+    : (d.moi.equipe ? "Équipe <b>" + esc(d.moi.equipe.nom) + "</b>, centre " + esc(d.moi.centre) + ". Invitez un nouveau gestionnaire par mail, ou prenez dans votre équipe quelqu'un qui travaille déjà dans votre centre. Vous réglez son service et son plafond, et vous pouvez désactiver son compte."
+                     : "Centre " + esc(d.moi.centre) + ". Commencez par choisir votre équipe : vos invitations, vos gestionnaires et votre pilotage y seront rattachés.")) + "</p></div></div>";
+  var sansEquipe = !admin && !d.moi.equipe;
+  var libres = (d.equipes || []).filter(function (e) { return !e.manager_id; });
+  if (!admin) h += '<section class="bloc"><div class="bloc-tete"><h2>' + (sansEquipe ? "Choisir mon équipe" : "Changer d'équipe") + '</h2></div><div class="bloc-corps pile"><div class="decision-actions">' +
+    (libres.length ? '<select class="saisie" id="q-eq" style="min-width:240px;max-width:360px" aria-label="Équipe du centre">' + libres.map(function (e) { return '<option value="' + esc(e.id) + '">' + esc(e.nom) + "</option>"; }).join("") + '</select><button class="btn" id="q-prendre">Prendre cette équipe</button><span class="muet petit">ou</span>' : "") +
+    '<input class="saisie" id="q-nom" maxlength="80" placeholder="Nom de la nouvelle équipe, ex. Dommages Paris 1" style="min-width:260px;max-width:360px"><button class="btn' + (sansEquipe ? " primaire" : "") + '" id="q-creer">Créer l\'équipe</button></div>' +
+    '<p class="muet petit">Une équipe a un seul manager. Les équipes déjà prises par un autre manager de votre centre n\'apparaissent pas.</p></div></section>';
+  if (sansEquipe) { $("vue").innerHTML = h; brancherChoixEquipe(); return; }
+  var eqNom = function (id) { var e = (d.equipes || []).filter(function (x) { return x.id === id; })[0]; return e ? e.nom : ""; };
+  var optsEquipes = function (choisi) { return '<option value="">Aucune équipe</option>' + (d.equipes || []).map(function (e) { return '<option value="' + esc(e.id) + '"' + (e.id === choisi ? " selected" : "") + ">" + esc(e.nom) + " (" + esc(e.centre) + (e.manager_nom ? ", " + esc(e.manager_nom) : "") + ")</option>"; }).join(""); };
   // Manager : prendre dans son équipe quelqu'un de son centre
   if (!admin && (d.disponibles || []).length) h += '<section class="bloc"><div class="bloc-tete"><h2>Ajouter quelqu\'un de votre centre</h2></div><div class="bloc-corps pile"><div class="decision-actions"><select class="saisie" id="r-qui" style="min-width:280px;max-width:440px" aria-label="Gestionnaire du centre">' +
-    d.disponibles.map(function (x) { return '<option value="' + esc(x.id) + '">' + esc(x.nom) + (x.manager_nom ? " (équipe de " + esc(x.manager_nom) + ")" : " (sans équipe)") + "</option>"; }).join("") +
-    '</select><button class="btn" id="r-ok">Ajouter à mon équipe</button></div><p class="muet petit">Pour quelqu\'un qui a déjà son compte Klerio dans votre centre. Son ancien manager est prévenu par mail ; ses dossiers en cours restent les siens.</p></div></section>';
+    d.disponibles.map(function (x) { return '<option value="' + esc(x.id) + '">' + esc(x.nom) + (x.equipe_nom ? " (équipe " + esc(x.equipe_nom) + ")" : " (sans équipe)") + "</option>"; }).join("") +
+    '</select><button class="btn" id="r-ok">Ajouter à mon équipe</button></div><p class="muet petit">Pour quelqu\'un qui a déjà son compte Klerio dans votre centre. Le manager de son ancienne équipe est prévenu par mail ; ses dossiers en cours restent les siens.</p></div></section>';
 
   // Inviter
   h += '<section class="bloc"><div class="bloc-tete"><h2>Inviter une personne</h2></div><form class="bloc-corps pile" id="form-invit" novalidate><div class="grille-3">' +
@@ -3482,7 +3498,7 @@ function rendreEquipe(d, envoi) {
     '<label class="champ">Email professionnel<input class="saisie" id="i-email" type="email" autocomplete="off" placeholder="prenom.nom@compagnie.fr" required></label>' +
     (admin ? '<label class="champ">Rôle<select class="saisie" id="i-role">' + optionsHtml(ROLES_G, "gestionnaire") + "</select></label>"
            : '<label class="champ">Centre<input class="saisie" value="' + esc(d.moi.centre) + '" disabled></label>') + "</div>" +
-    (admin ? '<div class="grille-3"><label class="champ">Équipe <span class="aide">pour un gestionnaire</span><select class="saisie" id="i-manager">' + optsManagers("") + "</select></label></div>" : "") +
+    (admin ? '<div class="grille-3"><label class="champ">Équipe <span class="aide">pour un gestionnaire</span><select class="saisie" id="i-equipe">' + optsEquipes("") + "</select></label></div>" : "") +
     '<div class="grille-3">' + (admin ? '<label class="champ">Centre de gestion <span class="aide">ex. Île-de-France, Lyon</span><input class="saisie" id="i-centre" list="liste-centres" value="' + esc(filtreEq.centre && filtreEq.centre !== "-" ? filtreEq.centre : "") + '"></label>' : "") +
     '<label class="champ">Service<select class="saisie" id="i-service">' + optionsHtml(SERVICES, "tous") + "</select></label>" +
     '<label class="champ">Plafond de règlement <span class="aide">en €' + (admin || d.moi.plafond_eur == null ? ", vide = sans plafond" : ", " + esc(C.nombre(d.moi.plafond_eur, 0)) + " € au plus") + '</span><input class="saisie" id="i-plafond" type="number" min="0" step="100" value="1500"></label></div>' +
@@ -3503,9 +3519,9 @@ function rendreEquipe(d, envoi) {
     '<option value="-"' + (filtreEq.centre === "-" ? " selected" : "") + '>Sans centre</option></select><select class="saisie" id="f-role" aria-label="Rôle"><option value="">Tous les rôles</option>' + optionsHtml(ROLES_G, filtreEq.role) + "</select></div>" : "";
   h += '<section class="bloc"><div class="bloc-tete"><h2>Comptes<span class="compte">' + membres.length + (membres.length !== tous.length ? " sur " + tous.length : "") + "</span></h2>" + filtres + '</div><div class="tableau-wrap"><table class="tableau comptes-t"><thead><tr><th>Nom</th><th>Email</th><th>Rôle</th><th>Centre</th><th>Équipe</th><th>Service</th><th class="nb">Plafond de règlement</th><th>Dernière connexion</th><th>État</th><th></th></tr></thead><tbody>' +
     membres.map(function (g) {
-      var modifiable = admin || (g.role === "gestionnaire" && g.manager_id === d.moi.id);
-      var equipe = g.role !== "gestionnaire" ? '<span class="muet">' + (g.role === "superviseur" ? "Manager" : "—") + "</span>"
-        : admin ? '<select class="saisie" data-manager="' + g.id + '" style="min-width:150px">' + optsManagers(g.manager_id) + "</select>" : esc(g.manager_nom || "");
+      var modifiable = admin || (g.role === "gestionnaire" && g.equipe_id === d.moi.equipe.id);
+      var equipe = g.role !== "gestionnaire" ? (g.equipe_nom ? esc(g.equipe_nom) + ' <span class="muet petit">(manager)</span>' : '<span class="muet">—</span>')
+        : admin ? '<select class="saisie" data-equipe="' + g.id + '" style="min-width:170px">' + optsEquipes(g.equipe_id) + "</select>" : esc(g.equipe_nom || "");
       var role = admin ? '<select class="saisie" data-role="' + g.id + '" style="min-width:150px">' + optionsHtml(ROLES_G, g.role) + "</select>" : esc(ROLES_G[g.role] || g.role);
       var centre = admin ? '<input class="saisie" data-centre="' + g.id + '" list="liste-centres" placeholder="Aucun" value="' + esc(g.centre || "") + '" style="min-width:140px">' : '<span style="white-space:nowrap">' + esc(g.centre || "") + "</span>";
       var service = modifiable ? '<select class="saisie" data-service="' + g.id + '" style="min-width:120px">' + optionsHtml(SERVICES, g.service) + "</select>" : esc(SERVICES[g.service] || g.service);
@@ -3544,9 +3560,10 @@ function rendreEquipe(d, envoi) {
       maj(b, { id: b.dataset.actif, actif: on }, on ? "Compte réactivé" : "Compte désactivé");
     };
   });
-  document.querySelectorAll("[data-manager]").forEach(function (sel) {
+  if (!admin) brancherChoixEquipe();
+  document.querySelectorAll("[data-equipe]").forEach(function (sel) {
     sel.onchange = function () {
-      equipeApi("affecter", { id: sel.dataset.manager, manager_id: sel.value || null }).then(function (r) { C.toast(sel.value ? "Équipe de " + mgrNom(sel.value) : "Retiré de son équipe"); recharger(r); })
+      equipeApi("affecter", { id: sel.dataset.equipe, equipe_id: sel.value || null }).then(function (r) { C.toast(sel.value ? "Équipe " + eqNom(sel.value) : "Retiré de son équipe"); recharger(r); })
         .catch(function (x) { C.toast(x.message, true); vueEquipe(); });
     };
   });
@@ -3573,10 +3590,23 @@ function rendreEquipe(d, envoi) {
     if (!nom || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { $("i-res").innerHTML = messageEnvoi({ erreur_saisie: "Saisissez le nom et une adresse email valide." }); return; }
     C.occupe(b, true, "Envoi");
     equipeApi("inviter", { nom: nom, email: email, role: admin ? $("i-role").value : "gestionnaire", centre: admin ? $("i-centre").value.trim() : d.moi.centre,
-      service: $("i-service").value, plafond_eur: pl === "" ? null : Number(pl), manager_id: admin ? $("i-manager").value || null : null })
+      service: $("i-service").value, plafond_eur: pl === "" ? null : Number(pl), equipe_id: admin ? $("i-equipe").value || null : null })
       .then(function (r) { recharger(r, r.envoi); })
       .catch(function (x) { C.occupe(b, false); $("i-res").innerHTML = messageEnvoi({ erreur_saisie: x.message }); });
   });
+}
+function brancherChoixEquipe() {
+  var fin = function (r) { C.toast("Votre équipe : " + ((r.moi && r.moi.equipe && r.moi.equipe.nom) || "")); rendreEquipe(r); };
+  if ($("q-prendre")) $("q-prendre").onclick = function () {
+    var b = this; C.occupe(b, true, "");
+    equipeApi("choisir_equipe", { equipe_id: $("q-eq").value }).then(fin).catch(function (x) { C.occupe(b, false); C.toast(x.message, true); });
+  };
+  $("q-creer").onclick = function () {
+    var b = this, nom = $("q-nom").value.trim();
+    if (!nom) { C.toast("Donnez un nom à l'équipe", true); $("q-nom").focus(); return; }
+    C.occupe(b, true, "");
+    equipeApi("choisir_equipe", { nom: nom }).then(fin).catch(function (x) { C.occupe(b, false); C.toast(x.message, true); });
+  };
 }
 function messageEnvoi(e) {
   if (!e) return "";
