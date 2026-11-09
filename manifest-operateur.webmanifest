@@ -1,6 +1,6 @@
 {
-  "name": "Espace Klerio",
-  "short_name": "Espace Klerio",
+  "name": "Klerio Admin",
+  "short_name": "Klerio Admin",
   "lang": "fr",
   "id": "./operateur.html",
   "start_url": "./operateur.html",
