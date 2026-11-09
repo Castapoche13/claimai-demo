@@ -14,8 +14,23 @@
 <link rel="stylesheet" href="style.css?v=20261105a">
 <link rel="stylesheet" href="charte.css?v=20261108j">
 <style>
-.op-connexion { min-height: 100vh; display: grid; place-items: center; padding: 40px 16px; background: var(--feuille-2); }
-.op-connexion form { width: min(400px, 100%); background: var(--feuille); border: 1px solid var(--trait); border-radius: 10px; padding: 28px; display: grid; gap: 16px; }
+body { background: var(--papier); }
+.op-connexion { min-height: 100vh; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); background: var(--papier); }
+.op-marque { background: #111113; color: #F3F3F1; padding: 48px 56px; display: flex; flex-direction: column; justify-content: space-between; }
+.op-marque .logo { display: flex; align-items: center; gap: 10px; font-size: 18px; font-weight: 600; }
+.op-marque .logo svg { width: 30px; height: 30px; }
+.op-marque h1 { font-size: clamp(28px, 3.2vw, 40px); line-height: 1.12; letter-spacing: -0.02em; font-weight: 600; max-width: 14ch; margin: 0; color: #F3F3F1; }
+.op-marque h1 span { color: #D9AE45; }
+.op-marque ul { list-style: none; margin: 28px 0 0; padding: 0; display: grid; gap: 12px; color: #B8B8BE; font-size: 14.5px; max-width: 38ch; }
+.op-marque li { padding-left: 18px; position: relative; }
+.op-marque li::before { content: ""; position: absolute; left: 0; top: .55em; width: 7px; height: 7px; border-radius: 2px; background: #D9AE45; }
+.op-marque .pied { font-size: 12.5px; color: #8C8C94; }
+.op-formulaire { display: grid; place-items: center; padding: 40px 24px; }
+.op-connexion form { width: min(380px, 100%); display: grid; gap: 18px; }
+.op-connexion form h2 { font-size: 24px; letter-spacing: -0.01em; margin: 0; }
+.op-connexion .saisie { height: 44px; }
+.op-connexion .btn.primaire { height: 44px; justify-content: center; }
+@media (max-width: 820px) { .op-connexion { grid-template-columns: 1fr; } .op-marque { padding: 28px 24px; gap: 24px; } .op-marque ul, .op-marque .pied { display: none; } }
 .op-tete { position: sticky; top: 0; z-index: 5; display: flex; align-items: center; gap: 16px; padding: 12px 24px; background: var(--feuille); border-bottom: 1px solid var(--trait); }
 .op-tete .marque { display: flex; align-items: center; gap: 8px; font-weight: 600; }
 .op-tete .role { font-size: 12.5px; color: var(--gris); border-left: 1px solid var(--trait); padding-left: 12px; }
@@ -36,13 +51,28 @@ tr.choisi td { background: var(--feuille-2); }
 </head>
 <body>
 <section class="op-connexion" id="ecran-c">
+  <aside class="op-marque">
+    <div class="logo"><svg viewBox="0 0 22 22" aria-hidden="true"><rect width="22" height="22" rx="6" fill="#D9AE45"/><path d="M7.5 5.5v11M7.5 11.5 14 5.5M10.2 9.3 14.5 16.5" stroke="#09090B" stroke-width="2.2" stroke-linecap="round" fill="none"/></svg>Klerio</div>
+    <div><h1>Espace <span>Klerio</span></h1>
+      <ul><li>Ouverture des compagnies clientes et de leur premier administrateur</li><li>Support des comptes : accès, invitations, mots de passe</li><li>Aucun dossier de sinistre n'est visible depuis cet espace</li></ul></div>
+    <p class="pied">Accès réservé à l'équipe Klerio. Chaque action est enregistrée.</p>
+  </aside>
+  <div class="op-formulaire">
   <form id="f-c" novalidate>
-    <div><h2 style="font-size:18px">Espace Klerio</h2><p class="muet petit" style="margin-top:4px">Réservé à l'équipe Klerio : ouverture des clients et support. Aucun dossier de sinistre n'est visible ici.</p></div>
+    <div><h2>Connexion</h2><p class="muet" style="margin-top:6px">Votre email et votre mot de passe Klerio.</p></div>
     <label class="champ">Email<input class="saisie" id="c-email" type="email" autocomplete="username" required></label>
     <label class="champ">Mot de passe<input class="saisie" id="c-mdp" type="password" autocomplete="current-password" required></label>
     <p class="erreur-form" id="c-err" role="alert"></p>
     <button class="btn primaire" id="c-btn" type="submit">Se connecter</button>
   </form>
+  <form id="f-m" novalidate hidden>
+    <div><h2>Nouveau mot de passe</h2><p class="muet" style="margin-top:6px">Le mot de passe provisoire ne servira plus. 12 caractères minimum.</p></div>
+    <label class="champ">Nouveau mot de passe<input class="saisie" id="m-1" type="password" autocomplete="new-password"></label>
+    <label class="champ">Confirmation<input class="saisie" id="m-2" type="password" autocomplete="new-password"></label>
+    <p class="erreur-form" id="m-err" role="alert"></p>
+    <button class="btn primaire" id="m-btn" type="submit">Enregistrer et continuer</button>
+  </form>
+  </div>
 </section>
 
 <div id="ecran-a" hidden>
@@ -71,8 +101,17 @@ $("f-c").addEventListener("submit", function (e) {
   e.preventDefault(); var b = $("c-btn"); $("c-err").textContent = ""; C.occupe(b, true, "Connexion");
   sb.auth.signInWithPassword({ email: $("c-email").value.trim(), password: $("c-mdp").value }).then(function (r) {
     if (r.error) throw new Error(/invalid/i.test(r.error.message) ? "Email ou mot de passe incorrect." : r.error.message);
+    if (r.data.user && r.data.user.user_metadata && r.data.user.user_metadata.mdp_provisoire) { $("f-c").hidden = true; $("f-m").hidden = false; $("m-1").focus(); return; }
     return entrer();
   }).catch(function (x) { $("c-err").textContent = x.message; }).finally(function () { C.occupe(b, false); });
+});
+$("f-m").addEventListener("submit", function (e) {
+  e.preventDefault(); var a = $("m-1").value, b = $("m-2").value, err = $("m-err"); err.textContent = "";
+  if (a.length < 12) { err.textContent = "12 caractères minimum."; return; }
+  if (a !== b) { err.textContent = "Les deux saisies sont différentes."; return; }
+  C.occupe($("m-btn"), true, "Enregistrement");
+  sb.auth.updateUser({ password: a, data: { mdp_provisoire: false } }).then(function (r) { if (r.error) throw r.error; return entrer(); })
+    .catch(function (x) { err.textContent = x.message; }).finally(function () { C.occupe($("m-btn"), false); });
 });
 $("b-sortir").onclick = function () { sb.auth.signOut().finally(function () { location.reload(); }); };
 sb.auth.getSession().then(function (r) { if (r.data.session) entrer(); });
