@@ -415,6 +415,7 @@ a.tuile:hover { border-color: var(--trait-fort); text-decoration: none; }
       <div id="c-captcha" class="captcha" hidden></div>
       <p class="erreur-form" id="c-err" role="alert"></p>
       <button class="btn primaire" id="c-btn" type="submit">Se connecter</button>
+      <button class="btn" id="c-ms" type="button"><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><rect x="1" y="1" width="6.5" height="6.5" fill="#f25022"/><rect x="8.5" y="1" width="6.5" height="6.5" fill="#7fba00"/><rect x="1" y="8.5" width="6.5" height="6.5" fill="#00a4ef"/><rect x="8.5" y="8.5" width="6.5" height="6.5" fill="#ffb900"/></svg>Se connecter avec Microsoft</button>
     </form>
     <form id="form-mdp" novalidate hidden>
       <div><h2>Choisissez votre mot de passe</h2><p class="muet petit" style="margin-top:4px">Le mot de passe provisoire qui vous a été remis ne servira plus.</p></div>
@@ -477,6 +478,7 @@ a.tuile:hover { border-color: var(--trait-fort); text-decoration: none; }
       <li id="n-boites" hidden><a href="#/boites" data-vue="boites"><svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><rect x="2.5" y="4" width="13" height="10" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M3 5l6 5 6-5" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>Boîtes mail de test</a></li>
       <li><a href="#/pilotage" data-vue="pilotage"><svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path d="M3.5 14.5V9M9 14.5V4M14.5 14.5v-7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>Pilotage</a></li>
       <li><a href="#/raccordement" data-vue="raccordement"><svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path d="M7 11l4-4M6 8.5L4.5 10a2.5 2.5 0 003.5 3.5L9.5 12M12 9.5L13.5 8A2.5 2.5 0 0010 4.5L8.5 6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>Raccordement</a></li>
+      <li><a href="#/aide" data-vue="aide"><svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><circle cx="9" cy="9" r="6.8" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M7.1 7.1a1.9 1.9 0 113 1.5c-.7.4-1.1.9-1.1 1.6M9 12.6v.1" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>Aide</a></li>
       <li id="n-equipe" hidden><a href="#/equipe" data-vue="equipe"><svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><circle cx="7" cy="6.5" r="2.5" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M2.5 14.5c.6-2.4 2.4-3.5 4.5-3.5s3.9 1.1 4.5 3.5M12 4.5a2.3 2.3 0 010 4.5M13.5 11.3c1.2.5 1.8 1.6 2 3.2" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>Équipe</a></li>
     </ul>
     <div class="nav-bas">
@@ -589,6 +591,17 @@ $("form-connexion").addEventListener("submit", function (e) {
   }).catch(function (x) { err.textContent = x.message; reinitCaptcha(); }).finally(function () { C.occupe(b, false); });
 });
 
+// Compte Microsoft de l'entreprise (Entra ID) : la compagnie active la connexion une fois, ensuite plus de mot de passe Klerio
+$("c-ms").addEventListener("click", function () {
+  var b = this; C.occupe(b, true, "Redirection");
+  sb.auth.signInWithOAuth({ provider: "azure", options: { scopes: "openid email profile", redirectTo: location.origin + location.pathname } }).then(function (r) {
+    if (r.error) throw r.error;
+  }).catch(function (x) {
+    C.occupe(b, false);
+    $("c-err").textContent = /not enabled|provider/i.test(x.message || "") ? "La connexion Microsoft n'est pas encore activée pour votre compagnie : connectez-vous avec votre email et votre mot de passe." : x.message;
+  });
+});
+function plateforme(action, corps) { return C.client(C.SUPABASE_URL + "/functions/v1", jeton)("klerio-plateforme", { body: Object.assign({ action: action }, corps || {}) }); }
 $("form-mdp").addEventListener("submit", function (e) {
   e.preventDefault();
   var m1 = $("m-mdp").value, m2 = $("m-mdp2").value, err = $("m-err");
@@ -673,7 +686,12 @@ function entrer(session) {
   return niveauMfa().then(function (a) {
     // Compte protégé par une application : le code est demandé avant tout accès
     if (a && a.nextLevel === "aal2" && a.currentLevel !== "aal2") return montrerMfa("saisie");
-    return api("moi").then(function (moi) {
+    return api("moi").catch(function (x) {
+      // première connexion avec Microsoft : l'invitation en attente crée le compte
+      if (x.status !== 401 || S.rejoint) throw x;
+      S.rejoint = true;
+      return plateforme("rejoindre").then(function () { return api("moi"); });
+    }).then(function (moi) {
     if (!moi || moi.type !== "gestionnaire") throw new Error("Ce compte n'a pas accès à la console.");
     // Connexion par email et mot de passe seulement : la double authentification n'est plus imposée ni proposée
     $("b-mfa").hidden = true;
@@ -795,7 +813,7 @@ function router() {
   var v = $("vue"); v.innerHTML = '<div class="vide"><span class="tourne" style="display:inline-block"></span></div>';
   window.scrollTo(0, 0);
   var f = { file: vueFile, dossiers: vueDossiers, dossier: function () { vueDossier(decodeURIComponent(h[1] || "")); },
-    archives: vueArchives, recherche: function () { vueRecherche(decodeURIComponent(h[1] || "")); }, clients: vueClients, client: function () { vueClient(decodeURIComponent(h[1] || "")); }, doublons: vueDoublons, declarer: vueDeclarer, boites: vueBoites, pilotage: vuePilotage, raccordement: function () { vueRaccordement(h[1]); }, equipe: vueEquipe }[vue] || vueFile;
+    archives: vueArchives, recherche: function () { vueRecherche(decodeURIComponent(h[1] || "")); }, clients: vueClients, client: function () { vueClient(decodeURIComponent(h[1] || "")); }, doublons: vueDoublons, declarer: vueDeclarer, boites: vueBoites, pilotage: vuePilotage, raccordement: function () { vueRaccordement(h[1]); }, equipe: vueEquipe, aide: vueAide }[vue] || vueFile;
   f();
 }
 function erreurVue(x) { $("vue").innerHTML = '<div class="bloc"><div class="vide"><b>Impossible de charger cette page</b>' + esc(x.message) + '<p style="margin-top:14px"><button class="btn" onclick="location.reload()">Recharger</button></p></div></div>'; }
@@ -3457,6 +3475,32 @@ function barres(o, lib, vous) {
   }).join("") || '<p class="muet">Aucune donnée.</p>';
 }
 
+/* ---------------- Vue : Aide ---------------- */
+function vueAide() {
+  var r = S.moi.role, q = function (t, txt) { return '<details class="bloc" style="padding:0"><summary class="bloc-tete" style="cursor:pointer;list-style:none"><h2 style="font-size:15px">' + t + '</h2></summary><div class="bloc-corps"><p style="max-width:72ch">' + txt + "</p></div></details>"; };
+  var h = '<div class="entete-vue"><div><h1>Aide</h1><p>Les réponses aux questions les plus fréquentes, selon votre rôle. Si rien ne correspond, écrivez au support Klerio en bas de page : la réponse arrive par mail.</p></div></div>';
+  if (r === "admin") h += q("Ajouter un manager", "Équipe, partie « Inviter une personne » : choisissez le rôle <b>Superviseur</b> et son centre de gestion. Il reçoit un mail, choisit son mot de passe, puis crée ou choisit son équipe. C'est lui qui invitera ensuite ses gestionnaires.") +
+    q("Un manager quitte l'entreprise ou change de poste", "Dans Équipe, désactivez son compte : il ne peut plus se connecter. Invitez le nouveau manager ; il pourra reprendre l'équipe existante, qui n'a plus de manager, avec ses gestionnaires.") +
+    q("Ajouter un autre administrateur", "Invitez la personne avec le rôle <b>Administrateur</b>. Gardez toujours au moins deux administrateurs : si le seul part, écrivez au support Klerio pour en désigner un nouveau.") +
+    q("Connexion avec les comptes Microsoft de l'entreprise", "Possible si votre service informatique l'autorise : écrivez au support Klerio, qui vous envoie la marche à suivre. Ensuite, chacun se connecte avec « Se connecter avec Microsoft », sans mot de passe Klerio.");
+  if (r === "superviseur") h += q("Créer mon équipe", "Onglet Équipe : prenez une équipe de votre centre qui n'a pas de manager, ou créez-la en lui donnant un nom. Votre pilotage, vos invitations et vos gestionnaires y sont rattachés.") +
+    q("Ajouter un gestionnaire", "Équipe, « Inviter une personne » : nom et email professionnel. Il reçoit un mail, choisit son mot de passe et apparaît dans votre équipe. S'il a déjà un compte dans votre centre, utilisez « Ajouter quelqu'un de votre centre ».") +
+    q("Ajouter un autre manager", "Seul un administrateur de votre compagnie peut créer un compte de manager. Demandez-le à votre administrateur.") +
+    q("Un gestionnaire n'a pas reçu son mail", "Dans « Invitations en attente », cliquez sur « Renvoyer » : un nouveau lien part et l'ancien ne marche plus. Vérifiez aussi ses courriers indésirables.");
+  h += q("Mot de passe oublié ou compte bloqué", r === "gestionnaire" ? "Prévenez votre manager ou écrivez au support Klerio ci-dessous : vous recevrez un lien pour choisir un nouveau mot de passe." : "Écrivez au support Klerio ci-dessous : la personne concernée recevra un lien pour choisir un nouveau mot de passe. Personne ne voit ni ne transmet de mot de passe.") +
+    q("Qui voit quoi", "Un gestionnaire voit les dossiers de son centre et traite ceux qui lui sont attribués. Un manager pilote son équipe. Un administrateur gère les comptes de toute la compagnie. L'équipe Klerio ne voit aucun dossier.");
+  h += '<section class="bloc"><div class="bloc-tete"><h2>Écrire au support Klerio</h2></div><form class="bloc-corps pile" id="f-sup" novalidate><label class="champ">Sujet<input class="saisie" id="s-sujet" maxlength="140" placeholder="Ex. Un gestionnaire ne reçoit pas son invitation"></label>' +
+    '<label class="champ">Votre message<textarea class="saisie" id="s-msg" rows="5" placeholder="Ce qui se passe, depuis quand, la personne ou le dossier concerné"></textarea></label>' +
+    '<div class="decision-actions"><button class="btn primaire" id="s-ok" type="submit">Envoyer</button><span class="muet petit">Réponse par mail à ' + esc(S.moi.email) + "</span></div></form></section>";
+  $("vue").innerHTML = h;
+  $("f-sup").addEventListener("submit", function (e) {
+    e.preventDefault(); var b = $("s-ok"); C.occupe(b, true, "Envoi");
+    plateforme("support", { sujet: $("s-sujet").value, message: $("s-msg").value }).then(function () {
+      $("f-sup").innerHTML = '<div class="alerte" role="status"><span>Message envoyé au support Klerio. La réponse arrivera par mail.</span></div>';
+    }).catch(function (x) { C.occupe(b, false); C.toast(x.message, true); });
+  });
+}
+
 /* ---------------- Vue : Équipe ---------------- */
 // Comptes et invitations : l'administrateur voit toute la compagnie, un superviseur seulement son centre (contrôlé par le serveur)
 var ROLES_G = { gestionnaire: "Gestionnaire", superviseur: "Superviseur", admin: "Administrateur" };
@@ -3929,6 +3973,16 @@ if (invitation) {
   var f = $("form-connexion"), att = document.createElement("p");
   att.className = "muet"; att.style.textAlign = "center"; att.textContent = "Ouverture de votre session…";
   if (invitation) return;
+  var reinit = (location.hash.match(/^#\/reinitialiser\/(.+)$/) || [])[1];
+  if (reinit) {
+    f.hidden = true; history.replaceState(null, "", location.pathname);
+    sb.auth.signOut().catch(function () { }).then(function () { return sb.auth.verifyOtp({ token_hash: decodeURIComponent(reinit), type: "recovery" }); }).then(function (r) {
+      if (r.error) throw r.error;
+      $("form-mdp").querySelector("p").textContent = "Choisissez votre nouveau mot de passe. L'ancien ne servira plus.";
+      $("form-mdp").hidden = false; $("m-mdp").focus();
+    }).catch(function () { f.hidden = false; $("c-err").textContent = "Ce lien a expiré ou a déjà servi. Demandez-en un nouveau au support."; });
+    return;
+  }
   sb.auth.getSession().then(function (r) {
     if (!r.data.session) return;
     f.hidden = true; f.parentNode.insertBefore(att, f);

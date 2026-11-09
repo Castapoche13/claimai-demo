@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Espace Klerio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css?v=20261105a">
+<link rel="stylesheet" href="charte.css?v=20261108j">
+<style>
+.op-connexion { min-height: 100vh; display: grid; place-items: center; padding: 40px 16px; background: var(--feuille-2); }
+.op-connexion form { width: min(400px, 100%); background: var(--feuille); border: 1px solid var(--trait); border-radius: 10px; padding: 28px; display: grid; gap: 16px; }
+.op-tete { position: sticky; top: 0; z-index: 5; display: flex; align-items: center; gap: 16px; padding: 12px 24px; background: var(--feuille); border-bottom: 1px solid var(--trait); }
+.op-tete .marque { display: flex; align-items: center; gap: 8px; font-weight: 600; }
+.op-tete .role { font-size: 12.5px; color: var(--gris); border-left: 1px solid var(--trait); padding-left: 12px; }
+.op-tete .droite { margin-left: auto; display: flex; align-items: center; gap: 12px; font-size: 13.5px; }
+.op-page { max-width: 1240px; margin: 0 auto; padding: 28px 24px 64px; display: grid; gap: 20px; }
+.op-chiffres { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+.op-chiffres .c { background: var(--feuille); border: 1px solid var(--trait); border-radius: 14px; padding: 16px 18px; }
+.op-chiffres .c b { display: block; font-size: 28px; font-weight: 600; letter-spacing: -0.02em; }
+.op-chiffres .c span { font-size: 13px; color: var(--gris); }
+.op-chiffres .c.alerte-c b { color: var(--rouge, #b42318); }
+tr.choisi td { background: var(--feuille-2); }
+.demande { border-top: 1px solid var(--trait); padding: 14px 20px; display: grid; gap: 6px; }
+.demande:first-child { border-top: 0; }
+.demande .qui { font-size: 13px; color: var(--gris); }
+.demande p { white-space: pre-wrap; margin: 0; }
+@media (max-width: 760px) { .op-chiffres { grid-template-columns: repeat(2, minmax(0, 1fr)); } .op-tete .role { display: none; } }
+</style>
+</head>
+<body>
+<section class="op-connexion" id="ecran-c">
+  <form id="f-c" novalidate>
+    <div><h2 style="font-size:18px">Espace Klerio</h2><p class="muet petit" style="margin-top:4px">Réservé à l'équipe Klerio : ouverture des clients et support. Aucun dossier de sinistre n'est visible ici.</p></div>
+    <label class="champ">Email<input class="saisie" id="c-email" type="email" autocomplete="username" required></label>
+    <label class="champ">Mot de passe<input class="saisie" id="c-mdp" type="password" autocomplete="current-password" required></label>
+    <p class="erreur-form" id="c-err" role="alert"></p>
+    <button class="btn primaire" id="c-btn" type="submit">Se connecter</button>
+  </form>
+</section>
+
+<div id="ecran-a" hidden>
+  <header class="op-tete"><span class="marque" id="logo"></span><span class="role">Espace Klerio · clients et support</span>
+    <span class="droite"><span id="op-nom"></span><button class="btn petit discret" id="b-sortir" type="button">Se déconnecter</button></span></header>
+  <main class="op-page" id="vue"></main>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="commun.js?v=20261108c"></script>
+<script>
+var C = window.CA, $ = C.$, esc = C.esc;
+$("logo").innerHTML = C.LOGO + "<span>Klerio</span>";
+var sb = window.supabase.createClient(C.SUPABASE_URL, C.CLE_PUBLIQUE, { auth: { persistSession: true, storageKey: "klerio-operateur", storage: window.sessionStorage, autoRefreshToken: true } });
+var jeton = function () { return sb.auth.getSession().then(function (r) { return r.data.session ? r.data.session.access_token : null; }); };
+var op = function (action, corps) { return C.client(C.SUPABASE_URL + "/functions/v1", jeton)("klerio-plateforme", { body: Object.assign({ action: action }, corps || {}) }); };
+var ROLES = { admin: "Administrateur", superviseur: "Manager", gestionnaire: "Gestionnaire" };
+var etat = { clients: [], support: [], choisi: null, fiche: null, ouvrir: false };
+
+function entrer() {
+  return op("moi").then(function (m) {
+    $("op-nom").textContent = m.nom; $("ecran-c").hidden = true; $("ecran-a").hidden = false; charger();
+  }).catch(function (x) { sb.auth.signOut(); $("ecran-c").hidden = false; $("ecran-a").hidden = true; $("c-err").textContent = x.message; });
+}
+$("f-c").addEventListener("submit", function (e) {
+  e.preventDefault(); var b = $("c-btn"); $("c-err").textContent = ""; C.occupe(b, true, "Connexion");
+  sb.auth.signInWithPassword({ email: $("c-email").value.trim(), password: $("c-mdp").value }).then(function (r) {
+    if (r.error) throw new Error(/invalid/i.test(r.error.message) ? "Email ou mot de passe incorrect." : r.error.message);
+    return entrer();
+  }).catch(function (x) { $("c-err").textContent = x.message; }).finally(function () { C.occupe(b, false); });
+});
+$("b-sortir").onclick = function () { sb.auth.signOut().finally(function () { location.reload(); }); };
+sb.auth.getSession().then(function (r) { if (r.data.session) entrer(); });
+
+function charger() {
+  return op("clients").then(function (r) { etat.clients = r.clients || []; etat.support = r.support || []; rendre(); }).catch(function (x) { C.toast(x.message, true); });
+}
+function somme(k) { return etat.clients.reduce(function (s, c) { return s + Number(c[k] || 0); }, 0); }
+function nomClient(id) { var c = etat.clients.filter(function (x) { return x.id === id; })[0]; return c ? c.nom : ""; }
+
+function rendre() {
+  var h = '<div class="entete-vue"><div><h1>Clients</h1><p>Chaque compagnie gère elle-même ses comptes. Vous ouvrez un client en invitant son premier administrateur, puis vous n\'intervenez qu\'en support : lien de mot de passe, compte bloqué, administrateur à remplacer.</p></div>' +
+    '<button class="btn primaire" id="b-ouvrir" type="button">Ouvrir un client</button></div>';
+  h += '<div class="op-chiffres"><div class="c"><b>' + etat.clients.length + '</b><span>Clients</span></div><div class="c"><b>' + somme("comptes") + '</b><span>Comptes actifs</span></div>' +
+    '<div class="c"><b>' + somme("invitations") + '</b><span>Invitations en attente</span></div><div class="c' + (etat.support.length ? " alerte-c" : "") + '"><b>' + etat.support.length + '</b><span>Demandes de support ouvertes</span></div></div>';
+  if (etat.ouvrir) h += '<section class="bloc"><div class="bloc-tete"><h2>Ouvrir un client</h2></div><form class="bloc-corps pile" id="f-o" novalidate><div class="grille-3">' +
+    '<label class="champ">Compagnie<input class="saisie" id="o-nom" placeholder="Ex. Mutuelle du Loing"></label>' +
+    '<label class="champ">Premier administrateur<input class="saisie" id="o-anom" placeholder="Prénom Nom"></label>' +
+    '<label class="champ">Son email professionnel<input class="saisie" id="o-amail" type="email" placeholder="prenom.nom@compagnie.fr"></label></div>' +
+    '<div class="decision-actions"><button class="btn primaire" id="o-ok" type="submit">Créer le client et inviter l\'administrateur</button><button class="btn discret" id="o-annuler" type="button">Annuler</button></div>' +
+    '<p class="muet petit">L\'administrateur reçoit un mail pour activer son compte. Il invite ensuite ses managers, qui créent leurs équipes. Vous ne faites pas partie de la compagnie.</p></form></section>';
+  if (etat.support.length) h += '<section class="bloc"><div class="bloc-tete"><h2>Demandes de support<span class="compte">' + etat.support.length + '</span></h2></div>' +
+    etat.support.map(function (s) {
+      return '<div class="demande"><b>' + esc(s.sujet) + '</b><span class="qui">' + esc(nomClient(s.assureur_id)) + " · " + esc(s.nom || "") + " (" + esc(ROLES[s.role] || s.role || "") + ", " + esc(s.email || "") + ") · " + esc(C.depuis(s.created_at)) + "</span><p>" + esc(s.message) + "</p>" +
+        '<div class="decision-actions"><textarea class="saisie" data-rep="' + esc(s.id) + '" rows="2" placeholder="Réponse envoyée par mail (facultatif)" style="flex:1;min-width:240px"></textarea><button class="btn petit" data-traiter="' + esc(s.id) + '">Marquer traitée</button></div></div>';
+    }).join("") + "</section>";
+  h += '<section class="bloc"><div class="bloc-tete"><h2>Clients<span class="compte">' + etat.clients.length + '</span></h2></div><div class="tableau-wrap"><table class="tableau"><thead><tr><th>Compagnie</th><th class="nb">Comptes</th><th class="nb">Admin.</th><th class="nb">Managers</th><th class="nb">Gestionnaires</th><th class="nb">Équipes</th><th class="nb">Dossiers en cours</th><th class="nb">Reçus 30 j</th><th>Dernière connexion</th><th>État</th></tr></thead><tbody>' +
+    (etat.clients.map(function (c) {
+      var etatC = !c.admins ? '<span class="statut ko">Sans administrateur</span>' : c.support_ouvert ? '<span class="statut ko">' + c.support_ouvert + " demande(s)</span>" : c.invitations ? '<span class="statut neutre">' + c.invitations + " invitation(s)</span>" : '<span class="statut ok">Actif</span>';
+      return '<tr data-client="' + esc(c.id) + '"' + (etat.choisi === c.id ? ' class="choisi"' : "") + ' style="cursor:pointer"><td><b>' + esc(c.nom) + '</b></td><td class="nb">' + c.comptes + '</td><td class="nb">' + c.admins + '</td><td class="nb">' + c.managers + '</td><td class="nb">' + c.gestionnaires + '</td><td class="nb">' + c.equipes +
+        '</td><td class="nb">' + c.dossiers_en_cours + '</td><td class="nb">' + c.dossiers_30j + '</td><td class="muet">' + esc(c.derniere_connexion ? C.depuis(c.derniere_connexion) : "Jamais") + "</td><td>" + etatC + "</td></tr>";
+    }).join("") || '<tr><td colspan="10"><div class="vide">Aucun client pour l\'instant.</div></td></tr>') + "</tbody></table></div></section>";
+  h += '<div id="fiche"></div>';
+  $("vue").innerHTML = h;
+  $("b-ouvrir").onclick = function () { etat.ouvrir = true; rendre(); $("o-nom").focus(); };
+  if ($("f-o")) {
+    $("o-annuler").onclick = function () { etat.ouvrir = false; rendre(); };
+    $("f-o").addEventListener("submit", function (e) {
+      e.preventDefault(); var b = $("o-ok"); C.occupe(b, true, "Création");
+      op("ouvrir_client", { nom: $("o-nom").value, admin_nom: $("o-anom").value, admin_email: $("o-amail").value }).then(function (r) {
+        etat.ouvrir = false; etat.choisi = r.client.id; etat.fiche = r;
+        C.toast(r.envoi && r.envoi.envoye ? "Client créé, invitation envoyée" : "Client créé, mais le mail n'est pas parti : " + ((r.envoi && r.envoi.erreur) || ""), !(r.envoi && r.envoi.envoye));
+        return charger();
+      }).catch(function (x) { C.occupe(b, false); C.toast(x.message, true); });
+    });
+  }
+  document.querySelectorAll("[data-traiter]").forEach(function (b) {
+    b.onclick = function () {
+      var id = b.dataset.traiter, rep = document.querySelector('[data-rep="' + id + '"]').value.trim(); C.occupe(b, true, "");
+      op("support_traiter", { id: id, reponse: rep || null }).then(function () { C.toast(rep ? "Réponse envoyée" : "Demande traitée"); charger(); }).catch(function (x) { C.occupe(b, false); C.toast(x.message, true); });
+    };
+  });
+  document.querySelectorAll("[data-client]").forEach(function (tr) {
+    tr.onclick = function () { etat.choisi = tr.dataset.client; op("client", { id: etat.choisi }).then(function (f) { etat.fiche = f; rendre(); $("fiche").scrollIntoView({ behavior: "smooth" }); }).catch(function (x) { C.toast(x.message, true); }); };
+  });
+  if (etat.fiche && etat.choisi === etat.fiche.client.id) rendreFiche(etat.fiche);
+}
+
+function rendreFiche(f) {
+  var h = '<section class="bloc"><div class="bloc-tete"><h2>' + esc(f.client.nom) + '<span class="compte">client depuis ' + esc(C.dateCourte(f.client.created_at)) + '</span></h2><button class="btn petit discret" id="b-fermer" type="button">Fermer</button></div>' +
+    '<div class="tableau-wrap"><table class="tableau"><thead><tr><th>Nom</th><th>Email</th><th>Rôle</th><th>Centre</th><th>Équipe</th><th>Dernière connexion</th><th>État</th><th></th></tr></thead><tbody>' +
+    (f.comptes.map(function (g) {
+      return '<tr style="cursor:default"><td>' + esc(g.nom) + '</td><td class="muet">' + esc(g.email) + '</td><td><select class="saisie" data-role="' + esc(g.id) + '" style="min-width:140px">' +
+        Object.keys(ROLES).map(function (k) { return '<option value="' + k + '"' + (k === g.role ? " selected" : "") + ">" + ROLES[k] + "</option>"; }).join("") + "</select></td><td>" + esc(g.centre || "") + "</td><td>" + esc(g.equipe || "") +
+        '</td><td class="muet">' + esc(g.derniere_connexion ? C.depuis(g.derniere_connexion) : "Jamais") + "</td><td>" + (g.actif ? '<span class="statut ok">Actif</span>' : '<span class="statut neutre">Désactivé</span>') + "</td>" +
+        '<td class="nb"><button class="btn petit" data-mdp="' + esc(g.id) + '" data-nom="' + esc(g.nom) + '">Lien mot de passe</button> <button class="btn petit discret" data-actif="' + esc(g.id) + '" data-val="' + (!g.actif) + '" data-nom="' + esc(g.nom) + '">' + (g.actif ? "Désactiver" : "Réactiver") + "</button></td></tr>";
+    }).join("") || '<tr><td colspan="8"><div class="vide">Aucun compte activé pour l\'instant.</div></td></tr>') + "</tbody></table></div>";
+  if (f.invitations.length) h += '<div class="bloc-corps"><h3 style="font-size:14px;margin-bottom:8px">Invitations en attente</h3><div class="tableau-wrap"><table class="tableau"><tbody>' + f.invitations.map(function (i) {
+    return "<tr><td>" + esc(i.nom) + '</td><td class="muet">' + esc(i.email) + "</td><td>" + esc(ROLES[i.role] || i.role) + '</td><td class="muet">par ' + esc(i.invite_par_nom || "") + "</td><td>" + (i.expiree ? '<span class="statut ko">Lien expiré</span>' : i.erreur_envoi ? '<span class="statut ko">Mail non parti</span>' : '<span class="statut neutre">Envoyée ' + esc(C.depuis(i.envoye_le)) + "</span>") +
+      '</td><td class="nb"><button class="btn petit" data-renvoyer="' + esc(i.id) + '">Renvoyer</button></td></tr>';
+  }).join("") + "</tbody></table></div></div>";
+  if (f.equipes.length) h += '<div class="bloc-corps"><h3 style="font-size:14px;margin-bottom:8px">Équipes</h3><p class="muet">' + f.equipes.map(function (e) { return esc(e.nom) + " (" + esc(e.centre) + ", " + esc(e.manager || "sans manager") + ")"; }).join(" · ") + "</p></div>";
+  h += '<form class="bloc-corps pile" id="f-adm" novalidate style="border-top:1px solid var(--trait)"><h3 style="font-size:14px">Inviter un administrateur</h3><div class="decision-actions">' +
+    '<input class="saisie" id="a-nom" placeholder="Prénom Nom" style="max-width:240px"><input class="saisie" id="a-mail" type="email" placeholder="prenom.nom@compagnie.fr" style="max-width:300px"><button class="btn" id="a-ok" type="submit">Envoyer l\'invitation</button></div>' +
+    '<p class="muet petit">Si le client n\'a plus d\'administrateur (départ, changement de poste), ou pour en ajouter un second. Pour une personne qui a déjà un compte, changez simplement son rôle ci-dessus.</p></form></section>';
+  $("fiche").innerHTML = h;
+  var maj = function (p) { return p.then(function (r) { etat.fiche = r; if (r.envoi) C.toast(r.envoi.envoye ? "Mail envoyé à " + r.envoi.email : "Mail non parti : " + (r.envoi.erreur || ""), !r.envoi.envoye); charger(); }).catch(function (x) { C.toast(x.message, true); rendreFiche(etat.fiche); }); };
+  $("b-fermer").onclick = function () { etat.choisi = null; etat.fiche = null; rendre(); };
+  document.querySelectorAll("#fiche [data-role]").forEach(function (s) { s.onchange = function () { maj(op("role", { id: s.dataset.role, role: s.value })); }; });
+  document.querySelectorAll("#fiche [data-mdp]").forEach(function (b) { b.onclick = function () { if (confirm("Envoyer à " + b.dataset.nom + " un lien pour choisir un nouveau mot de passe ?")) { C.occupe(b, true, ""); maj(op("reinitialiser", { id: b.dataset.mdp })); } }; });
+  document.querySelectorAll("#fiche [data-actif]").forEach(function (b) { b.onclick = function () { var on = b.dataset.val === "true"; if (on || confirm("Désactiver le compte de " + b.dataset.nom + " ? Il ne pourra plus se connecter.")) maj(op("activer", { id: b.dataset.actif, actif: on })); }; });
+  document.querySelectorAll("#fiche [data-renvoyer]").forEach(function (b) { b.onclick = function () { C.occupe(b, true, ""); maj(op("renvoyer", { id: b.dataset.renvoyer })); }; });
+  $("f-adm").addEventListener("submit", function (e) { e.preventDefault(); C.occupe($("a-ok"), true, "Envoi"); maj(op("inviter_admin", { assureur_id: f.client.id, nom: $("a-nom").value, email: $("a-mail").value })); });
+}
+</script>
+</body>
+</html>
