@@ -6,6 +6,8 @@
 <link rel="icon" type="image/svg+xml" href="icones/icone.svg">
 <link rel="icon" type="image/png" sizes="32x32" href="icones/favicon-32.png">
 <link rel="apple-touch-icon" href="icones/apple-touch-icon.png">
+<link rel="manifest" href="manifest-operateur.webmanifest">
+<meta name="theme-color" content="#0E0E10">
 <meta name="robots" content="noindex">
 <title>Espace Klerio</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -20,11 +22,16 @@ body { background: var(--papier); }
 .op-carte { width: min(380px, 100%); display: grid; gap: 28px; justify-items: center; }
 .op-carte .logo { display: flex; align-items: center; gap: 10px; font-size: 20px; font-weight: 600; color: #F3F3F1; letter-spacing: -0.01em; }
 .op-carte .logo svg { width: 34px; height: 34px; }
-.op-connexion form { width: 100%; display: grid; gap: 16px; background: #FFFFFF; color: #09090B; border-radius: 16px; padding: 28px; box-shadow: 0 1px 0 rgba(255,255,255,.06) inset, 0 24px 60px rgba(0,0,0,.45); }
-.op-connexion form .saisie { height: 44px; background: #FFFFFF; color: #09090B; border-color: #D4D4CF; }
-.op-connexion form .champ { color: #09090B; }
+.op-connexion form { width: 100%; display: grid; gap: 16px; padding: 28px; border-radius: 16px; color: #ECECEE;
+  background: linear-gradient(180deg, rgba(255,255,255,.055), rgba(255,255,255,.025)); border: 1px solid rgba(255,255,255,.09);
+  box-shadow: 0 24px 60px rgba(0,0,0,.35); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); }
+.op-connexion form .champ { color: #A2A2AA; font-size: 13px; }
+.op-connexion form .saisie { height: 44px; background: rgba(0,0,0,.35); color: #F3F3F1; border: 1px solid rgba(255,255,255,.12); }
+.op-connexion form .saisie:focus { border-color: #D9AE45; box-shadow: 0 0 0 3px rgba(217,174,69,.18); outline: none; }
 .op-connexion form[hidden] { display: none; }
-.op-connexion .btn.primaire { height: 44px; justify-content: center; background: #09090B; color: #FFFFFF; border-color: #09090B; }
+.op-connexion .erreur-form { color: #F28B82; }
+.op-connexion .btn.primaire { height: 44px; justify-content: center; background: #D9AE45; color: #09090B; border-color: #D9AE45; font-weight: 600; }
+.op-connexion .btn.primaire:hover { background: #E4BC57; }
 .op-tete { position: sticky; top: 0; z-index: 5; display: flex; align-items: center; gap: 16px; padding: 12px 24px; background: var(--feuille); border-bottom: 1px solid var(--trait); }
 .op-tete .marque { display: flex; align-items: center; gap: 8px; font-weight: 600; }
 .op-tete .role { font-size: 12.5px; color: var(--gris); border-left: 1px solid var(--trait); padding-left: 12px; }
@@ -103,6 +110,7 @@ $("f-m").addEventListener("submit", function (e) {
 });
 $("b-sortir").onclick = function () { sb.auth.signOut().finally(function () { location.reload(); }); };
 sb.auth.getSession().then(function (r) { if (r.data.session) entrer(); });
+if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(function () { });
 
 function charger() {
   return op("clients").then(function (r) { etat.clients = r.clients || []; etat.support = r.support || []; rendre(); }).catch(function (x) { C.toast(x.message, true); });
