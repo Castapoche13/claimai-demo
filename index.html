@@ -3468,7 +3468,13 @@ function rendreEquipe(d, envoi) {
   });
   var h = '<div class="entete-vue"><div><h1>Équipe</h1><p>' + (admin
     ? "Tous les comptes de la compagnie, tous centres confondus. Pour ajouter quelqu'un, saisissez son email professionnel : il reçoit un mail avec un lien pour choisir son mot de passe. Un superviseur gère lui-même les gestionnaires de son centre."
-    : "Les comptes du centre " + esc(d.moi.centre) + ". Vous pouvez inviter un gestionnaire dans votre centre, régler son service et son plafond, ou désactiver son compte. Les superviseurs et les autres centres sont gérés par l'administrateur.") + "</p></div></div>";
+    : "Votre équipe, au centre " + esc(d.moi.centre) + ". Invitez un nouveau gestionnaire par mail, ou prenez dans votre équipe quelqu'un qui travaille déjà dans votre centre. Vous réglez son service et son plafond, et vous pouvez désactiver son compte.") + "</p></div></div>";
+  var mgrNom = function (id) { var m = (d.managers || []).filter(function (x) { return x.id === id; })[0]; return m ? m.nom : ""; };
+  var optsManagers = function (choisi) { return '<option value="">Aucune équipe</option>' + (d.managers || []).map(function (m) { return '<option value="' + esc(m.id) + '"' + (m.id === choisi ? " selected" : "") + ">" + esc(m.nom) + (m.centre ? " (" + esc(m.centre) + ")" : "") + "</option>"; }).join(""); };
+  // Manager : prendre dans son équipe quelqu'un de son centre
+  if (!admin && (d.disponibles || []).length) h += '<section class="bloc"><div class="bloc-tete"><h2>Ajouter quelqu\'un de votre centre</h2></div><div class="bloc-corps pile"><div class="decision-actions"><select class="saisie" id="r-qui" style="min-width:280px;max-width:440px" aria-label="Gestionnaire du centre">' +
+    d.disponibles.map(function (x) { return '<option value="' + esc(x.id) + '">' + esc(x.nom) + (x.manager_nom ? " (équipe de " + esc(x.manager_nom) + ")" : " (sans équipe)") + "</option>"; }).join("") +
+    '</select><button class="btn" id="r-ok">Ajouter à mon équipe</button></div><p class="muet petit">Pour quelqu\'un qui a déjà son compte Klerio dans votre centre. Son ancien manager est prévenu par mail ; ses dossiers en cours restent les siens.</p></div></section>';
 
   // Inviter
   h += '<section class="bloc"><div class="bloc-tete"><h2>Inviter une personne</h2></div><form class="bloc-corps pile" id="form-invit" novalidate><div class="grille-3">' +
@@ -3476,6 +3482,7 @@ function rendreEquipe(d, envoi) {
     '<label class="champ">Email professionnel<input class="saisie" id="i-email" type="email" autocomplete="off" placeholder="prenom.nom@compagnie.fr" required></label>' +
     (admin ? '<label class="champ">Rôle<select class="saisie" id="i-role">' + optionsHtml(ROLES_G, "gestionnaire") + "</select></label>"
            : '<label class="champ">Centre<input class="saisie" value="' + esc(d.moi.centre) + '" disabled></label>') + "</div>" +
+    (admin ? '<div class="grille-3"><label class="champ">Équipe <span class="aide">pour un gestionnaire</span><select class="saisie" id="i-manager">' + optsManagers("") + "</select></label></div>" : "") +
     '<div class="grille-3">' + (admin ? '<label class="champ">Centre de gestion <span class="aide">ex. Île-de-France, Lyon</span><input class="saisie" id="i-centre" list="liste-centres" value="' + esc(filtreEq.centre && filtreEq.centre !== "-" ? filtreEq.centre : "") + '"></label>' : "") +
     '<label class="champ">Service<select class="saisie" id="i-service">' + optionsHtml(SERVICES, "tous") + "</select></label>" +
     '<label class="champ">Plafond de règlement <span class="aide">en €' + (admin || d.moi.plafond_eur == null ? ", vide = sans plafond" : ", " + esc(C.nombre(d.moi.plafond_eur, 0)) + " € au plus") + '</span><input class="saisie" id="i-plafond" type="number" min="0" step="100" value="1500"></label></div>' +
@@ -3494,18 +3501,20 @@ function rendreEquipe(d, envoi) {
   var filtres = admin ? '<div class="filtres"><select class="saisie" id="f-centre" aria-label="Centre"><option value="">Tous les centres</option>' +
     d.centres.map(function (c) { return '<option value="' + esc(c) + '"' + (c === filtreEq.centre ? " selected" : "") + ">" + esc(c) + "</option>"; }).join("") +
     '<option value="-"' + (filtreEq.centre === "-" ? " selected" : "") + '>Sans centre</option></select><select class="saisie" id="f-role" aria-label="Rôle"><option value="">Tous les rôles</option>' + optionsHtml(ROLES_G, filtreEq.role) + "</select></div>" : "";
-  h += '<section class="bloc"><div class="bloc-tete"><h2>Comptes<span class="compte">' + membres.length + (membres.length !== tous.length ? " sur " + tous.length : "") + "</span></h2>" + filtres + '</div><div class="tableau-wrap"><table class="tableau comptes-t"><thead><tr><th>Nom</th><th>Email</th><th>Rôle</th><th>Centre</th><th>Service</th><th class="nb">Plafond de règlement</th><th>Dernière connexion</th><th>État</th><th></th></tr></thead><tbody>' +
+  h += '<section class="bloc"><div class="bloc-tete"><h2>Comptes<span class="compte">' + membres.length + (membres.length !== tous.length ? " sur " + tous.length : "") + "</span></h2>" + filtres + '</div><div class="tableau-wrap"><table class="tableau comptes-t"><thead><tr><th>Nom</th><th>Email</th><th>Rôle</th><th>Centre</th><th>Équipe</th><th>Service</th><th class="nb">Plafond de règlement</th><th>Dernière connexion</th><th>État</th><th></th></tr></thead><tbody>' +
     membres.map(function (g) {
-      var modifiable = admin || (g.role === "gestionnaire" && g.id !== d.moi.id);
+      var modifiable = admin || (g.role === "gestionnaire" && g.manager_id === d.moi.id);
+      var equipe = g.role !== "gestionnaire" ? '<span class="muet">' + (g.role === "superviseur" ? "Manager" : "—") + "</span>"
+        : admin ? '<select class="saisie" data-manager="' + g.id + '" style="min-width:150px">' + optsManagers(g.manager_id) + "</select>" : esc(g.manager_nom || "");
       var role = admin ? '<select class="saisie" data-role="' + g.id + '" style="min-width:150px">' + optionsHtml(ROLES_G, g.role) + "</select>" : esc(ROLES_G[g.role] || g.role);
       var centre = admin ? '<input class="saisie" data-centre="' + g.id + '" list="liste-centres" placeholder="Aucun" value="' + esc(g.centre || "") + '" style="min-width:140px">' : '<span style="white-space:nowrap">' + esc(g.centre || "") + "</span>";
       var service = modifiable ? '<select class="saisie" data-service="' + g.id + '" style="min-width:120px">' + optionsHtml(SERVICES, g.service) + "</select>" : esc(SERVICES[g.service] || g.service);
       var plafond = modifiable ? '<input class="saisie" data-plafond="' + g.id + '" type="number" min="0" step="100" placeholder="Sans plafond" value="' + (g.plafond_eur == null ? "" : esc(g.plafond_eur)) + '" style="max-width:140px;text-align:right">'
         : (g.plafond_eur == null ? '<span class="muet">Sans plafond</span>' : esc(C.nombre(g.plafond_eur, 0)) + " €");
-      return '<tr style="cursor:default"><td>' + esc(g.nom) + (g.id === d.moi.id ? ' <span class="muet petit">(vous)</span>' : "") + '</td><td class="muet">' + esc(g.email) + "</td><td>" + role + "</td><td>" + centre + "</td><td>" + service + '</td><td class="nb">' + plafond + "</td>" +
+      return '<tr style="cursor:default"><td>' + esc(g.nom) + (g.id === d.moi.id ? ' <span class="muet petit">(vous)</span>' : "") + '</td><td class="muet">' + esc(g.email) + "</td><td>" + role + "</td><td>" + centre + "</td><td>" + equipe + "</td><td>" + service + '</td><td class="nb">' + plafond + "</td>" +
         '<td class="muet">' + esc(g.derniere_connexion ? C.depuis(g.derniere_connexion) : "Jamais") + "</td><td>" + (g.actif ? '<span class="statut ok">Actif</span>' : '<span class="statut neutre">Désactivé</span>') + "</td>" +
         '<td class="nb">' + (modifiable ? '<button class="btn petit" data-enreg="' + g.id + '">Enregistrer</button> <button class="btn petit discret" data-actif="' + g.id + '" data-val="' + (!g.actif) + '" data-nom="' + esc(g.nom) + '">' + (g.actif ? "Désactiver" : "Réactiver") + "</button>" : "") + "</td></tr>";
-    }).join("") + (membres.length ? "" : '<tr><td colspan="9"><div class="vide">Aucun compte pour ce filtre.</div></td></tr>') + "</tbody></table></div></section>" +
+    }).join("") + (membres.length ? "" : '<tr><td colspan="10"><div class="vide">Aucun compte pour ce filtre.</div></td></tr>') + "</tbody></table></div></section>" +
     '<datalist id="liste-centres">' + d.centres.map(function (c) { return '<option value="' + esc(c) + '">'; }).join("") + "</datalist>";
   $("vue").innerHTML = h;
 
@@ -3535,6 +3544,16 @@ function rendreEquipe(d, envoi) {
       maj(b, { id: b.dataset.actif, actif: on }, on ? "Compte réactivé" : "Compte désactivé");
     };
   });
+  document.querySelectorAll("[data-manager]").forEach(function (sel) {
+    sel.onchange = function () {
+      equipeApi("affecter", { id: sel.dataset.manager, manager_id: sel.value || null }).then(function (r) { C.toast(sel.value ? "Équipe de " + mgrNom(sel.value) : "Retiré de son équipe"); recharger(r); })
+        .catch(function (x) { C.toast(x.message, true); vueEquipe(); });
+    };
+  });
+  if ($("r-ok")) $("r-ok").onclick = function () {
+    var b = this; C.occupe(b, true, "");
+    equipeApi("rattacher", { id: $("r-qui").value }).then(function (r) { C.toast("Ajouté à votre équipe"); recharger(r); }).catch(function (x) { C.occupe(b, false); C.toast(x.message, true); });
+  };
   document.querySelectorAll("[data-renvoyer]").forEach(function (b) {
     b.onclick = function () {
       C.occupe(b, true, "");
@@ -3554,7 +3573,7 @@ function rendreEquipe(d, envoi) {
     if (!nom || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { $("i-res").innerHTML = messageEnvoi({ erreur_saisie: "Saisissez le nom et une adresse email valide." }); return; }
     C.occupe(b, true, "Envoi");
     equipeApi("inviter", { nom: nom, email: email, role: admin ? $("i-role").value : "gestionnaire", centre: admin ? $("i-centre").value.trim() : d.moi.centre,
-      service: $("i-service").value, plafond_eur: pl === "" ? null : Number(pl) })
+      service: $("i-service").value, plafond_eur: pl === "" ? null : Number(pl), manager_id: admin ? $("i-manager").value || null : null })
       .then(function (r) { recharger(r, r.envoi); })
       .catch(function (x) { C.occupe(b, false); $("i-res").innerHTML = messageEnvoi({ erreur_saisie: x.message }); });
   });
