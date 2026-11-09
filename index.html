@@ -9,7 +9,7 @@
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#FFFFFF">
 <meta name="apple-mobile-web-app-title" content="Klerio">
-<title>Console sinistres Klerio</title>
+<title>Klerio</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
@@ -648,7 +648,7 @@ function afficherEnv() {
   $("env-essai").setAttribute("aria-pressed", String(essai));
   $("bandeau-essai").hidden = !essai;
   $("n-boites").hidden = !essai; // les mails de l'essai se lisent ici ; en production ils sont dans chaque dossier
-  document.title = (essai ? "[Essai] " : "") + "Console sinistres Klerio";
+  document.title = (essai ? "[Essai] " : "") + "Klerio";
 }
 function changerEnv(env) {
   if (env === S.env) return;
