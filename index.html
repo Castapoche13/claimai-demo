@@ -39,6 +39,8 @@
 .connexion .btn:not(.primaire):hover { background: rgba(255,255,255,.06); }
 .connexion .sep-c { display: flex; align-items: center; gap: 12px; color: #737379; font-size: 12px; margin: -4px 0; }
 .connexion .sep-c::before, .connexion .sep-c::after { content: ""; flex: 1; height: 1px; background: rgba(255,255,255,.1); }
+.demande-ligne { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding: 12px 20px; border-top: 1px solid var(--trait); }
+.demande-ligne .actions { display: flex; gap: 8px; }
 #b-champs { display: grid; gap: 16px; }
 #b-champs[hidden] { display: none; }
 .connexion .pied-connexion { text-align: center; font-size: 12.5px; color: #737379; max-width: 40ch; margin: 0 auto; }
@@ -894,6 +896,8 @@ function vueFile() {
     var aMoi = file.filter(function (d) { return d.gestionnaire && d.gestionnaire.id === moi.id; });
     var libres = file.filter(function (d) { return !d.gestionnaire; });
     var autres = file.filter(function (d) { return d.gestionnaire && d.gestionnaire.id !== moi.id; });
+    // gestionnaire : sa corbeille ne contient que ses dossiers et ceux à prendre ; les autres se retrouvent par la recherche
+    if (!resp) { file = aMoi.concat(libres); autres = []; }
     var renvoyes = file.filter(function (d) { return d.renvoye_manager; });
     var tiers = encours.filter(function (d) { return d.statut === "mission_envoyee" || d.statut === "attente_pieces" || d.statut === "reglement_envoye"; });
     var prio = file.filter(function (d) { return d.priorite === "haute"; }).length;
@@ -902,7 +906,7 @@ function vueFile() {
     var horsDossier = mails.filter(function (m) { return MAIL_A_TRAITER.indexOf(m.statut) >= 0; });
     var relances = (ind.alertes || []).filter(function (a) { return resp || !S.moi || a.pour === S.moi.email; });
     var filtres = [["moi", "À moi", aMoi], ["libres", "À prendre", libres]];
-    if (resp || autres.length) filtres.push(["equipe", "Toute l'équipe", file]);
+    if (resp) filtres.push(["equipe", "Toute l'équipe", file]);
     if (resp && renvoyes.length) filtres.unshift(["renvoyes", "Renvoyés", renvoyes]);
     var choix = null, onglet = null;
     try { choix = localStorage.getItem(FILTRE_FILE); onglet = localStorage.getItem(BANNETTE); } catch (e) { }
@@ -925,7 +929,9 @@ function vueFile() {
       tab("mails", "Alertes", relances.length + horsDossier.length, false) +
       tab("tiers", "En attente d'un intervenant", tiers.length, false) +
       '</div><div id="bannette-corps" role="tabpanel"></div></section>';
+    h = h.replace('<section class="bloc accueil-bloc">', '<div id="demandes-reprise"></div><section class="bloc accueil-bloc">');
     $("vue").innerHTML = h;
+    afficherDemandes();
 
     function brancherLignes(racine) {
       racine.querySelectorAll("tr[data-n]").forEach(function (tr) {
@@ -2130,6 +2136,29 @@ function blocVehicule(f) {
   return h;
 }
 
+/* Reprise et transfert de dossiers entre gestionnaires (fonction klerio-dossiers) */
+function dossiersApi(action, corps) { return C.client(C.SUPABASE_URL + "/functions/v1", jeton, entetesEnv)("klerio-dossiers", { body: Object.assign({ action: action }, corps || {}) }); }
+function afficherDemandes() {
+  dossiersApi("demandes").then(function (r) {
+    var z = $("demandes-reprise"); if (!z) return;
+    var t = r.a_trancher || [], e = r.envoyees || [];
+    if (!t.length && !e.length) { z.innerHTML = ""; return; }
+    z.innerHTML = '<section class="bloc"><div class="bloc-tete"><h2>Demandes de reprise<span class="compte">' + (t.length + e.length) + "</span></h2></div>" +
+      t.map(function (d) {
+        return '<div class="demande-ligne"><span><b>' + esc(d.demandeur) + '</b> demande à reprendre le dossier <a href="#/dossier/' + esc(d.numero) + '">' + esc(d.numero) + "</a>" + (d.titulaire ? ", suivi par " + esc(d.titulaire) : "") +
+          (d.motif ? '<span class="muet"> · « ' + esc(d.motif) + " »</span>" : "") + '</span><span class="actions"><button class="btn petit primaire" data-rep="' + esc(d.id) + '" data-ok="1">Accepter</button><button class="btn petit" data-rep="' + esc(d.id) + '" data-ok="0">Refuser</button></span></div>';
+      }).join("") +
+      e.map(function (d) { return '<div class="demande-ligne"><span class="muet">Votre demande pour le dossier <a href="#/dossier/' + esc(d.numero) + '">' + esc(d.numero) + "</a> attend la réponse de " + esc(d.titulaire || "son titulaire") + "</span></div>"; }).join("") + "</section>";
+    z.querySelectorAll("[data-rep]").forEach(function (b) {
+      b.onclick = function () {
+        C.occupe(b, true, "");
+        dossiersApi("repondre", { id: b.dataset.rep, accepter: b.dataset.ok === "1" }).then(function () { C.toast(b.dataset.ok === "1" ? "Dossier transmis" : "Demande refusée"); vueFile(); })
+          .catch(function (x) { C.occupe(b, false); C.toast(x.message, true); });
+      };
+    });
+  }).catch(function () { });
+}
+
 /* Qui suit le dossier : prise en charge, renvoi au responsable, réaffectation */
 function barreTitulaire(f) {
   if (FINIS.indexOf(f.statut) >= 0 && !f.gestionnaire) return "";
@@ -2138,7 +2167,8 @@ function barreTitulaire(f) {
               : "Dossier dans la file commune" + (f.renvoye_manager ? '<span class="muet"> : renvoyé par ' + esc(f.renvoye_manager.par) + ", « " + esc(f.renvoye_manager.motif) + " »</span>" : "");
   var b = "";
   if (!g && FINIS.indexOf(f.statut) < 0) b += '<button class="btn petit primaire" id="t-prendre">Prendre le dossier</button>';
-  if (mien) b += '<button class="btn petit" id="t-renvoyer">Renvoyer au responsable</button>';
+  if (mien) b += '<button class="btn petit" id="t-transferer">Transférer à un collègue</button><span id="t-collegues"></span><button class="btn petit" id="t-renvoyer">Renvoyer au responsable</button>';
+  if (g && !mien && !resp) { txt += '<span class="muet"> · consultation seule</span>'; b += '<button class="btn petit primaire" id="t-demander">Demander à reprendre</button>'; }
   if (resp) b += '<button class="btn petit discret" id="t-reaffecter">Réaffecter</button><span id="t-choix"></span>';
   return '<div class="titulaire-barre"><span>' + txt + '</span><span class="actions">' + b + "</span></div>";
 }
@@ -2882,7 +2912,27 @@ function brancherFiche(f) {
 }
 
 function brancherTitulaire(f) {
-  var tp = $("t-prendre"), tr = $("t-renvoyer"), ta = $("t-reaffecter");
+  var tp = $("t-prendre"), tr = $("t-renvoyer"), ta = $("t-reaffecter"), td = $("t-demander"), tt = $("t-transferer");
+  if (td) td.onclick = function () {
+    var motif = prompt("Pourquoi souhaitez-vous reprendre ce dossier ? Votre message est envoyé à " + (f.gestionnaire ? f.gestionnaire.nom : "son titulaire") + ".", "");
+    if (motif === null) return;
+    C.occupe(td, true, "");
+    dossiersApi("demander", { numero: f.numero, motif: motif }).then(function () { C.occupe(td, false); td.disabled = true; td.textContent = "Demande envoyée"; C.toast("Demande envoyée : vous serez prévenu par mail"); })
+      .catch(function (x) { C.occupe(td, false); C.toast(x.message, true); });
+  };
+  if (tt) tt.onclick = function () {
+    C.occupe(tt, true, "");
+    dossiersApi("collegues").then(function (l) {
+      C.occupe(tt, false);
+      if (!l.length) { C.toast("Personne d'autre dans votre équipe pour l'instant", true); return; }
+      $("t-collegues").innerHTML = '<select class="saisie" id="t-vers" style="max-width:200px">' + l.map(function (c) { return '<option value="' + esc(c.id) + '">' + esc(c.nom) + "</option>"; }).join("") + '</select><button class="btn petit primaire" id="t-confirmer">Transférer</button>';
+      $("t-confirmer").onclick = function () {
+        var b = this; C.occupe(b, true, "");
+        dossiersApi("transferer", { numero: f.numero, vers: $("t-vers").value }).then(function () { C.toast("Dossier transféré"); location.hash = "#/file"; })
+          .catch(function (x) { C.occupe(b, false); C.toast(x.message, true); });
+      };
+    }).catch(function (x) { C.occupe(tt, false); C.toast(x.message, true); });
+  };
   if (tp) tp.onclick = function () {
     C.occupe(tp, true, "");
     api("prendre", { body: { numero: f.numero } }).then(function () { C.toast("Vous suivez ce dossier"); vueDossier(f.numero); })
