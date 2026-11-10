@@ -206,7 +206,7 @@ body { background: var(--papier); }
       <li><a href="#/support" data-vue="support"><span id="i-support"></span>Support<span class="n" id="n-support"></span></a></li>
       <li><a href="#/journal" data-vue="journal"><span id="i-journal"></span>Journal</a></li>
     </ul>
-    <div class="ad-bas"><b id="op-nom"></b><span id="op-mail"></span><button type="button" id="b-theme">Changer de thème</button><button type="button" id="b-sortir">Se déconnecter</button></div>
+    <div class="ad-bas"><b id="op-nom"></b><span id="op-mail"></span><button type="button" id="b-actualiser">Actualiser les données</button><button type="button" id="b-theme">Changer de thème</button><button type="button" id="b-sortir">Se déconnecter</button></div>
   </aside>
   <main class="ad-page" id="vue"></main>
 </div>
@@ -217,7 +217,23 @@ body { background: var(--papier); }
 var C = window.CA, $ = C.$, esc = C.esc;
 var sb = window.supabase.createClient(C.SUPABASE_URL, C.CLE_PUBLIQUE, { auth: { persistSession: true, storageKey: "klerio-operateur", storage: window.sessionStorage, autoRefreshToken: true } });
 var jeton = function () { return sb.auth.getSession().then(function (r) { return r.data.session ? r.data.session.access_token : null; }); };
-var op = function (action, corps) { return C.client(C.SUPABASE_URL + "/functions/v1", jeton)("klerio-plateforme", { body: Object.assign({ action: action }, corps || {}) }); };
+var opBrut = function (action, corps) { return C.client(C.SUPABASE_URL + "/functions/v1", jeton)("klerio-plateforme", { body: Object.assign({ action: action }, corps || {}) }); };
+// Session expirée (onglet resté ouvert longtemps) : on la renouvelle et on rejoue la demande ; sinon retour à la connexion
+var op = function (action, corps) {
+  return opBrut(action, corps).catch(function (x) {
+    if (x.status !== 401) throw x;
+    return sb.auth.refreshSession().then(function (r) {
+      if (r.error || !r.data.session) throw x;
+      return opBrut(action, corps);
+    }).catch(function (y) {
+      if (y && y.status && y.status !== 401) throw y;
+      sb.auth.signOut().catch(function () { });
+      $("ecran-a").hidden = true; $("ecran-c").hidden = false; $("f-c").hidden = false; $("f-m").hidden = true;
+      $("c-err").textContent = "Votre session a expiré : reconnectez-vous.";
+      throw new Error("Session expirée : reconnectez-vous");
+    });
+  });
+};
 var ROLES = { admin: "Administrateur", superviseur: "Manager", gestionnaire: "Gestionnaire" };
 
 function entrer() {
@@ -604,6 +620,8 @@ function brancherFiche(f) {
   });
   brancherDemandes();
 }
+$("b-actualiser").onclick = function () { etat.fiche = null; charger().then(function () { C.toast("Données à jour"); }); };
+document.addEventListener("visibilitychange", function () { if (!document.hidden && !$("ecran-a").hidden) sb.auth.getSession().then(function (r) { if (r.data.session && r.data.session.expires_at * 1000 < Date.now() + 120000) sb.auth.refreshSession(); }); });
 $("b-theme").onclick = function () {
   var sombre = document.documentElement.getAttribute("data-theme") === "dark" || (!document.documentElement.getAttribute("data-theme") && matchMedia("(prefers-color-scheme: dark)").matches);
   var t = sombre ? "light" : "dark"; appliquerTheme(t); try { localStorage.setItem(THEME, t); } catch (e) { }
