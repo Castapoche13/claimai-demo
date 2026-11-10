@@ -41,6 +41,24 @@
 .connexion .sep-c::before, .connexion .sep-c::after { content: ""; flex: 1; height: 1px; background: rgba(255,255,255,.1); }
 .demande-ligne { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding: 12px 20px; border-top: 1px solid var(--trait); }
 .demande-ligne .actions { display: flex; gap: 8px; }
+.lien-g { color: var(--encre); font-weight: 600; text-decoration: none; border-bottom: 1px solid var(--trait-fort); }
+.lien-g:hover { color: var(--bleu); border-bottom-color: currentColor; text-decoration: none; }
+.fil-g { font-size: 13px; color: var(--gris); margin-bottom: 8px; }
+.fil-g a { color: var(--gris); }
+.presence-g { display: inline-flex; align-items: center; gap: 6px; vertical-align: middle; font-size: 12.5px; font-weight: 500; padding: 2px 10px; border-radius: 999px; background: var(--vert-pale); color: var(--vert-texte); }
+.presence-g.absent { background: var(--survol); color: var(--gris); }
+.g-stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-bottom: 16px; }
+.g-stats .pil-stat { display: grid; gap: 4px; align-content: start; }
+.g-stats .pil-stat .lib { font-size: 13px; color: var(--gris); }
+.g-stats .pil-stat .val { font-size: 28px; line-height: 34px; font-weight: 500; color: var(--encre); }
+.g-stats .pil-stat .delta { font-size: 12.5px; color: var(--gris); }
+.g-stats .pil-stat.alerte-g { border-color: rgba(217,174,69,.55); }
+.g-stats .pil-stat .delta .moins-bien { color: var(--jaune-texte); font-weight: 600; }
+.g-dossiers td small { display: block; font-size: 12.5px; color: var(--gris); margin-top: 2px; }
+.g-activite { list-style: none; margin: 0; padding: 0; }
+.g-activite li { display: grid; grid-template-columns: 120px minmax(0, 1fr); gap: 12px; padding: 10px 20px; border-top: 1px solid var(--trait); font-size: 13.5px; }
+.g-activite li:first-child { border-top: 0; }
+@media (max-width: 760px) { .g-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 .presence { display: inline-flex; align-items: center; gap: 7px; height: 28px; padding: 0 11px; border-radius: 999px; border: 1px solid var(--trait); background: var(--feuille); color: var(--encre-2); font: inherit; font-size: 12.5px; font-weight: 500; cursor: pointer; margin-right: 6px; }
 .presence::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--vert); }
 .presence.absent::before { background: var(--gris-clair); }
@@ -860,7 +878,7 @@ function router() {
   var v = $("vue"); v.innerHTML = '<div class="vide"><span class="tourne" style="display:inline-block"></span></div>';
   window.scrollTo(0, 0);
   var f = { file: vueFile, dossiers: vueDossiers, dossier: function () { vueDossier(decodeURIComponent(h[1] || "")); },
-    archives: vueArchives, recherche: function () { vueRecherche(decodeURIComponent(h[1] || "")); }, clients: vueClients, client: function () { vueClient(decodeURIComponent(h[1] || "")); }, doublons: vueDoublons, declarer: vueDeclarer, boites: vueBoites, pilotage: vuePilotage, raccordement: function () { vueRaccordement(h[1]); }, equipe: vueEquipe, aide: vueAide }[vue] || vueFile;
+    archives: vueArchives, recherche: function () { vueRecherche(decodeURIComponent(h[1] || "")); }, clients: vueClients, client: function () { vueClient(decodeURIComponent(h[1] || "")); }, doublons: vueDoublons, declarer: vueDeclarer, boites: vueBoites, pilotage: function () { if (h[1]) vueGestionnaire(decodeURIComponent(h[1])); else vuePilotage(); }, raccordement: function () { vueRaccordement(h[1]); }, equipe: vueEquipe, aide: vueAide }[vue] || vueFile;
   f();
 }
 function erreurVue(x) { $("vue").innerHTML = '<div class="bloc"><div class="vide"><b>Impossible de charger cette page</b>' + esc(x.message) + '<p style="margin-top:14px"><button class="btn" onclick="location.reload()">Recharger</button></p></div></div>'; }
@@ -3190,6 +3208,7 @@ function vuePilotage() {
     if (rc && (rc.a_suivre || []).length) h += blocRecoursPilotage(rc);
     $("vue").innerHTML = h + "</div>";
     brancherGraphe(pm.semaines || []);
+    S.equipePil = (eq.gestionnaires || []).filter(function (x) { return x.actif && x.role !== "admin"; });
     brancherEquipePilotage(eq);
     brancherSensibles();
     brancherMissions();
@@ -3206,7 +3225,7 @@ function blocSensibles(sens, eq) {
     l.slice(0, 12).map(function (d) {
       return '<tr><td><a class="ref" href="#/dossier/' + esc(d.numero) + '">' + esc(d.numero) + "</a><small>" + esc(C.theme(d.theme)) + "</small></td>" +
         '<td><div class="raisons">' + d.raisons.map(function (x) { return '<span class="raison' + (/^Renvoyé|^Sans gestionnaire|^Sans action/.test(x) ? " chaude" : "") + '">' + esc(x) + "</span>"; }).join("") + "</div></td>" +
-        "<td>" + (d.titulaire ? esc(d.titulaire) : '<span class="muet">Personne</span>') + "<small>depuis " + esc(C.depuis(d.depuis).replace(/^il y a /, "")) + "</small></td>" +
+        "<td>" + (d.titulaire ? '<a class="lien-g" href="#/pilotage/' + esc(d.titulaire_id) + '">' + esc(d.titulaire) + "</a>" : '<span class="muet">Personne</span>') + "<small>depuis " + esc(C.depuis(d.depuis).replace(/^il y a /, "")) + "</small></td>" +
         '<td class="nb">' + (d.montant ? esc(C.eur(d.montant)) : '<span class="muet">–</span>') + "</td>" +
         '<td><div class="reaff-l"><select class="saisie" data-svers="' + esc(d.numero) + '" aria-label="Réaffecter ' + esc(d.numero) + '">' + opts(d.titulaire_id) + '</select><button type="button" class="btn petit" data-sreaff="' + esc(d.numero) + '">Valider</button></div></td></tr>';
     }).join("") + "</tbody></table></div></section>";
@@ -3372,7 +3391,7 @@ function blocEquipePilotage(eq, pm) {
     tri.map(function (x) {
       var presence = !x.disponible ? '<span class="presence absent">Absent' + (x.absent_jusqu_au ? " jusqu'au " + esc(C.dateCourte(x.absent_jusqu_au)) : "") + "</span>"
         : '<span class="presence">Présent' + (x.role !== "admin" && x.recoit_nouveaux === false ? ", sans nouveaux dossiers" : "") + (x.capacite_pct && x.capacite_pct < 100 ? ", " + x.capacite_pct + " %" : "") + "</span>";
-      return '<tr style="cursor:default"><td class="qui"><b>' + esc(x.nom) + "</b><small title=\"" + esc(x.derniere_connexion ? "Vu " + C.depuis(x.derniere_connexion) : "Jamais connecté") + '">' + esc(ROLES_G[x.role] || x.role) + ", " + esc(x.centre || (SERVICES[x.service] || x.service).toLowerCase()) + "</small></td>" +
+      return '<tr style="cursor:default"><td class="qui"><a class="lien-g" href="#/pilotage/' + esc(x.id) + '" title="Voir le détail de ' + esc(x.nom) + '">' + esc(x.nom) + "</a><small title=\"" + esc(x.derniere_connexion ? "Vu " + C.depuis(x.derniere_connexion) : "Jamais connecté") + '">' + esc(ROLES_G[x.role] || x.role) + ", " + esc(x.centre || (SERVICES[x.service] || x.service).toLowerCase()) + "</small></td>" +
         '<td class="nb">' + (x.a_traiter ? "<b>" + x.a_traiter + "</b>" : '<span class="muet">0</span>') + "</td>" +
         '<td class="nb">' + (x.sans_action ? '<span class="alerte-n">' + x.sans_action + "</span>" : '<span class="muet">0</span>') + "</td>" +
         '<td class="nb">' + (x.plus_ancien_jours != null ? x.plus_ancien_jours + " j" : '<span class="muet">–</span>') + "</td>" +
@@ -3462,6 +3481,66 @@ function brancherEquipePilotage(eq) {
       }).catch(function (x) { C.occupe(b, false); C.toast(x.message, true); });
     };
   });
+}
+
+/* Fiche d'un gestionnaire, ouverte depuis le Pilotage : ses chiffres, ses dossiers en cours, ce qu'il a fait récemment */
+function vueGestionnaire(id) {
+  equipeApi("gestionnaire", { id: id }).then(function (f) {
+    var g = f.gestionnaire, c = f.chiffres || {}, J = f.relance_jours || 3, l = f.dossiers || [], act = f.activite || [];
+    var membres = (S.equipePil || []).filter(function (x) { return x.id !== g.id && x.disponible !== false; });
+    var abs = g.disponible === false;
+    var h = '<div class="fil-g"><a href="#/pilotage">Pilotage</a> / ' + esc(g.nom) + "</div>" +
+      '<div class="entete-vue"><div><h1>' + esc(g.nom) + ' <span class="presence-g' + (abs ? " absent" : "") + '">' + (abs ? "Absent" + (g.absent_jusqu_au ? " jusqu'au " + esc(C.dateCourte(g.absent_jusqu_au)) : "") : "Présent") + "</span></h1>" +
+      "<p>" + esc(ROLES_G[g.role] || g.role) + (g.equipe ? ", équipe " + esc(g.equipe) : "") + (g.centre ? ", " + esc(g.centre) : "") +
+      (g.plafond_eur ? ", plafond " + esc(C.eur(g.plafond_eur)) : "") + (g.capacite_pct && g.capacite_pct < 100 ? ", " + g.capacite_pct + " % du temps" : "") +
+      ". " + (g.derniere_connexion ? "Connecté " + esc(C.depuis(g.derniere_connexion)) : "Jamais connecté") + (g.recoit_nouveaux === false ? ". Ne reçoit plus de nouveaux dossiers" : "") + ".</p></div>" +
+      '<div><button type="button" class="btn" id="g-presence">' + (abs ? "Marquer de retour" : "Marquer absent") + "</button></div></div>";
+    h += '<div class="pil-stats g-stats">' +
+      stat_g("À décider", c.a_decider || 0, c.sans_action ? '<span class="moins-bien">' + c.sans_action + "</span> sans action depuis plus de " + J + " jours" : "aucun en retard", c.sans_action) +
+      stat_g("Dossiers en cours", c.en_cours || 0, "charge pondérée " + Math.round(c.charge || 0)) +
+      stat_g("Reçus en 7 jours", c.recus_7j || 0, "attribués ou pris") +
+      stat_g("Traités en 30 jours", f.traites_30j || 0, (c.termines_30j || 0) + " terminé" + pl(c.termines_30j || 0, "") + " sur la période") + "</div>";
+    h += '<section class="bloc"><div class="bloc-tete"><h2>Dossiers en cours<span class="compte">' + l.length + '</span></h2></div>' +
+      (l.length ? '<div class="tableau-wrap"><table class="tableau g-dossiers"><thead><tr><th>Dossier</th><th>Où il en est</th><th class="nb">Montant</th><th>Dernière action</th>' + (membres.length ? "<th>Réaffecter</th>" : "") + "</tr></thead><tbody>" +
+        l.map(function (d) {
+          var retard = d.a_decider && d.jours > J;
+          return '<tr><td><a class="ref" href="#/dossier/' + esc(d.numero) + '">' + esc(d.numero) + "</a><small>" + esc(C.theme(d.theme)) + "</small></td>" +
+            "<td>" + C.statut(d.statut) + "<small>" + (d.pris_le ? "suivi depuis " + esc(C.depuis(d.pris_le).replace(/^il y a /, "")) : "") + "</small></td>" +
+            '<td class="nb">' + (d.montant ? esc(C.eur(d.montant)) : '<span class="muet">–</span>') + "</td>" +
+            "<td>" + (d.derniere_action ? esc(C.depuis(d.derniere_action)) + "<small>" + esc(libActG(d.derniere_action_lib)) + "</small>" : '<span class="muet">Aucune</span>') +
+            (retard ? '<span class="raison chaude" style="margin-top:4px;display:inline-block">Sans action depuis ' + d.jours + " j</span>" : "") + "</td>" +
+            (membres.length ? '<td><div class="reaff-l"><select class="saisie" data-gvers="' + esc(d.numero) + '" aria-label="Réaffecter ' + esc(d.numero) + '"><option value="">Choisir…</option><option value="-">File commune</option>' +
+              membres.map(function (m) { return '<option value="' + esc(m.id) + '">' + esc(m.nom) + "</option>"; }).join("") + '</select><button type="button" class="btn petit" data-greaff="' + esc(d.numero) + '">Valider</button></div></td>' : "") + "</tr>";
+        }).join("") + "</tbody></table></div>" : '<div class="vide">Aucun dossier en cours.</div>') + "</section>";
+    h += '<section class="bloc"><div class="bloc-tete"><h2>Activité récente</h2></div>' + (act.length ? '<ul class="g-activite">' + act.slice(0, 25).map(function (a) {
+      return '<li><span class="muet">' + esc(C.depuis(a.le)) + "</span><span>" + esc(libActG(a.action)) + ' <a class="ref" href="#/dossier/' + esc(a.numero) + '">' + esc(a.numero) + "</a></span></li>";
+    }).join("") + "</ul>" : '<div class="vide">Aucune action enregistrée.</div>') + "</section>";
+    $("vue").innerHTML = h;
+    $("g-presence").onclick = function () {
+      if (!abs && !confirm("Marquer " + g.nom + " absent ? Ses dossiers à décider seront confiés aux collègues présents.")) return;
+      var b = this; C.occupe(b, true, "");
+      api("disponibilite", { body: { gestionnaire: g.id, disponible: abs } }).then(function (r) {
+        C.toast(abs ? g.nom + " est de retour" : g.nom + " est absent" + (r.dossiers_redistribues ? " : " + r.dossiers_redistribues + " dossier(s) redistribué(s)" : ""));
+        vueGestionnaire(id);
+      }).catch(function (x) { C.occupe(b, false); C.toast(x.message, true); });
+    };
+    document.querySelectorAll("[data-greaff]").forEach(function (b) {
+      b.onclick = function () {
+        var n = b.dataset.greaff, v = document.querySelector('[data-gvers="' + n + '"]').value;
+        if (!v) return C.toast("Choisissez à qui confier le dossier", true);
+        C.occupe(b, true, "");
+        api("reaffecter", { body: { numero: n, vers: v === "-" ? null : v } }).then(function () { C.toast("Dossier " + n + " réaffecté"); vueGestionnaire(id); })
+          .catch(function (x) { C.occupe(b, false); C.toast(x.message, true); });
+      };
+    });
+  }).catch(erreurVue);
+}
+function libActG(a) {
+  var m = { changement_etat: "a fait avancer le dossier", attribution: "a reçu le dossier" };
+  return (ACTIONS_H[a] || m[a] || String(a || "").replace(/_/g, " ")).replace(/ (sur )?le dossier$/, "");
+}
+function stat_g(lib, v, sous, alerte) {
+  return '<div class="pil-stat' + (alerte ? " alerte-g" : "") + '"><span class="lib">' + lib + '</span><span class="val">' + v + '</span><span class="delta">' + sous + "</span></div>";
 }
 
 /* Activité de l'équipe : ce que chacun vient de faire, mis à jour toutes les 30 secondes */
