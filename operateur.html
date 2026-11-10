@@ -276,7 +276,7 @@ var ICONES = {
 var ic = function (n) { return '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + ICONES[n] + "</svg>"; };
 var FLECHE = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>';
 var CONTRAT = { essai: ["Essai", "essai"], actif: ["Actif", "ok"], suspendu: ["Suspendu", "ko"], resilie: ["Résilié", "neutre"] };
-var LIB_ACTION = { ouvrir_client: "Client ouvert", inviter_admin: "Administrateur invité", renvoyer: "Invitation renvoyée", reinitialiser: "Lien de mot de passe envoyé", activer: "Compte activé ou désactivé", role: "Rôle changé",
+var LIB_ACTION = { ouvrir_client: "Client ouvert", inviter_admin: "Administrateur invité", inviter_compte: "Accès créé", renvoyer: "Invitation renvoyée", reinitialiser: "Lien de mot de passe envoyé", activer: "Compte activé ou désactivé", role: "Rôle changé",
   support_traiter: "Demande de support traitée", contrat: "Contrat modifié", renommer_client: "Client renommé", deplacer: "Personne déplacée", equipe_creer: "Équipe créée", equipe_renommer: "Équipe renommée", equipe_manager: "Manager d'équipe changé", equipe_supprimer: "Équipe supprimée" };
 var LIB_CHAMP = { nom: "nom", email: "email", role: "rôle", centre: "centre", equipe_id: "équipe", manager_id: "manager", statut: "statut", offre: "offre", debut: "début", fin: "échéance", prix_annuel_eur: "prix annuel", utilisateurs_max: "utilisateurs prévus", contact_nom: "contact", contact_email: "email du contact", reponse: "réponse", actif: "actif", admin_nom: "administrateur", admin_email: "email de l'administrateur" };
 var ONGLETS = [["organisation", "Organisation"], ["comptes", "Comptes"], ["contrat", "Contrat"], ["support", "Support"], ["journal", "Journal"]];
@@ -533,7 +533,15 @@ function ongletComptes(f) {
         '<td><select class="saisie" data-equipe="' + esc(g.id) + '" style="min-width:180px">' + opts(g.equipe_id) + '</select></td><td class="nb masque-m">' + (charge[g.id] || 0) + '</td><td class="muet masque-m">' + esc(quand(g.derniere_connexion)) + "</td>" +
         '<td class="nb" style="white-space:nowrap"><button class="btn petit" data-mdp="' + esc(g.id) + '" data-nom="' + esc(g.nom) + '">Lien mot de passe</button> <button class="btn petit discret" data-actif="' + esc(g.id) + '" data-val="' + (!g.actif) + '" data-nom="' + esc(g.nom) + '">' + (g.actif ? "Désactiver" : "Réactiver") + "</button></td></tr>";
     }).join("") || '<tr><td colspan="6"><div class="vide">Aucun compte activé pour l\'instant.</div></td></tr>') + "</tbody></table></div></section>";
-  h += '<section class="bloc"><div class="bloc-tete"><h2>Inviter un administrateur</h2></div><form class="bloc-corps pile" id="f-adm" novalidate><p class="muet petit" style="margin:0">L\'administrateur crée ensuite les accès de ses managers, qui invitent leurs gestionnaires.</p><div class="ligne-form"><input class="saisie" id="a-nom" placeholder="Prénom Nom" style="max-width:220px"><input class="saisie" id="a-mail" type="email" placeholder="prenom.nom@compagnie.fr" style="max-width:300px"><button class="btn primaire" id="a-ok" type="submit">Envoyer l\'invitation</button></div></form></section>';
+  var centres = [];
+  ((f.structure || {}).centres || []).concat(f.equipes).forEach(function (x) { var n = x.nom && x.equipes ? x.nom : x.centre; if (n && centres.indexOf(n) < 0) centres.push(n); });
+  h += '<section class="bloc"><div class="bloc-tete"><h2>Créer un accès</h2></div><form class="bloc-corps pile" id="f-adm" novalidate>' +
+    '<p class="muet petit" style="margin:0">La personne reçoit un mail pour activer son compte. Un manager placé dans une équipe sans manager en devient le manager ; il invite ensuite ses gestionnaires.</p>' +
+    '<div class="grille-3"><label class="champ">Prénom Nom<input class="saisie" id="a-nom"></label><label class="champ">Email professionnel<input class="saisie" id="a-mail" type="email" placeholder="prenom.nom@compagnie.fr"></label>' +
+    '<label class="champ">Rôle<select class="saisie" id="a-role"><option value="admin">Administrateur</option><option value="superviseur">Manager</option><option value="gestionnaire">Gestionnaire</option></select></label></div>' +
+    '<div class="grille-3" id="a-place" hidden><label class="champ">Centre de gestion<input class="saisie" id="a-centre" list="a-centres" placeholder="ex. Île-de-France"><datalist id="a-centres">' + centres.map(function (c) { return '<option value="' + esc(c) + '">'; }).join("") + '</datalist></label>' +
+    '<label class="champ">Équipe<select class="saisie" id="a-equipe"></select></label><label class="champ" id="a-neq-l">Nom de la nouvelle équipe<input class="saisie" id="a-neq" placeholder="ex. Dommages Paris 1"></label></div>' +
+    '<div class="ligne-form"><button class="btn primaire" id="a-ok" type="submit">Envoyer l\'invitation</button></div></form></section>';
   return h;
 }
 function ongletContrat(f) {
@@ -568,7 +576,25 @@ function brancherFiche(f) {
   document.querySelectorAll("[data-mdp]").forEach(function (b) { b.onclick = function () { if (confirm("Envoyer à " + b.dataset.nom + " un lien pour choisir un nouveau mot de passe ?")) { C.occupe(b, true, ""); maj(op("reinitialiser", { id: b.dataset.mdp })); } }; });
   document.querySelectorAll("[data-actif]").forEach(function (b) { b.onclick = function () { var on = b.dataset.val === "true"; if (on || confirm("Désactiver le compte de " + b.dataset.nom + " ? Il ne pourra plus se connecter.")) maj(op("activer", { id: b.dataset.actif, actif: on }), on ? "Compte réactivé" : "Compte désactivé"); }; });
   document.querySelectorAll("[data-renvoyer]").forEach(function (b) { b.onclick = function () { C.occupe(b, true, ""); maj(op("renvoyer", { id: b.dataset.renvoyer })); }; });
-  if ($("f-adm")) $("f-adm").addEventListener("submit", function (e) { e.preventDefault(); C.occupe($("a-ok"), true, "Envoi"); maj(op("inviter_admin", { assureur_id: id, nom: $("a-nom").value, email: $("a-mail").value })); });
+  if ($("f-adm")) {
+    var majPlace = function () {
+      var role = $("a-role").value, centre = $("a-centre").value.trim(), avant = $("a-equipe").value;
+      $("a-place").hidden = role === "admin";
+      var eqs = f.equipes.filter(function (e) { return e.centre === centre && (role !== "superviseur" || !e.manager_id); });
+      $("a-equipe").innerHTML = (role === "gestionnaire" ? '<option value="">Sans équipe pour l\'instant</option>' : "") +
+        eqs.map(function (e) { return '<option value="' + esc(e.id) + '">' + esc(e.nom) + (e.manager ? " (manager : " + esc(e.manager) + ")" : "") + "</option>"; }).join("") + '<option value="+">Nouvelle équipe…</option>';
+      if (avant && $("a-equipe").querySelector('option[value="' + avant + '"]')) $("a-equipe").value = avant;
+      $("a-neq-l").hidden = $("a-equipe").value !== "+";
+    };
+    $("a-role").onchange = majPlace; $("a-centre").oninput = majPlace; $("a-equipe").onchange = majPlace; majPlace();
+    $("f-adm").addEventListener("submit", function (e) {
+      e.preventDefault(); var role = $("a-role").value, eq = $("a-equipe").value;
+      var p = { assureur_id: id, nom: $("a-nom").value, email: $("a-mail").value, role: role };
+      if (role !== "admin") { p.centre = $("a-centre").value.trim(); if (eq === "+") p.equipe_nom = $("a-neq").value.trim(); else if (eq) p.equipe_id = eq; }
+      if (role === "superviseur" && eq === "+" && !p.equipe_nom) return C.toast("Donnez un nom à la nouvelle équipe", true);
+      C.occupe($("a-ok"), true, "Envoi"); maj(op("inviter_compte", p));
+    });
+  }
   if ($("f-k")) $("f-k").addEventListener("submit", function (e) {
     e.preventDefault(); C.occupe($("k-ok"), true, "Enregistrement");
     var nom = $("k-client").value.trim(), suite = nom && nom !== f.client.nom ? op("renommer_client", { assureur_id: id, nom: nom }) : Promise.resolve();
