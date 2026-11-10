@@ -2996,8 +2996,10 @@ function brancherTitulaire(f) {
   };
   if (ta) ta.onclick = function () {
     ta.disabled = true;
-    api("pilotage-equipe" + qb()).then(function (p) {
-      var l = (p.gestionnaires || []).filter(function (g) { return g.actif; });
+    // un manager ne réaffecte qu'aux membres de son équipe ; l'administrateur voit toute la compagnie
+    var source = S.moi && S.moi.role === "superviseur" ? equipeApi("pilotage", { branche: S.branche }) : api("pilotage-equipe" + qb());
+    source.then(function (p) {
+      var l = (p.gestionnaires || []).filter(function (g) { return g.actif && g.role !== "admin" && g.role !== "superviseur"; });
       $("t-choix").innerHTML = '<select class="saisie" id="t-vers" style="min-width:200px"><option value="">File commune</option>' +
         l.map(function (g) { return '<option value="' + esc(g.id) + '"' + (f.gestionnaire && f.gestionnaire.id === g.id ? " selected" : "") + ">" + esc(g.nom) + " (" + g.a_traiter + " à traiter)</option>"; }).join("") +
         '</select> <button class="btn petit primaire" id="t-ok">Valider</button>';
