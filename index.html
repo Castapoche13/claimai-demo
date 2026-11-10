@@ -57,6 +57,10 @@
 .g-stats .pil-stat.alerte-g { border-color: rgba(217,174,69,.55); }
 .g-stats .pil-stat .delta .moins-bien { color: var(--jaune-texte); font-weight: 600; }
 .g-dossiers td small { display: block; font-size: 12.5px; color: var(--gris); margin-top: 2px; }
+.g-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.g-selection { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 10px 20px; background: var(--jaune-pale); border-bottom: 1px solid var(--trait); font-size: 13.5px; font-weight: 500; }
+.g-selection[hidden] { display: none; }
+.g-selection .saisie { height: 32px; width: auto; min-width: 180px; }
 .g-activite { list-style: none; margin: 0; padding: 0; }
 .g-activite li { display: grid; grid-template-columns: 120px minmax(0, 1fr); gap: 12px; padding: 10px 20px; border-top: 1px solid var(--trait); font-size: 13.5px; }
 .g-activite li:first-child { border-top: 0; }
@@ -3492,17 +3496,20 @@ function vueGestionnaire(id) {
       "<p>" + esc(ROLES_G[g.role] || g.role) + (g.equipe ? ", équipe " + esc(g.equipe) : "") + (g.centre ? ", " + esc(g.centre) : "") +
       (g.plafond_eur ? ", plafond " + esc(C.eur(g.plafond_eur)) : "") + (g.capacite_pct && g.capacite_pct < 100 ? ", " + g.capacite_pct + " % du temps" : "") +
       ". " + (g.derniere_connexion ? "Connecté " + esc(C.depuis(g.derniere_connexion)) : "Jamais connecté") + (g.recoit_nouveaux === false ? ". Ne reçoit plus de nouveaux dossiers" : "") + ".</p></div>" +
-      '<div><button type="button" class="btn" id="g-presence">' + (abs ? "Marquer de retour" : "Marquer absent") + "</button></div></div>";
+      '<div class="g-actions"><button type="button" class="btn" id="g-presence">' + (abs ? "Marquer de retour" : "Marquer absent") + "</button>" +
+      (l.length ? '<button type="button" class="btn primaire" id="g-repartir" title="Chaque dossier va au collègue présent du même centre qui en a le moins, en priorité dans la même équipe">Répartir ses ' + l.length + " dossier" + pl(l.length, "") + "</button>" : "") + "</div></div>";
     h += '<div class="pil-stats g-stats">' +
       stat_g("À décider", c.a_decider || 0, c.sans_action ? '<span class="moins-bien">' + c.sans_action + "</span> sans action depuis plus de " + J + " jours" : "aucun en retard", c.sans_action) +
       stat_g("Dossiers en cours", c.en_cours || 0, "charge pondérée " + Math.round(c.charge || 0)) +
       stat_g("Reçus en 7 jours", c.recus_7j || 0, "attribués ou pris") +
       stat_g("Traités en 30 jours", f.traites_30j || 0, (c.termines_30j || 0) + " terminé" + pl(c.termines_30j || 0, "") + " sur la période") + "</div>";
     h += '<section class="bloc"><div class="bloc-tete"><h2>Dossiers en cours<span class="compte">' + l.length + '</span></h2></div>' +
-      (l.length ? '<div class="tableau-wrap"><table class="tableau g-dossiers"><thead><tr><th>Dossier</th><th>Où il en est</th><th class="nb">Montant</th><th>Dernière action</th>' + (membres.length ? "<th>Réaffecter</th>" : "") + "</tr></thead><tbody>" +
+      (l.length ? (membres.length ? '<div class="g-selection" id="g-sel" hidden><span id="g-sel-n"></span><select class="saisie" id="g-sel-vers" aria-label="Confier à"><option value="">Confier à…</option><option value="-">File commune</option>' +
+          membres.map(function (m) { return '<option value="' + esc(m.id) + '">' + esc(m.nom) + "</option>"; }).join("") + '</select><button type="button" class="btn petit primaire" id="g-sel-ok">Confier la sélection</button></div>' : "") +
+        '<div class="tableau-wrap"><table class="tableau g-dossiers"><thead><tr>' + (membres.length ? '<th style="width:36px"><input type="checkbox" id="g-tout" aria-label="Tout sélectionner"></th>' : "") + '<th>Dossier</th><th>Où il en est</th><th class="nb">Montant</th><th>Dernière action</th>' + (membres.length ? "<th>Réaffecter</th>" : "") + "</tr></thead><tbody>" +
         l.map(function (d) {
           var retard = d.a_decider && d.jours > J;
-          return '<tr><td><a class="ref" href="#/dossier/' + esc(d.numero) + '">' + esc(d.numero) + "</a><small>" + esc(C.theme(d.theme)) + "</small></td>" +
+          return "<tr>" + (membres.length ? '<td><input type="checkbox" class="g-coche" value="' + esc(d.numero) + '" aria-label="Sélectionner ' + esc(d.numero) + '"></td>' : "") + '<td><a class="ref" href="#/dossier/' + esc(d.numero) + '">' + esc(d.numero) + "</a><small>" + esc(C.theme(d.theme)) + "</small></td>" +
             "<td>" + C.statut(d.statut) + "<small>" + (d.pris_le ? "suivi depuis " + esc(C.depuis(d.pris_le).replace(/^il y a /, "")) : "") + "</small></td>" +
             '<td class="nb">' + (d.montant ? esc(C.eur(d.montant)) : '<span class="muet">–</span>') + "</td>" +
             "<td>" + (d.derniere_action ? esc(C.depuis(d.derniere_action)) + "<small>" + esc(libActG(d.derniere_action_lib)) + "</small>" : '<span class="muet">Aucune</span>') +
@@ -3521,6 +3528,27 @@ function vueGestionnaire(id) {
         C.toast(abs ? g.nom + " est de retour" : g.nom + " est absent" + (r.dossiers_redistribues ? " : " + r.dossiers_redistribues + " dossier(s) redistribué(s)" : ""));
         vueGestionnaire(id);
       }).catch(function (x) { C.occupe(b, false); C.toast(x.message, true); });
+    };
+    if ($("g-repartir")) $("g-repartir").onclick = function () {
+      if (!confirm("Répartir les " + l.length + " dossiers de " + g.nom + " entre les collègues présents de son centre ?\n\nChaque dossier va à celui qui en a le moins, en priorité dans la même équipe. Ceux que personne ne peut prendre partent dans la file commune.")) return;
+      var b = this; C.occupe(b, true, "Répartition");
+      api("transferer-dossiers", { body: { de: g.id, vers: null } }).then(function (r) {
+        C.toast((r.transferes || 0) + " dossier(s) réparti(s)" + (r.file_commune ? ", " + r.file_commune + " en file commune" : "")); vueGestionnaire(id);
+      }).catch(function (x) { C.occupe(b, false); C.toast(x.message, true); });
+    };
+    var majSel = function () {
+      var n = document.querySelectorAll(".g-coche:checked").length;
+      if (!$("g-sel")) return;
+      $("g-sel").hidden = !n; $("g-sel-n").textContent = n + " dossier" + pl(n, "") + " sélectionné" + pl(n, "");
+    };
+    document.querySelectorAll(".g-coche").forEach(function (c) { c.onchange = majSel; });
+    if ($("g-tout")) $("g-tout").onchange = function () { var on = this.checked; document.querySelectorAll(".g-coche").forEach(function (c) { c.checked = on; }); majSel(); };
+    if ($("g-sel-ok")) $("g-sel-ok").onclick = function () {
+      var v = $("g-sel-vers").value, nums = Array.prototype.map.call(document.querySelectorAll(".g-coche:checked"), function (c) { return c.value; });
+      if (!v) return C.toast("Choisissez à qui confier la sélection", true);
+      var b = this; C.occupe(b, true, "Envoi");
+      nums.reduce(function (p, n) { return p.then(function (ok) { return api("reaffecter", { body: { numero: n, vers: v === "-" ? null : v } }).then(function () { return ok + 1; }, function (x) { C.toast(n + " : " + x.message, true); return ok; }); }); }, Promise.resolve(0))
+        .then(function (ok) { C.toast(ok + " dossier(s) confié(s)"); vueGestionnaire(id); });
     };
     document.querySelectorAll("[data-greaff]").forEach(function (b) {
       b.onclick = function () {
