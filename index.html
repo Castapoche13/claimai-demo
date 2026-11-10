@@ -41,6 +41,8 @@
 .connexion .sep-c::before, .connexion .sep-c::after { content: ""; flex: 1; height: 1px; background: rgba(255,255,255,.1); }
 .demande-ligne { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding: 12px 20px; border-top: 1px solid var(--trait); }
 .demande-ligne .actions { display: flex; gap: 8px; }
+.btn.danger { color: var(--rouge-texte); }
+.btn.danger:hover { background: var(--rouge-pale); color: var(--rouge-texte); }
 .lien-g { color: var(--encre); font-weight: 600; text-decoration: none; border-bottom: 1px solid var(--trait-fort); }
 .lien-g:hover { color: var(--bleu); border-bottom-color: currentColor; text-decoration: none; }
 .fil-g { font-size: 13px; color: var(--gris); margin-bottom: 8px; }
@@ -868,15 +870,16 @@ function surveiller() { verifierPriorites(); clearInterval(minuterie); minuterie
 
 /* ---------------- Routage ---------------- */
 window.addEventListener("hashchange", router);
-function router() {
+function router(silencieux) {
   if (!api) return;
+  silencieux = silencieux === true;
   var h = location.hash.replace(/^#\/?/, "").split("/");
   var vue = h[0] || "file";
   document.querySelectorAll(".nav a[data-vue]").forEach(function (a) {
     if (a.dataset.vue === vue || (a.dataset.vue === "clients" && vue === "client")) a.setAttribute("aria-current", "page"); else a.removeAttribute("aria-current");
   });
-  var v = $("vue"); v.innerHTML = '<div class="vide"><span class="tourne" style="display:inline-block"></span></div>';
-  window.scrollTo(0, 0);
+  var v = $("vue");
+  if (!silencieux) { v.innerHTML = '<div class="vide"><span class="tourne" style="display:inline-block"></span></div>'; window.scrollTo(0, 0); }
   var f = { file: vueFile, dossiers: vueDossiers, dossier: function () { vueDossier(decodeURIComponent(h[1] || "")); },
     archives: vueArchives, recherche: function () { vueRecherche(decodeURIComponent(h[1] || "")); }, clients: vueClients, client: function () { vueClient(decodeURIComponent(h[1] || "")); }, doublons: vueDoublons, declarer: vueDeclarer, boites: vueBoites, pilotage: function () { if (h[1]) vueGestionnaire(decodeURIComponent(h[1])); else vuePilotage(); }, raccordement: function () { vueRaccordement(h[1]); }, equipe: vueEquipe, aide: vueAide }[vue] || vueFile;
   f();
@@ -1175,11 +1178,6 @@ function brancherMails() {
   });
 }
 // L'accueil se met à jour seul toutes les 30 secondes : un mail arrivé apparaît sans recharger
-setInterval(function () {
-  var h = location.hash.replace(/^#\/?/, "").split("/")[0] || "file";
-  var a = document.activeElement;
-  if (api && h === "file" && !document.hidden && !(a && /INPUT|TEXTAREA|SELECT/.test(a.tagName)) && !document.querySelector('[data-mail][aria-expanded="true"], [data-voir-plus][aria-expanded="true"]')) vueFile();
-}, 30000);
 function ligneFile(d, extra) {
   var a = attente(d), libre = !d.gestionnaire;
   return '<li><a class="ligne vous" href="#/dossier/' + esc(d.numero) + '"><span class="repere"></span>' +
@@ -3382,7 +3380,7 @@ function blocEquipePilotage(eq, pm) {
   g.forEach(function (x) { var e = pg[x.id] || {}; x.plus_ancien_jours = e.plus_ancien_jours; x.sans_action = e.sans_action || 0; x.delai_decision_heures = e.delai_decision_heures; });
   var tri = g.slice().sort(function (a, b) { return (b.sans_action - a.sans_action) || (b.a_traiter - a.a_traiter) || (b.en_cours - a.en_cours); });
   var h = '<section class="bloc"><div class="bloc-tete"><div><h2>Équipe</h2><p class="muet petit" style="margin-top:2px">' +
-    (rep ? "Les dossiers qui demandent une personne partent automatiquement aux présents, au prorata de leur temps de travail." : "File commune : chacun prend ses dossiers.") +
+    (rep ? "Les dossiers qui demandent une personne partent automatiquement aux présents, au prorata de leur temps de travail. La charge est rééquilibrée toute seule toutes les 5 minutes ; le bouton le fait tout de suite." : "File commune : chacun prend ses dossiers.") +
     (eq.sans_titulaire ? " " + eq.sans_titulaire + " décision" + pl(eq.sans_titulaire, "") + " sans gestionnaire attitré." : "") + "</p></div>" +
     (rep ? '<button type="button" class="btn petit" id="b-repartir" title="Attribue les dossiers sans gestionnaire ou tenus par un absent, puis équilibre la charge">Répartir équitablement</button>' : "") + "</div>";
   if (!tri.length) return h + '<div class="vide">Aucun compte actif dans cette équipe.</div></section>';
@@ -3782,7 +3780,8 @@ function rendreEquipe(d, envoi) {
         : (g.plafond_eur == null ? '<span class="muet">Sans plafond</span>' : esc(C.nombre(g.plafond_eur, 0)) + " €");
       return '<tr style="cursor:default"><td>' + esc(g.nom) + (g.id === d.moi.id ? ' <span class="muet petit">(vous)</span>' : "") + '</td><td class="muet">' + esc(g.email) + "</td><td>" + role + "</td><td>" + centre + "</td><td>" + equipe + "</td><td>" + service + '</td><td class="nb">' + plafond + "</td>" +
         '<td class="muet">' + esc(g.derniere_connexion ? C.depuis(g.derniere_connexion) : "Jamais") + "</td><td>" + (g.actif ? '<span class="statut ok">Actif</span>' : '<span class="statut neutre">Désactivé</span>') + "</td>" +
-        '<td class="nb">' + (modifiable ? '<button class="btn petit" data-enreg="' + g.id + '">Enregistrer</button> <button class="btn petit discret" data-actif="' + g.id + '" data-val="' + (!g.actif) + '" data-nom="' + esc(g.nom) + '">' + (g.actif ? "Désactiver" : "Réactiver") + "</button>" : "") + "</td></tr>";
+        '<td class="nb">' + (modifiable ? '<button class="btn petit" data-enreg="' + g.id + '">Enregistrer</button> <button class="btn petit discret" data-actif="' + g.id + '" data-val="' + (!g.actif) + '" data-nom="' + esc(g.nom) + '">' + (g.actif ? "Désactiver" : "Réactiver") + "</button>" +
+          (g.id !== d.moi.id ? ' <button class="btn petit discret danger" data-suppr="' + g.id + '" data-nom="' + esc(g.nom) + '">Supprimer</button>' : "") : "") + "</td></tr>";
     }).join("") + (membres.length ? "" : '<tr><td colspan="10"><div class="vide">Aucun compte pour ce filtre.</div></td></tr>') + "</tbody></table></div></section>" +
     '<datalist id="liste-centres">' + d.centres.map(function (c) { return '<option value="' + esc(c) + '">'; }).join("") + "</datalist>";
   $("vue").innerHTML = h;
@@ -3811,6 +3810,17 @@ function rendreEquipe(d, envoi) {
       var on = b.dataset.val === "true";
       if (!on && !confirm("Désactiver le compte de " + b.dataset.nom + " ? Il ne pourra plus se connecter. Ses dossiers restent dans le centre et peuvent être réattribués.")) return;
       maj(b, { id: b.dataset.actif, actif: on }, on ? "Compte réactivé" : "Compte désactivé");
+    };
+  });
+  document.querySelectorAll("[data-suppr]").forEach(function (b) {
+    b.onclick = function () {
+      if (!confirm("Supprimer définitivement le compte de " + b.dataset.nom + " ?\n\nSes dossiers en cours sont confiés aux collègues présents de son centre. L'historique des dossiers garde la trace de ce qu'il a fait. Cette action ne peut pas être annulée.")) return;
+      C.occupe(b, true, "");
+      equipeApi("supprimer", { id: b.dataset.suppr }).then(function (r) {
+        var x = r.supprime || {};
+        C.toast("Compte de " + (x.nom || b.dataset.nom) + " supprimé" + (x.reaffectes ? ", " + x.reaffectes + " dossier(s) confié(s) aux collègues" : "") + (x.file_commune ? ", " + x.file_commune + " en file commune" : ""));
+        recharger(r);
+      }).catch(function (x) { C.occupe(b, false); C.toast(x.message, true); });
     };
   });
   if (!admin) brancherChoixEquipe();
@@ -4251,12 +4261,13 @@ $("b-compte").addEventListener("click", function () { sb.auth.signOut().finally(
 // Accueil et Pilotage se mettent à jour seuls toutes les 30 secondes : le responsable voit le travail de l'équipe en direct
 setInterval(function () {
   if (!S.moi || document.hidden || $("ecran-app").hidden) return;
-  var vue = location.hash.replace(/^#\/?/, "").split("/")[0] || "file";
-  if (vue !== "file" && vue !== "pilotage") return;
+  var hh = location.hash.replace(/^#\/?/, "").split("/"), vue = hh[0] || "file";
+  if ((vue !== "file" && vue !== "pilotage") || hh[1]) return;
   var a = document.activeElement;
   if (a && /^(INPUT|SELECT|TEXTAREA)$/.test(a.tagName)) return;
   if (document.querySelector('tr.gerer:not([hidden]), .mail-detail:not([hidden]), #table-flux:not([hidden])')) return;
-  var y = window.scrollY; router(); setTimeout(function () { window.scrollTo(0, y); }, 800);
+  if (document.querySelector('[data-mail][aria-expanded="true"], [data-voir-plus][aria-expanded="true"]')) return;
+  var y = window.scrollY; router(true); setTimeout(function () { window.scrollTo(0, y); }, 600);
 }, 30000);
 })();
 </script>
