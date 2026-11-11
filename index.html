@@ -747,7 +747,7 @@ function bandeauCorporel() {
 
 function entrer(session) {
   if (!session) return Promise.resolve();
-  var base = ($("c-base").value || "").trim() || C.API_DEFAUT;
+  var base = C.API_DEFAUT; // serveur fixe, jamais modifiable depuis la page
   S.base = base; api = C.client(base, jeton, entetesEnv);
   if (session.user && session.user.user_metadata && session.user.user_metadata.mdp_provisoire) {
     $("form-connexion").hidden = true; $("form-mdp").hidden = false; $("m-mdp").focus();
@@ -2547,7 +2547,7 @@ function lienEspace(f, email) {
 }
 function lienPortail(l) {
   var t = (String(l).match(/[?&]t=([0-9a-f]{64})/) || [])[1]; if (!t) return null;
-  return "portail.html?t=" + t + (S.base !== C.API_DEFAUT ? "&api=" + encodeURIComponent(S.base) : "");
+  return "portail.html?t=" + t;
 }
 
 function blocPrestataires(f) {
