@@ -157,8 +157,34 @@ body { background: var(--papier); }
 .pile { display: grid; gap: 16px; }
 .ad-journal td:first-child { white-space: nowrap; color: var(--gris); }
 
+.ad-etapes { list-style: none; margin: 0; padding: 4px 0; }
+.ad-etapes li { display: flex; gap: 12px; align-items: flex-start; padding: 10px 20px; }
+.ad-etapes li + li { border-top: 1px solid var(--trait); }
+.ad-etapes .pt { flex: none; width: 8px; height: 8px; border-radius: 50%; background: var(--gris-clair); margin-top: 7px; }
+.ad-etapes .pt.rouge { background: var(--rouge); box-shadow: 0 0 0 4px var(--rouge-pale); }
+.ad-etapes .pt.vert { background: var(--vert, #2f8f5b); }
+.ad-etapes li div { display: grid; gap: 2px; }
+.ad-etapes li span:not(.pt):not(.muet) { color: var(--gris); font-size: 13px; }
+.mes-apercu { display: grid; gap: 6px; padding: 12px 14px; border: 1px solid var(--trait); border-top: 4px solid #1f4e8c; border-radius: 8px; min-height: 64px; align-content: center; }
+.mes-apercu img { max-height: 30px; max-width: 160px; }
+.mes-apercu span { font-size: 12px; color: var(--gris); word-break: break-all; }
+.j-filtres { align-items: flex-end; flex-wrap: wrap; }
+.j-filtres .champ { min-width: 150px; }
+.ad-actions { white-space: nowrap; }
+.tableau-wrap { overflow-x: auto; }
+@media (max-width: 600px) {
+  .ad-comptes thead { display: none; }
+  .ad-comptes, .ad-comptes tbody, .ad-comptes tr, .ad-comptes td { display: block; width: 100%; }
+  .ad-comptes tr { padding: 12px 16px; border-top: 1px solid var(--trait); }
+  .ad-comptes td { padding: 4px 0 !important; border: 0 !important; }
+  .ad-comptes td select { width: 100%; min-width: 0 !important; }
+  .ad-comptes .ad-actions { white-space: normal; text-align: left; display: flex; flex-wrap: wrap; gap: 8px; }
+}
 @media (max-width: 960px) {
-  .ad { grid-template-columns: 1fr; }
+  .ad { grid-template-columns: minmax(0, 1fr); }
+  .ad-menu, .ad-page, .ad-page > * { min-width: 0; }
+  .ad-page { grid-template-columns: minmax(0, 1fr); }
+  .ad-menu ul { max-width: 100%; }
   .ad-menu { position: static; height: auto; flex-direction: row; flex-wrap: wrap; align-items: center; gap: 12px; padding: 12px 16px; border-right: 0; border-bottom: 1px solid var(--trait); }
   .ad-menu ul { display: flex; overflow-x: auto; }
   .ad-bas { display: none; }
@@ -301,11 +327,19 @@ var ICONES = {
 var ic = function (n) { return '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + ICONES[n] + "</svg>"; };
 var FLECHE = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>';
 var CONTRAT = { essai: ["Essai", "essai"], actif: ["Actif", "ok"], suspendu: ["Contrat suspendu", "ko"], resilie: ["Résilié", "neutre"] };
-var LIB_ACTION = { ouvrir_client: "Client ouvert", inviter_admin: "Administrateur invité", inviter_compte: "Accès créé", renvoyer: "Invitation renvoyée", reinitialiser: "Lien de mot de passe envoyé", activer: "Compte activé ou désactivé", role: "Rôle changé",
+var LIB_ACTION = { ouvrir_client: "Client ouvert", inviter_admin: "Administrateur invité", inviter_compte: "Accès créé", renvoyer: "Invitation renvoyée", reinitialiser: "Lien de mot de passe envoyé", activer: "Compte activé ou désactivé", role: "Rôle changé", mise_en_service_maj: "Réglages de mise en service modifiés", envois_mode: "Mode d'envoi des mails changé",
   support_traiter: "Demande de support traitée", contrat: "Contrat modifié", renommer_client: "Client renommé", deplacer: "Personne déplacée", equipe_creer: "Équipe créée", equipe_renommer: "Équipe renommée", equipe_manager: "Manager d'équipe changé", equipe_supprimer: "Équipe supprimée",
   annuler_invitation: "Invitation annulée", suspendre: "Accès suspendu ou rétabli" };
-var LIB_CHAMP = { nom: "nom", email: "email", role: "rôle", centre: "centre", equipe_id: "équipe", manager_id: "manager", statut: "statut", offre: "offre", debut: "début", fin: "échéance", prix_annuel_eur: "prix annuel", utilisateurs_max: "utilisateurs prévus", contact_nom: "contact", contact_email: "email du contact", reponse: "réponse", actif: "actif", admin_nom: "administrateur", admin_email: "email de l'administrateur", cible: "personne", motif: "motif", suspendre: "suspendre" };
-var ONGLETS = [["organisation", "Organisation"], ["comptes", "Comptes"], ["contrat", "Contrat"], ["support", "Support"], ["journal", "Journal"]];
+// libellé de l'action réelle, selon ce qui a été fait
+function libAction(j) {
+  var d = j.details || {}, l = LIB_ACTION[j.action] || j.action;
+  if (j.action === "activer") l = d.actif === true ? "Compte réactivé" : "Compte désactivé";
+  else if (j.action === "suspendre") l = d.suspendre === true ? "Accès suspendu" : "Accès rétabli";
+  else if (j.action === "envois_mode") l = d.reel === true ? "Mails aux assurés passés en réel" : "Mails aux assurés repassés en test";
+  return d.refus ? l + " : refusé" : l;
+}
+var LIB_CHAMP = { nom: "nom", email: "email", role: "rôle", centre: "centre", equipe_id: "équipe", manager_id: "manager", statut: "statut", offre: "offre", debut: "début", fin: "échéance", prix_annuel_eur: "prix annuel", utilisateurs_max: "utilisateurs prévus", contact_nom: "contact", contact_email: "email du contact", reponse: "réponse", actif: "actif", refus: "motif du refus", dossiers_reaffectes: "dossiers réaffectés", ancien_nom: "ancien nom", envoye: "mail parti", logo_url: "logo", couleur: "couleur", expediteur_nom: "nom d'expéditeur", expediteur_adresse: "adresse d'envoi", email_reception: "adresse de réception", reel: "réel", confirmation: "confirmation", filtre_action: "action", admin_nom: "administrateur", admin_email: "email de l'administrateur", cible: "personne", motif: "motif", suspendre: "suspendre" };
+var ONGLETS = [["organisation", "Organisation"], ["comptes", "Comptes"], ["service", "Mise en service"], ["contrat", "Contrat"], ["support", "Support"], ["journal", "Journal"]];
 var etat = { clients: [], support: [], global: {}, fiche: null, onglet: "organisation", centre: null, filtre: "tous", cherche: "", ouvrir: false };
 var THEME = "claimai-theme";
 ["accueil", "clients", "support", "journal"].forEach(function (n) { $("i-" + n).outerHTML = ic(n); });
@@ -332,7 +366,7 @@ function sante(c) {
   if (c.support_ouvert) return ["or", plur(c.support_ouvert, "demande") + " de support"];
   if (k.statut === "actif" && j !== null && j <= 30) return ["or", j < 0 ? "Contrat échu" : "Échéance dans " + plur(j, "jour")];
   if (c.invitations_expirees) return ["or", plur(c.invitations_expirees, "invitation expirée", "invitations expirées")];
-  if (c.comptes && !c.connectes_7j) return ["gris", "Personne connecté depuis 7 jours"];
+  if (c.comptes && !c.connectes_7j) return ["gris", "Aucune connexion depuis 7 jours"];
   if (c.invitations) return ["gris", plur(c.invitations, "invitation") + " en attente"];
   if (s.envoi_mails === "desactive" && c.dossiers_en_cours) return ["gris", "Envoi des mails désactivé"];
   return ["ok", "En ordre"];
@@ -379,7 +413,7 @@ window.addEventListener("hashchange", function () { if (!$("ecran-a").hidden) ro
 /* ---------- Vue d'ensemble ---------- */
 function vueAccueil() {
   var g = etat.global || {}, t = taches();
-  var essai = etat.clients.filter(function (c) { return (c.contrat || {}).statut !== "actif"; }).length;
+  var essai = etat.clients.filter(function (c) { return ((c.contrat || {}).statut || "essai") === "essai"; }).length;
   var date = new Date().toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" });
   var h = '<div class="ad-tete"><div><h1>Bonjour ' + esc((etat.moi || "").split(" ")[0]) + "</h1><p>" + esc(date.charAt(0).toUpperCase() + date.slice(1)) + ". Aucun contenu de dossier n'est visible ici.</p></div>" +
     '<button class="btn primaire" type="button" data-ouvrir>Ouvrir un client</button></div>';
@@ -389,7 +423,7 @@ function vueAccueil() {
       return '<li><span class="pt ' + x.pt + '"></span><div><b>' + esc(x.titre) + "</b><span>" + esc(x.sous) + '</span></div><a class="btn petit" href="' + esc(x.lien) + '">' + esc(x.bouton) + "</a></li>";
     }).join("") + "</ul>" : '<div class="ad-calme"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m8 12 3 3 5-6"/></svg>Rien à traiter : tous vos clients sont en ordre.</div>') + "</section>";
   h += '<div class="ad-bande">' +
-    case_("Clients", g.clients || 0, "<b>" + (g.clients_actifs || 0) + "</b> sous contrat, " + essai + " en essai ou à signer") +
+    case_("Clients", g.clients || 0, "<b>" + (g.clients_actifs || 0) + "</b> sous contrat, " + essai + " en essai") +
     case_("Revenu annuel", C.eur(g.revenu_annuel || 0).replace(",00", ""), "contrats actifs, hors taxes") +
     case_("Utilisateurs", g.comptes || 0, "<b>" + (g.connectes_7j || 0) + "</b> connectés ces 7 jours") +
     case_("Dossiers en cours", g.dossiers_en_cours || 0, "<b>" + (g.dossiers_30j || 0) + "</b> reçus en 30 jours") + "</div>";
@@ -405,7 +439,7 @@ function tableClients(l) {
       var k = c.contrat || {}, st = CONTRAT[k.statut || "essai"] || CONTRAT.essai, s = sante(c);
       if (c.suspendu_le) st = ["Accès suspendu", "ko"];
       return '<tr data-client="' + esc(c.id) + '" tabindex="0"><td><b>' + esc(c.nom) + "</b><small>" + esc(k.offre || "Offre non renseignée") + '</small></td><td><span class="pill ' + st[1] + '">' + st[0] + "</span></td>" +
-        '<td class="nb">' + c.comptes + (k.utilisateurs_max ? '<span class="muet"> / ' + k.utilisateurs_max + "</span>" : "") + "<small>" + plur(c.connectes_7j || 0, "actif") + " cette semaine</small></td>" +
+        '<td class="nb">' + c.comptes + (k.utilisateurs_max ? '<span class="muet" title="comptes activés / prévus au contrat"> / ' + k.utilisateurs_max + " prévus</span>" : "") + "<small>" + plur(c.connectes_7j || 0, "actif") + " cette semaine</small></td>" +
         '<td class="nb masque-m">' + c.dossiers_en_cours + "<small>" + c.dossiers_30j + ' en 30 j</small></td><td class="masque-m muet">' + esc(quand(c.derniere_connexion)) + '</td><td><span class="sante ' + s[0] + '">' + esc(s[1]) + '</span></td><td class="fl">' + FLECHE + "</td></tr>";
     }).join("") + "</tbody></table></div>";
 }
@@ -465,7 +499,7 @@ function vueClients() {
 
 /* ---------- Support ---------- */
 function vueSupport() {
-  var h = '<div class="ad-tete"><div><h1>Support</h1><p>Les demandes envoyées depuis la page Aide de Klerio. Votre réponse part par mail, depuis votre adresse.</p></div></div>';
+  var h = '<div class="ad-tete"><div><h1>Support</h1><p>Les demandes envoyées depuis la page Aide de Klerio. Votre réponse part par mail depuis l\'adresse du support Klerio ; si la personne répond, sa réponse arrive dans votre boîte.</p></div></div>';
   h += '<section class="bloc">' + (etat.support.map(function (s) { return blocDemande(s, true); }).join("") || '<div class="ad-calme"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m8 12 3 3 5-6"/></svg>Aucune demande en attente.</div>') + "</section>";
   $("vue").innerHTML = h; brancherDemandes();
 }
@@ -476,7 +510,10 @@ function blocDemande(s, avecClient) {
     (ouverte ? '<div class="rep"><textarea class="saisie" data-rep="' + esc(s.id) + '" rows="3" placeholder="Votre réponse à ' + esc(s.nom || "cette personne") + '"></textarea><div class="ligne-form"><button class="btn discret petit" data-classer="' + esc(s.id) + '">Classer sans répondre</button><button class="btn primaire petit" data-repondre="' + esc(s.id) + '">Envoyer la réponse</button></div></div>' : "") + "</div>";
 }
 function brancherDemandes() {
-  var fin = function (b, msg) { return function () { C.toast(msg); etat.fiche = null; charger(); }; };
+  var fin = function (b, msg) { return function (r) {
+    if (r && r.envoi && !r.envoi.envoye) { C.occupe(b, false); return C.toast("La réponse n'est pas partie : la demande reste à traiter", true); }
+    C.toast(msg); etat.fiche = null; charger();
+  }; };
   document.querySelectorAll("[data-repondre]").forEach(function (b) {
     b.onclick = function () {
       var id = b.dataset.repondre, rep = document.querySelector('[data-rep="' + id + '"]').value.trim();
@@ -491,9 +528,46 @@ function brancherDemandes() {
 
 /* ---------- Journal ---------- */
 function vueJournal() {
-  var j = (etat.global || {}).journal || [];
-  $("vue").innerHTML = '<div class="ad-tete"><div><h1>Journal</h1><p>Chaque modification faite depuis Klerio Admin, avec son auteur. Les consultations ne sont pas notées.</p></div></div>' +
-    '<section class="bloc">' + (j.length ? tableJournal(j, true) : '<div class="vide">Aucune action pour l\'instant.</div>') + "</section>";
+  var opts = Object.keys(LIB_ACTION).map(function (k) { return '<option value="' + k + '">' + esc(LIB_ACTION[k]) + "</option>"; }).join("");
+  $("vue").innerHTML = '<div class="ad-tete"><div><h1>Journal</h1><p>Chaque modification faite depuis Klerio Admin, avec son auteur, y compris les actions refusées. Les consultations ne sont pas notées.</p></div>' +
+    '<button class="btn" type="button" id="j-csv">Exporter en CSV</button></div>' +
+    '<section class="bloc"><form class="bloc-corps ligne-form j-filtres" id="f-j" novalidate>' +
+    '<label class="champ">Client<select class="saisie" id="j-client"><option value="">Tous</option>' + etat.clients.map(function (c) { return '<option value="' + esc(c.id) + '">' + esc(c.nom) + "</option>"; }).join("") + "</select></label>" +
+    '<label class="champ">Action<select class="saisie" id="j-action"><option value="">Toutes</option>' + opts + "</select></label>" +
+    '<label class="champ">Du<input class="saisie" type="date" id="j-du"></label><label class="champ">Au<input class="saisie" type="date" id="j-au"></label>' +
+    '<button class="btn" type="submit">Filtrer</button></form><div id="j-liste"><div class="vide">Chargement…</div></div>' +
+    '<div class="bloc-corps" id="j-suite-l" hidden style="border-top:1px solid var(--trait);text-align:center"><button class="btn discret" type="button" id="j-suite">Afficher les suivantes</button></div></section>';
+  var lignes = [], suite = null;
+  var filtres = function () { return { assureur_id: $("j-client").value || null, filtre_action: $("j-action").value || null, depuis: $("j-du").value || null, jusqu_au: $("j-au").value || null }; };
+  var charge = function (plus) {
+    var p = filtres(); p.limite = 50; if (plus) p.avant = suite;
+    return op("journal", p).then(function (r) {
+      lignes = plus ? lignes.concat(r.lignes) : r.lignes; suite = r.suite;
+      $("j-liste").innerHTML = lignes.length ? tableJournal(lignes, true) : '<div class="vide">Aucune action pour ces critères.</div>';
+      $("j-suite-l").hidden = !suite;
+    }).catch(function (x) { C.toast(x.message, true); });
+  };
+  $("f-j").addEventListener("submit", function (e) { e.preventDefault(); charge(false); });
+  $("j-suite").onclick = function () { C.occupe(this, true, ""); var b = this; charge(true).finally(function () { C.occupe(b, false); }); };
+  $("j-csv").onclick = function () {
+    // tout ce qui correspond aux filtres, par pages de 500
+    var b = this, tout = [], p = filtres(); p.limite = 500; C.occupe(b, true, "Export");
+    var page = function (avant) {
+      if (avant) p.avant = avant;
+      return op("journal", p).then(function (r) { tout = tout.concat(r.lignes); return r.suite && tout.length < 20000 ? page(r.suite) : null; });
+    };
+    page(null).then(function () {
+      var cel = function (x) { x = x == null ? "" : String(x); if (/^[=+\-@\t\r]/.test(x)) x = "'" + x; return '"' + x.replace(/"/g, '""') + '"'; };
+      var csv = "\ufeff" + ["Date", "Client", "Action", "Par", "Détails"].map(cel).join(";") + "\r\n" + tout.map(function (j) {
+        return [new Date(j.created_at).toLocaleString("fr-FR", { timeZone: "Europe/Paris" }), j.client || "", libAction(j), j.operateur, JSON.stringify(j.details || {})].map(cel).join(";");
+      }).join("\r\n");
+      var a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
+      a.download = "journal-klerio-admin-" + new Date().toISOString().slice(0, 10) + ".csv"; document.body.appendChild(a); a.click();
+      setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+      C.toast(plur(tout.length, "ligne") + " exportée" + (tout.length > 1 ? "s" : ""));
+    }).catch(function (x) { C.toast(x.message, true); }).finally(function () { C.occupe(b, false); });
+  };
+  charge(false);
 }
 function tableJournal(l, avecClient) {
   return '<div class="tableau-wrap"><table class="ad-t ad-journal"><thead><tr><th>Quand</th>' + (avecClient ? "<th>Client</th>" : "") + '<th>Action</th><th class="masque-m">Par</th></tr></thead><tbody>' + l.map(function (j) {
@@ -505,10 +579,10 @@ function tableJournal(l, avecClient) {
       return (LIB_CHAMP[k] || k) + " : " + (typeof v === "object" ? JSON.stringify(v) : v);
     };
     // la personne visée d'abord, puis ce qui a changé
-    var cles = Object.keys(d).filter(function (k) { return ["id", "assureur_id"].indexOf(k) < 0 && d[k] !== null && d[k] !== ""; }).sort(function (a, b) { return (b === "cible") - (a === "cible"); });
+    var cles = Object.keys(d).filter(function (k) { return ["id", "assureur_id", "confirmation"].indexOf(k) < 0 && d[k] !== null && d[k] !== ""; }).sort(function (a, b) { return (b === "cible") - (a === "cible"); });
     var det = cles.map(val).join(", ");
     return "<tr><td>" + esc(C.depuis(j.created_at)) + "</td>" + (avecClient ? "<td>" + (j.assureur_id ? '<a href="#/client/' + esc(j.assureur_id) + '">' + esc(j.client || "") + "</a>" : "") + "</td>" : "") +
-      "<td><b>" + esc(LIB_ACTION[j.action] || j.action) + "</b>" + (det ? "<small>" + esc(det.slice(0, 160)) + "</small>" : "") + '</td><td class="muet masque-m">' + esc(j.operateur) + "</td></tr>";
+      "<td><b" + ((j.details || {}).refus ? ' style="color:var(--rouge-texte)"' : "") + ">" + esc(libAction(j)) + "</b>" + (det ? "<small>" + esc(det.slice(0, 160)) + "</small>" : "") + '</td><td class="muet masque-m">' + esc(j.operateur) + "</td></tr>";
   }).join("") + "</tbody></table></div>";
 }
 
@@ -517,11 +591,17 @@ function ouvrirClient(id, onglet) {
   if (onglet) etat.onglet = onglet;
   var memeClient = etat.fiche && etat.fiche.client.id === id;
   if (memeClient) return rendreFiche(etat.fiche);
-  op("client", { id: id }).then(function (f) { etat.fiche = f; etat.centre = null; if (!onglet) etat.onglet = "organisation"; rendreFiche(f); window.scrollTo(0, 0); }).catch(function (x) { C.toast(x.message, true); location.hash = "#/clients"; });
+  op("client", { id: id }).then(function (f) { etat.fiche = f; etat.centre = null; etat.mes = null; if (!onglet) etat.onglet = "organisation"; rendreFiche(f); window.scrollTo(0, 0); }).catch(function (x) { C.toast(x.message, true); location.hash = "#/clients"; });
 }
 // garder : en cas d'erreur, on ne redessine pas la page, pour ne pas effacer ce qui a été saisi dans un formulaire
 function maj(p, msg, garder) {
-  return p.then(function (r) { if (r && r.client && r.comptes) etat.fiche = r; if (r && r.envoi) C.toast(r.envoi.envoye ? "Mail envoyé à " + r.envoi.email : "Mail non parti : " + (r.envoi.erreur || ""), !r.envoi.envoye); else if (msg) C.toast(msg); rendreFiche(etat.fiche); })
+  return p.then(function (r) {
+    if (r && r.client && r.comptes) etat.fiche = r;
+    if (r && r.envoi) C.toast(r.envoi.envoye ? "Mail envoyé à " + r.envoi.email : "Mail non parti : " + (r.envoi.erreur || ""), !r.envoi.envoye);
+    else if (msg) C.toast(msg + (r && r.redistribues ? " : " + plur(r.redistribues, "dossier") + " réaffecté" + (r.redistribues > 1 ? "s" : "") : ""));
+    if (r && r.journal_en_echec) C.toast("Action faite, mais elle n'a pas pu être notée au journal : prévenez l'équipe technique", true);
+    rendreFiche(etat.fiche);
+  })
     .catch(function (x) { C.toast(x.message, true); if (garder) document.querySelectorAll(".btn[disabled][data-l]").forEach(function (b) { C.occupe(b, false); }); else rendreFiche(etat.fiche); });
 }
 function rendreFiche(f) {
@@ -536,7 +616,8 @@ function rendreFiche(f) {
   var ouvertes = f.support.filter(function (x) { return x.statut === "ouverte"; }).length;
   var h = '<div><div class="ad-fil"><a href="#/clients">Clients</a> / ' + esc(f.client.nom) + '</div><div class="ad-tete"><div><h1>' + esc(f.client.nom) + ' <span class="pill ' + st[1] + '">' + st[0] + "</span></h1><p>Client depuis le " + esc(C.dateCourte(f.client.created_at)) +
     (k.offre ? ", offre " + esc(k.offre) : "") + (k.fin ? ", échéance le " + esc(C.dateCourte(k.fin)) : "") + "</p></div>" +
-    (f.client.suspendu_le ? '<button class="btn" type="button" data-suspendre="non">Rétablir l\'accès</button>' : '<button class="btn discret" type="button" data-suspendre="oui">Suspendre l\'accès</button>') + "</div></div>";
+    '<div class="ligne-form"><button class="btn discret" type="button" data-renommer-client>Renommer</button>' +
+    (f.client.suspendu_le ? '<button class="btn" type="button" data-suspendre="non">Rétablir l\'accès</button>' : '<button class="btn discret" type="button" data-suspendre="oui">Suspendre l\'accès</button>') + "</div></div></div>";
   if (f.client.suspendu_le) h += '<div class="ad-alerte" role="status"><b>Accès suspendu ' + esc(C.depuis(f.client.suspendu_le)) + ".</b> Personne ne peut se connecter, les clés API sont refusées et les mails aux assurés sont retenus : ils partiront au rétablissement." +
     (f.client.suspendu_motif ? " Motif : " + esc(f.client.suspendu_motif) + "." : "") + "</div>";
   h += '<div class="ad-bande">' + case_("Organisation", centres, plur(centres, "centre").replace(/^\d+ /, "") + ", " + plur(f.equipes.length, "équipe")) +
@@ -547,7 +628,7 @@ function rendreFiche(f) {
     var c = o[0] === "comptes" ? f.comptes.length : o[0] === "support" ? ouvertes : 0;
     return '<a href="#/client/' + esc(f.client.id) + "/" + o[0] + '"' + (o[0] === etat.onglet ? ' aria-current="page"' : "") + ">" + o[1] + (c ? '<span class="n">' + c + "</span>" : "") + "</a>";
   }).join("") + "</nav>";
-  h += ({ organisation: ongletOrganisation, comptes: ongletComptes, contrat: ongletContrat, support: ongletSupport, journal: ongletJournal }[etat.onglet] || ongletOrganisation)(f);
+  h += ({ organisation: ongletOrganisation, comptes: ongletComptes, service: ongletService, contrat: ongletContrat, support: ongletSupport, journal: ongletJournal }[etat.onglet] || ongletOrganisation)(f);
   $("vue").innerHTML = h;
   brancherFiche(f);
 }
@@ -578,18 +659,21 @@ function ongletOrganisation(f) {
 function ongletComptes(f) {
   var opts = function (sel) { return '<option value="">Sans équipe</option>' + f.equipes.map(function (e) { return '<option value="' + esc(e.id) + '"' + (e.id === sel ? " selected" : "") + ">" + esc(e.nom) + " (" + esc(e.centre) + ")</option>"; }).join(""); };
   var charge = (f.structure || {}).charge || {};
+  var admins = f.comptes.filter(function (g) { return g.actif && g.role === "admin"; }).length;
   var h = "";
-  if (f.invitations.length) h += '<section class="bloc"><div class="bloc-tete"><h2>Invitations en attente<span class="compte">' + f.invitations.length + '</span></h2></div><div class="tableau-wrap"><table class="ad-t"><tbody>' + f.invitations.map(function (i) {
+  if (f.invitations.length) h += '<section class="bloc"><div class="bloc-tete"><h2>Invitations en attente<span class="compte">' + f.invitations.length + '</span></h2></div><div class="tableau-wrap"><table class="ad-t ad-comptes"><tbody>' + f.invitations.map(function (i) {
     return "<tr><td><b>" + esc(i.nom) + "</b><small>" + esc(i.email) + "</small></td><td>" + esc(ROLES[i.role] || i.role) + '</td><td class="muet masque-m">Invité par ' + esc(i.invite_par_nom || "") + "</td><td>" +
-      (i.expiree ? '<span class="sante rouge">Lien expiré</span>' : i.erreur_envoi ? '<span class="sante rouge">Mail non parti</span>' : '<span class="sante gris">Envoyée ' + esc(C.depuis(i.envoye_le)) + "</span>") + '</td><td class="nb"><button class="btn petit" data-renvoyer="' + esc(i.id) + '">Renvoyer</button> <button class="btn petit discret" data-annuler-inv="' + esc(i.id) + '" data-nom="' + esc(i.nom) + '">Annuler</button></td></tr>';
+      (i.expiree ? '<span class="sante rouge">Lien expiré</span>' : i.erreur_envoi ? '<span class="sante rouge">Mail non parti</span>' : '<span class="sante gris">Envoyée ' + esc(C.depuis(i.envoye_le)) + "</span>") + '</td><td class="nb ad-actions"><button class="btn petit" data-renvoyer="' + esc(i.id) + '">Renvoyer</button> <button class="btn petit discret" data-annuler-inv="' + esc(i.id) + '" data-nom="' + esc(i.nom) + '">Annuler</button></td></tr>';
   }).join("") + "</tbody></table></div></section>";
-  h += '<section class="bloc"><div class="bloc-tete"><h2>Comptes<span class="compte">' + f.comptes.length + '</span></h2></div><div class="tableau-wrap"><table class="ad-t"><thead><tr><th>Personne</th><th>Rôle</th><th>Équipe</th><th class="nb masque-m">Dossiers</th><th class="masque-m">Connexion</th><th></th></tr></thead><tbody>' +
+  h += '<section class="bloc"><div class="bloc-tete"><h2>Comptes<span class="compte">' + f.comptes.length + '</span></h2></div><div class="tableau-wrap"><table class="ad-t ad-comptes"><thead><tr><th>Personne</th><th>Rôle</th><th>Équipe</th><th class="nb masque-m">Dossiers</th><th class="masque-m">Connexion</th><th></th></tr></thead><tbody>' +
     (f.comptes.map(function (g) {
       var absent = g.actif && g.disponible === false;
       return "<tr><td><b>" + esc(g.nom) + "</b>" + (g.actif ? "" : ' <span class="pill neutre">Désactivé</span>') + (absent ? ' <span class="pill essai">Absent' + (g.absent_jusqu_au ? " jusqu'au " + esc(C.dateCourte(g.absent_jusqu_au)) : "") + "</span>" : "") +
         (g.actif && g.role === "gestionnaire" && g.recoit_nouveaux === false ? ' <span class="pill neutre">Ne reçoit plus de nouveaux dossiers</span>' : "") + "<small>" + esc(g.email) + '</small></td><td><select class="saisie" data-role="' + esc(g.id) + '" data-avant="' + esc(g.role) + '" data-nom="' + esc(g.nom) + '">' + Object.keys(ROLES).map(function (r) { return '<option value="' + r + '"' + (r === g.role ? " selected" : "") + ">" + ROLES[r] + "</option>"; }).join("") + "</select></td>" +
-        '<td><select class="saisie" data-equipe="' + esc(g.id) + '" style="min-width:180px">' + opts(g.equipe_id) + '</select></td><td class="nb masque-m">' + (charge[g.id] || 0) + '</td><td class="muet masque-m">' + esc(quand(g.derniere_connexion)) + "</td>" +
-        '<td class="nb" style="white-space:nowrap"><button class="btn petit" data-mdp="' + esc(g.id) + '" data-nom="' + esc(g.nom) + '">Lien mot de passe</button> <button class="btn petit discret" data-actif="' + esc(g.id) + '" data-val="' + (!g.actif) + '" data-nom="' + esc(g.nom) + '">' + (g.actif ? "Désactiver" : "Réactiver") + "</button></td></tr>";
+        '<td><select class="saisie" data-equipe="' + esc(g.id) + '" style="min-width:180px">' + opts(g.equipe_id) + '</select></td><td class="nb masque-m" data-l="Dossiers">' + (charge[g.id] || 0) + '</td><td class="muet masque-m">' + esc(quand(g.derniere_connexion)) + "</td>" +
+        '<td class="nb ad-actions">' + (g.actif ? '<button class="btn petit" data-mdp="' + esc(g.id) + '" data-nom="' + esc(g.nom) + '">Lien mot de passe</button> ' : "") +
+          (g.actif && g.role === "admin" && admins < 2 ? '<span class="muet petit" title="Invitez d\'abord un autre administrateur">Seul administrateur</span>'
+            : '<button class="btn petit discret" data-actif="' + esc(g.id) + '" data-val="' + (!g.actif) + '" data-nom="' + esc(g.nom) + '" data-dossiers="' + (charge[g.id] || 0) + '">' + (g.actif ? "Désactiver" : "Réactiver") + "</button>") + "</td></tr>";
     }).join("") || '<tr><td colspan="6"><div class="vide">Aucun compte activé pour l\'instant.</div></td></tr>') + "</tbody></table></div></section>";
   var centres = [];
   ((f.structure || {}).centres || []).concat(f.equipes).forEach(function (x) { var n = x.nom && x.equipes ? x.nom : x.centre; if (n && centres.indexOf(n) < 0) centres.push(n); });
@@ -606,8 +690,7 @@ function ongletContrat(f) {
   var k = (f.structure || {}).contrat || {};
   var v = function (x) { return esc(x == null ? "" : x); };
   return '<section class="bloc"><form class="bloc-corps pile" id="f-k" novalidate><div class="grille-3">' +
-    '<label class="champ">Nom du client<input class="saisie" id="k-client" value="' + v(f.client.nom) + '"></label>' +
-    '<label class="champ">Statut<select class="saisie" id="k-statut">' + Object.keys(CONTRAT).map(function (s) { return '<option value="' + s + '"' + ((k.statut || "essai") === s ? " selected" : "") + ">" + CONTRAT[s][0] + "</option>"; }).join("") + "</select></label>" +
+        '<label class="champ">Statut<select class="saisie" id="k-statut">' + Object.keys(CONTRAT).map(function (s) { return '<option value="' + s + '"' + ((k.statut || "essai") === s ? " selected" : "") + ">" + CONTRAT[s][0] + "</option>"; }).join("") + "</select></label>" +
     '<label class="champ">Offre<input class="saisie" id="k-offre" value="' + v(k.offre) + '" placeholder="Ex. Contractuel, pilote 6 mois"></label></div><div class="grille-3">' +
     '<label class="champ">Début<input class="saisie" id="k-debut" type="date" value="' + v(k.debut) + '"></label><label class="champ">Échéance<input class="saisie" id="k-fin" type="date" value="' + v(k.fin) + '"></label>' +
     '<label class="champ">Prix annuel HT (€)<input class="saisie" id="k-prix" type="number" min="0" step="100" value="' + v(k.prix_annuel_eur) + '"></label></div><div class="grille-3">' +
@@ -615,6 +698,45 @@ function ongletContrat(f) {
     '<label class="champ">Email du contact<input class="saisie" id="k-cmail" type="email" value="' + v(k.contact_email) + '"></label></div>' +
     '<label class="champ">Notes<textarea class="saisie" id="k-notes" rows="4">' + v(k.notes) + "</textarea></label>" +
     '<div class="ligne-form"><button class="btn primaire" id="k-ok" type="submit">Enregistrer le contrat</button>' + (k.maj_le ? '<span class="muet petit">Modifié ' + esc(C.depuis(k.maj_le)) + "</span>" : "") + "</div></form></section>";
+}
+/* Mise en service : réglages des mails aux assurés, étapes, passage en réel. Jamais de contenu de dossier. */
+function ongletService(f) {
+  var m = etat.mes && etat.mes.id === f.client.id ? etat.mes.d : null;
+  if (!m) {
+    op("mise_en_service", { assureur_id: f.client.id }).then(function (d) { etat.mes = { id: f.client.id, d: d }; if (etat.onglet === "service" && etat.fiche && etat.fiche.client.id === f.client.id) rendreFiche(etat.fiche); })
+      .catch(function (x) { C.toast(x.message, true); });
+    return '<section class="bloc"><div class="vide">Chargement de la mise en service…</div></section>';
+  }
+  var r = m.reglages || {}, v = function (x) { return esc(x == null ? "" : x); };
+  var requis = m.etapes.filter(function (e) { return e.requis; }), faits = requis.filter(function (e) { return e.ok; }).length;
+  var h = '<section class="bloc"><div class="bloc-tete"><h2>Étapes<span class="sous">' + faits + " sur " + requis.length + " obligatoires</span></h2>" +
+    '<span class="pill ' + (m.envois === "reel" ? "ok" : "essai") + '">' + (m.envois === "reel" ? "Mails aux assurés : envoi réel" : "Mails aux assurés : mode test, rien ne part") + "</span></div>" +
+    '<ul class="ad-etapes">' + m.etapes.map(function (e) {
+      return '<li class="' + (e.ok ? "fait" : e.requis ? "manque" : "conseil") + '"><span class="pt ' + (e.ok ? "vert" : e.requis ? "rouge" : "gris") + '"></span><div><b>' + esc(e.titre) + (e.requis ? "" : ' <span class="muet petit">conseillé</span>') + "</b><span>" + esc(e.detail) + "</span></div></li>";
+    }).join("") + "</ul>" +
+    '<div class="bloc-corps" style="border-top:1px solid var(--trait)"><div class="ligne-form">' +
+    (m.envois === "reel" ? '<button class="btn discret" type="button" id="mes-test">Repasser en mode test</button><span class="muet petit">Les mails aux assurés seront alors retenus.</span>'
+      : '<button class="btn primaire" type="button" id="mes-reel"' + (m.pret ? "" : " disabled") + '>Passer les envois en réel</button><span class="muet petit">' + (m.pret ? "Les assurés recevront les mails dès la confirmation." : "Terminez d'abord les étapes obligatoires.") + "</span>") +
+    "</div></div></section>";
+  h += '<section class="bloc"><div class="bloc-tete"><h2>Mails aux assurés</h2></div><form class="bloc-corps pile" id="f-mes" novalidate>' +
+    '<p class="muet petit" style="margin:0">Les assurés, garages et experts voient ces réglages : aucun ne mentionne Klerio. L\'adresse d\'envoi doit être sur un domaine du client, vérifié chez l\'hébergeur des mails.</p>' +
+    '<div class="grille-3"><label class="champ">Nom de l\'expéditeur<input class="saisie" id="m-nom" maxlength="80" value="' + v(r.expediteur_nom) + '" placeholder="Service sinistres"></label>' +
+    '<label class="champ">Adresse d\'envoi<input class="saisie" id="m-adr" type="email" value="' + v(r.expediteur_adresse) + '" placeholder="sinistres@compagnie.fr"></label>' +
+    '<label class="champ">Adresse de réception des réponses<input class="saisie" id="m-rec" type="email" value="' + v(r.email_reception) + '" placeholder="sinistres@compagnie.fr"></label></div>' +
+    '<div class="grille-3" style="align-items:start"><label class="champ">Logo (adresse https)<input class="saisie" id="m-logo" value="' + v(r.logo_url) + '" placeholder="https://compagnie.fr/logo.png"></label>' +
+    '<label class="champ">Couleur principale<span style="display:flex;gap:8px;align-items:center"><input type="color" id="m-coul-p" value="' + v(r.couleur || "#1f4e8c") + '" aria-label="Choisir la couleur"><input class="saisie" id="m-coul" value="' + v(r.couleur) + '" placeholder="#1f4e8c" maxlength="7" style="max-width:120px;flex:1"></span></label>' +
+    '<div class="champ"><span>Aperçu</span><div class="mes-apercu" id="m-apercu"></div></div></div>' +
+    '<div class="ligne-form"><button class="btn primaire" id="m-ok" type="submit">Enregistrer</button></div></form></section>';
+  return h;
+}
+function apercuMes() {
+  var a = $("m-apercu"); if (!a) return;
+  var k = /^#[0-9a-f]{6}$/i.test($("m-coul").value.trim()) ? $("m-coul").value.trim() : "#1f4e8c", logo = $("m-logo").value.trim();
+  var nom = (etat.fiche && etat.fiche.client.nom) || "";
+  a.style.borderTopColor = k;
+  a.innerHTML = (/^https:\/\//.test(logo) ? '<img alt="" referrerpolicy="no-referrer">' : "<b></b>") + "<span></span>";
+  if (a.querySelector("img")) { a.querySelector("img").src = logo; a.querySelector("img").alt = nom; } else a.querySelector("b").textContent = nom;
+  a.querySelector("span").textContent = ($("m-nom").value.trim() || "Service sinistres") + " <" + ($("m-adr").value.trim() || "adresse d'envoi") + ">";
 }
 function ongletSupport(f) { return '<section class="bloc">' + (f.support.map(function (s) { return blocDemande(s, false); }).join("") || '<div class="vide">Aucune demande de support de ce client.</div>') + "</section>"; }
 function ongletJournal(f) { var j = (f.structure || {}).journal || []; return '<section class="bloc">' + (j.length ? tableJournal(j, false) : '<div class="vide">Aucune modification faite chez ce client depuis Klerio Admin.</div>') + "</section>"; }
@@ -637,7 +759,13 @@ function brancherFiche(f) {
     var msg = s.dataset.nom + " passe de " + (ROLES[s.dataset.avant] || s.dataset.avant) + " à " + ROLES[s.value] + "." +
       (s.value === "admin" ? " Un administrateur voit et règle tout chez ce client." : s.dataset.avant === "admin" ? " Il perdra l'accès aux réglages de la compagnie." : "") + " Confirmer ?";
     if (!confirm(msg)) { s.value = s.dataset.avant; return; }
-    maj(op("role", { id: s.dataset.role, role: s.value }), "Rôle changé");
+    var g = f.comptes.filter(function (x) { return x.id === s.dataset.role; })[0] || {}, p = { id: s.dataset.role, role: s.value };
+    if (s.value === "superviseur" && !g.centre) {
+      var centre = prompt("Un manager dirige une équipe dans un centre de gestion. Centre de " + s.dataset.nom + " :", "");
+      if (!centre || !centre.trim()) { s.value = s.dataset.avant; return C.toast("Indiquez le centre de gestion du manager", true); }
+      p.centre = centre.trim();
+    }
+    maj(op("role", p), "Rôle changé");
   }; });
   document.querySelectorAll("[data-annuler-inv]").forEach(function (b) { b.onclick = function () { if (confirm("Annuler l'invitation de " + b.dataset.nom + " ? Son lien ne fonctionnera plus.")) { C.occupe(b, true, ""); maj(op("annuler_invitation", { id: b.dataset.annulerInv }), "Invitation annulée"); } }; });
   document.querySelectorAll("[data-suspendre]").forEach(function (b) { b.onclick = function () {
@@ -650,9 +778,50 @@ function brancherFiche(f) {
       maj(op("suspendre", { assureur_id: id, suspendre: false }), "Accès rétabli").then(function () { charger(); });
     }
   }; });
-  document.querySelectorAll("select[data-equipe]").forEach(function (s) { s.onchange = function () { maj(op("deplacer", { id: s.dataset.equipe, equipe_id: s.value || null }), "Équipe changée"); }; });
+  document.querySelectorAll("select[data-equipe]").forEach(function (s) { s.onchange = function () {
+    var g = f.comptes.filter(function (x) { return x.id === s.dataset.equipe; })[0] || {}, nb = ((f.structure || {}).charge || {})[g.id] || 0;
+    var eq = f.equipes.filter(function (e) { return e.id === s.value; })[0], autreCentre = eq && g.centre && eq.centre !== g.centre;
+    var msg = s.value ? "Placer " + g.nom + " dans l'équipe " + eq.nom + " (" + eq.centre + ") ?" : "Retirer " + g.nom + " de son équipe ?";
+    if (nb && autreCentre) msg += "\n\nSes " + plur(nb, "dossier") + " en cours du centre " + g.centre + " seront réaffectés à d'autres gestionnaires de ce centre. Ce n'est pas annulable.";
+    else if (nb) msg += "\n\nIl garde ses " + plur(nb, "dossier") + " en cours s'ils restent dans son centre.";
+    if (!confirm(msg)) { s.value = g.equipe_id || ""; return; }
+    maj(op("deplacer", { id: s.dataset.equipe, equipe_id: s.value || null }), "Équipe changée");
+  }; });
   document.querySelectorAll("[data-mdp]").forEach(function (b) { b.onclick = function () { if (confirm("Envoyer à " + b.dataset.nom + " un lien pour choisir un nouveau mot de passe ?")) { C.occupe(b, true, ""); maj(op("reinitialiser", { id: b.dataset.mdp })); } }; });
-  document.querySelectorAll("[data-actif]").forEach(function (b) { b.onclick = function () { var on = b.dataset.val === "true"; if (on || confirm("Désactiver le compte de " + b.dataset.nom + " ? Il ne pourra plus se connecter.")) maj(op("activer", { id: b.dataset.actif, actif: on }), on ? "Compte réactivé" : "Compte désactivé"); }; });
+  document.querySelectorAll("[data-actif]").forEach(function (b) { b.onclick = function () {
+    var on = b.dataset.val === "true", nb = Number(b.dataset.dossiers || 0);
+    var msg = "Désactiver le compte de " + b.dataset.nom + " ? Il ne pourra plus se connecter." + (nb ? " Ses " + plur(nb, "dossier") + " en cours seront réaffectés à d'autres gestionnaires de son centre." : "") + " Ses invitations en attente seront annulées.";
+    if (on || confirm(msg)) maj(op("activer", { id: b.dataset.actif, actif: on }), on ? "Compte réactivé" : "Compte désactivé");
+  }; });
+  if ($("f-mes")) {
+    ["m-nom", "m-adr", "m-logo", "m-coul"].forEach(function (i) { $(i).addEventListener("input", apercuMes); });
+    $("m-coul-p").addEventListener("input", function () { $("m-coul").value = this.value; apercuMes(); });
+    apercuMes();
+    $("f-mes").addEventListener("submit", function (e) {
+      e.preventDefault(); C.occupe($("m-ok"), true, "Enregistrement");
+      op("mise_en_service_maj", { assureur_id: id, expediteur_nom: $("m-nom").value, expediteur_adresse: $("m-adr").value, email_reception: $("m-rec").value, logo_url: $("m-logo").value, couleur: $("m-coul").value })
+        .then(function (d) { etat.mes = { id: id, d: d }; C.toast("Réglages enregistrés"); rendreFiche(etat.fiche); })
+        .catch(function (x) { C.toast(x.message, true); C.occupe($("m-ok"), false); });
+    });
+  }
+  var envois = function (reel) {
+    var p = { assureur_id: id, reel: reel };
+    if (reel) {
+      var c = prompt("Les assurés de " + f.client.nom + " recevront désormais les mails pour de vrai.\n\nPour confirmer, recopiez le nom du client :");
+      if (c === null) return;
+      p.confirmation = c;
+    } else if (!confirm("Repasser " + f.client.nom + " en mode test ? Plus aucun mail ne partira aux assurés.")) return;
+    op("envois_mode", p).then(function (d) { etat.mes = { id: id, d: d }; C.toast(reel ? "Envois aux assurés en réel" : "Envois aux assurés en mode test"); rendreFiche(etat.fiche); }).catch(function (x) { C.toast(x.message, true); });
+  };
+  if ($("mes-reel")) $("mes-reel").onclick = function () { envois(true); };
+  if ($("mes-test")) $("mes-test").onclick = function () { envois(false); };
+  document.querySelectorAll("[data-renommer-client]").forEach(function (b) { b.onclick = function () {
+    var nom = prompt("Nouveau nom de la compagnie.\n\nLes assurés verront ce nom dès le prochain mail : nom de l'expéditeur, en-tête du portail et des PDF.", f.client.nom);
+    if (nom === null) return; nom = nom.trim();
+    if (!nom || nom === f.client.nom) return;
+    if (!confirm("Renommer « " + f.client.nom + " » en « " + nom + " » ?")) return;
+    maj(op("renommer_client", { assureur_id: id, nom: nom }), "Client renommé").then(function () { charger(); });
+  }; });
   document.querySelectorAll("[data-renvoyer]").forEach(function (b) { b.onclick = function () { C.occupe(b, true, ""); maj(op("renvoyer", { id: b.dataset.renvoyer })); }; });
   if ($("f-adm")) {
     var majPlace = function () {
@@ -675,8 +844,7 @@ function brancherFiche(f) {
   }
   if ($("f-k")) $("f-k").addEventListener("submit", function (e) {
     e.preventDefault(); C.occupe($("k-ok"), true, "Enregistrement");
-    var nom = $("k-client").value.trim(), suite = nom && nom !== f.client.nom ? op("renommer_client", { assureur_id: id, nom: nom }) : Promise.resolve();
-    maj(suite.then(function () { return op("contrat", { assureur_id: id, statut: $("k-statut").value, offre: $("k-offre").value, debut: $("k-debut").value, fin: $("k-fin").value,
+    maj(Promise.resolve().then(function () { return op("contrat", { assureur_id: id, statut: $("k-statut").value, offre: $("k-offre").value, debut: $("k-debut").value, fin: $("k-fin").value,
       prix_annuel_eur: $("k-prix").value === "" ? null : Number($("k-prix").value), utilisateurs_max: $("k-max").value === "" ? null : Number($("k-max").value),
       contact_nom: $("k-cnom").value, contact_email: $("k-cmail").value, notes: $("k-notes").value }); }), "Contrat enregistré", true).then(function () { charger(); }).finally(function () { if ($("k-ok")) C.occupe($("k-ok"), false); });
   });

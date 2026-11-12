@@ -3735,7 +3735,8 @@ function vueAide() {
   h += q("Mot de passe oublié ou compte bloqué", r === "gestionnaire" ? "Prévenez votre manager ou écrivez au support Klerio ci-dessous : vous recevrez un lien pour choisir un nouveau mot de passe." : "Écrivez au support Klerio ci-dessous : la personne concernée recevra un lien pour choisir un nouveau mot de passe. Personne ne voit ni ne transmet de mot de passe.") +
     q("Qui voit quoi", "Un gestionnaire voit les dossiers de son centre et traite ceux qui lui sont attribués. Un manager pilote son équipe. Un administrateur gère les comptes de toute la compagnie. L'équipe Klerio ne voit aucun dossier.");
   h += '<section class="bloc"><div class="bloc-tete"><h2>Écrire au support Klerio</h2></div><form class="bloc-corps pile" id="f-sup" novalidate><label class="champ">Sujet<input class="saisie" id="s-sujet" maxlength="140" placeholder="Ex. Un gestionnaire ne reçoit pas son invitation"></label>' +
-    '<label class="champ">Votre message<textarea class="saisie" id="s-msg" rows="5" placeholder="Ce qui se passe, depuis quand, la personne ou le dossier concerné"></textarea></label>' +
+    '<label class="champ">Votre message<textarea class="saisie" id="s-msg" rows="5" placeholder="Ce qui se passe, depuis quand, sur quel écran"></textarea></label>' +
+    '<p class="muet petit" style="margin:0">N\'indiquez aucune donnée d\'assuré (nom, email, téléphone, IBAN, détail d\'un sinistre) : le support Klerio n\'a pas accès aux dossiers. Les adresses, numéros et IBAN sont masqués automatiquement.</p>' +
     '<div class="decision-actions"><button class="btn primaire" id="s-ok" type="submit">Envoyer</button><span class="muet petit">Réponse par mail à ' + esc(S.moi.email) + "</span></div></form></section>";
   $("vue").innerHTML = h;
   $("f-sup").addEventListener("submit", function (e) {
@@ -3822,7 +3823,26 @@ function rendreEquipe(d, envoi) {
           (g.id !== d.moi.id ? ' <button class="btn petit discret danger" data-suppr="' + g.id + '" data-nom="' + esc(g.nom) + '">Supprimer</button>' : "") : "") + "</td></tr>";
     }).join("") + (membres.length ? "" : '<tr><td colspan="10"><div class="vide">Aucun compte pour ce filtre.</div></td></tr>') + "</tbody></table></div></section>" +
     '<datalist id="liste-centres">' + d.centres.map(function (c) { return '<option value="' + esc(c) + '">'; }).join("") + "</datalist>";
+  // Droit d'accès d'un assuré (RGPD) : export en lecture seule, réservé à l'administrateur
+  if (admin) h += '<section class="bloc"><div class="bloc-tete"><h2>Demande d\'accès d\'un assuré</h2></div><form class="bloc-corps pile" id="form-export" novalidate>' +
+    '<p class="muet petit" style="margin:0">Quand un assuré demande les données que vous détenez sur lui, téléchargez ici tout ce que Klerio conserve : contrat, dossiers, mails envoyés, pièces reçues, échanges, règlements et réclamations. Relisez le fichier avant de l\'envoyer : récits et notes peuvent citer des tiers. Chaque export est noté au journal des dossiers concernés.</p>' +
+    '<div class="decision-actions"><input class="saisie" id="x-cle" autocomplete="off" placeholder="Email de l\'assuré ou numéro de contrat" style="min-width:280px;max-width:380px" aria-label="Email de l\'assuré ou numéro de contrat">' +
+    '<button class="btn" id="x-ok" type="submit">Télécharger ses données</button></div></form></section>';
   $("vue").innerHTML = h;
+  if ($("form-export")) $("form-export").addEventListener("submit", function (e) {
+    e.preventDefault();
+    var cle = $("x-cle").value.trim(), b = $("x-ok");
+    if (cle.length < 4) return C.toast("Indiquez l'email de l'assuré ou son numéro de contrat", true);
+    C.occupe(b, true, "Export");
+    equipeApi("export_assure", { cle: cle }).then(function (r) {
+      if (!r || !r.trouve) return C.toast("Aucun contrat ne correspond à « " + cle + " » dans cet environnement", true);
+      var a = document.createElement("a");
+      a.href = URL.createObjectURL(new Blob([JSON.stringify(r, null, 2)], { type: "application/json" }));
+      a.download = "donnees-assure-" + ((r.contrats && r.contrats[0] && r.contrats[0].numero) || "export").replace(/[^A-Za-z0-9-]/g, "") + ".json";
+      document.body.appendChild(a); a.click(); setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+      C.toast("Export téléchargé : " + (r.dossiers || []).length + " dossier" + ((r.dossiers || []).length > 1 ? "s" : ""));
+    }).catch(function (x) { C.toast(x.message, true); }).finally(function () { C.occupe(b, false); });
+  });
 
   var recharger = function (r, envoi2) { rendreEquipe(r && r.membres ? r : d, envoi2); };
   var maj = function (b, corps, msg) {
