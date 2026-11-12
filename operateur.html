@@ -297,7 +297,7 @@ var ICONES = {
 };
 var ic = function (n) { return '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + ICONES[n] + "</svg>"; };
 var FLECHE = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>';
-var CONTRAT = { essai: ["Essai", "essai"], actif: ["Actif", "ok"], suspendu: ["Suspendu", "ko"], resilie: ["Résilié", "neutre"] };
+var CONTRAT = { essai: ["Essai", "essai"], actif: ["Actif", "ok"], suspendu: ["Contrat suspendu", "ko"], resilie: ["Résilié", "neutre"] };
 var LIB_ACTION = { ouvrir_client: "Client ouvert", inviter_admin: "Administrateur invité", inviter_compte: "Accès créé", renvoyer: "Invitation renvoyée", reinitialiser: "Lien de mot de passe envoyé", activer: "Compte activé ou désactivé", role: "Rôle changé",
   support_traiter: "Demande de support traitée", contrat: "Contrat modifié", renommer_client: "Client renommé", deplacer: "Personne déplacée", equipe_creer: "Équipe créée", equipe_renommer: "Équipe renommée", equipe_manager: "Manager d'équipe changé", equipe_supprimer: "Équipe supprimée",
   annuler_invitation: "Invitation annulée", suspendre: "Accès suspendu ou rétabli" };
@@ -317,14 +317,21 @@ function jours(d) { return d ? Math.round((new Date(d) - Date.now()) / 864e5) : 
 // Santé d'un client : ce qui bloque d'abord, puis ce qui demande un geste, puis l'activité
 function sante(c) {
   var k = c.contrat || {}, j = jours(k.fin);
+  var s = c.sante || {};
   if (c.suspendu_le) return ["rouge", "Accès suspendu"];
+  if (s.courriers_erreur_7j) return ["rouge", plur(s.courriers_erreur_7j, "mail") + " en erreur"];
+  if (s.mails_recus_erreur_7j) return ["rouge", plur(s.mails_recus_erreur_7j, "mail reçu", "mails reçus") + " en erreur"];
+  if (s.webhooks_en_echec) return ["rouge", "Raccordement en échec"];
   if (!c.admins) return ["rouge", "Sans administrateur"];
+  if (s.ia_en_echec) return ["or", plur(s.ia_en_echec, "dossier") + " bloqué(s) par l'IA"];
+  if (s.envoi_mails === "reel" && s.courriers_en_attente) return ["or", plur(s.courriers_en_attente, "mail") + " en attente d'envoi"];
   if (c.invitations_echec) return ["rouge", "Invitation non partie"];
   if (c.support_ouvert) return ["or", plur(c.support_ouvert, "demande") + " de support"];
   if (k.statut === "actif" && j !== null && j <= 30) return ["or", j < 0 ? "Contrat échu" : "Échéance dans " + plur(j, "jour")];
   if (c.invitations_expirees) return ["or", plur(c.invitations_expirees, "invitation expirée", "invitations expirées")];
   if (c.comptes && !c.connectes_7j) return ["gris", "Personne connecté depuis 7 jours"];
   if (c.invitations) return ["gris", plur(c.invitations, "invitation") + " en attente"];
+  if (s.envoi_mails === "desactive" && c.dossiers_en_cours) return ["gris", "Envoi des mails désactivé"];
   return ["ok", "En ordre"];
 }
 // Ce qui attend un geste de votre part, du plus urgent au moins urgent
@@ -337,6 +344,12 @@ function taches() {
     if (c.invitations_echec) t.push({ n: 0, pt: "rouge", titre: plur(c.invitations_echec, "invitation") + " sans mail envoyé", sous: c.nom + " · l'adresse a été refusée ou l'envoi a échoué", bouton: "Renvoyer", lien: l + "/comptes" });
     if (c.invitations_expirees) t.push({ n: 2, pt: "or", titre: plur(c.invitations_expirees, "invitation expirée", "invitations expirées"), sous: c.nom + " · le lien de 7 jours n'a pas servi", bouton: "Renvoyer", lien: l + "/comptes" });
     if (k.statut === "actif" && j !== null && j <= 30) t.push({ n: 2, pt: "or", titre: j < 0 ? "Contrat échu depuis " + plur(-j, "jour") : "Contrat à renouveler dans " + plur(j, "jour"), sous: c.nom + (k.offre ? " · " + k.offre : ""), bouton: "Voir le contrat", lien: l + "/contrat" });
+    var s = c.sante || {};
+    if (s.courriers_erreur_7j) t.push({ n: 0, pt: "rouge", titre: plur(s.courriers_erreur_7j, "mail") + " aux assurés en erreur (7 jours)", sous: c.nom + " · adresse refusée ou envoi impossible : vérifiez le domaine d'envoi", bouton: "Voir le client", lien: l });
+    if (s.mails_recus_erreur_7j) t.push({ n: 0, pt: "rouge", titre: plur(s.mails_recus_erreur_7j, "mail reçu", "mails reçus") + " non traité(s)", sous: c.nom + " · la boîte sinistres n'a pas pu les lire", bouton: "Voir le client", lien: l });
+    if (s.webhooks_en_echec) t.push({ n: 0, pt: "rouge", titre: plur(s.webhooks_en_echec, "envoi") + " vers l'outil du client en échec", sous: c.nom + " · l'outil de la compagnie ne répond pas", bouton: "Voir le client", lien: l });
+    if (s.ia_en_echec) t.push({ n: 1, pt: "or", titre: plur(s.ia_en_echec, "dossier") + " bloqué(s) : analyse IA en échec", sous: c.nom + " · à relancer ou à reprendre par un gestionnaire", bouton: "Voir le client", lien: l });
+    if (s.envoi_mails === "reel" && s.courriers_en_attente) t.push({ n: 1, pt: "or", titre: plur(s.courriers_en_attente, "mail") + " en attente d'envoi depuis plus de 15 min", sous: c.nom + " · l'envoi est peut-être bloqué", bouton: "Voir le client", lien: l });
     if (c.comptes && !c.connectes_7j) t.push({ n: 3, pt: "gris", titre: "Aucune connexion depuis 7 jours", sous: c.nom + " · " + plur(c.comptes, "compte actif", "comptes actifs"), bouton: "Voir les comptes", lien: l + "/comptes" });
   });
   return t.sort(function (a, b) { return a.n - b.n; });
@@ -387,6 +400,7 @@ function tableClients(l) {
   return '<div class="tableau-wrap"><table class="ad-t"><thead><tr><th>Compagnie</th><th>Contrat</th><th class="nb">Utilisateurs</th><th class="nb masque-m">Dossiers en cours</th><th class="masque-m">Dernière activité</th><th>État</th><th></th></tr></thead><tbody>' +
     l.map(function (c) {
       var k = c.contrat || {}, st = CONTRAT[k.statut || "essai"] || CONTRAT.essai, s = sante(c);
+      if (c.suspendu_le) st = ["Accès suspendu", "ko"];
       return '<tr data-client="' + esc(c.id) + '" tabindex="0"><td><b>' + esc(c.nom) + "</b><small>" + esc(k.offre || "Offre non renseignée") + '</small></td><td><span class="pill ' + st[1] + '">' + st[0] + "</span></td>" +
         '<td class="nb">' + c.comptes + (k.utilisateurs_max ? '<span class="muet"> / ' + k.utilisateurs_max + "</span>" : "") + "<small>" + plur(c.connectes_7j || 0, "actif") + " cette semaine</small></td>" +
         '<td class="nb masque-m">' + c.dossiers_en_cours + "<small>" + c.dossiers_30j + ' en 30 j</small></td><td class="masque-m muet">' + esc(quand(c.derniere_connexion)) + '</td><td><span class="sante ' + s[0] + '">' + esc(s[1]) + '</span></td><td class="fl">' + FLECHE + "</td></tr>";
@@ -509,6 +523,8 @@ function maj(p, msg, garder) {
 }
 function rendreFiche(f) {
   var s = f.structure || {}, k = s.contrat || {}, st = CONTRAT[k.statut || "essai"] || CONTRAT.essai;
+  // accès suspendu par Klerio : la pastille le dit, quel que soit le statut commercial du contrat
+  if (f.client.suspendu_le) st = ["Accès suspendu", "ko"];
   var actifs = f.comptes.filter(function (g) { return g.actif; });
   var n = function (r) { return actifs.filter(function (g) { return g.role === r; }).length; };
   var centres = (s.centres || []).filter(function (c) { return c.nom; }).length;
