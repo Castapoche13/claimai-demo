@@ -950,6 +950,8 @@ function vueFile() {
     if (!resp) { file = aMoi.concat(libres); autres = []; }
     var renvoyes = file.filter(function (d) { return d.renvoye_manager; });
     var tiers = encours.filter(function (d) { return d.statut === "mission_envoyee" || d.statut === "attente_pieces" || d.statut === "reglement_envoye"; });
+    // un gestionnaire ne suit ici que ses propres dossiers ; le manager et l'admin voient tout leur périmètre
+    if (!resp) tiers = tiers.filter(function (d) { return d.gestionnaire_id === moi.id; });
     var prio = file.filter(function (d) { return d.priorite === "haute"; }).length;
     // Alertes : les relances de Klerio sur des dossiers qui attendent, et les mails qu'aucun dossier n'a pu recevoir.
     // Les autres mails se lisent et se répondent dans leur dossier (onglet Messages).
