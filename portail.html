@@ -37,7 +37,10 @@ form.carte-in { display: grid; gap: 18px; }
 .indice.ok { background: var(--vert-pale); border-color: transparent; color: var(--vert); }
 .piece { display: grid; grid-template-columns: 1fr auto; gap: 8px 16px; align-items: center; padding: 14px 0; border-top: 1px solid var(--trait); }
 .piece:first-of-type { border-top: 0; }
-.piece input[type=file] { font-size: 13px; color: var(--gris); max-width: 240px; }
+.piece-nom { display: grid; gap: 2px; min-width: 0; }
+.piece-nom span { overflow-wrap: anywhere; }
+.piece-choisir { min-height: 44px; cursor: pointer; white-space: nowrap; }
+.piece-choisir:focus-within { outline: 2px solid var(--bleu); outline-offset: 2px; }
 .piece.recue { color: var(--gris); }
 .envoyer { display: flex; gap: 14px; align-items: center; flex-wrap: wrap; }
 .etat { text-align: center; padding: 48px 24px; }
@@ -626,11 +629,36 @@ function formulaire(c) {
       (fac ? '<label class="champ">Nature des travaux <span class="aide">facultatif</span><textarea class="saisie" id="f-conclusion" rows="2"></textarea></label>' : "");
   }
   return (c.pieces_attendues || []).filter(function (p) { return p.code !== "QUESTIONNAIRE_VOL"; }).map(function (p) {
-    return '<div class="piece' + (p.recue ? " recue" : "") + '"><label class="case"><input type="checkbox" name="piece" value="' + esc(p.code) + '"' + (p.recue ? " checked disabled" : "") + "> <span><b>" + esc(C.PIECES[p.code] || p.libelle) + "</b>" +
-      (p.recue ? '<br><span class="muet petit">Déjà reçue</span>' : "") + "</span></label>" + (p.recue ? "<span></span>" : '<input type="file" aria-label="Fichier ' + esc(p.libelle) + '" accept=".pdf,.jpg,.jpeg,.png">') + "</div>";
-  }).join("") + '<p class="muet petit">Démonstration : seul l\'envoi de chaque pièce est enregistré, les fichiers ne sont pas conservés.</p>';
+    var nom = String(C.PIECES[p.code] || p.libelle || ""); nom = nom.charAt(0).toUpperCase() + nom.slice(1);
+    return '<div class="piece' + (p.recue ? " recue" : "") + '"><div class="piece-nom"><b>' + esc(nom) + "</b>" + (p.recue ? '<span class="muet petit">Déjà reçue</span>' : '<span class="muet petit" data-etat-piece="' + esc(p.code) + '">Aucun fichier choisi</span>') + "</div>" +
+      (p.recue ? "<span></span>" : '<label class="btn piece-choisir">Choisir le fichier<input type="file" name="piece" data-code="' + esc(p.code) + '" aria-label="Choisir le fichier : ' + esc(nom) + '" accept=".pdf,.jpg,.jpeg,.png,.webp" hidden></label>') + "</div>";
+  }).join("") + '<p class="muet petit">PDF, photo JPEG, PNG ou WebP, 8 Mo au maximum par fichier. Une photo nette prise avec votre téléphone suffit.</p>';
 }
 
+// Pièces de l'assuré : chaque fichier est réellement envoyé, lu et rangé dans le dossier, puis la pièce est marquée reçue
+function envoyerPieces(choisis, c) {
+  var b = $("b-envoyer"); C.occupe(b, true, "Envoi");
+  var faites = [], i = 0;
+  function suivant() {
+    if (i >= choisis.length) {
+      if (!faites.length) { C.occupe(b, false); return; }
+      return api("portail", { body: { t: jeton, pieces: faites } }).then(function () { C.occupe(b, false); etat(ICONE_OK, "", "Merci, c'est transmis", "Le service sinistres a bien reçu " + (faites.length > 1 ? "vos " + faites.length + " pièces" : "votre pièce") + " pour le dossier " + esc(c.numero) + ". Vous serez informé par email de la suite."); }).catch(function (x) { C.occupe(b, false); C.toast(x.message, true); });
+    }
+    var inp = choisis[i++], f = inp.files[0], code = inp.dataset.code, etatP = document.querySelector('[data-etat-piece="' + code + '"]');
+    if (["application/pdf", "image/jpeg", "image/png", "image/webp"].indexOf(f.type) < 0) { etatP.textContent = "Format non accepté : PDF, JPEG, PNG ou WebP"; return suivant(); }
+    if (f.size > 8 * 1024 * 1024) { etatP.textContent = "Fichier trop lourd : 8 Mo au maximum"; return suivant(); }
+    etatP.textContent = "Envoi de « " + f.name + " »…";
+    var lr = new FileReader();
+    lr.onload = function () {
+      api("portail/lire?t=" + jeton, { body: { nom_fichier: f.name, type_mime: f.type, contenu_base64: String(lr.result).split(",")[1] || "", piece: code } })
+        .then(function () { faites.push(code); etatP.textContent = "Envoyé"; suivant(); })
+        .catch(function (x) { etatP.textContent = "Non envoyé : " + x.message; suivant(); });
+    };
+    lr.onerror = function () { etatP.textContent = "Impossible de lire ce fichier sur votre appareil"; suivant(); };
+    lr.readAsDataURL(f);
+  }
+  suivant();
+}
 function val(id) { var e = $(id); if (!e || e.value === "") return undefined; return Number(e.value); }
 
 // Champs du formulaire remplis par la lecture du document
@@ -681,6 +709,11 @@ function brancherDepot(c) {
 
 function brancher(c) {
   brancherDepot(c);
+  document.querySelectorAll('input[name=piece]').forEach(function (inp) { inp.addEventListener("change", function () {
+    var e = document.querySelector('[data-etat-piece="' + inp.dataset.code + '"]'), f = inp.files && inp.files[0];
+    if (e) e.textContent = f ? "« " + f.name + " », prêt à envoyer" : "Aucun fichier choisi";
+    inp.parentNode.firstChild.textContent = f ? "Changer" : "Choisir le fichier";
+  }); });
   var vei = $("f-vei"), bloc = $("f-vei-bloc");
   if (vei && bloc) {
     var maj = function () {
@@ -737,8 +770,9 @@ function brancher(c) {
       if ($("f-ttc")) { r.montant_ttc = val("f-ttc"); r.montant_ht = val("f-ht"); r.conclusion = ($("f-conclusion").value || "").trim() || undefined; r.numero_facture = ($("f-num").value || "").trim() || undefined; if (!r.montant_ttc) return C.toast("Indiquez le montant TTC de la facture.", true); }
       else if (!r.delegation_paiement) return C.toast($("f-deleg") ? "Cochez la délégation de paiement pour l'envoyer." : "Rien d'autre n'est attendu de votre part.", true);
     } else {
-      r.pieces = Array.prototype.map.call(document.querySelectorAll('input[name=piece]:checked:not(:disabled)'), function (x) { return x.value; });
-      if (!r.pieces.length) return C.toast("Cochez au moins une pièce à envoyer.", true);
+      var choisis = Array.prototype.filter.call(document.querySelectorAll('input[name=piece]'), function (x) { return x.files && x.files[0]; });
+      if (!choisis.length) return C.toast("Choisissez au moins un fichier à envoyer.", true);
+      return envoyerPieces(choisis, c);
     }
     r.t = jeton;
     var b = $("b-envoyer"); C.occupe(b, true, "Envoi");
