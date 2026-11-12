@@ -169,6 +169,10 @@ body { background: var(--papier); }
 .mes-apercu img { max-height: 30px; max-width: 160px; }
 .mes-apercu span { font-size: 12px; color: var(--gris); word-break: break-all; }
 .j-filtres { align-items: flex-end; flex-wrap: wrap; }
+.guide p { margin: 0; line-height: 1.55; }
+.guide ol { margin: 0; padding-left: 20px; display: grid; gap: 6px; line-height: 1.5; }
+.ad-dns .dns-v span { word-break: break-all; font-size: 12px; }
+.ad-dns td { vertical-align: top; }
 .j-filtres .champ { min-width: 150px; }
 .ad-actions { white-space: nowrap; }
 .tableau-wrap { overflow-x: auto; }
@@ -591,7 +595,7 @@ function ouvrirClient(id, onglet) {
   if (onglet) etat.onglet = onglet;
   var memeClient = etat.fiche && etat.fiche.client.id === id;
   if (memeClient) return rendreFiche(etat.fiche);
-  op("client", { id: id }).then(function (f) { etat.fiche = f; etat.centre = null; etat.mes = null; if (!onglet) etat.onglet = "organisation"; rendreFiche(f); window.scrollTo(0, 0); }).catch(function (x) { C.toast(x.message, true); location.hash = "#/clients"; });
+  op("client", { id: id }).then(function (f) { etat.fiche = f; etat.centre = null; etat.mes = null; etat.dom = null; etat.domCharge = false; if (!onglet) etat.onglet = "organisation"; rendreFiche(f); window.scrollTo(0, 0); }).catch(function (x) { C.toast(x.message, true); location.hash = "#/clients"; });
 }
 // garder : en cas d'erreur, on ne redessine pas la page, pour ne pas effacer ce qui a été saisi dans un formulaire
 function maj(p, msg, garder) {
@@ -727,7 +731,49 @@ function ongletService(f) {
     '<label class="champ">Couleur principale<span style="display:flex;gap:8px;align-items:center"><input type="color" id="m-coul-p" value="' + v(r.couleur || "#1f4e8c") + '" aria-label="Choisir la couleur"><input class="saisie" id="m-coul" value="' + v(r.couleur) + '" placeholder="#1f4e8c" maxlength="7" style="max-width:120px;flex:1"></span></label>' +
     '<div class="champ"><span>Aperçu</span><div class="mes-apercu" id="m-apercu"></div></div></div>' +
     '<div class="ligne-form"><button class="btn primaire" id="m-ok" type="submit">Enregistrer</button></div></form></section>';
+  h += blocDomaine(f, m);
+  h += '<section class="bloc"><div class="bloc-tete"><h2>Raccordement à l\'outil de la compagnie</h2></div><div class="bloc-corps pile guide">' +
+    '<p>Le raccordement relie Klerio à l\'outil de gestion du client : Klerio y lit les contrats et y renvoie chaque dossier. <b>C\'est l\'administrateur du client qui le fait</b>, dans sa console Klerio, menu <b>Raccordement</b>.</p>' +
+    '<ol><li>Il crée une clé API d\'essai (<span class="mono">klr_test_</span>) et la donne à son équipe informatique avec le <a href="guide.html" target="_blank" rel="noopener">guide d\'intégration</a>.</li>' +
+    '<li>Son informatique branche l\'outil sur l\'environnement d\'essai ; l\'onglet Vérification se coche tout seul à chaque étape réussie.</li>' +
+    '<li>Une fois l\'essai validé, il refait la même chose en production avec une clé <span class="mono">klr_live_</span>.</li></ol>' +
+    '<p class="muet petit">Vous ne voyez ici que l\'état (étape « Raccordement vérifié » plus haut), jamais les clés ni les données.</p></div></section>';
   return h;
+}
+/* Domaine d'envoi chez Resend, guidé : déclarer, transmettre les DNS, vérifier, tester */
+function blocDomaine(f, m) {
+  var adr = (m.reglages || {}).expediteur_adresse || "", dom = adr.split("@")[1] || "";
+  var h = '<section class="bloc"><div class="bloc-tete"><h2>Envoi depuis le domaine du client</h2>' + (etat.dom && etat.dom.statut ? '<span class="pill ' + (etat.dom.statut === "verified" ? "ok" : "essai") + '">' + (etat.dom.statut === "verified" ? "Domaine vérifié" : "En attente des DNS") + "</span>" : "") + '</div><div class="bloc-corps pile guide">';
+  if (!dom || /(^|\.)klerio\.fr$/.test(dom)) return h + '<p><b>Étape 1.</b> Demandez au client l\'adresse qui enverra les mails à ses assurés (par exemple <span class="mono">sinistres@sa-compagnie.fr</span>) et l\'adresse où il veut recevoir leurs réponses. Saisissez-les dans « Mails aux assurés » ci-dessus, puis enregistrez. La suite apparaîtra ici.</p></div></section>';
+  var d = etat.dom && etat.dom.domaine === dom ? etat.dom : null;
+  if (!d) {
+    if (etat.domCharge !== dom) { etat.domCharge = dom; op("domaine", { assureur_id: f.client.id, operation: "etat" }).then(function (r) { etat.dom = r; rendreFiche(etat.fiche); }).catch(function (x) { etat.dom = { domaine: dom, erreur: x.message }; rendreFiche(etat.fiche); }); }
+    return h + '<p class="muet">Lecture de l\'état du domaine ' + esc(dom) + '…</p></div></section>';
+  }
+  if (d.erreur) return h + '<p class="erreur-form">' + esc(d.erreur) + '</p><div class="ligne-form"><button class="btn" type="button" data-dom="etat">Réessayer</button></div></div></section>';
+  if (!d.existe) return h + '<p><b>Étape 2.</b> Déclarez le domaine <b>' + esc(dom) + '</b> chez Resend, le service qui envoie les mails de Klerio. Klerio le fait pour vous et affiche ensuite les réglages à transmettre au client.</p>' +
+    '<div class="ligne-form"><button class="btn primaire" type="button" data-dom="creer">Préparer le domaine ' + esc(dom) + "</button></div></div></section>";
+  var ok = d.statut === "verified";
+  h += '<p><b>Étape 3.</b> Le service informatique du client ajoute ces enregistrements dans la zone DNS de <b>' + esc(dom) + '</b>. Ils prouvent que Klerio a le droit d\'envoyer en son nom (sinon les mails partent en indésirables). Rien ne change pour ses propres mails.</p>' +
+    '<div class="tableau-wrap"><table class="ad-t ad-dns"><thead><tr><th>Type</th><th>Nom</th><th>Valeur</th><th class="nb">Priorité</th><th>État</th></tr></thead><tbody>' +
+    (d.enregistrements || []).map(function (r) {
+      return "<tr><td>" + esc(r.type) + '</td><td class="mono">' + esc(r.nom) + '</td><td class="mono dns-v"><span>' + esc(r.valeur) + '</span> <button class="btn petit discret" type="button" data-copier="' + esc(r.valeur) + '">Copier</button></td><td class="nb">' + esc(r.priorite == null ? "" : r.priorite) + "</td><td>" +
+        (r.statut === "verified" ? '<span class="sante">Trouvé</span>' : '<span class="sante gris">' + (r.statut === "failed" ? "Introuvable" : "En attente") + "</span>") + "</td></tr>";
+    }).join("") + "</tbody></table></div>" +
+    '<div class="ligne-form"><button class="btn" type="button" id="dom-mail">Préparer le mail pour l\'informatique du client</button><span class="muet petit">Ouvre votre messagerie avec les réglages et les explications, prêts à envoyer.</span></div>' +
+    '<p><b>Étape 4.</b> Une fois les réglages ajoutés (quelques minutes, parfois jusqu\'à 48 h), vérifiez. ' + (ok ? "C'est fait : le domaine est vérifié." : "Tant qu'un enregistrement reste « En attente », le domaine n'est pas prêt.") + "</p>" +
+    '<div class="ligne-form"><button class="btn' + (ok ? "" : " primaire") + '" type="button" data-dom="verifier">Vérifier maintenant</button>' +
+    (ok ? '<button class="btn primaire" type="button" data-dom="tester">M\'envoyer un mail d\'essai</button><span class="muet petit">Il part de ' + esc(adr) + " vers votre adresse, comme un mail d'assuré.</span>" : "") + "</div>" +
+    '<p class="muet petit">Étape 5 : quand tout est vert, le bouton « Passer les envois en réel » en haut de page se débloque.</p></div></section>';
+  return h;
+}
+function mailDns(f) {
+  var d = etat.dom || {}, k = (f.structure || {}).contrat || {};
+  var corps = "Bonjour,\n\nPour que les mails de gestion des sinistres partent au nom de " + f.client.nom + " depuis " + ((etat.mes && etat.mes.d.reglages.expediteur_adresse) || "") +
+    " sans arriver en indésirables, merci d'ajouter ces enregistrements dans la zone DNS du domaine " + d.domaine + " :\n\n" +
+    (d.enregistrements || []).map(function (r) { return "- Type " + r.type + ", nom " + r.nom + (r.priorite != null ? ", priorité " + r.priorite : "") + "\n  Valeur : " + r.valeur; }).join("\n\n") +
+    "\n\nCes enregistrements n'ont aucun effet sur vos mails actuels. Prévenez-moi une fois ajoutés : je lance la vérification.\n\nMerci,";
+  location.href = "mailto:" + encodeURIComponent(k.contact_email || "") + "?subject=" + encodeURIComponent("Réglages DNS pour l'envoi des mails sinistres (" + d.domaine + ")") + "&body=" + encodeURIComponent(corps);
 }
 function apercuMes() {
   var a = $("m-apercu"); if (!a) return;
@@ -804,6 +850,18 @@ function brancherFiche(f) {
         .catch(function (x) { C.toast(x.message, true); C.occupe($("m-ok"), false); });
     });
   }
+  document.querySelectorAll("[data-dom]").forEach(function (b) { b.onclick = function () {
+    var o = b.dataset.dom; C.occupe(b, true, "");
+    op("domaine", { assureur_id: id, operation: o }).then(function (r) {
+      etat.dom = r;
+      if (o === "tester" && r.test) C.toast(r.test.envoye ? "Mail d'essai envoyé à " + r.test.a + " : vérifiez qu'il n'est pas en indésirables" : "Mail d'essai non parti : " + r.test.erreur, !r.test.envoye);
+      else if (o === "verifier") C.toast(r.statut === "verified" ? "Domaine vérifié" : "Pas encore : certains réglages DNS ne sont pas visibles", r.statut !== "verified");
+      else if (o === "creer") C.toast("Domaine déclaré : transmettez les réglages au client");
+      etat.mes = null; rendreFiche(etat.fiche);
+    }).catch(function (x) { C.toast(x.message, true); C.occupe(b, false); });
+  }; });
+  document.querySelectorAll("[data-copier]").forEach(function (b) { b.onclick = function () { navigator.clipboard.writeText(b.dataset.copier).then(function () { C.toast("Copié"); }); }; });
+  if ($("dom-mail")) $("dom-mail").onclick = function () { mailDns(f); };
   var envois = function (reel) {
     var p = { assureur_id: id, reel: reel };
     if (reel) {
