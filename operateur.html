@@ -2,6 +2,8 @@
 <html lang="fr">
 <head>
 <meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://challenges.cloudflare.com https://js.hcaptcha.com https://*.hcaptcha.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://*.hcaptcha.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' https://okugbnabvlotasdsokco.supabase.co wss://okugbnabvlotasdsokco.supabase.co https://*.hcaptcha.com; frame-src 'self' blob: https://challenges.cloudflare.com https://*.hcaptcha.com; object-src 'none'; base-uri 'none'; form-action 'self'">
+<style id="anti-cadre">html{display:none}</style><script>if (window.top === window.self) { document.getElementById("anti-cadre").remove(); } else { try { window.top.location = window.self.location; } catch (e) { } }</script>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="icon" type="image/svg+xml" href="icones/icone.svg">
 <link rel="icon" type="image/png" sizes="32x32" href="icones/favicon-32.png">
@@ -213,11 +215,12 @@ body { background: var(--papier); }
 </div>
 
 <script src="vendor/supabase-js-2.118.0.js"></script>
-<script src="commun.js?v=20261109a"></script>
+<script src="commun.js?v=20261112a"></script>
 <script>
 var C = window.CA, $ = C.$, esc = C.esc;
 var sb = window.supabase.createClient(C.SUPABASE_URL, C.CLE_PUBLIQUE, { auth: { persistSession: true, storageKey: "klerio-operateur", storage: window.sessionStorage, autoRefreshToken: true } });
 var jeton = function () { return sb.auth.getSession().then(function (r) { return r.data.session ? r.data.session.access_token : null; }); };
+C.surveillerInactivite(15, sb); // Klerio Admin agit sur tous les clients : fin de session après 15 minutes sans activité
 var opBrut = function (action, corps) { return C.client(C.SUPABASE_URL + "/functions/v1", jeton)("klerio-plateforme", { body: Object.assign({ action: action }, corps || {}) }); };
 // Session expirée (onglet resté ouvert longtemps) : on la renouvelle et on rejoue la demande ; sinon retour à la connexion
 var op = function (action, corps) {

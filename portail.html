@@ -2,6 +2,8 @@
 <html lang="fr">
 <head>
 <meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://challenges.cloudflare.com https://js.hcaptcha.com https://*.hcaptcha.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://*.hcaptcha.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' https://okugbnabvlotasdsokco.supabase.co wss://okugbnabvlotasdsokco.supabase.co https://*.hcaptcha.com; frame-src 'self' blob: https://challenges.cloudflare.com https://*.hcaptcha.com; object-src 'none'; base-uri 'none'; form-action 'self'">
+<style id="anti-cadre">html{display:none}</style><script>if (window.top === window.self) { document.getElementById("anti-cadre").remove(); } else { try { window.top.location = window.self.location; } catch (e) { } }</script>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="icon" id="favicon" href="data:,">
 <meta name="robots" content="noindex">
@@ -91,7 +93,7 @@ form.carte-in { display: grid; gap: 18px; }
   <span class="cadenas"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><rect x="2.5" y="6" width="9" height="6.5" rx="1.5" fill="currentColor"/><path d="M4.5 6V4.5a2.5 2.5 0 015 0V6" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>Lien personnel</span></div></header>
 <main id="main"><div class="carte"><div class="etat"><span class="tourne" style="display:inline-block;color:var(--bleu)"></span></div></div></main>
 <div id="toast" class="toast" hidden role="status"></div>
-<script src="commun.js?v=20261109a"></script>
+<script src="commun.js?v=20261112a"></script>
 <script>
 (function () {
 "use strict";

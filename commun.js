@@ -142,6 +142,23 @@
   function attendVous(s) { return (STATUTS[s] || [])[1] === "vous"; }
 
   var minuteur;
+  // Déconnexion après inactivité (poste partagé) : avertissement une minute avant, puis fin de session et retour à la connexion
+  function surveillerInactivite(minutes, sb) {
+    var limite = minutes * 60000, dernier = Date.now(), averti = false;
+    ["pointerdown", "keydown", "wheel", "touchstart"].forEach(function (e) {
+      window.addEventListener(e, function () { dernier = Date.now(); averti = false; }, { passive: true });
+    });
+    setInterval(function () {
+      var reste = limite - (Date.now() - dernier);
+      if (reste > 60000) return;
+      sb.auth.getSession().then(function (r) {
+        if (!r.data.session) return;
+        if (reste <= 0) sb.auth.signOut().finally(function () { location.reload(); });
+        else if (!averti) { averti = true; toast("Sans activité, vous serez déconnecté dans une minute. Bougez la souris pour rester connecté."); }
+      });
+    }, 15000);
+  }
+
   function toast(msg, erreur) {
     var t = $("toast"); if (!t) { t = document.createElement("div"); t.id = "toast"; t.setAttribute("role", "status"); document.body.appendChild(t); }
     t.textContent = msg; t.className = "toast" + (erreur ? " erreur" : ""); t.hidden = false;
@@ -209,7 +226,7 @@
     API_DEFAUT: API_DEFAUT, SUPABASE_URL: SUPABASE_URL, CAPTCHA: CAPTCHA, CLE_PUBLIQUE: CLE_PUBLIQUE, STATUTS: STATUTS, THEMES: THEMES, MOTIFS: MOTIFS, ANOMALIES: ANOMALIES, COURRIERS: COURRIERS,
     ROLES: ROLES, PIECES: PIECES, ESPACES: ESPACES, GARANTIES: GARANTIES, LIENS: LIENS, CLASSES: CLASSES, LOGO: LOGO,
     $: $, esc: esc, eur: eur, nombre: nombre, dateFr: dateFr, dateCourte: dateCourte, heure: heure, depuis: depuis,
-    statut: statut, theme: theme, motif: motif, attendVous: attendVous, toast: toast, occupe: occupe, client: client,
+    statut: statut, theme: theme, motif: motif, attendVous: attendVous, toast: toast, occupe: occupe, client: client, surveillerInactivite: surveillerInactivite,
     lireSession: lireSession, ecrireSession: ecrireSession, oublierSession: oublierSession, yeux: yeux
   };
 })(window);

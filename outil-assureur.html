@@ -2,6 +2,8 @@
 <html lang="fr">
 <head>
 <meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://challenges.cloudflare.com https://js.hcaptcha.com https://*.hcaptcha.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://*.hcaptcha.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' https://okugbnabvlotasdsokco.supabase.co wss://okugbnabvlotasdsokco.supabase.co https://*.hcaptcha.com; frame-src 'self' blob: https://challenges.cloudflare.com https://*.hcaptcha.com; object-src 'none'; base-uri 'none'; form-action 'self'">
+<style id="anti-cadre">html{display:none}</style><script>if (window.top === window.self) { document.getElementById("anti-cadre").remove(); } else { try { window.top.location = window.self.location; } catch (e) { } }</script>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Gestion sinistres, Mutuelle Démo du Gâtinais</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -114,10 +116,10 @@ tr.neuf td { animation: neuf 2.4s ease-out; }
 "use strict";
 var C = window.CA, $ = C.$, esc = C.esc, eur = C.eur;
 var MEMO = "claimai-outil-v1";
-function lire() { try { return JSON.parse(localStorage.getItem(MEMO) || "null"); } catch (e) { return null; } }
+function lire() { try { return JSON.parse(sessionStorage.getItem(MEMO) || "null"); } catch (e) { return null; } }
 var S = lire() || {};
 // Ancienne adresse du service (avant le nom Klerio)
-if (S.base) S.base = S.base.replace(/\/claimai\/?$/, "/klerio");
+if (S.base) S.base = C.API_DEFAUT; // adresse du service toujours fixe
 var api, apiOutil, vus = {}, premier = true, panne = false;
 
 var SITUATION = {
@@ -143,7 +145,7 @@ function demarrer() {
   $("env-outil").className = "env-badge" + (essai() ? " essai" : "");
   $("env-outil").textContent = essai() ? "Recette" : "Production";
   $("b-cle").hidden = false;
-  $("b-cle").onclick = function () { try { localStorage.removeItem(MEMO); } catch (e) { } location.reload(); };
+  $("b-cle").onclick = function () { try { sessionStorage.removeItem(MEMO); } catch (e) { } location.reload(); };
   $("o-contrats").innerHTML = (essai() ? ["ESSAI-AUTO-0001", "ESSAI-AUTO-0002", "ESSAI-AUTO-0003", "ESSAI-GA-0004"] : ["AUTO-2025-0001", "AUTO-2025-0004", "GA-2024-0005", "GA-2025-0006"])
     .map(function (n) { return '<option value="' + n + '">'; }).join("");
   apiOutil = C.client(S.base.replace(/\/(klerio|claimai)\/?$/, "/assureur-demo"), S.cle);
@@ -218,10 +220,10 @@ function rafraichir() {
   }).catch(function (x) { $("maj").textContent = "Liaison interrompue : " + x.message; });
 }
 
-$("k-base").value = S.base || C.API_DEFAUT;
+$("k-base").value = C.API_DEFAUT; $("k-base").readOnly = true; // adresse fixe : la clé ne part jamais ailleurs
 $("form-cle").addEventListener("submit", function (e) {
-  e.preventDefault(); var base = $("k-base").value.trim(), cle = $("k-cle").value.trim();
-  C.client(base, cle)("moi").then(function (m) { S = { base: base, cle: cle, env: m && m.environnement === "test" ? "test" : "production" }; try { localStorage.setItem(MEMO, JSON.stringify(S)); } catch (e) { } demarrer(); })
+  e.preventDefault(); var base = C.API_DEFAUT, cle = $("k-cle").value.trim();
+  C.client(base, cle)("moi").then(function (m) { S = { base: base, cle: cle, env: m && m.environnement === "test" ? "test" : "production" }; try { sessionStorage.setItem(MEMO, JSON.stringify(S)); } catch (e) { } demarrer(); })
     .catch(function (x) { $("k-err").textContent = x.status === 401 ? "Clé refusée." : x.message; });
 });
 if (S.base && S.cle) {
