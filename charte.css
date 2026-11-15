@@ -358,13 +358,15 @@ button.tuile:hover, a.tuile:hover { border-color: var(--trait-fort); text-decora
 .comptes-t td:nth-child(2) { color: var(--gris); }
 
 /* ---------- Caractère : menu clair façon outil moderne, repères jaune constat, une carte noire par page ---------- */
-:root { --constat: #D9AE45; --forte: #18181B; --forte-texte: #A1A1AA; --sur-forte: #FFFFFF; --rayon: 6px; --rayon-carte: 8px; }
+:root { --constat: #D9AE45; --forte: #18181B; --forte-texte: #A1A1AA; --sur-forte: #FFFFFF; --rayon: 8px; --rayon-carte: 12px; }
 :root[data-theme="dark"] { --forte: #ECECEE; --forte-texte: #52525B; --sur-forte: #111113; }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --forte: #ECECEE; --forte-texte: #52525B; --sur-forte: #111113; } }
 .nav { background: var(--feuille); border-right: 1px solid var(--trait); }
 .nav .marque rect { fill: var(--constat) !important; }
 .nav .marque path { stroke: #18181B !important; }
-.nav ul a[aria-current="page"] { background: var(--papier); box-shadow: inset 3px 0 0 var(--constat); color: var(--encre); font-weight: 500; }
+.nav ul a[aria-current="page"] { background: var(--bleu-pale); box-shadow: inset 3px 0 0 var(--bleu); color: var(--bleu); font-weight: 500; }
+.nav ul a[aria-current="page"] svg { color: var(--bleu); }
+.nav ul a[aria-current="page"] .n { color: var(--bleu); }
 .nav ul a:hover { background: var(--papier); }
 .nav .espaces { background: var(--papier); }
 .nav .espaces button[aria-pressed="true"] { background: var(--feuille); box-shadow: 0 0 0 1px var(--trait), 0 1px 2px rgba(24, 24, 27, .06); }
