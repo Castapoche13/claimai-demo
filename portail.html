@@ -607,7 +607,7 @@ function zoneDepot(c) {
   var fac = c.role === "garage" && (c.pieces_attendues || []).some(function (p) { return p.code === "FACTURE" && !p.recue; });
   if (c.role !== "expert_auto" && c.role !== "expert_medical" && !fac) return "";
   if (c.role === "expert_auto" && c.cles_attendues && !c.evaluation_vol) return "";
-  var quoi = c.role === "expert_auto" ? "votre rapport d'expertise" : c.role === "expert_medical" ? "vos conclusions médicales" : "votre facture";
+  var quoi = c.role === "expert_auto" ? "votre rapport d'expertise (obligatoire)" : c.role === "expert_medical" ? "vos conclusions médicales (obligatoire)" : "votre facture (obligatoire)";
   return '<div class="depot" id="depot"><b>Gagnez du temps : déposez ' + quoi + "</b>" +
     "<p>PDF ou photo, 8 Mo au maximum. Le formulaire se remplit tout seul ; vous vérifiez chaque valeur avant d'envoyer.</p>" +
     (c.role === "expert_medical" ? "<p><b>Secret médical :</b> le document est lu puis supprimé aussitôt. Seuls le taux d'AIPP, la date de consolidation et la mention de dépendance sont conservés.</p>" : "") +
@@ -711,6 +711,8 @@ var CHAMPS_LUS = {
   expert_medical: [["f-aipp", "aipp_pct"], ["f-conso", "date_consolidation"], ["f-dep", "dependance_totale"]],
   garage: [["f-ttc", "montant_ttc"], ["f-ht", "montant_ht"], ["f-num", "numero_facture"], ["f-deleg", "delegation_paiement"], ["f-conclusion", "conclusion"]]
 };
+// rapport d'expertise, conclusions médicales ou facture : le document lui-même est obligatoire (preuve, contrôle anti-fraude)
+var docDepose = false;
 function brancherDepot(c) {
   var inp = $("f-fichier"), zone = $("depot"), etatD = $("depot-etat");
   if (!inp) return;
@@ -723,6 +725,7 @@ function brancherDepot(c) {
     lr.onload = function () {
       var b64 = String(lr.result).split(",")[1] || "";
       api("portail/lire?t=" + jeton, { body: { nom_fichier: fichier.name, type_mime: fichier.type, contenu_base64: b64 } }).then(function (r) {
+        docDepose = true;
         var v = r.valeurs || {}, n = 0;
         (CHAMPS_LUS[c.role] || []).forEach(function (k) {
           var el = $(k[0]); if (!el || v[k[1]] === undefined || el.disabled) return;
@@ -790,6 +793,8 @@ function brancher(c) {
       var cc = document.querySelector('input[name="f-conc"]:checked');
       r = { conclusion: cc && cc.value, synthese: $("f-syn").value.trim() };
       if (!r.conclusion || r.synthese.length < 20) return C.toast("Choisissez une conclusion et résumez vos constatations.", true);
+    } else if (((c.role === "expert_auto" || c.role === "garage") && $("f-ttc") || c.role === "expert_medical") && $("f-fichier") && !docDepose) {
+      return C.erreurChamp("f-fichier", c.role === "garage" ? "Déposez d'abord votre facture (PDF ou photo) : elle est obligatoire pour être réglé." : "Déposez d'abord votre rapport (PDF ou photo) : il est obligatoire pour valider votre envoi.");
     } else if (c.role === "expert_auto" && !$("f-ttc")) {
       r = { cles_recues: val("f-cles"), cles_conformes: $("f-cles-ok").checked, cles_observations: $("f-cles-obs").value.trim() || undefined };
       if (r.cles_recues == null) return C.erreurChamp("f-cles", "Indiquez le nombre de jeux de clés reçus.");
