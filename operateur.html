@@ -15,73 +15,65 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=20261105a">
-<link rel="stylesheet" href="charte.css?v=20261115a">
+<link rel="stylesheet" href="style.css?v=20261115a">
+<link rel="stylesheet" href="charte.css?v=20261115b">
 <style>
 body { background: var(--papier); }
-/* ---------- Connexion ---------- */
-.op-connexion { min-height: 100vh; display: grid; place-items: center; padding: 40px 16px;
-  background: radial-gradient(1100px 600px at 50% -10%, rgba(217,174,69,.16), transparent 60%), radial-gradient(800px 500px at 50% 110%, rgba(46,77,158,.18), transparent 60%), #0E0E10; }
-.op-carte { width: min(380px, 100%); display: grid; gap: 28px; justify-items: center; }
-.op-carte .logo { display: flex; align-items: center; gap: 10px; font-size: 20px; font-weight: 600; color: #F3F3F1; letter-spacing: -0.01em; }
-.op-carte .logo svg { width: 34px; height: 34px; }
-.op-connexion form { width: 100%; display: grid; gap: 16px; padding: 28px; border-radius: 16px; color: #ECECEE;
-  background: linear-gradient(180deg, rgba(255,255,255,.055), rgba(255,255,255,.025)); border: 1px solid rgba(255,255,255,.09);
-  box-shadow: 0 24px 60px rgba(0,0,0,.35); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); }
-.op-connexion form .champ { color: #A2A2AA; font-size: 13px; }
-.op-connexion form .saisie { height: 44px; background: rgba(0,0,0,.35); color: #F3F3F1; border: 1px solid rgba(255,255,255,.12); }
-.op-connexion form .saisie:focus { border-color: #D9AE45; box-shadow: 0 0 0 3px rgba(217,174,69,.18); outline: none; }
+/* ---------- Connexion : fond clair (ou sombre selon le thème), carte à filet, bouton primaire noir ---------- */
+.op-connexion { min-height: 100vh; display: grid; place-items: center; padding: 40px 16px; background: var(--papier); }
+.op-carte { width: min(380px, 100%); display: grid; gap: 24px; justify-items: center; }
+.op-carte .logo { display: flex; align-items: center; gap: 10px; font-size: 20px; font-weight: 600; color: var(--encre); letter-spacing: -0.01em; }
+.op-carte .logo svg { width: 32px; height: 32px; }
+.op-connexion form { width: 100%; display: grid; gap: 16px; padding: 24px; border-radius: var(--rayon-carte, 8px); color: var(--encre); background: var(--feuille); border: 1px solid var(--trait); }
+.op-connexion form .champ { color: var(--encre-2); font-size: 13px; }
+.op-connexion form .saisie { height: 40px; }
 .op-connexion form[hidden] { display: none; }
-.op-connexion .erreur-form { color: #F28B82; }
-.op-connexion .btn.primaire { height: 44px; justify-content: center; background: #D9AE45; color: #09090B; border-color: #D9AE45; font-weight: 600; }
-.op-connexion .btn.primaire:hover { background: #E4BC57; }
-.op-connexion .btn:not(.primaire) { height: 44px; justify-content: center; background: transparent; color: #ECECEE; border: 1px solid rgba(255,255,255,.16); }
-.op-connexion .btn:not(.primaire):hover { background: rgba(255,255,255,.06); }
+.op-connexion .erreur-form { color: var(--rouge-texte); }
+.op-connexion .btn { height: 40px; justify-content: center; }
 
 /* ---------- Cadre : menu à gauche, page à droite ---------- */
 .ad { display: grid; grid-template-columns: 232px minmax(0, 1fr); min-height: 100vh; }
 .ad[hidden] { display: none; }
 .ad-menu { position: sticky; top: 0; height: 100vh; display: flex; flex-direction: column; gap: 24px; padding: 18px 12px; background: var(--feuille); border-right: 1px solid var(--trait); }
-.ad-marque { display: flex; align-items: center; gap: 10px; padding: 2px 8px; font-weight: 600; font-size: 15px; color: var(--encre); }
+.ad-marque { display: flex; align-items: center; gap: 10px; padding: 2px 8px; font-weight: 600; font-size: 14px; color: var(--encre); }
 .ad-marque svg { width: 26px; height: 26px; flex: none; }
 .ad-marque small { display: block; font-size: 12px; font-weight: 400; color: var(--gris); margin-top: 1px; }
 .ad-menu ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
-.ad-menu ul a { display: flex; align-items: center; gap: 10px; height: 36px; padding: 0 10px; border-radius: 9px; color: var(--encre-2); font-size: 14px; text-decoration: none; }
+.ad-menu ul a { display: flex; align-items: center; gap: 10px; height: 36px; padding: 0 10px; border-radius: var(--rayon); white-space: nowrap; color: var(--encre-2); font-size: 14px; text-decoration: none; }
 .ad-menu ul a svg { color: var(--gris); flex: none; }
 .ad-menu ul a:hover { background: var(--survol); color: var(--encre); }
 .ad-menu ul a[aria-current="page"] { background: var(--papier); color: var(--encre); font-weight: 500; box-shadow: inset 3px 0 0 #D9AE45; }
 .ad-menu ul a[aria-current="page"] svg { color: #B8892A; }
 .ad-menu .n { margin-left: auto; font-family: var(--mono); font-size: 12px; color: var(--gris); }
-.ad-menu .n.chaud { min-width: 20px; height: 20px; padding: 0 6px; border-radius: 999px; display: grid; place-items: center; background: #D9AE45; color: #17130A; font-weight: 600; }
+.ad-menu .n.chaud { color: var(--rouge-texte); font-weight: 600; }
 .ad-bas { margin-top: auto; display: grid; gap: 6px; padding: 12px 10px 0; border-top: 1px solid var(--trait); }
-.ad-bas b { font-size: 13.5px; font-weight: 500; color: var(--encre); }
-.ad-bas span { font-size: 12.5px; color: var(--gris); overflow: hidden; text-overflow: ellipsis; }
+.ad-bas b { font-size: 13px; font-weight: 500; color: var(--encre); }
+.ad-bas span { font-size: 12px; color: var(--gris); overflow: hidden; text-overflow: ellipsis; }
 .ad-bas button { justify-self: start; border: 0; background: none; padding: 2px 0; font: inherit; font-size: 13px; color: var(--gris); cursor: pointer; }
 .ad-bas button:hover { color: var(--encre); }
-.ad-page { padding: 32px 40px 72px; max-width: 1180px; width: 100%; display: grid; gap: 24px; align-content: start; }
+.ad-page { padding: 32px 40px 72px; max-width: 1180px; width: 100%; display: grid; grid-template-columns: minmax(0, 1fr); gap: 24px; align-content: start; }
 
 /* ---------- En-tête de page ---------- */
 .ad-tete { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
-.ad-tete h1 { font-size: 26px; line-height: 32px; font-weight: 500; letter-spacing: -0.01em; }
+.ad-tete h1 { font-size: 24px; line-height: 32px; font-weight: 500; letter-spacing: -0.01em; }
 .ad-tete p { margin: 6px 0 0; color: var(--gris); }
-.ad-alerte { margin: 16px 0 0; padding: 12px 16px; border: 1px solid var(--rouge-texte, #B42318); border-radius: 10px; color: var(--encre); background: color-mix(in srgb, var(--rouge-texte, #B42318) 7%, transparent); font-size: 14px; line-height: 1.5; }
+.ad-alerte { margin: 16px 0 0; padding: 12px 16px; border: 1px solid var(--rouge-texte, #B42318); border-radius: var(--rayon); color: var(--encre); background: color-mix(in srgb, var(--rouge-texte, #B42318) 7%, transparent); font-size: 14px; line-height: 1.5; }
 .ad-fil { font-size: 13px; color: var(--gris); margin-bottom: 8px; }
 .ad-fil a { color: var(--gris); }
 .ad-fil a:hover { color: var(--encre); }
-.pill { display: inline-flex; align-items: center; gap: 6px; height: 22px; padding: 0 9px; border-radius: 999px; font-size: 12px; font-weight: 500; vertical-align: middle; white-space: nowrap; }
-.pill::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+.pill { display: inline-flex; align-items: center; height: 20px; padding: 0 8px; border-radius: 4px; font-size: 12px; font-weight: 500; line-height: 1; vertical-align: middle; white-space: nowrap; }
 .pill.ok { color: var(--vert-texte); background: var(--vert-pale); }
 .pill.essai { color: var(--jaune-texte); background: var(--jaune-pale); }
 .pill.ko { color: var(--rouge-texte); background: var(--rouge-pale); }
 .pill.neutre { color: var(--gris); background: var(--survol); }
 
 /* ---------- Bande de chiffres : un seul cadre, quatre cases ---------- */
-.ad-bande { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); background: var(--feuille); border: 1px solid var(--trait); border-radius: 14px; }
+.ad-bande { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); background: var(--feuille); border: 1px solid var(--trait); border-radius: var(--rayon-carte); }
 .ad-bande > div { padding: 18px 20px; display: grid; gap: 4px; align-content: start; }
 .ad-bande > div + div { border-left: 1px solid var(--trait); }
 .ad-bande .l { font-size: 13px; color: var(--gris); }
-.ad-bande .v { font-size: 28px; line-height: 34px; font-weight: 500; letter-spacing: -0.02em; color: var(--encre); font-variant-numeric: tabular-nums; }
-.ad-bande .s { font-size: 12.5px; color: var(--gris); }
+.ad-bande .v { font-size: 24px; line-height: 34px; font-weight: 500; letter-spacing: -0.02em; color: var(--encre); font-variant-numeric: tabular-nums; }
+.ad-bande .s { font-size: 12px; color: var(--gris); }
 .ad-bande .s b { color: var(--encre-2); font-weight: 500; }
 
 /* ---------- À traiter ---------- */
@@ -98,13 +90,14 @@ body { background: var(--papier); }
 
 /* ---------- Tableau des clients ---------- */
 .ad-t { width: 100%; border-collapse: collapse; }
-.ad-t th { text-align: left; font-size: 12.5px; font-weight: 500; color: var(--gris); padding: 10px 14px; border-bottom: 1px solid var(--trait); white-space: nowrap; }
+.ad-t th { text-align: left; font-size: 12px; font-weight: 500; color: var(--gris); padding: 10px 14px; border-bottom: 1px solid var(--trait); white-space: nowrap; }
 .ad-t td { padding: 13px 14px; border-bottom: 1px solid var(--trait); vertical-align: middle; }
 .ad-t tr:last-child td { border-bottom: 0; }
+.ad-comptes th, .ad-comptes td { padding-left: 12px; padding-right: 12px; }
 .ad-t th:first-child, .ad-t td:first-child { padding-left: 20px; }
 .ad-t th:last-child, .ad-t td:last-child { padding-right: 20px; }
 .ad-t .nb { text-align: right; font-variant-numeric: tabular-nums; }
-.ad-t td small { display: block; font-size: 12.5px; color: var(--gris); margin-top: 1px; }
+.ad-t td small { display: block; font-size: 12px; color: var(--gris); margin-top: 1px; }
 .ad-t tbody tr[data-client] { cursor: pointer; }
 .ad-t tbody tr[data-client]:hover td { background: var(--feuille-2); }
 .ad-t .fl { color: var(--gris-clair); width: 20px; }
@@ -114,7 +107,7 @@ body { background: var(--papier); }
 .sante.or::before { background: #D9AE45; } .sante.rouge::before { background: var(--rouge); } .sante.gris::before { background: var(--gris-clair); }
 .ad-outils { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; padding: 12px 20px; border-bottom: 1px solid var(--trait); }
 .ad-outils .saisie { max-width: 280px; height: 34px; }
-.seg { display: inline-flex; padding: 3px; border-radius: 10px; background: var(--survol); }
+.seg { display: inline-flex; padding: 3px; border-radius: var(--rayon); background: var(--survol); }
 .seg button { border: 0; background: none; padding: 5px 12px; border-radius: 7px; font: inherit; font-size: 13px; font-weight: 500; color: var(--gris); cursor: pointer; }
 .seg button[aria-pressed="true"] { background: var(--feuille); color: var(--encre); box-shadow: 0 0 0 1px var(--trait); }
 
@@ -127,14 +120,14 @@ body { background: var(--papier); }
 .org { display: grid; grid-template-columns: 240px minmax(0, 1fr); gap: 20px; align-items: start; }
 .ad-page .bloc + .bloc { margin-top: 0; }
 .org-centres { list-style: none; margin: 0; padding: 6px; display: grid; gap: 2px; }
-.org-centres button { width: 100%; text-align: left; border: 0; background: none; padding: 10px 12px; border-radius: 9px; font: inherit; color: var(--encre-2); cursor: pointer; display: grid; gap: 2px; }
+.org-centres button { width: 100%; text-align: left; border: 0; background: none; padding: 10px 12px; border-radius: var(--rayon); font: inherit; color: var(--encre-2); cursor: pointer; display: grid; gap: 2px; }
 .org-centres button b { font-weight: 500; color: var(--encre); }
-.org-centres button span { font-size: 12.5px; color: var(--gris); }
+.org-centres button span { font-size: 12px; color: var(--gris); }
 .org-centres button:hover { background: var(--survol); }
 .org-centres button[aria-pressed="true"] { background: var(--papier); box-shadow: inset 3px 0 0 #D9AE45; }
 .equipe + .equipe { border-top: 1px solid var(--trait); }
 .equipe-tete { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 14px 20px 10px; }
-.equipe-tete h3 { font-size: 15px; font-weight: 500; }
+.equipe-tete h3 { font-size: 14px; font-weight: 500; }
 .equipe-tete .muet { font-size: 13px; }
 .equipe-tete .droite { margin-left: auto; display: flex; gap: 8px; align-items: center; }
 .equipe-tete label { display: flex; align-items: center; gap: 8px; }
@@ -246,7 +239,7 @@ body { background: var(--papier); }
 </div>
 
 <script src="vendor/supabase-js-2.118.0.js"></script>
-<script src="commun.js?v=20261115a"></script>
+<script src="commun.js?v=20261115b"></script>
 <script>
 var C = window.CA, $ = C.$, esc = C.esc;
 var sb = window.supabase.createClient(C.SUPABASE_URL, C.CLE_PUBLIQUE, { auth: { persistSession: true, storageKey: "klerio-operateur", storage: window.sessionStorage, autoRefreshToken: true } });
@@ -365,7 +358,7 @@ function sante(c) {
   if (s.mails_recus_erreur_7j) return ["rouge", plur(s.mails_recus_erreur_7j, "mail reçu", "mails reçus") + " en erreur"];
   if (s.webhooks_en_echec) return ["rouge", "Raccordement en échec"];
   if (!c.admins) return ["rouge", "Sans administrateur"];
-  if (s.ia_en_echec) return ["or", plur(s.ia_en_echec, "dossier") + " bloqué(s) par l'IA"];
+  if (s.ia_en_echec) return ["or", plur(s.ia_en_echec, "dossier bloqué", "dossiers bloqués") + " par l'IA"];
   if (s.envoi_mails === "reel" && s.courriers_en_attente) return ["or", plur(s.courriers_en_attente, "mail") + " en attente d'envoi"];
   if (c.invitations_echec) return ["rouge", "Invitation non partie"];
   if (c.support_ouvert) return ["or", plur(c.support_ouvert, "demande") + " de support"];
@@ -388,9 +381,9 @@ function taches() {
     if (k.statut === "actif" && j !== null && j <= 30) t.push({ n: 2, pt: "or", titre: j < 0 ? "Contrat échu depuis " + plur(-j, "jour") : "Contrat à renouveler dans " + plur(j, "jour"), sous: c.nom + (k.offre ? " · " + k.offre : ""), bouton: "Voir le contrat", lien: l + "/contrat" });
     var s = c.sante || {};
     if (s.courriers_erreur_7j) t.push({ n: 0, pt: "rouge", titre: plur(s.courriers_erreur_7j, "mail") + " aux assurés en erreur (7 jours)", sous: c.nom + " · adresse refusée ou envoi impossible : vérifiez le domaine d'envoi", bouton: "Voir le client", lien: l });
-    if (s.mails_recus_erreur_7j) t.push({ n: 0, pt: "rouge", titre: plur(s.mails_recus_erreur_7j, "mail reçu", "mails reçus") + " non traité(s)", sous: c.nom + " · la boîte sinistres n'a pas pu les lire", bouton: "Voir le client", lien: l });
+    if (s.mails_recus_erreur_7j) t.push({ n: 0, pt: "rouge", titre: plur(s.mails_recus_erreur_7j, "mail reçu non traité", "mails reçus non traités"), sous: c.nom + " · la boîte sinistres n'a pas pu les lire", bouton: "Voir le client", lien: l });
     if (s.webhooks_en_echec) t.push({ n: 0, pt: "rouge", titre: plur(s.webhooks_en_echec, "envoi") + " vers l'outil du client en échec", sous: c.nom + " · l'outil de la compagnie ne répond pas", bouton: "Voir le client", lien: l });
-    if (s.ia_en_echec) t.push({ n: 1, pt: "or", titre: plur(s.ia_en_echec, "dossier") + " bloqué(s) : analyse IA en échec", sous: c.nom + " · à relancer ou à reprendre par un gestionnaire", bouton: "Voir le client", lien: l });
+    if (s.ia_en_echec) t.push({ n: 1, pt: "or", titre: plur(s.ia_en_echec, "dossier bloqué", "dossiers bloqués") + " : analyse IA en échec", sous: c.nom + " · à relancer ou à reprendre par un gestionnaire", bouton: "Voir le client", lien: l });
     if (s.envoi_mails === "reel" && s.courriers_en_attente) t.push({ n: 1, pt: "or", titre: plur(s.courriers_en_attente, "mail") + " en attente d'envoi depuis plus de 15 min", sous: c.nom + " · l'envoi est peut-être bloqué", bouton: "Voir le client", lien: l });
     if (c.comptes && !c.connectes_7j) t.push({ n: 3, pt: "gris", titre: "Aucune connexion depuis 7 jours", sous: c.nom + " · " + plur(c.comptes, "compte actif", "comptes actifs"), bouton: "Voir les comptes", lien: l + "/comptes" });
   });
@@ -420,7 +413,7 @@ function vueAccueil() {
   var g = etat.global || {}, t = taches();
   var essai = etat.clients.filter(function (c) { return ((c.contrat || {}).statut || "essai") === "essai"; }).length;
   var date = new Date().toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" });
-  var h = '<div class="ad-tete"><div><h1>Bonjour ' + esc((etat.moi || "").split(" ")[0]) + "</h1><p>" + esc(date.charAt(0).toUpperCase() + date.slice(1)) + ". Aucun contenu de dossier n'est visible ici.</p></div>" +
+  var h = '<div class="ad-tete"><div><h1>Vue d\'ensemble</h1><p>' + esc(date.charAt(0).toUpperCase() + date.slice(1)) + ". Aucun contenu de dossier n'est visible ici.</p></div>" +
     '<button class="btn primaire" type="button" data-ouvrir>Ouvrir un client</button></div>';
   h += formOuvrir();
   h += '<section class="bloc"><div class="bloc-tete"><h2>À traiter<span class="compte">' + t.length + "</span></h2></div>" +
@@ -628,7 +621,7 @@ function rendreFiche(f) {
   h += '<div class="ad-bande">' + case_("Organisation", centres, plur(centres, "centre").replace(/^\d+ /, "") + ", " + plur(f.equipes.length, "équipe")) +
     case_("Utilisateurs actifs", actifs.length, (n("admin") ? plur(n("admin"), "admin") : '<b style="color:var(--rouge-texte)">aucun admin</b>') + ", " + plur(n("superviseur"), "manager") + ", " + plur(n("gestionnaire"), "gestionnaire")) +
     case_("Dossiers en cours", enCours, "<b>" + recus + "</b> reçus en 30 jours") +
-    case_("Invitations", f.invitations.length, f.invitations.filter(function (i) { return i.expiree; }).length ? "dont " + f.invitations.filter(function (i) { return i.expiree; }).length + " expirée(s)" : "en attente d'acceptation") + "</div>";
+    case_("Invitations", f.invitations.length, f.invitations.filter(function (i) { return i.expiree; }).length ? "dont " + plur(f.invitations.filter(function (i) { return i.expiree; }).length, "expirée") : "en attente d'acceptation") + "</div>";
   h += '<nav class="onglets">' + ONGLETS.map(function (o) {
     var c = o[0] === "comptes" ? f.comptes.length : o[0] === "support" ? ouvertes : 0;
     return '<a href="#/client/' + esc(f.client.id) + "/" + o[0] + '"' + (o[0] === etat.onglet ? ' aria-current="page"' : "") + ">" + o[1] + (c ? '<span class="n">' + c + "</span>" : "") + "</a>";

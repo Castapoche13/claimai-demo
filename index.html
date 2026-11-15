@@ -15,32 +15,25 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=20261105a">
+<link rel="stylesheet" href="style.css?v=20261115a">
 <style>
-/* ---------- Connexion ---------- */
-.connexion { min-height: 100vh; display: grid; place-items: center; padding: 40px 16px;
-  background: radial-gradient(1100px 600px at 50% -10%, rgba(217,174,69,.16), transparent 60%), radial-gradient(800px 500px at 50% 110%, rgba(46,77,158,.18), transparent 60%), #0E0E10; }
-.connexion-boite { width: min(380px, 100%); display: grid; gap: 28px; }
-.connexion-boite .marque-c { display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 20px; font-weight: 600; color: #F3F3F1; letter-spacing: -0.01em; }
-.connexion-boite .marque-c svg { width: 34px; height: 34px; }
-.connexion form { display: grid; gap: 16px; padding: 28px; border-radius: 16px; color: #ECECEE;
-  background: linear-gradient(180deg, rgba(255,255,255,.055), rgba(255,255,255,.025)); border: 1px solid rgba(255,255,255,.09);
-  box-shadow: 0 24px 60px rgba(0,0,0,.35); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); }
+/* ---------- Connexion : fond clair (ou sombre selon le thème), carte à filet, bouton primaire noir ---------- */
+.connexion { min-height: 100vh; display: grid; place-items: center; padding: 40px 16px; background: var(--papier); }
+.connexion-boite { width: min(380px, 100%); display: grid; gap: 24px; }
+.connexion-boite .marque-c { display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 20px; font-weight: 600; color: var(--encre); letter-spacing: -0.01em; }
+.connexion-boite .marque-c svg { width: 32px; height: 32px; }
+.connexion form { display: grid; gap: 16px; padding: 24px; border-radius: var(--rayon-carte, 8px); color: var(--encre); background: var(--feuille); border: 1px solid var(--trait); }
 .connexion form[hidden] { display: none; }
-.connexion form h2 { font-size: 18px; color: #F3F3F1; }
-.connexion form .muet, .connexion form .aide { color: #A2A2AA; }
-.connexion form .champ { color: #A2A2AA; font-size: 13px; }
-.connexion form .saisie { height: 44px; background: rgba(0,0,0,.35); color: #F3F3F1; border: 1px solid rgba(255,255,255,.12); }
-.connexion form .saisie:focus { border-color: #D9AE45; box-shadow: 0 0 0 3px rgba(217,174,69,.18); outline: none; }
-.connexion form .saisie[readonly] { color: #A2A2AA; }
-.connexion .erreur-form { color: #F28B82; }
-.connexion .btn { height: 44px; justify-content: center; }
-.connexion .btn.primaire { background: #D9AE45; color: #09090B; border-color: #D9AE45; font-weight: 600; }
-.connexion .btn.primaire:hover { background: #E4BC57; }
-.connexion .btn:not(.primaire) { background: transparent; color: #ECECEE; border: 1px solid rgba(255,255,255,.16); gap: 10px; }
-.connexion .btn:not(.primaire):hover { background: rgba(255,255,255,.06); }
-.connexion .sep-c { display: flex; align-items: center; gap: 12px; color: #8A8A93; font-size: 12px; margin: -4px 0; }
-.connexion .sep-c::before, .connexion .sep-c::after { content: ""; flex: 1; height: 1px; background: rgba(255,255,255,.1); }
+.connexion form h2 { font-size: 16px; font-weight: 600; color: var(--encre); }
+.connexion form .muet, .connexion form .aide { color: var(--gris); }
+.connexion form .champ { color: var(--encre-2); font-size: 13px; }
+.connexion form .saisie { height: 40px; }
+.connexion form .saisie[readonly] { color: var(--gris); }
+.connexion .erreur-form { color: var(--rouge-texte); }
+.connexion .btn { height: 40px; justify-content: center; }
+.connexion .btn:not(.primaire) { gap: 10px; }
+.connexion .sep-c { display: flex; align-items: center; gap: 12px; color: var(--gris); font-size: 12px; margin: -4px 0; }
+.connexion .sep-c::before, .connexion .sep-c::after { content: ""; flex: 1; height: 1px; background: var(--trait); }
 .demande-ligne { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding: 12px 20px; border-top: 1px solid var(--trait); }
 .demande-ligne .actions { display: flex; gap: 8px; }
 .btn.danger { color: var(--rouge-texte); }
@@ -49,30 +42,30 @@
 .lien-g:hover { color: var(--bleu); border-bottom-color: currentColor; text-decoration: none; }
 .fil-g { font-size: 13px; color: var(--gris); margin-bottom: 8px; }
 .fil-g a { color: var(--gris); }
-.presence-g { display: inline-flex; align-items: center; gap: 6px; vertical-align: middle; font-size: 12.5px; font-weight: 500; padding: 2px 10px; border-radius: 999px; background: var(--vert-pale); color: var(--vert-texte); }
+.presence-g { display: inline-flex; align-items: center; gap: 6px; vertical-align: middle; font-size: 12px; font-weight: 500; padding: 2px 10px; border-radius: 999px; background: var(--vert-pale); color: var(--vert-texte); }
 .presence-g.absent { background: var(--survol); color: var(--gris); }
 .g-stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-bottom: 16px; }
 .g-stats .pil-stat { display: grid; gap: 4px; align-content: start; }
 .g-stats .pil-stat .lib { font-size: 13px; color: var(--gris); }
-.g-stats .pil-stat .val { font-size: 28px; line-height: 34px; font-weight: 500; color: var(--encre); }
-.g-stats .pil-stat .delta { font-size: 12.5px; color: var(--gris); }
+.g-stats .pil-stat .val { font-size: 24px; line-height: 34px; font-weight: 500; color: var(--encre); }
+.g-stats .pil-stat .delta { font-size: 12px; color: var(--gris); }
 .g-stats .pil-stat.alerte-g { border-color: rgba(217,174,69,.55); }
 .g-stats .pil-stat .delta .moins-bien { color: var(--jaune-texte); font-weight: 600; }
-.g-dossiers td small { display: block; font-size: 12.5px; color: var(--gris); margin-top: 2px; }
+.g-dossiers td small { display: block; font-size: 12px; color: var(--gris); margin-top: 2px; }
 .g-actions { display: flex; gap: 8px; flex-wrap: wrap; }
-.g-selection { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 10px 20px; background: var(--jaune-pale); border-bottom: 1px solid var(--trait); font-size: 13.5px; font-weight: 500; }
+.g-selection { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 10px 20px; background: var(--jaune-pale); border-bottom: 1px solid var(--trait); font-size: 13px; font-weight: 500; }
 .g-selection[hidden] { display: none; }
 .g-selection .saisie { height: 32px; width: auto; min-width: 180px; }
 .g-activite { list-style: none; margin: 0; padding: 0; }
-.g-activite li { display: grid; grid-template-columns: 120px minmax(0, 1fr); gap: 12px; padding: 10px 20px; border-top: 1px solid var(--trait); font-size: 13.5px; }
+.g-activite li { display: grid; grid-template-columns: 120px minmax(0, 1fr); gap: 12px; padding: 10px 20px; border-top: 1px solid var(--trait); font-size: 13px; }
 .g-activite li:first-child { border-top: 0; }
 @media (max-width: 760px) { .g-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-.presence { display: inline-flex; align-items: center; gap: 7px; height: 28px; padding: 0 11px; border-radius: 999px; border: 1px solid var(--trait); background: var(--feuille); color: var(--encre-2); font: inherit; font-size: 12.5px; font-weight: 500; cursor: pointer; margin-right: 6px; }
+.presence { display: inline-flex; align-items: center; gap: 7px; height: 28px; padding: 0 11px; border-radius: 999px; border: 1px solid var(--trait); background: var(--feuille); color: var(--encre-2); font: inherit; font-size: 12px; font-weight: 500; cursor: pointer; margin-right: 6px; }
 .presence::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--vert); }
 .presence.absent::before { background: var(--gris-clair); }
 .presence.absent { color: var(--gris); }
 .presence:hover { border-color: var(--trait-fort); }
-.sensibles td small { display: block; font-size: 12.5px; color: var(--gris); margin-top: 1px; }
+.sensibles td small { display: block; font-size: 12px; color: var(--gris); margin-top: 1px; }
 .raisons { display: flex; flex-wrap: wrap; gap: 6px; }
 .raison { font-size: 12px; font-weight: 500; padding: 2px 8px; border-radius: 999px; background: var(--survol); color: var(--encre-2); white-space: nowrap; }
 .raison.chaude { background: var(--jaune-pale); color: var(--jaune-texte); }
@@ -80,7 +73,7 @@
 .reaff-l .saisie { height: 30px; min-width: 150px; padding-top: 0; padding-bottom: 0; }
 #b-champs { display: grid; gap: 16px; }
 #b-champs[hidden] { display: none; }
-.connexion .pied-connexion { text-align: center; font-size: 12.5px; color: #8A8A93; max-width: 40ch; margin: 0 auto; }
+.connexion .pied-connexion { text-align: center; font-size: 12px; color: var(--gris); max-width: 40ch; margin: 0 auto; }
 .alertes-titre { font-size: 13px; font-weight: 600; color: var(--encre-2); margin: 16px 16px 8px; }
 .erreur-form { color: var(--rouge-texte); font-size: 13px; min-height: 1.3em; }
 .mfa-qr { display: grid; gap: 8px; justify-items: center; text-align: center; }
@@ -92,17 +85,17 @@
 .app { display: grid; grid-template-columns: 228px minmax(0, 1fr); min-height: 100vh; }
 .nav { background: var(--feuille-2); border-right: 1px solid var(--trait); padding: 16px 12px; display: flex; flex-direction: column; gap: 20px; position: sticky; top: 0; height: 100vh; }
 .nav .marque { padding: 4px 8px; }
-.nav-assureur { padding: 0 8px; font-size: 12.5px; color: var(--gris); line-height: 1.4; }
+.nav-assureur { padding: 0 8px; font-size: 12px; color: var(--gris); line-height: 1.4; }
 .nav-assureur b { color: var(--encre); font-weight: 500; display: block; font-size: 13px; }
 .nav ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 1px; }
-.nav a { display: flex; align-items: center; gap: 10px; padding: 7px 8px; border-radius: 6px; color: var(--encre-2); font-size: 13.5px; font-weight: 500; }
+.nav a { display: flex; align-items: center; gap: 10px; padding: 7px 8px; border-radius: 6px; color: var(--encre-2); font-size: 13px; font-weight: 500; }
 .nav a:hover { background: var(--survol); text-decoration: none; }
 .nav a[aria-current="page"] { background: var(--survol); color: var(--encre); font-weight: 600; }
 .nav a svg { flex: none; color: var(--gris); }
 .nav a[aria-current="page"] svg { color: var(--encre); }
 .compteur { margin-left: auto; font-size: 12px; font-weight: 600; color: var(--orange-texte); }
-.nav-bas { margin-top: auto; display: grid; gap: 6px; padding: 0 8px; font-size: 12.5px; }
-.nav-bas button, .nav-bas a { background: none; border: 0; color: var(--gris); padding: 0; text-align: left; cursor: pointer; font-size: 12.5px; }
+.nav-bas { margin-top: auto; display: grid; gap: 6px; padding: 0 8px; font-size: 12px; }
+.nav-bas button, .nav-bas a { background: none; border: 0; color: var(--gris); padding: 0; text-align: left; cursor: pointer; font-size: 12px; }
 .nav-bas button:hover, .nav-bas a:hover { color: var(--encre); text-decoration: none; }
 
 .principal { min-width: 0; }
@@ -116,9 +109,9 @@
 .cloche { position: relative; display: grid; place-items: center; width: 34px; height: 34px; border-radius: 8px; border: 1px solid transparent; background: none; color: var(--encre); cursor: pointer; }
 .cloche:hover { background: var(--survol); }
 .cloche:focus-visible { outline: 2px solid var(--bleu); outline-offset: 2px; }
-.cloche .pastille { position: absolute; top: 2px; right: 1px; min-width: 16px; height: 16px; padding: 0 4px; border-radius: 8px; background: var(--gris); color: #fff; font-size: 10px; font-weight: 600; line-height: 16px; text-align: center; }
+.cloche .pastille { position: absolute; top: 2px; right: 1px; min-width: 16px; height: 16px; padding: 0 4px; border-radius: 8px; background: var(--gris); color: #fff; font-size: 11px; font-weight: 600; line-height: 16px; text-align: center; }
 .cloche .pastille.urgente { background: var(--rouge); }
-.p-alertes { position: absolute; right: 0; top: 42px; width: min(380px, calc(100vw - 32px)); max-height: 70vh; overflow: auto; background: var(--feuille); border: 1px solid var(--trait); border-radius: 10px; box-shadow: 0 12px 32px rgba(0,0,0,.14); z-index: 50; }
+.p-alertes { position: absolute; right: 0; top: 42px; width: min(380px, calc(100vw - 32px)); max-height: 70vh; overflow: auto; background: var(--feuille); border: 1px solid var(--trait); border-radius: var(--rayon); box-shadow: 0 12px 32px rgba(0,0,0,.14); z-index: 50; }
 .p-alertes .pa-tete { display: flex; align-items: baseline; justify-content: space-between; padding: 12px 16px; border-bottom: 1px solid var(--trait); color: var(--encre); }
 .p-alertes ul { list-style: none; margin: 0; padding: 0; }
 .p-alertes li + li { border-top: 1px solid var(--trait); }
@@ -162,7 +155,7 @@
 .vide { padding: 32px 16px; text-align: center; color: var(--gris); }
 .vide b, .vide .vide-titre { display: block; color: var(--encre); font-size: 14px; font-weight: 600; margin: 0 0 4px; letter-spacing: 0; }
 h1.sans-contour:focus { outline: none; }
-.compte { font-size: 12.5px; color: var(--gris); font-weight: 400; margin-left: 6px; }
+.compte { font-size: 12px; color: var(--gris); font-weight: 400; margin-left: 6px; }
 
 /* File de travail : lignes de tableau */
 .file { list-style: none; margin: 0; padding: 0; }
@@ -170,18 +163,18 @@ h1.sans-contour:focus { outline: none; }
 .ligne { display: grid; grid-template-columns: minmax(0, 200px) minmax(0, 1fr) 190px 90px; gap: 16px; align-items: center; padding: 11px 16px; color: inherit; }
 .ligne:hover { background: var(--feuille-2); text-decoration: none; }
 .ligne .repere { display: none; }
-.ligne .num { font-weight: 500; font-size: 13.5px; }
-.ligne .num small { display: block; font-weight: 400; color: var(--gris); font-size: 12.5px; }
-.ligne .quoi { font-size: 13.5px; color: var(--encre); }
-.ligne .quoi small { display: block; color: var(--gris); font-size: 12.5px; }
+.ligne .num { font-weight: 500; font-size: 13px; }
+.ligne .num small { display: block; font-weight: 400; color: var(--gris); font-size: 12px; }
+.ligne .quoi { font-size: 13px; color: var(--encre); }
+.ligne .quoi small { display: block; color: var(--gris); font-size: 12px; }
 .ligne .droite { display: contents; }
-.ligne .droite > span:last-child { text-align: right; font-size: 12.5px; color: var(--gris); }
+.ligne .droite > span:last-child { text-align: right; font-size: 12px; color: var(--gris); }
 @media (max-width: 760px) { .ligne { grid-template-columns: 1fr auto; } .ligne .quoi { grid-column: 1 / -1; } .ligne .droite > span:last-child { display: none; } }
 
 /* Tableau */
 .tableau-wrap { overflow-x: auto; }
-table.tableau { width: 100%; border-collapse: collapse; font-size: 13.5px; }
-.tableau th { text-align: left; font-weight: 500; color: var(--gris); font-size: 12.5px; padding: 9px 16px; border-bottom: 1px solid var(--trait); white-space: nowrap; background: var(--feuille-2); }
+table.tableau { width: 100%; border-collapse: collapse; font-size: 13px; }
+.tableau th { text-align: left; font-weight: 500; color: var(--gris); font-size: 12px; padding: 9px 16px; border-bottom: 1px solid var(--trait); white-space: nowrap; background: var(--feuille-2); }
 .tableau td { padding: 10px 16px; border-bottom: 1px solid var(--trait); vertical-align: middle; }
 .tableau tbody tr { cursor: pointer; }
 .tableau tbody tr:hover { background: var(--feuille-2); }
@@ -195,7 +188,7 @@ table.tableau { width: 100%; border-collapse: collapse; font-size: 13.5px; }
 .chiffre { padding: 16px; }
 .chiffre + .chiffre { border-left: 1px solid var(--trait); }
 .chiffre .val { font-size: clamp(18px, 1.6vw, 22px); font-weight: 600; letter-spacing: -.02em; line-height: 1.2; }
-.chiffre .lib { font-size: 12.5px; color: var(--gris); margin-top: 4px; }
+.chiffre .lib { font-size: 12px; color: var(--gris); margin-top: 4px; }
 .chiffre.vous .val { color: var(--orange-texte); }
 @media (max-width: 1100px) { .chiffres { grid-template-columns: repeat(3, minmax(0, 1fr)); } .chiffre:nth-child(4) { border-left: 0; } .chiffre:nth-child(n+4) { border-top: 1px solid var(--trait); } }
 @media (max-width: 560px) { .chiffres { grid-template-columns: repeat(2, minmax(0, 1fr)); } .chiffre { border-left: 0 !important; border-top: 1px solid var(--trait); } .chiffre:nth-child(-n+2) { border-top: 0; } .chiffre:nth-child(even) { border-left: 1px solid var(--trait) !important; } }
@@ -213,14 +206,14 @@ table.tableau { width: 100%; border-collapse: collapse; font-size: 13.5px; }
 .retour { display: inline-flex; gap: 6px; align-items: center; color: var(--gris); font-size: 13px; margin-bottom: 12px; }
 .retour:hover { color: var(--encre); text-decoration: none; }
 .fiche-tete { display: flex; gap: 20px; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; }
-.fiche-tete h1 { font-size: 22px; }
+.fiche-tete h1 { font-size: 20px; }
 .fiche-tete .sous { color: var(--gris); margin-top: 6px; display: flex; gap: 16px; flex-wrap: wrap; align-items: center; font-size: 13px; }
-.etiquette { font-size: 12.5px; color: var(--encre-2); font-weight: 500; }
+.etiquette { font-size: 12px; color: var(--encre-2); font-weight: 500; }
 
 /* Parcours : une barre d'étapes fine */
 .parcours { margin: 20px 0 20px; border: 1px solid var(--trait); border-radius: var(--rayon); padding: 16px 20px 14px; overflow-x: auto; }
 .route { list-style: none; margin: 0; padding: 0; display: grid; grid-auto-flow: column; grid-auto-columns: minmax(92px, 1fr); position: relative; min-width: 640px; }
-.route li { position: relative; padding-top: 20px; font-size: 12.5px; color: var(--gris-clair); text-align: center; }
+.route li { position: relative; padding-top: 20px; font-size: 12px; color: var(--gris-clair); text-align: center; }
 .route li::before { content: ""; position: absolute; top: 5px; left: 0; right: 0; height: 2px; background: var(--trait); }
 .route li:first-child::before { left: 50%; }
 .route li:last-child::before { right: 50%; }
@@ -245,18 +238,18 @@ table.tableau { width: 100%; border-collapse: collapse; font-size: 13.5px; }
 
 /* Décision attendue */
 .decision { border: 1px solid var(--trait-fort); background: var(--feuille); border-radius: var(--rayon); box-shadow: var(--ombre); }
-.decision-entete { display: flex; align-items: center; gap: 8px; padding: 10px 16px; border-bottom: 1px solid var(--trait); font-size: 12.5px; font-weight: 500; color: var(--orange-texte); background: var(--feuille-2); border-radius: var(--rayon) var(--rayon) 0 0; }
+.decision-entete { display: flex; align-items: center; gap: 8px; padding: 10px 16px; border-bottom: 1px solid var(--trait); font-size: 12px; font-weight: 500; color: var(--orange-texte); background: var(--feuille-2); border-radius: var(--rayon) var(--rayon) 0 0; }
 .decision-entete::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--orange); }
 .decision-corps { padding: 16px; display: grid; gap: 14px; }
 .decision h2 { font-size: 16px; }
 .decision .explication { color: var(--encre-2); max-width: 72ch; }
-.decision .loi { font-size: 12.5px; color: var(--gris); }
+.decision .loi { font-size: 12px; color: var(--gris); }
 .decision-actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
 .constat { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 12px 0; }
 .vehicule-constat { border: 1px solid var(--trait); border-radius: 8px; padding: 10px 12px; background: var(--feuille-2); min-width: 0; }
 .vehicule-constat.assure { border-color: var(--bleu-fonce); }
 .vc-tete { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 2px; }
-.cases { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 6px; font-size: 13.5px; }
+.cases { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 6px; font-size: 13px; }
 .cases li { display: grid; grid-template-columns: 24px 1fr; gap: 8px; align-items: start; }
 .cases .num { display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: var(--bleu-pale); color: var(--bleu-fonce); font-weight: 700; font-size: 12px; }
 .parts { border: 0; padding: 0; margin: 14px 0 6px; }
@@ -265,48 +258,48 @@ table.tableau { width: 100%; border-collapse: collapse; font-size: 13.5px; }
 .part { position: relative; }
 .part input { position: absolute; opacity: 0; inset: 0; margin: 0; cursor: pointer; }
 .part span { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 52px; border: 1px solid var(--trait); border-radius: 8px; background: var(--feuille); text-align: center; padding: 6px 4px; }
-.part small { font-size: 11.5px; color: var(--encre-2, inherit); opacity: .8; }
+.part small { font-size: 12px; color: var(--encre-2, inherit); opacity: .8; }
 .part input:checked + span { border-color: var(--bleu-fonce); background: var(--bleu-pale); color: var(--bleu-fonce); box-shadow: 0 0 0 1px var(--bleu-fonce); }
 .part input:focus-visible + span { outline: 2px solid var(--bleu-fonce); outline-offset: 2px; }
 @media (max-width: 560px) { .constat { grid-template-columns: 1fr; } }
-.decompte { display: grid; grid-template-columns: 1fr auto; gap: 6px 24px; max-width: 420px; font-size: 13.5px; }
-.decompte .total { font-weight: 600; font-size: 15px; border-top: 1px solid var(--trait); padding-top: 8px; margin-top: 2px; }
+.decompte { display: grid; grid-template-columns: 1fr auto; gap: 6px 24px; max-width: 420px; font-size: 13px; }
+.decompte .total { font-weight: 600; font-size: 14px; border-top: 1px solid var(--trait); padding-top: 8px; margin-top: 2px; }
 .decompte .nb { text-align: right; }
 .tampon { display: none; }
 
-.info-liste { display: grid; grid-template-columns: max-content 1fr; gap: 7px 16px; font-size: 13.5px; margin: 0; }
+.info-liste { display: grid; grid-template-columns: max-content 1fr; gap: 7px 16px; font-size: 13px; margin: 0; }
 .info-liste dt { color: var(--gris); }
 .info-liste dd { margin: 0; overflow-wrap: anywhere; }
-.recit { font-size: 13.5px; line-height: 1.6; color: var(--encre-2); }
-.confiance { display: flex; align-items: center; gap: 10px; font-size: 13.5px; }
+.recit { font-size: 13px; line-height: 1.6; color: var(--encre-2); }
+.confiance { display: flex; align-items: center; gap: 10px; font-size: 13px; }
 .confiance .piste { display: block; width: 100px; height: 6px; border-radius: 3px; background: var(--survol); overflow: hidden; }
 .confiance .rempli { display: block; height: 100%; background: var(--encre-2); }
 .confiance.basse .rempli { background: var(--orange); }
-.alerte { display: grid; grid-template-columns: 16px 1fr; gap: 10px; padding: 10px 12px; border-radius: 6px; border: 1px solid var(--trait); background: var(--feuille-2); color: var(--encre); font-size: 13.5px; }
+.alerte { display: grid; grid-template-columns: 16px 1fr; gap: 10px; padding: 10px 12px; border-radius: 6px; border: 1px solid var(--trait); background: var(--feuille-2); color: var(--encre); font-size: 13px; }
 .alerte svg { margin-top: 2px; color: var(--orange); }
 .alerte.ko svg { color: var(--rouge); }
 .pile { display: grid; gap: 12px; }
-.sous-titre { font-size: 12.5px; font-weight: 500; color: var(--gris); margin-bottom: 6px; }
-.liste-simple { margin: 0; padding-left: 18px; font-size: 13.5px; display: grid; gap: 4px; }
+.sous-titre { font-size: 12px; font-weight: 500; color: var(--gris); margin-bottom: 6px; }
+.liste-simple { margin: 0; padding-left: 18px; font-size: 13px; display: grid; gap: 4px; }
 .note-garage { margin: -6px 0 16px; }
-.puces { margin: 0; padding-left: 18px; display: grid; gap: 4px; font-size: 13.5px; }
+.puces { margin: 0; padding-left: 18px; display: grid; gap: 4px; font-size: 13px; }
 
 .chiffrage { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px 20px; }
-.chiffrage div { font-size: 12.5px; color: var(--gris); }
-.chiffrage b { display: block; font-size: 15px; color: var(--encre); font-weight: 500; margin-top: 2px; }
+.chiffrage div { font-size: 12px; color: var(--gris); }
+.chiffrage b { display: block; font-size: 14px; color: var(--encre); font-weight: 500; margin-top: 2px; }
 .formule { font-size: 13px; padding: 10px 12px; background: var(--feuille-2); border: 1px solid var(--trait); border-radius: 6px; color: var(--encre-2); line-height: 1.55; }
 .document + .document { border-top: 1px solid var(--trait); padding-top: 16px; }
 .document.a-verifier { border-left: 3px solid var(--orange); padding-left: 12px; }
 .note + .note, .depot-fiche + .note { border-top: 1px solid var(--trait); padding-top: 16px; }
 .note.a-traiter { border-left: 3px solid var(--orange); padding-left: 12px; }
-.note-texte { white-space: pre-wrap; font-size: 13.5px; line-height: 1.55; color: var(--encre-2); margin: 6px 0 10px; }
+.note-texte { white-space: pre-wrap; font-size: 13px; line-height: 1.55; color: var(--encre-2); margin: 6px 0 10px; }
 .impacts { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0; }
 .impacts span { font-size: 12px; padding: 2px 8px; border-radius: 999px; background: var(--feuille-2); border: 1px solid var(--trait); color: var(--encre-2); }
 .propositions { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 8px; }
-.propositions li { display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; align-items: center; padding: 10px 12px; border: 1px solid var(--trait); border-radius: 6px; font-size: 13.5px; }
-.propositions li small { grid-column: 1; color: var(--gris); font-size: 12.5px; }
+.propositions li { display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; align-items: center; padding: 10px 12px; border: 1px solid var(--trait); border-radius: 6px; font-size: 13px; }
+.propositions li small { grid-column: 1; color: var(--gris); font-size: 12px; }
 .propositions li .boutons { grid-row: 1 / span 2; grid-column: 2; display: flex; gap: 6px; }
-.depot-fiche { display: block; border: 1.5px dashed var(--trait-fort); border-radius: 8px; padding: 14px; text-align: center; font-size: 13.5px; color: var(--gris); cursor: pointer; }
+.depot-fiche { display: block; border: 1.5px dashed var(--trait-fort); border-radius: 8px; padding: 14px; text-align: center; font-size: 13px; color: var(--gris); cursor: pointer; }
 .depot-fiche b { color: var(--encre); font-weight: 500; }
 .depot-fiche.survol { background: var(--survol); color: var(--encre); }
 .depot-fiche input { display: none; }
@@ -315,34 +308,34 @@ table.tableau { width: 100%; border-collapse: collapse; font-size: 13.5px; }
 .expertise-tete { display: flex; justify-content: space-between; gap: 10px; align-items: baseline; margin-bottom: 10px; }
 
 .pieces { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
-.pieces li { display: grid; grid-template-columns: 16px 1fr auto; gap: 10px; align-items: start; font-size: 13.5px; }
+.pieces li { display: grid; grid-template-columns: 16px 1fr auto; gap: 10px; align-items: start; font-size: 13px; }
 .coche { width: 16px; height: 16px; border-radius: 50%; border: 1.5px solid var(--trait-fort); display: grid; place-items: center; margin-top: 2px; }
 .coche.ok { background: var(--vert); border-color: var(--vert); }
 .coche.ok::after { content: ""; width: 3px; height: 7px; border: solid #fff; border-width: 0 1.5px 1.5px 0; transform: translateY(-1px) rotate(45deg); }
 .pieces small { display: block; color: var(--gris); font-size: 12px; }
 
 .presta { display: grid; gap: 12px; }
-.presta-l { display: grid; grid-template-columns: 1fr auto; gap: 2px 10px; font-size: 13.5px; }
+.presta-l { display: grid; grid-template-columns: 1fr auto; gap: 2px 10px; font-size: 13px; }
 .presta-l .role { font-size: 12px; color: var(--gris); }
 .presta-l b { font-weight: 500; }
-.presta-l a { font-size: 12.5px; }
+.presta-l a { font-size: 12px; }
 
 .courriers { list-style: none; margin: 0; padding: 0; }
 .courriers > li + li { border-top: 1px solid var(--trait); }
 .courriers summary { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px 12px; padding: 10px 16px; cursor: pointer; list-style: none; }
 .courriers summary::-webkit-details-marker { display: none; }
 .courriers summary:hover { background: var(--feuille-2); }
-.courriers .objet { font-weight: 500; font-size: 13.5px; }
-.courriers .meta { font-size: 12.5px; color: var(--gris); }
-.courriers .envoi { font-size: 12.5px; text-align: right; color: var(--gris); }
+.courriers .objet { font-weight: 500; font-size: 13px; }
+.courriers .meta { font-size: 12px; color: var(--gris); }
+.courriers .envoi { font-size: 12px; text-align: right; color: var(--gris); }
 .courriers .envoi.ok { color: var(--vert-texte); }
 .courriers .envoi.ko { color: var(--rouge-texte); }
-.corps-courrier { white-space: pre-wrap; font-size: 13.5px; line-height: 1.6; padding: 4px 16px 16px; color: var(--encre-2); }
+.corps-courrier { white-space: pre-wrap; font-size: 13px; line-height: 1.6; padding: 4px 16px 16px; color: var(--encre-2); }
 
 .journal { list-style: none; margin: 0; padding: 0; }
 .journal li { display: grid; grid-template-columns: 104px 1fr; gap: 12px; font-size: 13px; padding: 5px 0; }
 .journal li + li { border-top: 1px solid var(--trait); padding-top: 7px; }
-.journal .t { color: var(--gris); font-size: 12.5px; }
+.journal .t { color: var(--gris); font-size: 12px; }
 .journal .p { display: none; }
 .acteur { font-size: 12px; color: var(--gris); margin-left: 8px; white-space: nowrap; }
 .acteur::before { content: "par "; }
@@ -363,12 +356,12 @@ table.tableau { width: 100%; border-collapse: collapse; font-size: 13.5px; }
 .msg { width: 100%; text-align: left; border: 0; border-bottom: 1px solid var(--trait); background: none; padding: 12px 14px; cursor: pointer; display: grid; gap: 2px; }
 .msg:hover { background: var(--feuille-2); }
 .msg[aria-current="true"] { background: var(--bleu-pale); }
-.msg .o { font-weight: 500; font-size: 13.5px; }
+.msg .o { font-weight: 500; font-size: 13px; }
 .msg .m { font-size: 12px; color: var(--gris); display: flex; justify-content: space-between; gap: 8px; }
 .lecteur { padding: 20px 24px; }
 .lecteur .entete-mail { border-bottom: 1px solid var(--trait); padding-bottom: 12px; margin-bottom: 16px; display: grid; gap: 4px; }
 .lecteur .entete-mail h2 { font-size: 16px; }
-.lecteur .entete-mail .de { font-size: 12.5px; color: var(--gris); }
+.lecteur .entete-mail .de { font-size: 12px; color: var(--gris); }
 .lecteur .corps { white-space: pre-wrap; font-size: 14px; line-height: 1.65; max-width: 72ch; }
 .lecteur .cta { margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--trait); display: flex; gap: 14px; align-items: center; flex-wrap: wrap; }
 @media (max-width: 1100px) { .messagerie { grid-template-columns: 1fr; height: auto; } .col-boites, .col-messages { border-right: 0; border-bottom: 1px solid var(--trait); max-height: 320px; } }
@@ -382,7 +375,7 @@ table.tableau { width: 100%; border-collapse: collapse; font-size: 13.5px; }
 @media (max-width: 900px) { .reglage { grid-template-columns: 1fr; gap: 12px; } }
 .code { font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace; font-size: 12px; background: var(--feuille-2); border: 1px solid var(--trait); border-radius: 6px; padding: 12px 14px; white-space: pre-wrap; overflow-wrap: anywhere; color: var(--encre-2); margin: 0; }
 textarea.saisie.code-saisie { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 12px; min-height: 160px; }
-.envois { list-style: none; margin: 0; padding: 0; font-size: 12.5px; display: grid; gap: 4px; }
+.envois { list-style: none; margin: 0; padding: 0; font-size: 12px; display: grid; gap: 4px; }
 .envois li { display: flex; justify-content: space-between; gap: 10px; }
 .routes { width: 100%; border-collapse: collapse; font-size: 13px; }
 .routes td { padding: 7px 10px; border-bottom: 1px solid var(--trait); vertical-align: top; }
@@ -394,54 +387,54 @@ textarea.saisie.code-saisie { font-family: ui-monospace, Menlo, Consolas, monosp
 .espaces button { border: 0; background: none; padding: 7px 6px; border-radius: 6px; font-size: 13px; font-weight: 500; color: var(--gris); cursor: pointer; }
 .espaces button[aria-pressed="true"] { background: var(--feuille); color: var(--encre); box-shadow: 0 1px 2px rgba(0,0,0,.08); font-weight: 600; }
 .espaces[hidden] { display: none; }
-.espace-seul { margin: 0 8px; font-size: 12.5px; color: var(--gris); }
+.espace-seul { margin: 0 8px; font-size: 12px; color: var(--gris); }
 .espace-seul b { color: var(--encre); font-weight: 600; }
 .bandeau-corporel { border: 1px solid var(--trait); border-left: 3px solid var(--orange); border-radius: 6px; padding: 10px 14px; font-size: 13px; color: var(--encre-2); margin-bottom: 16px; background: var(--feuille-2); }
 .accueil-tete { display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; margin-bottom: 18px; flex-wrap: wrap; }
-.accueil-tete h1 { font-size: 22px; letter-spacing: -.02em; }
-.accueil-tete p { color: var(--gris); font-size: 13.5px; margin-top: 4px; }
+.accueil-tete h1 { font-size: 20px; letter-spacing: -.02em; }
+.accueil-tete p { color: var(--gris); font-size: 13px; margin-top: 4px; }
 button.ligne-mail { width: 100%; background: none; border: 0; font: inherit; color: inherit; text-align: left; cursor: pointer; }
 .mail-detail { padding: 4px 20px 16px 36px; }
 .mail-texte { white-space: pre-wrap; font: inherit; font-size: 14px; line-height: 1.5; background: var(--papier); color: var(--encre); border: 1px solid var(--trait); border-radius: 8px; padding: 12px 14px; margin: 0 0 8px; max-height: 320px; overflow: auto; }
 .mail-actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-top: 8px; }
 .mail-actions .saisie { max-width: 260px; }
 .paie-resume { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
-.paie-resume b { font-size: 18px; }
+.paie-resume b { font-size: 16px; }
 .pastille-mail { justify-self: start; align-self: center; font-size: 12px; font-weight: 600; padding: 3px 9px; border-radius: 999px; white-space: nowrap; background: var(--survol); color: var(--gris); }
 .pastille-mail.ok { background: var(--vert-pale); color: var(--vert-texte); } .pastille-mail.attente { background: var(--jaune-pale); color: var(--jaune-texte); }
 .pastille-mail.alerte { background: var(--rouge-pale); color: var(--rouge-texte); } .pastille-mail.info { background: var(--bleu-pale); color: var(--bleu-fonce); }
-.indice { font-size: 13.5px; padding: 10px 14px; border-radius: 8px; background: var(--bleu-pale); color: var(--encre); } .indice.ok { background: var(--vert-pale); color: var(--vert-texte); } .indice.ko { background: var(--rouge-pale); color: var(--rouge-texte); }
+.indice { font-size: 13px; padding: 10px 14px; border-radius: 8px; background: var(--bleu-pale); color: var(--encre); } .indice.ok { background: var(--vert-pale); color: var(--vert-texte); } .indice.ko { background: var(--rouge-pale); color: var(--rouge-texte); }
 .tableau .actions { display: flex; flex-wrap: wrap; align-items: center; } .txt-ko { color: var(--rouge); }
 .tuiles { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-bottom: 18px; }
 .tuile { border: 1px solid var(--trait); border-radius: var(--rayon); padding: 14px 16px; background: var(--feuille); box-shadow: var(--ombre); text-decoration: none; color: inherit; display: block; }
 a.tuile:hover { border-color: var(--trait-fort); text-decoration: none; }
-.tuile .val { font-size: 26px; font-weight: 600; letter-spacing: -.02em; line-height: 1.1; }
-.tuile .lib { font-size: 12.5px; color: var(--gris); margin-top: 6px; }
+.tuile .val { font-size: 24px; font-weight: 600; letter-spacing: -.02em; line-height: 1.1; }
+.tuile .lib { font-size: 12px; color: var(--gris); margin-top: 6px; }
 .tuile.vous .val { color: var(--orange-texte); }
 .tuile .sous { font-size: 12px; color: var(--orange-texte); margin-top: 2px; }
 @media (max-width: 900px) { .tuiles { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 .filtre-file { display: inline-flex; gap: 2px; padding: 3px; border-radius: 8px; background: var(--survol); }
-.filtre-file button { border: 0; background: none; padding: 5px 10px; border-radius: 6px; font-size: 12.5px; font-weight: 500; color: var(--gris); cursor: pointer; }
+.filtre-file button { border: 0; background: none; padding: 5px 10px; border-radius: 6px; font-size: 12px; font-weight: 500; color: var(--gris); cursor: pointer; }
 .filtre-file button[aria-pressed="true"] { background: var(--feuille); color: var(--encre); box-shadow: 0 1px 2px rgba(0,0,0,.08); }
 .filtre-file .n { margin-left: 4px; color: var(--gris); font-weight: 400; }
 .prio { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--orange); margin-right: 6px; vertical-align: 1px; }
 .ligne .titulaire { display: block; font-size: 12px; color: var(--gris); margin-top: 2px; }
 .lien-prendre { border: 0; background: none; padding: 0; color: var(--bleu); font: inherit; font-weight: 500; cursor: pointer; }
 .lien-prendre:hover { text-decoration: underline; }
-.titulaire-barre { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; border: 1px solid var(--trait); border-radius: var(--rayon); padding: 10px 14px; margin-bottom: 16px; font-size: 13.5px; background: var(--feuille-2); }
+.titulaire-barre { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; border: 1px solid var(--trait); border-radius: var(--rayon); padding: 10px 14px; margin-bottom: 16px; font-size: 13px; background: var(--feuille-2); }
 .titulaire-barre .actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
 .env { display: inline-flex; border: 1px solid var(--trait-fort); border-radius: 6px; padding: 2px; background: var(--feuille-2); flex: none; }
-.env button { border: 0; background: none; padding: 4px 10px; border-radius: 4px; font-size: 12.5px; font-weight: 500; color: var(--gris); cursor: pointer; }
+.env button { border: 0; background: none; padding: 4px 10px; border-radius: 4px; font-size: 12px; font-weight: 500; color: var(--gris); cursor: pointer; }
 .env button[aria-pressed="true"] { background: var(--feuille); color: var(--encre); box-shadow: 0 0 0 1px var(--trait); }
 .env button.essai[aria-pressed="true"] { color: var(--orange-texte); }
-.bandeau-essai { background: var(--jaune-pale); color: var(--orange-texte); border-bottom: 1px solid var(--trait); font-size: 12.5px; font-weight: 500; }
+.bandeau-essai { background: var(--jaune-pale); color: var(--orange-texte); border-bottom: 1px solid var(--trait); font-size: 12px; font-weight: 500; }
 .bandeau-essai div { max-width: 1240px; margin: 0 auto; padding: 6px 32px; display: flex; gap: 8px; align-items: center; }
 .bandeau-essai div::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--orange); flex: none; }
 @media (max-width: 960px) { .bandeau-essai div { padding: 6px 16px; } }
 
 /* ---------- Onglets internes ---------- */
 .onglets { display: flex; gap: 2px; border-bottom: 1px solid var(--trait); margin-bottom: 20px; overflow-x: auto; }
-.onglets a { padding: 9px 12px; font-size: 13.5px; font-weight: 500; color: var(--gris); border-bottom: 2px solid transparent; margin-bottom: -1px; white-space: nowrap; }
+.onglets a { padding: 9px 12px; font-size: 13px; font-weight: 500; color: var(--gris); border-bottom: 2px solid transparent; margin-bottom: -1px; white-space: nowrap; }
 .onglets a:hover { color: var(--encre); text-decoration: none; }
 .onglets a[aria-current="page"] { color: var(--encre); border-bottom-color: var(--encre); }
 .fiche-onglets { margin-top: 28px; }
@@ -449,7 +442,7 @@ a.tuile:hover { border-color: var(--trait-fort); text-decoration: none; }
 
 /* ---------- Vérification du raccordement ---------- */
 .verif-tete { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px 20px; align-items: center; padding: 16px; border-bottom: 1px solid var(--trait); }
-.verif-tete h2 { font-size: 15px; }
+.verif-tete h2 { font-size: 14px; }
 .verif-tete p { color: var(--gris); font-size: 13px; margin-top: 2px; }
 .progression { grid-column: 1 / -1; display: block; height: 6px; border-radius: 3px; background: var(--survol); overflow: hidden; }
 .progression span { display: block; height: 100%; background: var(--vert); border-radius: 3px; }
@@ -457,11 +450,11 @@ a.tuile:hover { border-color: var(--trait-fort); text-decoration: none; }
 .controles { list-style: none; margin: 0; padding: 0; }
 .controles li { display: grid; grid-template-columns: 20px minmax(0, 1fr) auto; gap: 4px 12px; padding: 12px 16px; align-items: start; }
 .controles li + li { border-top: 1px solid var(--trait); }
-.controles .lib { font-size: 13.5px; font-weight: 500; }
+.controles .lib { font-size: 13px; font-weight: 500; }
 .controles .det { font-size: 13px; color: var(--encre-2); grid-column: 2; overflow-wrap: anywhere; }
-.controles .aide { font-size: 12.5px; color: var(--gris); grid-column: 2; }
+.controles .aide { font-size: 12px; color: var(--gris); grid-column: 2; }
 .controles .quand { font-size: 12px; color: var(--gris); white-space: nowrap; text-align: right; }
-.controles .fac { font-size: 11.5px; color: var(--gris); font-weight: 400; margin-left: 6px; }
+.controles .fac { font-size: 12px; color: var(--gris); font-weight: 400; margin-left: 6px; }
 @media (max-width: 640px) { .controles li { grid-template-columns: 20px minmax(0, 1fr); } .controles .quand { grid-column: 2; text-align: left; } }
 .pastille { width: 18px; height: 18px; border-radius: 50%; display: grid; place-items: center; margin-top: 1px; border: 1.5px solid var(--trait-fort); }
 .pastille.ok { background: var(--vert); border-color: var(--vert); }
@@ -472,7 +465,7 @@ a.tuile:hover { border-color: var(--trait-fort); text-decoration: none; }
 .pastille.attention::after { content: "!"; color: #fff; font-size: 12px; line-height: 1; font-weight: 700; }
 .pastille.en_cours { border-color: var(--bleu); border-right-color: transparent; animation: tourne .8s linear infinite; }
 .cle-neuve { display: grid; gap: 8px; padding: 12px 14px; border: 1px solid var(--orange); border-radius: 6px; background: var(--jaune-pale); }
-.cle-neuve .mono { font-size: 12.5px; overflow-wrap: anywhere; color: var(--encre); }
+.cle-neuve .mono { font-size: 12px; overflow-wrap: anywhere; color: var(--encre); }
 .code-http { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 12px; font-weight: 600; }
 .code-http.ok { color: var(--vert-texte); }
 .code-http.ko { color: var(--rouge-texte); }
@@ -483,7 +476,7 @@ a.tuile:hover { border-color: var(--trait-fort); text-decoration: none; }
 
 #c-captcha { min-height: 65px; }
 </style>
-<link rel="stylesheet" href="charte.css?v=20261115a">
+<link rel="stylesheet" href="charte.css?v=20261115b">
 </head>
 <body>
 
@@ -612,7 +605,7 @@ a.tuile:hover { border-color: var(--trait-fort); text-decoration: none; }
 <div id="toast" class="toast" hidden role="status"></div>
 
 <script src="vendor/supabase-js-2.118.0.js"></script>
-<script src="commun.js?v=20261115a"></script>
+<script src="commun.js?v=20261115b"></script>
 <script>
 (function () {
 "use strict";
@@ -996,12 +989,12 @@ $("form-recherche").addEventListener("submit", function (e) {
 /* ---------------- Ce que le dossier attend ---------------- */
 function attente(d) {
   var v = d.validation, p = v && v.proposition || {};
-  if (v && v.etape === "decision" && p.decision === "classement_sans_indemnite") return ["Classement sans indemnité à confirmer", "AIPP estimée " + C.nombre(p.aipp_estimee != null ? p.aipp_estimee : p.aipp) + " %"];
+  if (v && v.etape === "decision" && p.decision === "classement_sans_indemnite") return ["Classement sans indemnité à confirmer", "AIPP estimée " + C.nombre(p.aipp_estimee != null ? p.aipp_estimee : p.aipp) + "\u00a0%"];
   if (v && v.etape === "decision") return ["Refus proposé, à confirmer ou écarter", C.motif(p.motif)];
-  if (v && v.etape === "responsabilite") return ["Responsabilité à valider", p.pct != null ? "Proposition : assuré responsable à " + p.pct + " %" : "Accident avec un autre véhicule : constat à examiner"];
+  if (v && v.etape === "responsabilite") return ["Responsabilité à valider", p.pct != null ? "Proposition : assuré responsable à " + p.pct + "\u00a0%" : "Accident avec un autre véhicule : constat à examiner"];
   if (v && v.etape === "prereglement") return ["Règlement de " + eur(p.montant_net) + " à valider", p.remboursement_assure ? "Remboursement de l'assuré, garage hors réseau, franchise déduite" : d.theme === "VOL" ? "Indemnité vol versée à l'assuré, franchise déduite" : p.beneficiaire === "assure" ? "Capital invalidité versé à l'assuré" : "Versé au réparateur, franchise déduite"];
   if (v && v.etape === "anomalie") {
-    var a = (p.anomalies || [])[0]; return [a ? (C.ANOMALIES[a.code] || a.code) : (C.ANOMALIES[p.code] || "Anomalie à examiner"), a ? a.detail : C.motif(d.motif)];
+    var a = (p.anomalies || [])[0]; return [a ? (C.ANOMALIES[a.code] || a.code) : (C.ANOMALIES[p.code] || "Anomalie à examiner"), a ? C.montantsFr(a.detail) : C.motif(d.motif)];
   }
   if (d.statut === "hors_perimetre") return ["Dossier sorti du circuit automatique", C.motif(d.motif)];
   if (d.document_a_verifier) return ["Document à vérifier", "Klerio l'a lu mais ne l'a pas appliqué seul : un contrôle a échoué"];
@@ -1046,10 +1039,10 @@ function vueFile() {
     var h = bandeauCorporel() + '<div class="corbeille-tete"><div><h1>À traiter</h1><p>Espace ' + esc(C.ESPACES[S.branche].nom.toLowerCase()) +
       ", " + esc(new Date().toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" })) + '</p></div><a class="btn primaire" href="#/declarer">Déclarer un sinistre</a></div>';
     h += '<div class="tuiles">' +
-      '<button type="button" class="tuile forte" data-aller="decider"><div class="val">' + file.length + '</div><div class="lib">Attendent une décision</div>' + "" + "</button>" +
+      '<button type="button" class="tuile forte' + (file.length ? "" : " zero") + '" data-aller="decider"><div class="val">' + file.length + '</div><div class="lib">Attendent une décision</div>' + "" + "</button>" +
       '<button type="button" class="tuile" data-aller="tiers"><div class="val">' + tiers.length + '</div><div class="lib">Chez un expert, un garage ou l\'assuré</div></button>' +
       '<a class="tuile" href="#/archives"><div class="val">' + (ind.clos_30j || 0) + '</div><div class="lib">Terminés ces 30 derniers jours</div></a>' +
-      '<a class="tuile" href="#/pilotage"><div class="val">' + (ind.taux_sans_intervention != null ? C.nombre(ind.taux_sans_intervention, 0) + " %" : "–") + '</div><div class="lib">Traités sans intervention humaine</div></a></div>';
+      '<a class="tuile" href="#/pilotage"><div class="val">' + (ind.taux_sans_intervention != null ? C.nombre(ind.taux_sans_intervention, 0) + "\u00a0%" : "–") + '</div><div class="lib">Traités sans intervention humaine</div></a></div>';
     function tab(cle, lib, n, urgent) {
       return '<button type="button" role="tab" class="bannette" data-bannette="' + cle + '" aria-selected="' + (cle === onglet) + '" aria-controls="bannette-corps">' +
         esc(lib) + '<span class="badge-n' + (urgent ? " urgent" : "") + '">' + n + "</span></button>";
@@ -1508,7 +1501,7 @@ function afficherDossier(f) {
       "<dt>Garanties</dt><dd>" + ((ctr.garanties || []).length ? repliable((ctr.garanties || []).map(function (g) {
         return esc(C.GARANTIES[g.code] || g.code) +
           '<span class="muet">' + (g.option ? ", option " + g.option : ", franchise " + eur(g.franchise)) +
-          (g.plafond != null ? ", plafond " + eur(g.plafond) : "") + (g.vetuste_pieces_pct ? ", vétusté pièces " + C.nombre(g.vetuste_pieces_pct) + " %" : "") + "</span>";
+          (g.plafond != null ? ", plafond " + eur(g.plafond) : "") + (g.vetuste_pieces_pct ? ", vétusté pièces " + C.nombre(g.vetuste_pieces_pct) + "\u00a0%" : "") + "</span>";
       }), 3, "liste-garanties", "garantie", "garanties") : "Aucune") + "</dd></dl>" : '<p class="muet">Aucun contrat rattaché.</p>') + "</div></section>";
   h += blocClient(f);
   h += blocPrestataires(f);
@@ -1615,7 +1608,7 @@ function vehiculeConstat(cote, k, cases, assure) {
 function carteResponsabilite(f, v) {
   var p = v.proposition || {}, k = p.constat || {}, al = p.alertes || [];
   var expl = p.pct != null
-    ? "Proposition : votre assuré responsable à " + p.pct + " %. Règle appliquée : " + (p.regle || "") + "."
+    ? "Proposition : votre assuré responsable à " + p.pct + "\u00a0%. Règle appliquée : " + (p.regle || "") + "."
     : "Klerio ne peut pas proposer de répartition seul : choisissez la part de responsabilité de votre assuré à partir des éléments du dossier.";
   var h = '<section class="decision" id="carte-decision"><div class="decision-entete">Décision requise</div><div class="decision-corps"><h2>Valider la responsabilité</h2>' +
     '<p class="explication">' + esc(expl) + "</p>";
@@ -1693,9 +1686,9 @@ function blocVigilance(f) {
   if (ok.length) h += '<div><div class="sous-titre">Points confirmés</div><ul class="liste-simple">' + ok.map(function (x) { return "<li>" + esc(x) + "</li>"; }).join("") + "</ul></div>";
   if (v.synthese_ia) h += '<p class="petit">' + esc(v.synthese_ia) + "</p>";
   h += '<dl class="info-liste">' +
-    "<dt>Questionnaire</dt><dd>" + (q ? "Clés " + esc(CLES_Q[q.cles] || q.cles) + ", " + esc(String(q.nb_cles)) + " jeu(x), " + esc(STAT_Q[q.stationnement] || q.stationnement) +
+    "<dt>Questionnaire</dt><dd>" + (q ? "Clés " + esc(CLES_Q[q.cles] || q.cles) + ", " + esc(C.pluriel(q.nb_cles, "jeu", "jeux")) + ", " + esc(STAT_Q[q.stationnement] || q.stationnement) +
       (q.antivol ? ", antivol" : "") + (q.en_vente ? ", véhicule en vente" : "") : '<span class="muet">Pas encore rempli par l\'assuré</span>') + "</dd>" +
-    "<dt>Clés</dt><dd>" + (k ? esc(String(k.recues)) + " jeu(x) reçu(s) par l'expert" + (k.conformes === false ? ', <span class="statut ko">non conformes</span>' : k.recues > 0 ? ", conformes" : "") + (k.observations ? '<span class="muet"> · ' + esc(k.observations) + "</span>" : "")
+    "<dt>Clés</dt><dd>" + (k ? esc(C.pluriel(k.recues, "jeu reçu", "jeux reçus")) + " par l'expert" + (k.conformes === false ? ', <span class="statut ko">non conformes</span>' : k.recues > 0 ? ", conformes" : "") + (k.observations ? '<span class="muet"> · ' + esc(k.observations) + "</span>" : "")
       : '<span class="muet">Pas encore confirmées par l\'expert</span>') + "</dd>" +
     (en ? "<dt>Enquête</dt><dd>" + esc(en.enqueteur || "") + ", " + (en.statut === "en_cours" ? "en cours" : esc(({ vol_confirme: "vol établi", doute: "doutes", fraude_suspectee: "fraude soupçonnée" })[en.conclusion] || en.conclusion || "")) + "</dd>" : "") + "</dl>";
   h += '<p class="muet petit">Klerio contrôle lui-même la plainte, la facture d\'achat, le certificat de non-gage, les clés et la cohérence du récit. Les indices mineurs sont levés automatiquement ; les indices sérieux vous sont présentés. Aucun refus n\'est jamais décidé sans vous.' +
@@ -1709,7 +1702,7 @@ function blocResponsabilite(f) {
   var lib = Number(r.pct) === 0 ? ["Non responsable", "ok"] : Number(r.pct) === 100 ? ["Responsable", "alerte"] : ["Partagée", "attente"];
   return '<section class="bloc"><div class="bloc-tete"><h2>Responsabilité</h2><span class="pastille-mail ' + lib[1] + '">' + esc(lib[0]) + " · " + esc(String(r.pct)) + ' %</span></div><div class="bloc-corps"><dl class="info-liste">' +
     (r.regle ? "<dt>Règle appliquée</dt><dd>" + esc(r.regle) + "</dd>" : "") +
-    (r.propose_pct != null && Number(r.propose_pct) !== Number(r.pct) ? "<dt>Proposé par Klerio</dt><dd>" + esc(String(r.propose_pct)) + " %, corrigé par le gestionnaire</dd>" : "") +
+    (r.propose_pct != null && Number(r.propose_pct) !== Number(r.pct) ? "<dt>Proposé par Klerio</dt><dd>" + esc(String(r.propose_pct)) + "\u00a0%, corrigé par le gestionnaire</dd>" : "") +
     "<dt>Validée par</dt><dd>" + esc(String(r.valide_par || "").replace(/^humain:/, "")) + (r.le ? '<span class="muet"> · ' + esc(C.dateFr(r.le)) + "</span>" : "") + "</dd>" +
     (r.commentaire ? "<dt>Commentaire</dt><dd>" + esc(r.commentaire) + "</dd>" : "") +
     (f.tiers && (f.tiers.immatriculation || f.tiers.assureur) ? "<dt>Autre véhicule</dt><dd>" + esc([f.tiers.immatriculation, f.tiers.assureur].filter(Boolean).join(" · ")) + "</dd>" : "") +
@@ -1722,7 +1715,7 @@ function blocRecours(f) {
   var e = ETAT_RECOURS[r.statut] || [r.statut, "info"];
   var h = '<section class="bloc" id="bloc-recours"><div class="bloc-tete"><h2>Recours contre l\'assureur adverse</h2><span class="pastille-mail ' + e[1] + '">' + esc(e[0]) + '</span></div><div class="bloc-corps"><dl class="info-liste">' +
     "<dt>Montant</dt><dd><b>" + esc(eur(r.montant)) + "</b>" + '<span class="muet"> · ' + (r.mode === "forfait" ? "forfait conventionnel IRSA" : "montant réel retenu par l'expert") +
-    (Number(r.responsabilite_assure_pct) > 0 ? ", " + (100 - Number(r.responsabilite_assure_pct)) + " % de " + esc(eur(r.base)) : "") + "</span></dd>" +
+    (Number(r.responsabilite_assure_pct) > 0 ? ", " + (100 - Number(r.responsabilite_assure_pct)) + "\u00a0% de " + esc(eur(r.base)) : "") + "</span></dd>" +
     "<dt>Assureur adverse</dt><dd>" + esc(r.assureur_adverse || "Non identifié") + (r.immat_tiers ? '<span class="muet"> · véhicule ' + esc(r.immat_tiers) + "</span>" : "") + "</dd>" +
     (r.email_adverse ? "<dt>Service recours</dt><dd>" + esc(r.email_adverse) + "</dd>" : "") +
     (r.emis_le ? "<dt>Émis le</dt><dd>" + esc(C.dateFr(r.emis_le)) + "</dd>" : "") +
@@ -1770,7 +1763,7 @@ function blocGestion(f) {
   var h = '<section class="bloc" id="bloc-gestion"><div class="bloc-tete"><h2>Agir sur le dossier</h2><span class="muet petit">Sans retourner dans l\'outil de la compagnie</span></div><div class="bloc-corps pile">';
   if (f.theme === "ACCIDENT_TIERS" && r && r.pct != null && !regleValide && !enAttente) {
     h += '<details><summary class="petit">Corriger la responsabilité (contestation, nouveau témoignage)</summary><div class="pile" style="margin-top:10px"><div class="grille-2"><label class="champ">Nouvelle part de l\'assuré<select class="saisie" id="g-pct">' +
-      [0, 50, 100].filter(function (x) { return x !== Number(r.pct); }).map(function (x) { return '<option value="' + x + '">' + x + " %</option>"; }).join("") + '</select></label><div></div></div>' +
+      [0, 50, 100].filter(function (x) { return x !== Number(r.pct); }).map(function (x) { return '<option value="' + x + '">' + x + "\u00a0%</option>"; }).join("") + '</select></label><div></div></div>' +
       '<label class="champ">Motif <span class="aide">envoyé à l\'assuré</span><input class="saisie" id="g-motif-resp"></label>' +
       '<div class="decision-actions"><button class="btn" id="g-resp">Corriger et prévenir l\'assuré</button><span class="muet petit">Le recours est recalculé tant qu\'il n\'est pas émis.</span></div></div></details>';
   }
@@ -1813,7 +1806,7 @@ function blocExplication(f) {
   if (an.echec_ia) ko("Lecture de la déclaration impossible", "L'analyse automatique n'a pas abouti : un gestionnaire reprend la déclaration.");
   else {
     var doute = (conf != null && conf < .7) || an.theme_declare_coherent === false || (an.incoherences || []).length;
-    var titre = "Type retenu : " + C.theme(f.theme) + (conf != null ? " (fiabilité " + Math.round(conf * 100) + " %)" : "");
+    var titre = "Type retenu : " + C.theme(f.theme) + (conf != null ? " (fiabilité " + Math.round(conf * 100) + "\u00a0%)" : "");
     var d = an.justification || (an.resume ? "Résumé de la déclaration : " + an.resume : "");
     if (an.theme_declare_coherent === false) d += (d ? " " : "") + "Le type choisi par l'assuré ne correspond pas au récit.";
     if ((an.incoherences || []).length) d += (d ? " " : "") + "Points incohérents : " + an.incoherences.join(" ; ") + ".";
@@ -2075,7 +2068,7 @@ function blocRecoursRecus(f) {
     h += '<div class="recl"><div class="ligne-recl"><b>' + esc(r.assureur_adverse || "Assureur adverse") + "</b>" + (r.reference_adverse ? '<span class="muet"> · réf. ' + esc(r.reference_adverse) + "</span>" : "") + ' <span class="pastille-mail ' + e[1] + '">' + esc(e[0]) + "</span></div>" +
       '<dl class="info-liste"><dt>Reçu le</dt><dd>' + esc(C.dateFr(r.recu_le)) + (r.statut === "a_examiner" ? '<span class="muet"> · depuis ' + esc(String(r.age_jours)) + " jours</span>" : "") + "</dd>" +
       "<dt>Réclamé</dt><dd>" + (r.montant_reclame != null ? esc(C.eur(r.montant_reclame)) + (r.mode === "forfait" ? '<span class="muet"> · forfait conventionnel</span>' : r.mode === "reel" ? '<span class="muet"> · montant réel</span>' : "") : '<span class="muet">à compléter</span>') + "</dd>" +
-      (r.montant_du != null ? "<dt>Part de notre assuré</dt><dd><b>" + esc(C.eur(r.montant_du)) + '</b><span class="muet"> · responsabilité retenue ' + esc(String(r.responsabilite_assure_pct)) + " %</span></dd>" : "") +
+      (r.montant_du != null ? "<dt>Part de notre assuré</dt><dd><b>" + esc(C.eur(r.montant_du)) + '</b><span class="muet"> · responsabilité retenue ' + esc(String(r.responsabilite_assure_pct)) + "\u00a0%</span></dd>" : "") +
       (r.montant_accepte != null ? "<dt>Accepté</dt><dd>" + esc(C.eur(r.montant_accepte)) + (r.reference_reglement ? '<span class="muet"> · réglé, réf. ' + esc(r.reference_reglement) + "</span>" : "") + "</dd>" : "") +
       (r.motif ? "<dt>Motif</dt><dd>" + esc(r.motif) + "</dd>" : "") + "</dl>";
     if (r.statut === "a_examiner" && (r.montant_reclame == null || !r.assureur_adverse)) {
@@ -2090,7 +2083,7 @@ function blocRecoursRecus(f) {
       if (pct === null) {
         h += '<p class="muet">Validez d\'abord la responsabilité de notre assuré : Klerio calculera alors ce qui est dû.</p>';
       } else if (r.statut === "a_examiner" && pct > 0) {
-        h += '<p>Proposition : <b>payer ' + esc(C.eur(r.montant_du)) + "</b>, la part de notre assuré (" + esc(String(pct)) + " % de responsabilité).</p>" +
+        h += '<p>Proposition : <b>payer ' + esc(C.eur(r.montant_du)) + "</b>, la part de notre assuré (" + esc(String(pct)) + "\u00a0% de responsabilité).</p>" +
           '<div class="decision-actions"><button class="btn primaire" data-rr="accepter" data-id="' + id + '">Accepter et payer ' + esc(C.eur(r.montant_du)) + "</button></div>";
       } else if (r.statut === "a_examiner") {
         h += "<p>Notre assuré n'est pas responsable : proposition de <b>contester</b>. Le motif ci-dessous est envoyé à l'assureur adverse.</p>";
@@ -2498,7 +2491,7 @@ function carteAction(f) {
         if (p.synthese) corps += '<p class="recit">' + esc(p.synthese) + "</p>";
       }
       corps = (corps || "") + '<div class="pile">' + an.map(function (a) {
-        return '<div class="alerte ko"><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2l6.5 11.5h-13z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M8 6.5v3M8 11.5v.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg><span><b>' + esc(C.ANOMALIES[a.code] || a.code) + "</b>" + (a.detail ? "<br>" + esc(a.detail) : "") + "</span></div>";
+        return '<div class="alerte ko"><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2l6.5 11.5h-13z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M8 6.5v3M8 11.5v.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg><span><b>' + esc(C.ANOMALIES[a.code] || a.code) + "</b>" + (a.detail ? "<br>" + esc(C.montantsFr(a.detail)) : "") + "</span></div>";
       }).join("") + "</div>";
       oui = p.code === "VIGILANCE_VOL" ? "Rien d'anormal : envoyer l'offre" : p.code === "ENQUETE_VOL" ? "Poursuivre l'indemnisation" : p.expertise_id ? "Accepter et poursuivre" : "Prendre la main";
       non = "Reprendre la main";
@@ -2609,7 +2602,7 @@ function blocAnalyse(f, an, d) {
   if (an.resume) h += "<p>" + esc(an.resume) + "</p>";
   h += '<dl class="info-liste">';
   h += "<dt>Type retenu</dt><dd>" + esc(C.theme(f.theme)) + (an.theme_declare_coherent === false ? ' <span class="statut vous">différent du type déclaré</span>' : "") + "</dd>";
-  if (conf != null) h += '<dt>Fiabilité</dt><dd><span class="confiance' + (conf < .7 ? " basse" : "") + '"><span class="piste"><span class="rempli" style="width:' + Math.round(conf * 100) + '%"></span></span>' + Math.round(conf * 100) + " %</span></dd>";
+  if (conf != null) h += '<dt>Fiabilité</dt><dd><span class="confiance' + (conf < .7 ? " basse" : "") + '"><span class="piste"><span class="rempli" style="width:' + Math.round(conf * 100) + '%"></span></span>' + Math.round(conf * 100) + "\u00a0%</span></dd>";
   if (f.theme !== "GARANTIE_ACCIDENT" && f.tiers_implique != null) {
     // Bris de glace, vol, vandalisme, incendie, intempéries : un tiers éventuel est inconnu et ne change rien à la prise en charge
     var sansRecours = ["BRIS_GLACE", "VANDALISME", "TENTATIVE_VOL", "VOL", "VOL_RETROUVE", "INCENDIE", "EVENEMENT_CLIMATIQUE", "CATASTROPHE_NATURELLE"].indexOf(f.theme) >= 0;
@@ -2619,7 +2612,7 @@ function blocAnalyse(f, an, d) {
     if (d.classification) h += "<dt>Nature</dt><dd>" + esc(C.CLASSES[d.classification] || d.classification) + "</dd>";
     if (d.categorie_assure) h += "<dt>Qualité</dt><dd>Catégorie " + esc(d.categorie_assure) + (d.victime ? ", " + esc(C.LIENS[d.victime.lien] || "") : "") + "</dd>";
     if ((d.blessures || []).length) h += "<dt>Lésions</dt><dd>" + d.blessures.map(function (b) { return esc(b.description || libSiege(b.siege)) + ' <span class="muet">(' + (b.complexe ? "complexe" : "simple") + ")</span>"; }).join("<br>") + "</dd>";
-    if (d.aipp_estimee != null) h += "<dt>AIPP au barème</dt><dd>" + esc(C.nombre(d.aipp_estimee)) + " %, " + esc(libSiege(d.siege_retenu)) + "</dd>";
+    if (d.aipp_estimee != null) h += "<dt>AIPP au barème</dt><dd>" + esc(C.nombre(d.aipp_estimee)) + "\u00a0%, " + esc(libSiege(d.siege_retenu)) + "</dd>";
     h += "<dt>Exclusions</dt><dd>" + ((d.exclusions || []).length ? d.exclusions.map(function (x) { return esc(C.motif(x)); }).join(", ") : "Aucune relevée") + "</dd>";
   }
   if ((an.dommages || []).length && f.theme !== "GARANTIE_ACCIDENT") h += "<dt>Dommages</dt><dd>" + an.dommages.map(esc).join("<br>") + "</dd>";
@@ -2640,7 +2633,7 @@ var VALEURS_DOC = [["montant_ttc", "Montant TTC", "eur"], ["montant_ht", "Montan
 var ETAT_DOC = { applique: ["Appliqué au dossier", "ok"], a_verifier: ["À vérifier", "vous"], ecarte: ["Écarté", "neutre"], aide_saisie: ["Aide à la saisie", "neutre"], range: ["Rangé au dossier", "neutre"] };
 function valeurDoc(v, t) {
   if (v === undefined || v === null || v === "") return null;
-  if (t === "eur") return eur(v); if (t === "pct") return C.nombre(v, 1) + " %"; if (t === "h") return C.nombre(v, 1) + " h";
+  if (t === "eur") return eur(v); if (t === "pct") return C.nombre(v, 1) + "\u00a0%"; if (t === "h") return C.nombre(v, 1) + " h";
   if (t === "bool") return v ? "Oui" : "Non"; if (t === "date") return C.dateCourte(v); return String(v);
 }
 function sourceDoc(s) {
@@ -2657,7 +2650,7 @@ function blocDocuments(f) {
       var ctl = (d.controles || []).filter(function (c) { return c.niveau !== "info"; });
       var h = '<div class="document' + (d.statut === "a_verifier" ? " a-verifier" : "") + '"><div class="expertise-tete"><h3>' + esc(NATURES_DOC[d.nature] || d.nature) + "</h3>" +
         '<span class="statut ' + e[1] + '">' + esc(e[0]) + "</span></div>" +
-        '<p class="muet petit" style="margin-bottom:10px">' + esc(sourceDoc(d.source)) + " · " + esc(C.heure(d.cree_le)) + " · lecture sûre à " + Math.round((d.confiance || 0) * 100) + " %" +
+        '<p class="muet petit" style="margin-bottom:10px">' + esc(sourceDoc(d.source)) + " · " + esc(C.heure(d.cree_le)) + " · lecture sûre à " + Math.round((d.confiance || 0) * 100) + "\u00a0%" +
         (d.conserve ? ' · <button class="btn discret petit" data-ouvrir-doc="' + esc(d.id) + '">Ouvrir le document</button>' : " · document non conservé") + "</p>" +
         (vals ? '<div class="chiffrage">' + vals + "</div>" : "") +
         (x.resume ? '<p class="formule" style="margin-top:10px">' + esc(x.resume) + "</p>" : "") +
@@ -2695,19 +2688,19 @@ function blocExpertises(f) {
       var ecart = auto && auto.retenu_ttc ? (Number(x.retenu_ttc) - Number(auto.retenu_ttc)) / Number(auto.retenu_ttc) * 100 : null;
       h += '<div class="expertise-tete"><h3>Facture du réparateur</h3><span class="muet petit">' + esc(C.heure(x.recu_le)) + "</span></div>" +
         '<div class="chiffrage"><div>Montant TTC<b>' + esc(eur(x.retenu_ttc)) + "</b></div>" +
-        (ecart != null ? "<div>Écart avec l'expert<b>" + (ecart > 0 ? "+" : "") + esc(C.nombre(ecart, 1)) + " %</b></div>" : "") + "</div>" +
+        (ecart != null ? "<div>Écart avec l'expert<b>" + (ecart > 0 ? "+" : "") + esc(C.nombre(ecart, 1)) + "\u00a0%</b></div>" : "") + "</div>" +
         (x.conclusion ? '<p class="muet petit" style="margin-top:10px">' + esc(x.conclusion) + "</p>" : "");
     } else {
       var c = x.calcul || {};
       h += '<div class="expertise-tete"><h3>Conclusions du médecin expert</h3><span class="muet petit">' + esc(C.heure(x.recu_le)) + "</span></div>" +
-        '<div class="chiffrage"><div>AIPP retenue<b>' + esc(C.nombre(x.aipp)) + " %</b></div><div>Consolidation<b>" + esc(C.dateCourte(x.date_consolidation) || "Non fixée") + "</b></div>" +
+        '<div class="chiffrage"><div>AIPP retenue<b>' + esc(C.nombre(x.aipp)) + "\u00a0%</b></div><div>Consolidation<b>" + esc(C.dateCourte(x.date_consolidation) || "Non fixée") + "</b></div>" +
         (c.age_consolidation != null ? "<div>Âge à la consolidation<b>" + esc(c.age_consolidation) + " ans</b></div>" : "") +
         (c.rente_annuelle != null ? "<div>Rente annuelle<b>" + esc(eur(c.rente_annuelle)) + "</b></div>" : "") +
         (c.capital_net != null ? "<div>Capital à verser<b>" + esc(eur(c.capital_net)) + "</b></div>" : "") + "</div>" +
         (c.formule ? '<p class="formule" style="margin-top:12px">' + esc(frNum(c.formule)) + (c.per_interpole ? " (PER interpolé entre deux âges de la table)" : "") + "</p>" : "") +
         (c.type === "RENTE_VIAGERE" ? '<p class="alerte" style="margin-top:12px"><svg width="16" height="16" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6" fill="none" stroke="currentColor" stroke-width="1.5"/></svg><span>AIPP de 50 % ou plus : versement en rente viagère, à transmettre au service Rentes.</span></p>' : "");
     }
-    if (an.length) h += '<div class="pile" style="margin-top:12px">' + an.map(function (a) { return '<div class="alerte ko"><svg width="16" height="16" viewBox="0 0 16 16"><path d="M8 2l6.5 11.5h-13z" fill="none" stroke="currentColor" stroke-width="1.5"/></svg><span><b>' + esc(C.ANOMALIES[a.code] || a.code) + "</b>" + (a.detail ? " : " + esc(a.detail) : "") + "</span></div>"; }).join("") + "</div>";
+    if (an.length) h += '<div class="pile" style="margin-top:12px">' + an.map(function (a) { return '<div class="alerte ko"><svg width="16" height="16" viewBox="0 0 16 16"><path d="M8 2l6.5 11.5h-13z" fill="none" stroke="currentColor" stroke-width="1.5"/></svg><span><b>' + esc(C.ANOMALIES[a.code] || a.code) + "</b>" + (a.detail ? " : " + esc(C.montantsFr(a.detail)) : "") + "</span></div>"; }).join("") + "</div>";
     h += "</div>";
   });
   regl.forEach(function (r) {
@@ -3480,7 +3473,7 @@ function statsPilotage(pm) {
   var dr = p.delai_reglement_jours, ts = p.taux_sans_intervention;
   return '<div class="pil-stats">' +
     '<div class="pil-stat"><div class="lib">Dossiers en cours</div><div class="val">' + (pm.en_cours || 0) + "</div>" + ecart(pm.en_cours, pm.en_cours_avant, "", true) + "</div>" +
-    '<div class="pil-stat forte"><div class="lib">À décider par l\'équipe</div><div class="val">' + (pm.a_decider || 0) + "</div>" +
+    '<div class="pil-stat forte' + (pm.a_decider ? "" : " zero") + '"><div class="lib">À décider par l\'équipe</div><div class="val">' + (pm.a_decider || 0) + "</div>" +
       (pm.a_decider_plus_3j ? '<a class="delta" href="#/file">dont <b class="moins-bien">' + pm.a_decider_plus_3j + "</b> sans action depuis plus de " + J + " jours</a>"
         : '<div class="delta">Aucun dossier en attente depuis plus de ' + J + " jours</div>") + "</div>" +
     '<div class="pil-stat"><div class="lib">Délai jusqu\'au paiement</div><div class="val">' + (dr != null ? C.nombre(dr, 1) + "<small>jours</small>" : "–") + "</div>" +
@@ -3605,7 +3598,7 @@ function blocEquipePilotage(eq, pm) {
     '<th class="nb" title="Le dossier qui attend sa décision depuis le plus longtemps">Plus longue attente</th><th class="nb">En cours</th><th class="nb">Terminés 30 j</th><th class="nb" title="Temps moyen entre la demande de décision et la décision, 30 jours">Délai moyen</th><th>Présence</th><th></th></tr></thead><tbody>' +
     tri.map(function (x) {
       var presence = !x.disponible ? '<span class="presence absent">Indisponible' + (x.absent_jusqu_au ? " jusqu'au " + esc(C.dateCourte(x.absent_jusqu_au)) : "") + "</span>"
-        : '<span class="presence">Disponible' + (x.role !== "admin" && x.recoit_nouveaux === false ? ", sans nouveaux dossiers" : "") + (x.capacite_pct && x.capacite_pct < 100 ? ", " + x.capacite_pct + " %" : "") + "</span>";
+        : '<span class="presence">Disponible' + (x.role !== "admin" && x.recoit_nouveaux === false ? ", sans nouveaux dossiers" : "") + (x.capacite_pct && x.capacite_pct < 100 ? ", " + x.capacite_pct + "\u00a0%" : "") + "</span>";
       return '<tr style="cursor:default"><td class="qui"><a class="lien-g" href="#/pilotage/' + esc(x.id) + '" title="Voir le détail de ' + esc(x.nom) + '">' + esc(x.nom) + "</a><small title=\"" + esc(x.derniere_connexion ? "Vu " + C.depuis(x.derniere_connexion) : "Jamais connecté") + '">' + esc(ROLES_G[x.role] || x.role) + ", " + esc(x.centre || (SERVICES[x.service] || x.service).toLowerCase()) + "</small></td>" +
         '<td class="nb">' + (x.a_traiter ? "<b>" + x.a_traiter + "</b>" : '<span class="muet">0</span>') + "</td>" +
         '<td class="nb">' + (x.sans_action ? '<span class="alerte-n">' + x.sans_action + "</span>" : '<span class="muet">0</span>') + "</td>" +
@@ -3633,7 +3626,7 @@ function panneauGestion(x, g) {
   var nouveaux = x.role === "admin" ? '<p class="muet petit">Les administrateurs ne reçoivent pas de dossiers automatiquement.</p>'
     : '<div class="actions"><label class="case" style="margin:0"><input type="checkbox" data-recoit="' + esc(x.id) + '"' + (x.recoit_nouveaux !== false ? " checked" : "") + "> Reçoit les nouveaux dossiers</label>" +
       '<select class="saisie" style="width:auto" data-capacite="' + esc(x.id) + '" aria-label="Temps de travail">' +
-      [100, 80, 60, 50].map(function (p) { return '<option value="' + p + '"' + (p === (x.capacite_pct || 100) ? " selected" : "") + ">" + (p === 100 ? "Temps plein" : p + " % du temps") + "</option>"; }).join("") + "</select></div>";
+      [100, 80, 60, 50].map(function (p) { return '<option value="' + p + '"' + (p === (x.capacite_pct || 100) ? " selected" : "") + ">" + (p === 100 ? "Temps plein" : p + "\u00a0% du temps") + "</option>"; }).join("") + "</select></div>";
   var transf = x.en_cours && autres.length ? '<div class="actions"><select class="saisie" style="width:auto;max-width:220px" data-transf-vers="' + esc(x.id) + '" aria-label="Transférer à">' +
       '<option value="">Entre les collègues présents</option>' + autres.map(function (y) { return '<option value="' + esc(y.id) + '">' + esc(y.nom) + "</option>"; }).join("") +
       '</select><button type="button" class="btn petit" data-transf="' + esc(x.id) + '" data-nom="' + esc(x.nom) + '" data-n="' + x.en_cours + '">Transférer ses ' + x.en_cours + " dossiers</button></div>"
@@ -3661,7 +3654,7 @@ function brancherEquipePilotage(eq) {
   if (br) br.onclick = function () {
     C.occupe(br, true, "Répartition");
     api("repartir" + qb(), { body: {} }).then(function (r) {
-      C.toast(r.attribues + r.reequilibres ? (r.attribues + " dossier(s) attribué(s), " + r.reequilibres + " déplacé(s) pour équilibrer la charge") : "La charge est déjà équilibrée");
+      C.toast(r.attribues + r.reequilibres ? (C.pluriel(r.attribues, "dossier attribué") + ", " + C.pluriel(r.reequilibres, "déplacé") + " pour équilibrer la charge") : "La charge est déjà équilibrée");
       vuePilotage();
     }).catch(function (x) { C.occupe(br, false); C.toast(x.message, true); });
   };
@@ -3669,7 +3662,7 @@ function brancherEquipePilotage(eq) {
     el.disabled = true;
     api("regler-repartition", { body: Object.assign({ gestionnaire: id }, p) }).then(function (r) {
       el.disabled = false;
-      C.toast(r.recoit_nouveaux ? r.gestionnaire + " reçoit les nouveaux dossiers" + (r.capacite_pct < 100 ? " (" + r.capacite_pct + " % du temps)" : "") : r.gestionnaire + " ne reçoit plus de nouveaux dossiers : il garde ceux qu'il suit");
+      C.toast(r.recoit_nouveaux ? r.gestionnaire + " reçoit les nouveaux dossiers" + (r.capacite_pct < 100 ? " (" + r.capacite_pct + "\u00a0% du temps)" : "") : r.gestionnaire + " ne reçoit plus de nouveaux dossiers : il garde ceux qu'il suit");
     }).catch(function (x) { el.disabled = false; C.toast(x.message, true); vuePilotage(); });
   }
   document.querySelectorAll("[data-recoit]").forEach(function (c) { c.onchange = function () { regler(c.dataset.recoit, { recoit_nouveaux: c.checked }, c); }; });
@@ -3681,7 +3674,7 @@ function brancherEquipePilotage(eq) {
       if (!confirm("Transférer les " + b.dataset.n + " dossiers en cours de " + b.dataset.nom + " à " + nomVers + " ?")) return;
       C.occupe(b, true, "");
       api("transferer-dossiers", { body: { de: id, vers: vers || null } }).then(function (r) {
-        C.toast(r.transferes + " dossier(s) de " + r.de + " transféré(s)" + (r.file_commune ? ", " + r.file_commune + " sans preneur laissé(s) en file commune" : ""));
+        C.toast(C.pluriel(r.transferes, "dossier") + " de " + r.de + (r.transferes > 1 ? " transférés" : " transféré") + (r.file_commune ? ", " + C.pluriel(r.file_commune, "sans preneur laissé", "sans preneur laissés") + " en file commune" : ""));
         vuePilotage();
       }).catch(function (x) { C.occupe(b, false); C.toast(x.message, true); });
     };
@@ -3691,7 +3684,7 @@ function brancherEquipePilotage(eq) {
       var id = b.dataset.dispo, absent = b.dataset.etat === "absent", d = document.querySelector('[data-jusqu="' + id + '"]');
       C.occupe(b, true, "");
       api("disponibilite", { body: { gestionnaire: id, disponible: !absent, jusqu_au: absent && d ? d.value || null : null } }).then(function (r) {
-        C.toast(r.disponible ? "Retour enregistré pour " + r.gestionnaire : "Absence enregistrée pour " + r.gestionnaire + (r.dossiers_redistribues ? " : " + r.dossiers_redistribues + " dossier(s) confié(s) à l'équipe" : ""));
+        C.toast(r.disponible ? "Retour enregistré pour " + r.gestionnaire : "Absence enregistrée pour " + r.gestionnaire + (r.dossiers_redistribues ? " : " + C.pluriel(r.dossiers_redistribues, "dossier confié") + " à l'équipe" : ""));
         vuePilotage();
       }).catch(function (x) { C.occupe(b, false); C.toast(x.message, true); });
     };
@@ -3707,7 +3700,7 @@ function vueGestionnaire(id) {
     var h = '<div class="fil-g"><a href="#/pilotage">Pilotage</a> / ' + esc(g.nom) + "</div>" +
       '<div class="entete-vue"><div><h1>' + esc(g.nom) + ' <span class="presence-g' + (abs ? " absent" : "") + '">' + (abs ? "Indisponible" + (g.absent_jusqu_au ? " jusqu'au " + esc(C.dateCourte(g.absent_jusqu_au)) : "") : "Présent") + "</span></h1>" +
       "<p>" + esc(ROLES_G[g.role] || g.role) + (g.equipe ? ", équipe " + esc(g.equipe) : "") + (g.centre ? ", " + esc(g.centre) : "") +
-      (g.plafond_eur ? ", plafond " + esc(C.eur(g.plafond_eur)) : "") + (g.capacite_pct && g.capacite_pct < 100 ? ", " + g.capacite_pct + " % du temps" : "") +
+      (g.plafond_eur ? ", plafond " + esc(C.eur(g.plafond_eur)) : "") + (g.capacite_pct && g.capacite_pct < 100 ? ", " + g.capacite_pct + "\u00a0% du temps" : "") +
       ". " + (g.derniere_connexion ? "Connecté " + esc(C.depuis(g.derniere_connexion)) : "Jamais connecté") + (g.recoit_nouveaux === false ? ". Ne reçoit plus de nouveaux dossiers" : "") + ".</p></div>" +
       '<div class="g-actions"><button type="button" class="btn" id="g-presence">' + (abs ? "Enregistrer son retour" : "Enregistrer une absence") + "</button>" +
       (l.length ? '<button type="button" class="btn primaire" id="g-repartir" title="Chaque dossier va au collègue présent du même centre qui en a le moins, en priorité dans la même équipe">Répartir ses ' + l.length + " dossier" + pl(l.length, "") + "</button>" : "") + "</div></div>";
@@ -3738,7 +3731,7 @@ function vueGestionnaire(id) {
       if (!abs && !confirm("Enregistrer une absence pour " + g.nom + " ? Ses dossiers à décider seront confiés aux collègues disponibles.")) return;
       var b = this; C.occupe(b, true, "");
       api("disponibilite", { body: { gestionnaire: g.id, disponible: abs } }).then(function (r) {
-        C.toast(abs ? "Retour enregistré pour " + g.nom : "Absence enregistrée pour " + g.nom + (r.dossiers_redistribues ? " : " + r.dossiers_redistribues + " dossier(s) confié(s) à l'équipe" : ""));
+        C.toast(abs ? "Retour enregistré pour " + g.nom : "Absence enregistrée pour " + g.nom + (r.dossiers_redistribues ? " : " + C.pluriel(r.dossiers_redistribues, "dossier confié") + " à l'équipe" : ""));
         vueGestionnaire(id);
       }).catch(function (x) { C.occupe(b, false); C.toast(x.message, true); });
     };
@@ -3746,7 +3739,7 @@ function vueGestionnaire(id) {
       if (!confirm("Répartir les " + l.length + " dossiers de " + g.nom + " entre les collègues présents de son centre ?\n\nChaque dossier va à celui qui en a le moins, en priorité dans la même équipe. Ceux que personne ne peut prendre partent dans la file commune.")) return;
       var b = this; C.occupe(b, true, "Répartition");
       api("transferer-dossiers", { body: { de: g.id, vers: null } }).then(function (r) {
-        C.toast((r.transferes || 0) + " dossier(s) réparti(s)" + (r.file_commune ? ", " + r.file_commune + " en file commune" : "")); vueGestionnaire(id);
+        C.toast(C.pluriel(r.transferes || 0, "dossier réparti") + (r.file_commune ? ", " + r.file_commune + " en file commune" : "")); vueGestionnaire(id);
       }).catch(function (x) { C.occupe(b, false); C.toast(x.message, true); });
     };
     var majSel = function () {
@@ -3761,7 +3754,7 @@ function vueGestionnaire(id) {
       if (!v) return C.toast("Choisissez à qui confier la sélection", true);
       var b = this; C.occupe(b, true, "Envoi");
       nums.reduce(function (p, n) { return p.then(function (ok) { return api("reaffecter", { body: { numero: n, vers: v === "-" ? null : v } }).then(function () { return ok + 1; }, function (x) { C.toast(n + " : " + x.message, true); return ok; }); }); }, Promise.resolve(0))
-        .then(function (ok) { C.toast(ok + " dossier(s) confié(s)"); vueGestionnaire(id); });
+        .then(function (ok) { C.toast(C.pluriel(ok, "dossier confié")); vueGestionnaire(id); });
     };
     document.querySelectorAll("[data-greaff]").forEach(function (b) {
       b.onclick = function () {
@@ -3808,14 +3801,14 @@ function blocMotifs(pm, eq, i) {
   return '<div class="bloc-tete"><div><h2>Pourquoi un humain intervient</h2><p class="muet petit" style="margin-top:2px">Dossiers sortis du circuit automatique, 30 jours</p></div></div>' +
     '<div class="bloc-corps">' + rangs(l, function (x) { return esc(C.motif(x.motif)); }, function (x) { return x.n; }) +
     '<p class="pil-note">' + auto + " décision" + pl(auto, "") + " automatique" + pl(auto, "") + " et " + hum + " prise" + pl(hum, "") + " par l'équipe en 30 jours." +
-    (i.confiance_moyenne != null ? " Fiabilité moyenne de l'IA : " + Math.round(i.confiance_moyenne * 100) + " %." : "") + "</p></div>";
+    (i.confiance_moyenne != null ? " Fiabilité moyenne de l'IA : " + Math.round(i.confiance_moyenne * 100) + "\u00a0%." : "") + "</p></div>";
 }
 function blocArgent(pm) {
   var p = pm.periode || {}, l = pm.cout_moyen || [];
   return '<div class="bloc-tete"><div><h2>Règlements</h2><p class="muet petit" style="margin-top:2px">Montants nets, franchise déduite</p></div></div>' +
     '<div class="bloc-corps"><div class="argent"><div><div class="lib">Payé en 30 jours</div><div class="val">' + esc(eur(p.regle_eur || 0)) + "</div>" +
     ecart(p.regle_eur, p.regle_eur_avant, " €", false, 0) + '</div><div><div class="lib">Validé, pas encore payé</div><div class="val">' + esc(eur(p.engage_eur || 0)) + "</div>" +
-    (p.regles_7j_pct != null ? '<div class="delta">' + p.regles_7j_pct + " % des dossiers payés en moins de 7 jours</div>" : "") + "</div></div>" +
+    (p.regles_7j_pct != null ? '<div class="delta">' + p.regles_7j_pct + "\u00a0% des dossiers payés en moins de 7 jours</div>" : "") + "</div></div>" +
     '<h3 class="muet petit" style="font-weight:500;margin:0 0 12px">Coût moyen par type de sinistre, 90 jours</h3>' +
     rangs(l, function (x) { return esc(C.theme(x.theme)) + ' <span class="muet">' + x.n + " dossier" + pl(x.n, "") + "</span>"; }, function (x) { return Number(x.moyen) || 0; }, null, function (v) { return esc(eur(v)); }) + "</div>";
 }
@@ -4079,7 +4072,7 @@ function rendreEquipe(d, envoi) {
       C.occupe(b, true, "");
       equipeApi("supprimer", { id: b.dataset.suppr }).then(function (r) {
         var x = r.supprime || {};
-        C.toast("Compte de " + (x.nom || b.dataset.nom) + " supprimé" + (x.reaffectes ? ", " + x.reaffectes + " dossier(s) confié(s) aux collègues" : "") + (x.file_commune ? ", " + x.file_commune + " en file commune" : ""));
+        C.toast("Compte de " + (x.nom || b.dataset.nom) + " supprimé" + (x.reaffectes ? ", " + C.pluriel(x.reaffectes, "dossier confié") + " aux collègues" : "") + (x.file_commune ? ", " + x.file_commune + " en file commune" : ""));
         recharger(r);
       }).catch(function (x) { C.occupe(b, false); C.toast(x.message, true); });
     };
@@ -4352,7 +4345,7 @@ function brancherRaccordement(admin) {
   }
   function lier(id, fn) { var el = $(id); if (el) el.onclick = fn; }
   function montrerSecret(r) { if (r && r.webhook_secret) $("w-secret-val").innerHTML = '<span class="cle-neuve" style="display:grid"><b>Nouveau secret, à copier dans votre outil maintenant :</b><span class="mono">' + esc(r.webhook_secret) + "</span></span>"; }
-  lier("w-rejouer", function () { envoyer(this, "rejouer-envois", {}, function (r) { return r.relances + " message(s) renvoyé(s)"; }, recharger); });
+  lier("w-rejouer", function () { envoyer(this, "rejouer-envois", {}, function (r) { return C.pluriel(r.relances, "message renvoyé"); }, recharger); });
   if (!admin) {
     document.querySelectorAll("#vue .reglage .zone button, #vue .reglage .zone input, #vue .reglage .zone textarea").forEach(function (x) { if (x.id !== "w-rejouer" && x.id !== "w-test") x.disabled = true; });
   }
@@ -4382,13 +4375,13 @@ function brancherRaccordement(admin) {
     var mode = (document.querySelector('input[name="m-mode"]:checked') || {}).value || "test";
     envoyer(this, "parametres", { email_test: $("m-test").value.trim(), email_mode: mode }, "Réglages des emails enregistrés");
   });
-  lier("m-envoyer", function () { envoyer(this, "envoyer", {}, function (r) { return r.info ? "Envoi par email pas encore activé : clé Resend absente" : r.envoyes + " courrier(s) envoyé(s), " + r.erreurs + " échec(s)"; }); });
+  lier("m-envoyer", function () { envoyer(this, "envoyer", {}, function (r) { return r.info ? "Envoi par email pas encore activé : clé Resend absente" : C.pluriel(r.envoyes, "courrier envoyé") + ", " + C.pluriel(r.erreurs, "échec"); }); });
   function importer(btn, id, chemin, msg) {
     var j; try { j = JSON.parse($(id).value); } catch (e) { C.toast("Le JSON n'est pas valide : " + e.message, true); return; }
     envoyer(btn, chemin, j, msg, recharger);
   }
-  lier("i-reseau-ok", function () { importer(this, "i-reseau", "reseau", function (r) { return r.experts + " expert(s) et " + r.garages + " garage(s) à jour"; }); });
-  lier("i-contrats-ok", function () { importer(this, "i-contrats", "contrats", function (r) { return r.contrats + " contrat(s) à jour"; }); });
+  lier("i-reseau-ok", function () { importer(this, "i-reseau", "reseau", function (r) { return C.pluriel(r.experts, "expert") + " et " + C.pluriel(r.garages, "garage") + " à jour"; }); });
+  lier("i-contrats-ok", function () { importer(this, "i-contrats", "contrats", function (r) { return C.pluriel(r.contrats, "contrat") + " à jour"; }); });
   lier("s-ok", function () {
     envoyer(this, "parametres", { seuil_ecart_prix_pct: Number($("s-ecart").value), ecart_facture_expertise_pct: Number($("s-fact").value), taux_horaire_max_eur: Number($("s-taux").value),
       bris_glace_sans_expert_max: Number($("s-bg").value), delai_relance_jours: Number($("s-relance").value), ga_ecart_aipp_points: Number($("s-aipp").value), delai_vol_jours: Number($("s-vol").value), relance_gestionnaire_jours: Number($("s-relg").value), franchise_catnat_eur: Number($("s-catnat").value) }, "Règles enregistrées");
@@ -4478,7 +4471,7 @@ $("b-presence").addEventListener("click", function () {
   var b = this; b.disabled = true;
   api("disponibilite", { body: { gestionnaire: S.moi.id, disponible: !la } }).then(function (r) {
     S.moi.disponible = !la; S.moi.absent_jusqu_au = null; majPresence();
-    C.toast(la ? "Absence enregistrée" + (r.dossiers_redistribues ? " : " + r.dossiers_redistribues + " dossier(s) confié(s) à vos collègues" : "") : "Retour enregistré : vous recevez à nouveau des dossiers");
+    C.toast(la ? "Absence enregistrée" + (r.dossiers_redistribues ? " : " + C.pluriel(r.dossiers_redistribues, "dossier confié") + " à vos collègues" : "") : "Retour enregistré : vous recevez à nouveau des dossiers");
     router();
   }).catch(function (x) { C.toast(x.message, true); }).finally(function () { b.disabled = false; });
 });

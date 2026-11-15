@@ -136,6 +136,10 @@
     if (m < 1) return "à l'instant"; if (m < 60) return "il y a " + m + " min";
     var h = Math.round(m / 60); if (h < 24) return "il y a " + h + " h"; var j = Math.round(h / 24); return "il y a " + j + " j";
   }
+  // Montants écrits par le serveur dans un texte (« 4445,00 € », « 1500.5 € ») remis au format français (« 4 445,00 € »)
+  function montantsFr(t) { return String(t == null ? "" : t).replace(/(\d{4,})(?:[.,](\d{1,2}))?\s?€/g, function (m, e, d) { return eur(Number(e + "." + (d || "0"))); }); }
+  // « 1 dossier confié », « 3 dossiers confiés » : n puis les mots accordés (pluriel par défaut : + s à chaque mot)
+  function pluriel(n, sing, plur) { n = Number(n) || 0; return nombre(n, 0) + " " + (n > 1 ? (plur || sing.split(" ").map(function (m) { return m + "s"; }).join(" ")) : sing); }
   function statut(s) { var x = STATUTS[s] || [s || "?", ""]; return '<span class="statut ' + x[1] + '">' + esc(x[0]) + "</span>"; }
   function theme(t) { return THEMES[t] || t || "Non qualifié"; }
   function motif(m) { return MOTIFS[m] || m || ""; }
@@ -257,7 +261,7 @@
     API_DEFAUT: API_DEFAUT, SUPABASE_URL: SUPABASE_URL, CAPTCHA: CAPTCHA, CLE_PUBLIQUE: CLE_PUBLIQUE, STATUTS: STATUTS, THEMES: THEMES, MOTIFS: MOTIFS, ANOMALIES: ANOMALIES, COURRIERS: COURRIERS,
     ROLES: ROLES, PIECES: PIECES, ESPACES: ESPACES, GARANTIES: GARANTIES, LIENS: LIENS, CLASSES: CLASSES, LOGO: LOGO,
     $: $, esc: esc, eur: eur, nombre: nombre, dateFr: dateFr, dateCourte: dateCourte, heure: heure, depuis: depuis,
-    statut: statut, theme: theme, motif: motif, attendVous: attendVous, toast: toast, erreurChamp: erreurChamp, occupe: occupe, client: client, surveillerInactivite: surveillerInactivite,
+    statut: statut, theme: theme, motif: motif, attendVous: attendVous, toast: toast, erreurChamp: erreurChamp, pluriel: pluriel, montantsFr: montantsFr, occupe: occupe, client: client, surveillerInactivite: surveillerInactivite,
     lireSession: lireSession, ecrireSession: ecrireSession, oublierSession: oublierSession, yeux: yeux
   };
 })(window);

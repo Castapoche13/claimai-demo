@@ -57,8 +57,8 @@ body {
   font-variant-numeric: tabular-nums; -webkit-font-smoothing: antialiased;
 }
 h1, h2, h3, h4 { margin: 0; line-height: 1.25; letter-spacing: -.01em; }
-h1 { font-size: 22px; font-weight: 600; }
-h2 { font-size: 15px; font-weight: 600; }
+h1 { font-size: 20px; font-weight: 600; }
+h2 { font-size: 14px; font-weight: 600; }
 h3 { font-size: 14px; font-weight: 600; }
 p { margin: 0; }
 a { color: var(--bleu); text-decoration: none; }
@@ -67,13 +67,13 @@ button, input, select, textarea { font: inherit; color: inherit; }
 :focus-visible { outline: 2px solid var(--bleu); outline-offset: 2px; }
 [hidden] { display: none !important; }
 .muet { color: var(--gris); }
-.petit { font-size: 12.5px; }
+.petit { font-size: 12px; }
 
 /* Boutons */
 .btn {
   display: inline-flex; align-items: center; justify-content: center; gap: 8px;
   min-height: 34px; padding: 6px 14px; border-radius: 6px; border: 1px solid var(--trait-fort);
-  background: var(--feuille); color: var(--encre); font-weight: 500; font-size: 13.5px;
+  background: var(--feuille); color: var(--encre); font-weight: 500; font-size: 13px;
   cursor: pointer; white-space: nowrap; text-decoration: none;
 }
 .btn:hover { background: var(--survol); text-decoration: none; }
@@ -84,7 +84,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .btn.danger:hover { background: var(--rouge-pale); }
 .btn.discret { border-color: transparent; background: transparent; color: var(--bleu); padding-inline: 6px; }
 .btn.discret:hover { background: var(--bleu-pale); }
-.btn.petit { min-height: 28px; padding: 3px 10px; font-size: 12.5px; }
+.btn.petit { min-height: 28px; padding: 3px 10px; font-size: 12px; }
 
 /* Champs */
 label.champ { display: grid; gap: 6px; font-size: 13px; font-weight: 500; color: var(--encre-2); }
@@ -120,7 +120,7 @@ textarea.saisie { min-height: 88px; resize: vertical; line-height: 1.5; }
 .toast {
   position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); z-index: 90;
   background: var(--encre); color: var(--papier); padding: 10px 16px; border-radius: 6px;
-  font-size: 13.5px; font-weight: 500; max-width: min(560px, calc(100vw - 32px));
+  font-size: 13px; font-weight: 500; max-width: min(560px, calc(100vw - 32px));
 }
 .toast.erreur { background: var(--rouge); color: #fff; }
 .tourne { width: 14px; height: 14px; border-radius: 50%; border: 2px solid currentColor; border-right-color: transparent; animation: tourne .7s linear infinite; display: inline-block; }
@@ -128,7 +128,7 @@ textarea.saisie { min-height: 88px; resize: vertical; line-height: 1.5; }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; } }
 
 /* Marque */
-.marque { display: flex; align-items: center; gap: 9px; font-weight: 600; font-size: 15px; letter-spacing: -.01em; }
+.marque { display: flex; align-items: center; gap: 9px; font-weight: 600; font-size: 14px; letter-spacing: -.01em; }
 .marque svg { flex: none; }
 
 /* échéances légales (tiers blessé) */
@@ -137,7 +137,7 @@ ul.delais li { font-size: 14px; line-height: 1.45; }
 
 /* doublons et fiche client */
 ul.liste-mini { list-style: none; margin: 4px 0 0; padding: 0; display: grid; gap: 10px; }
-ul.liste-mini li { font-size: 13.5px; line-height: 1.45; }
+ul.liste-mini li { font-size: 13px; line-height: 1.45; }
 ul.liste-mini .petit { margin-top: 3px; display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
 table.comparaison td { vertical-align: top; }
 table.comparaison tr.moi td { background: var(--bleu-pale); }
@@ -151,7 +151,7 @@ table.comparaison tr:not(.raisons) td { border-bottom: 0; }
 /* raisonnement de Klerio */
 ol.raisonnement { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
 ol.raisonnement li { display: grid; grid-template-columns: 24px 1fr; gap: 10px; align-items: start; }
-ol.raisonnement li p { margin: 3px 0 0; color: var(--encre-2); font-size: 13.5px; line-height: 1.5; }
+ol.raisonnement li p { margin: 3px 0 0; color: var(--encre-2); font-size: 13px; line-height: 1.5; }
 ol.raisonnement .pastille-etape { width: 24px; height: 24px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; }
 ol.raisonnement li.ok .pastille-etape { background: var(--vert-pale); color: var(--vert-texte); }
 ol.raisonnement li.att .pastille-etape { background: var(--jaune-pale); color: var(--jaune-texte); }
@@ -159,7 +159,7 @@ ol.raisonnement li.ko .pastille-etape { background: var(--rouge-pale); color: va
 ol.raisonnement li.info .pastille-etape { background: var(--bleu-pale); color: var(--bleu); }
 
 /* Personne blessée : une question à la fois */
-.vt-titre { margin: 0 0 6px; font-size: 15px; }
+.vt-titre { margin: 0 0 6px; font-size: 14px; }
 .recl > p { margin: 10px 0 8px; }
 .recl > .decision-actions { margin-top: 4px; }
 .choix-rapides { display: flex; flex-wrap: wrap; gap: 8px; margin: 6px 0 4px; }
