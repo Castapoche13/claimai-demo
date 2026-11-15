@@ -942,7 +942,7 @@ document.addEventListener("click", function (e) { if (!$("p-alertes").hidden && 
 document.addEventListener("keydown", function (e) { if (e.key === "Escape" && !$("p-alertes").hidden) { fermerAlertes(); $("b-alertes").focus(); } });
 setInterval(function () { if (!document.hidden && !$("ecran-app").hidden) chargerAlertes(); }, 5 * 60 * 1000);
 // Nouvelle version du site publiée pendant que l'onglet est ouvert : on le dit, et on recharge en un clic (les brouillons sont gardés en session)
-var VERSION = "202611152218";
+var VERSION = "20261115222236";
 function verifierVersion() {
   fetch("version.txt?t=" + Date.now(), { cache: "no-store" }).then(function (r) { return r.ok ? r.text() : ""; }).then(function (t) {
     t = (t || "").trim();
@@ -1077,9 +1077,11 @@ function vueFile() {
       ", " + esc(new Date().toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" })) + '</p></div><a class="btn primaire" href="#/declarer">Déclarer un sinistre</a></div>';
     h += '<div class="tuiles">' +
       '<button type="button" class="tuile forte' + (file.length ? "" : " zero") + '" data-aller="decider"><div class="val">' + file.length + '</div><div class="lib">Attendent une décision</div>' + "" + "</button>" +
-      '<button type="button" class="tuile" data-aller="tiers"><div class="val">' + tiers.length + '</div><div class="lib">Chez un expert, un garage ou l\'assuré</div></button>' +
       '<a class="tuile" href="#/archives"><div class="val">' + (ind.clos_30j || 0) + '</div><div class="lib">Terminés ces 30 derniers jours</div></a>' +
       '<a class="tuile" href="#/pilotage"><div class="val">' + (ind.taux_sans_intervention != null ? C.nombre(ind.taux_sans_intervention, 0) + "\u00a0%" : "–") + '</div><div class="lib">Traités sans intervention humaine</div></a></div>';
+    // les dossiers qui attendent un expert, un garage ou l'assuré ne demandent rien au gestionnaire : Klerio relance seul,
+    // et ne les lui confie qu'après plusieurs relances sans réponse. Ils restent visibles dans « Dossiers en cours ».
+    if (onglet === "tiers") onglet = "decider";
     function tab(cle, lib, n, urgent) {
       return '<button type="button" role="tab" class="bannette" data-bannette="' + cle + '" aria-selected="' + (cle === onglet) + '" aria-controls="bannette-corps">' +
         esc(lib) + '<span class="badge-n' + (urgent ? " urgent" : "") + '">' + n + "</span></button>";
@@ -1087,7 +1089,6 @@ function vueFile() {
     h += '<section class="bloc accueil-bloc"><div class="bannettes" role="tablist" aria-label="Catégories à traiter">' +
       tab("decider", "À décider", file.length, false) +
       tab("mails", "Alertes", relances.length + horsDossier.length, false) +
-      tab("tiers", "En attente d'un intervenant", tiers.length, false) +
       '</div><div id="bannette-corps" role="tabpanel"></div></section>';
     h = h.replace('<section class="bloc accueil-bloc">', '<div id="demandes-reprise"></div><section class="bloc accueil-bloc">');
     $("vue").innerHTML = h;
