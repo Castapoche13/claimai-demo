@@ -39,7 +39,7 @@
 .connexion .btn.primaire:hover { background: #E4BC57; }
 .connexion .btn:not(.primaire) { background: transparent; color: #ECECEE; border: 1px solid rgba(255,255,255,.16); gap: 10px; }
 .connexion .btn:not(.primaire):hover { background: rgba(255,255,255,.06); }
-.connexion .sep-c { display: flex; align-items: center; gap: 12px; color: #737379; font-size: 12px; margin: -4px 0; }
+.connexion .sep-c { display: flex; align-items: center; gap: 12px; color: #8A8A93; font-size: 12px; margin: -4px 0; }
 .connexion .sep-c::before, .connexion .sep-c::after { content: ""; flex: 1; height: 1px; background: rgba(255,255,255,.1); }
 .demande-ligne { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding: 12px 20px; border-top: 1px solid var(--trait); }
 .demande-ligne .actions { display: flex; gap: 8px; }
@@ -80,7 +80,7 @@
 .reaff-l .saisie { height: 30px; min-width: 150px; padding-top: 0; padding-bottom: 0; }
 #b-champs { display: grid; gap: 16px; }
 #b-champs[hidden] { display: none; }
-.connexion .pied-connexion { text-align: center; font-size: 12.5px; color: #737379; max-width: 40ch; margin: 0 auto; }
+.connexion .pied-connexion { text-align: center; font-size: 12.5px; color: #8A8A93; max-width: 40ch; margin: 0 auto; }
 .alertes-titre { font-size: 13px; font-weight: 600; color: var(--encre-2); margin: 16px 16px 8px; }
 .erreur-form { color: var(--rouge-texte); font-size: 13px; min-height: 1.3em; }
 .mfa-qr { display: grid; gap: 8px; justify-items: center; text-align: center; }
@@ -142,8 +142,17 @@
   .nav a { white-space: nowrap; }
   .nav-assureur, .nav-bas { display: none; }
   .barre-in, .contenu { padding-left: 16px; padding-right: 16px; }
-  .barre .gestionnaire { display: none; }
+  .barre .gestionnaire > .presence, .barre .gestionnaire > .avatar, .barre .gestionnaire > b, .barre .gestionnaire > #b-compte { display: none; }
+  .barre .gestionnaire { gap: 4px; flex: none; }
+  .barre-in { gap: 8px; }
+  .barre .compte-z { display: block; }
 }
+.compte-z { position: relative; display: none; }
+.compte-btn .avatar { width: 30px; height: 30px; }
+.p-compte { width: 240px; padding-bottom: 6px; }
+.p-compte > button { display: block; width: 100%; min-height: 44px; padding: 0 16px; border: 0; background: none; color: var(--encre); font: inherit; font-size: 14px; text-align: left; cursor: pointer; }
+.p-compte > button:hover, .p-compte > button:focus-visible { background: var(--survol); }
+.p-compte > button[hidden] { display: none; }
 
 /* ---------- Blocs ---------- */
 .bloc { background: var(--feuille); border: 1px solid var(--trait); border-radius: var(--rayon); box-shadow: var(--ombre); }
@@ -151,7 +160,8 @@
 .bloc-corps { padding: 16px; }
 .bloc + .bloc { margin-top: 16px; }
 .vide { padding: 32px 16px; text-align: center; color: var(--gris); }
-.vide b { display: block; color: var(--encre); font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+.vide b, .vide .vide-titre { display: block; color: var(--encre); font-size: 14px; font-weight: 600; margin: 0 0 4px; letter-spacing: 0; }
+h1.sans-contour:focus { outline: none; }
 .compte { font-size: 12.5px; color: var(--gris); font-weight: 400; margin-left: 6px; }
 
 /* File de travail : lignes de tableau */
@@ -473,7 +483,7 @@ a.tuile:hover { border-color: var(--trait-fort); text-decoration: none; }
 
 #c-captcha { min-height: 65px; }
 </style>
-<link rel="stylesheet" href="charte.css?v=20261109b">
+<link rel="stylesheet" href="charte.css?v=20261115a">
 </head>
 <body>
 
@@ -559,7 +569,7 @@ a.tuile:hover { border-color: var(--trait-fort); text-decoration: none; }
     </div>
     <div class="espace-seul" id="n-espace-seul" hidden></div>
     <ul>
-      <li><a href="#/file" data-vue="file"><svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path d="M3 4h12M3 9h12M3 14h7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>Accueil<span class="compteur" id="n-compteur" hidden></span></a></li>
+      <li><a href="#/file" data-vue="file"><svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path d="M3 4h12M3 9h12M3 14h7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>À traiter<span class="compteur" id="n-compteur" hidden></span></a></li>
       <li><a href="#/dossiers" data-vue="dossiers"><svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path d="M2.5 5.5v8a1 1 0 001 1h11a1 1 0 001-1v-6a1 1 0 00-1-1H8.5L7 4.5H3.5a1 1 0 00-1 1z" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>Dossiers en cours</a></li>
       <li><a href="#/archives" data-vue="archives"><svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><rect x="2.5" y="3.5" width="13" height="3.5" rx="1" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M3.5 7v6.5a1 1 0 001 1h9a1 1 0 001-1V7M7.5 10h3" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>Archives</a></li>
       <li><a href="#/clients" data-vue="clients"><svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><circle cx="9" cy="6.5" r="3" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M3.5 15c.7-2.8 2.8-4.2 5.5-4.2s4.8 1.4 5.5 4.2" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>Clients</a></li>
@@ -592,7 +602,7 @@ a.tuile:hover { border-color: var(--trait-fort); text-decoration: none; }
           <button type="button" id="env-prod" aria-pressed="true">Production</button>
           <button type="button" id="env-essai" class="essai" aria-pressed="false">Essai</button>
         </div>
-        <div class="gestionnaire"><div class="alertes-z"><button type="button" class="cloche" id="b-alertes" aria-label="Alertes" aria-expanded="false" aria-controls="p-alertes"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg><span class="pastille" id="n-alertes" hidden></span></button><div class="p-alertes" id="p-alertes" hidden role="dialog" aria-label="Vos alertes"></div></div><button type="button" class="presence" id="b-presence" hidden></button><span class="avatar" id="n-avatar"></span><b id="n-gest"></b><button type="button" class="btn petit discret" id="b-compte" title="Se déconnecter pour se connecter avec un autre compte">Changer de compte</button></div>
+        <div class="gestionnaire"><div class="alertes-z"><button type="button" class="cloche" id="b-alertes" aria-label="Alertes" aria-expanded="false" aria-controls="p-alertes"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg><span class="pastille" id="n-alertes" hidden></span></button><div class="p-alertes" id="p-alertes" hidden role="dialog" aria-label="Vos alertes"></div></div><button type="button" class="presence" id="b-presence" hidden></button><span class="avatar" id="n-avatar"></span><b id="n-gest"></b><button type="button" class="btn petit discret" id="b-compte" title="Se déconnecter pour se connecter avec un autre compte">Changer de compte</button><div class="compte-z"><button type="button" class="cloche compte-btn" id="b-menu-compte" aria-label="Compte" aria-expanded="false" aria-controls="p-compte"><span class="avatar" id="n-avatar-m" aria-hidden="true"></span></button><div class="p-alertes p-compte" id="p-compte" hidden><div class="pa-tete"><b id="n-gest-m"></b></div><button type="button" id="m-presence" hidden></button><button type="button" id="m-theme">Changer de thème</button><button type="button" id="m-compte">Changer de compte</button><button type="button" id="m-deco">Se déconnecter</button></div></div></div>
       </div>
     </header>
     <main class="contenu" id="vue" tabindex="-1"></main>
@@ -602,7 +612,7 @@ a.tuile:hover { border-color: var(--trait-fort); text-decoration: none; }
 <div id="toast" class="toast" hidden role="status"></div>
 
 <script src="vendor/supabase-js-2.118.0.js"></script>
-<script src="commun.js?v=20261112a"></script>
+<script src="commun.js?v=20261115a"></script>
 <script>
 (function () {
 "use strict";
@@ -716,7 +726,11 @@ function afficherEnv() {
   $("env-essai").setAttribute("aria-pressed", String(essai));
   $("bandeau-essai").hidden = !essai;
   $("n-boites").hidden = !essai; // les mails de l'essai se lisent ici ; en production ils sont dans chaque dossier
-  document.title = (essai ? "[Essai] " : "") + "Klerio";
+  majTitre();
+}
+// Titre de l'onglet : (alertes) [Essai] vue · Klerio ; la vue vient du h1 affiché (ou du numéro et du type pour un dossier)
+function majTitre() {
+  document.title = (S.nPrioritaires ? "(" + S.nPrioritaires + ") " : "") + (S.env === "test" ? "[Essai] " : "") + (S.titreVue ? S.titreVue + " · " : "") + "Klerio";
 }
 function changerEnv(env) {
   if (env === S.env) return;
@@ -794,7 +808,8 @@ function entrer(session) {
       if (/^#\/(file)?$/.test(location.hash || "#/file")) router();
     }).catch(function () { });
     $("n-assureur").textContent = S.assureur; $("n-gest").textContent = moi.nom;
-    $("n-avatar").textContent = moi.nom.split(/\s+/).map(function (x) { return x[0]; }).join("").slice(0, 2);
+    $("n-avatar").textContent = $("n-avatar-m").textContent = moi.nom.split(/\s+/).map(function (x) { return x[0]; }).join("").slice(0, 2);
+    $("n-gest-m").textContent = moi.nom;
     $("n-equipe").hidden = !(moi.role === "admin" || (moi.role === "superviseur" && moi.centre));
     // le raccordement (clés API, outil de la compagnie) ne concerne que l'administrateur
     $("n-raccordement").hidden = moi.role !== "admin";
@@ -921,7 +936,7 @@ function verifierPriorites() {
       if (neufs.length) C.toast(neufs.length > 1 ? neufs.length + " nouveaux dossiers pour vous : " + neufs.slice(0, 3).join(", ") : "Nouveau dossier pour vous : " + neufs[0]);
     }
     vus = hauts;
-    document.title = (hauts.length ? "(" + hauts.length + ") " : "") + (S.env === "test" ? "[Essai] " : "") + "Console sinistres Klerio";
+    S.nPrioritaires = hauts.length; majTitre();
   }).catch(function () { });
 }
 function surveiller() { verifierPriorites(); clearInterval(minuterie); minuterie = setInterval(verifierPriorites, 120000); }
@@ -937,12 +952,12 @@ function router(silencieux) {
     if (a.dataset.vue === vue || (a.dataset.vue === "clients" && vue === "client")) a.setAttribute("aria-current", "page"); else a.removeAttribute("aria-current");
   });
   var v = $("vue");
-  if (!silencieux) { v.innerHTML = '<div class="vide"><span class="tourne" style="display:inline-block"></span></div>'; window.scrollTo(0, 0); }
+  if (!silencieux) { v.innerHTML = '<div class="vide"><span class="tourne" style="display:inline-block"></span></div>'; window.scrollTo(0, 0); delete v.dataset.titre; S.titreAttendu = true; }
   var f = { file: vueFile, dossiers: vueDossiers, dossier: function () { vueDossier(decodeURIComponent(h[1] || "")); },
     archives: vueArchives, recherche: function () { vueRecherche(decodeURIComponent(h[1] || "")); }, clients: vueClients, client: function () { vueClient(decodeURIComponent(h[1] || "")); }, doublons: vueDoublons, declarer: vueDeclarer, boites: vueBoites, pilotage: function () { if (h[1]) vueGestionnaire(decodeURIComponent(h[1])); else vuePilotage(); }, raccordement: function () { if (!S.moi || S.moi.role !== "admin") { location.replace("#/file"); return; } vueRaccordement(h[1]); }, equipe: vueEquipe, aide: vueAide }[vue] || vueFile;
   f();
 }
-function erreurVue(x) { $("vue").innerHTML = '<div class="bloc"><div class="vide"><b>Impossible de charger cette page</b>' + esc(x.message) + '<p style="margin-top:14px"><button class="btn" onclick="location.reload()">Recharger</button></p></div></div>'; }
+function erreurVue(x) { $("vue").innerHTML = '<div class="bloc"><div class="vide"><h1 class="vide-titre">Impossible de charger cette page</h1>' + esc(x.message) + '<p style="margin-top:14px"><button class="btn" onclick="location.reload()">Recharger</button></p></div></div>'; }
 // Explications repliées : chaque bloc qui en contient reçoit un bouton « ? » dans son en-tête
 function plierAides(racine) {
   racine.querySelectorAll(".bloc, .decision").forEach(function (sec) {
@@ -953,12 +968,23 @@ function plierAides(racine) {
     if (!tete) return;
     sec.classList.add("aide-repliee");
     var b = document.createElement("button");
-    b.type = "button"; b.className = "aide-btn"; b.textContent = "?"; b.title = "Afficher les explications"; b.setAttribute("aria-expanded", "false");
+    b.type = "button"; b.className = "aide-btn"; b.textContent = "?"; b.title = "Afficher les explications"; b.setAttribute("aria-label", "Afficher les explications"); b.setAttribute("aria-expanded", "false");
     b.addEventListener("click", function () { var o = sec.classList.toggle("aide-repliee"); b.setAttribute("aria-expanded", String(!o)); });
     tete.appendChild(b);
   });
 }
-new MutationObserver(function () { plierAides($("vue")); }).observe($("vue"), { childList: true, subtree: true });
+new MutationObserver(function () { plierAides($("vue")); annoncerVue(); }).observe($("vue"), { childList: true, subtree: true });
+// Après un changement de vue : titre de l'onglet mis à jour et focus sur le h1, pour que le lecteur d'écran annonce la nouvelle page
+function annoncerVue() {
+  var v = $("vue"), h1 = v.querySelector("h1");
+  if (!h1) return;
+  var t = v.dataset.titre || h1.textContent.replace(/\s+/g, " ").trim();
+  if (t !== S.titreVue) { S.titreVue = t; majTitre(); }
+  if (!S.titreAttendu) return;
+  S.titreAttendu = false;
+  h1.setAttribute("tabindex", "-1"); h1.classList.add("sans-contour");
+  try { h1.focus({ preventScroll: true }); } catch (e) { h1.focus(); }
+}
 function ouvrirDossier(n) { location.hash = "#/dossier/" + encodeURIComponent(n); }
 
 $("form-recherche").addEventListener("submit", function (e) {
@@ -1017,18 +1043,18 @@ function vueFile() {
     if (!filtres.some(function (f) { return f[0] === choix; })) choix = aMoi.length ? "moi" : "libres";
     if (["decider", "mails", "tiers"].indexOf(onglet) < 0) onglet = "decider";
 
-    var h = bandeauCorporel() + '<div class="corbeille-tete"><div><h1>Corbeille</h1><p>Espace ' + esc(C.ESPACES[S.branche].nom.toLowerCase()) +
+    var h = bandeauCorporel() + '<div class="corbeille-tete"><div><h1>À traiter</h1><p>Espace ' + esc(C.ESPACES[S.branche].nom.toLowerCase()) +
       ", " + esc(new Date().toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" })) + '</p></div><a class="btn primaire" href="#/declarer">Déclarer un sinistre</a></div>';
     h += '<div class="tuiles">' +
       '<button type="button" class="tuile forte" data-aller="decider"><div class="val">' + file.length + '</div><div class="lib">Attendent une décision</div>' + "" + "</button>" +
       '<button type="button" class="tuile" data-aller="tiers"><div class="val">' + tiers.length + '</div><div class="lib">Chez un expert, un garage ou l\'assuré</div></button>' +
       '<a class="tuile" href="#/archives"><div class="val">' + (ind.clos_30j || 0) + '</div><div class="lib">Terminés ces 30 derniers jours</div></a>' +
-      '<a class="tuile" href="#/pilotage"><div class="val">' + (ind.taux_sans_intervention != null ? C.nombre(ind.taux_sans_intervention, 0) + " %" : "–") + '</div><div class="lib">Traités sans aucun clic</div></a></div>';
+      '<a class="tuile" href="#/pilotage"><div class="val">' + (ind.taux_sans_intervention != null ? C.nombre(ind.taux_sans_intervention, 0) + " %" : "–") + '</div><div class="lib">Traités sans intervention humaine</div></a></div>';
     function tab(cle, lib, n, urgent) {
       return '<button type="button" role="tab" class="bannette" data-bannette="' + cle + '" aria-selected="' + (cle === onglet) + '" aria-controls="bannette-corps">' +
         esc(lib) + '<span class="badge-n' + (urgent ? " urgent" : "") + '">' + n + "</span></button>";
     }
-    h += '<section class="bloc accueil-bloc"><div class="bannettes" role="tablist" aria-label="Corbeilles">' +
+    h += '<section class="bloc accueil-bloc"><div class="bannettes" role="tablist" aria-label="Catégories à traiter">' +
       tab("decider", "À décider", file.length, false) +
       tab("mails", "Alertes", relances.length + horsDossier.length, false) +
       tab("tiers", "En attente d'un intervenant", tiers.length, false) +
@@ -1126,6 +1152,8 @@ function joursAvant(date) {
 function echeanceTag(date) {
   var j = joursAvant(date);
   if (j === null) return '<span class="echeance">–</span>';
+  if (j < 0) return '<span class="echeance retard">' + esc(C.dateCourte(date)) + "<small>En retard de " + (-j) + " j</small></span>";
+  if (j <= 2) return '<span class="echeance proche">' + esc(C.dateCourte(date)) + "<small>" + (j === 0 ? "Aujourd'hui" : "Dans " + j + " j") + "</small></span>";
   return '<span class="echeance">' + esc(C.dateCourte(date)) + "</span>";
 }
 function tableTiers(l) {
@@ -1269,8 +1297,8 @@ function vueDossiers() {
   var q = decodeURIComponent((location.hash.split("/")[2] || ""));
   var statuts = Object.keys(C.STATUTS).filter(function (k) { return ["clos", "refuse", "classe_sans_suite"].indexOf(k) < 0; });
   var h = bandeauCorporel() + '<div class="entete-vue"><div><h1>Dossiers en cours</h1><p>Espace ' + esc(C.ESPACES[S.branche].nom.toLowerCase()) + ". Recherche par numéro, contrat, immatriculation ou référence de votre outil. Les dossiers terminés sont dans les <a href=\"#/archives\">archives</a>.</p></div></div>" +
-    '<section class="bloc"><div class="bloc-tete"><div class="filtres"><input class="saisie" id="f-q" type="search" placeholder="Rechercher" value="' + esc(q) + '">' +
-    '<select class="saisie" id="f-statut"><option value="">Tous les statuts</option>' +
+    '<section class="bloc"><div class="bloc-tete"><div class="filtres"><input class="saisie" id="f-q" type="search" placeholder="Rechercher" aria-label="Rechercher un dossier" value="' + esc(q) + '">' +
+    '<select class="saisie" id="f-statut" aria-label="Filtrer par statut"><option value="">Tous les statuts</option>' +
     statuts.map(function (k) { return '<option value="' + k + '">' + esc(C.STATUTS[k][0]) + "</option>"; }).join("") +
     '</select></div><span class="muet petit" id="f-n"></span></div><div class="tableau-wrap" id="f-table"></div></section>';
   $("vue").innerHTML = h;
@@ -1313,9 +1341,9 @@ function vueRecherche(q) {
 /* ---------------- Vue : Archives ---------------- */
 function vueArchives() {
   var h = bandeauCorporel() + '<div class="entete-vue"><div><h1>Archives</h1><p>Tous les dossiers terminés : clos et payés, refusés ou classés. Chacun a aussi été remis complet à votre outil, avec son récapitulatif PDF.</p></div></div>' +
-    '<section class="bloc"><div class="bloc-tete"><div class="filtres"><input class="saisie" id="a-q" type="search" placeholder="Rechercher">' +
-    '<select class="saisie" id="a-statut"><option value="">Toutes les issues</option><option value="clos">Clos et payés</option><option value="refuse">Refusés</option><option value="classe_sans_suite">Classés</option></select>' +
-    '<select class="saisie" id="a-annee"><option value="">Toutes les années</option></select></div><span class="muet petit" id="a-n"></span></div><div class="tableau-wrap" id="a-table"></div></section>';
+    '<section class="bloc"><div class="bloc-tete"><div class="filtres"><input class="saisie" id="a-q" type="search" placeholder="Rechercher" aria-label="Rechercher dans les archives">' +
+    '<select class="saisie" id="a-statut" aria-label="Filtrer par issue"><option value="">Toutes les issues</option><option value="clos">Clos et payés</option><option value="refuse">Refusés</option><option value="classe_sans_suite">Classés</option></select>' +
+    '<select class="saisie" id="a-annee" aria-label="Filtrer par année"><option value="">Toutes les années</option></select></div><span class="muet petit" id="a-n"></span></div><div class="tableau-wrap" id="a-table"></div></section>';
   $("vue").innerHTML = h;
   var tous = [], t;
   function dessiner() {
@@ -1428,11 +1456,11 @@ function brancherOnglets() {
 }
 function afficherDossier(f) {
   var ctr = f.contrat || {}, d = f.details || {}, an = f.analyse && f.analyse.detail || {};
-  var h = '<a class="retour" href="#/file"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M8.5 3L4.5 7l4 4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>Retour à la file</a>';
+  var h = '<a class="retour" href="#/file"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M8.5 3L4.5 7l4 4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>À traiter</a>';
   h += '<div class="fiche-tete"><div><h1>' + esc(f.numero) + '</h1><div class="sous">' + typeTag(f.theme) + C.statut(f.statut) +
     '<span>Sinistre du ' + esc(C.dateFr(f.date_sinistre)) + "</span>" + (f.ref_externe ? "<span>Réf. compagnie " + esc(f.ref_externe) + "</span>" : "") + "</div></div>" +
     '<div class="fiche-tete-droite"><div class="muet petit" style="text-align:right">Ouvert ' + esc(C.depuis(f.cree)) + "<br>Mis à jour " + esc(C.depuis(f.maj)) + "</div>" +
-    '<button type="button" class="btn petit" id="b-suivante" title="Ouvre le prochain dossier de votre corbeille, par échéance">Activité suivante</button></div></div>';
+    '<button type="button" class="btn petit" id="b-suivante" title="Ouvre le prochain dossier à traiter, par échéance">Dossier suivant</button></div></div>';
   h += '<section class="parcours" aria-label="Parcours du dossier">' + parcours(f) + '<p class="parcours-legende">' + esc(legendeParcours(f)) + "</p></section>";
   h += barreTitulaire(f);
 
@@ -1486,10 +1514,56 @@ function afficherDossier(f) {
   h += blocPrestataires(f);
   h += blocPieces(f);
   h += "</aside></div>";
+  $("vue").dataset.titre = f.numero + " · " + C.theme(f.theme);
   $("vue").innerHTML = h;
   brancherOnglets();
   brancherFiche(f);
+  brancherBrouillons(f.numero);
 }
+/* Brouillons de la fiche : commentaire de décision, message et note d'appel survivent aux redessins et aux allers-retours.
+   Gardés en mémoire par numéro de dossier, et dans sessionStorage quand le navigateur le permet. */
+var BROUILLONS = {}, CHAMPS_MSG = ["g-dest", "g-email", "g-modele", "g-objet", "g-texte"], CHAMPS_NOTE = ["n-canal", "n-qui", "n-texte"];
+var CHAMPS_BROUILLON = ["d-com"].concat(CHAMPS_MSG, CHAMPS_NOTE);
+function lireBrouillon(n) {
+  if (!BROUILLONS[n]) { var x = null; try { x = JSON.parse(sessionStorage.getItem("brouillon:" + n) || "null"); } catch (e) { } BROUILLONS[n] = x || {}; }
+  return BROUILLONS[n];
+}
+function ecrireBrouillon(n, b) {
+  BROUILLONS[n] = b;
+  try { if (Object.keys(b).length) sessionStorage.setItem("brouillon:" + n, JSON.stringify(b)); else sessionStorage.removeItem("brouillon:" + n); } catch (e) { }
+}
+function oublierBrouillon(n, champs) { var b = lireBrouillon(n); champs.forEach(function (c) { delete b[c]; }); ecrireBrouillon(n, b); }
+function messageEnCours(n) { var b = lireBrouillon(n); return !!((b["g-texte"] || "").trim() || (b["g-objet"] || "").trim()); }
+function brancherBrouillons(n) {
+  var b = lireBrouillon(n), fo = $("msg-form"), no = $("d-note");
+  var texte = function (ids) { return ids.some(function (id) { return /-(texte|objet)$|^d-com$/.test(id) && (b[id] || "").trim(); }); };
+  CHAMPS_BROUILLON.forEach(function (id) {
+    var el = $(id); if (!el) return;
+    if (b[id] != null && (id === "d-com" || texte(id.charAt(0) === "g" ? CHAMPS_MSG : CHAMPS_NOTE))) el.value = b[id];
+    var groupe = id === "d-com" ? [id] : id.charAt(0) === "g" ? CHAMPS_MSG : CHAMPS_NOTE;
+    var garder = function () { var x = lireBrouillon(n); groupe.forEach(function (c) { if ($(c)) x[c] = $(c).value; }); ecrireBrouillon(n, x); };
+    el.addEventListener("input", garder); el.addEventListener("change", garder);
+  });
+  if (fo && texte(CHAMPS_MSG)) {
+    fo.hidden = false; if (no) no.hidden = true; majPiecesModele(false);
+    var cx = $("msg-contexte"); if (cx && cx.hidden) { cx.hidden = false; cx.textContent = "Brouillon non envoyé, conservé depuis votre dernière visite."; }
+  } else if (no && texte(CHAMPS_NOTE)) no.hidden = false;
+}
+// Quitter une fiche avec un message non envoyé : le brouillon est gardé, on le dit (et on peut le supprimer)
+var FICHE_QUITTEE = null;
+window.addEventListener("hashchange", function (e) {
+  var avant = (String(e.oldURL || "").split("#")[1] || "").replace(/^\/?/, "").split("/");
+  if (avant[0] !== "dossier" || !avant[1]) return;
+  var n = decodeURIComponent(avant[1]), apres = location.hash.replace(/^#\/?/, "").split("/");
+  if (apres[0] === "dossier" && decodeURIComponent(apres[1] || "") === n) return;
+  if (!messageEnCours(n)) return;
+  C.toast("Message non envoyé sur " + n + " : il est gardé en brouillon, vous le retrouverez en rouvrant le dossier.", false,
+    { libelle: "Supprimer le brouillon", fn: function () { oublierBrouillon(n, CHAMPS_MSG); C.toast("Brouillon supprimé"); } });
+});
+window.addEventListener("beforeunload", function (e) {
+  var h = location.hash.replace(/^#\/?/, "").split("/");
+  if (h[0] === "dossier" && h[1] && messageEnCours(decodeURIComponent(h[1]))) { e.preventDefault(); e.returnValue = ""; }
+});
 
 /* Accident avec un autre véhicule : le constat, la proposition de Klerio et la part retenue par le gestionnaire */
 var PARTS_RESP = [[0, "0 %", "non responsable"], [50, "50 %", "partagée"], [100, "100 %", "responsable"]];
@@ -1503,6 +1577,35 @@ var MODELES_MSG = {
   point: { dest: "assure", objet: "Où en est votre dossier",
     texte: "Votre dossier est en cours de traitement. \n\nNous revenons vers vous dès que possible." },
 };
+// Modèle « Demander une pièce manquante » : la liste des pièces attendues non reçues remplit la phrase à trou
+var TROU_PIECE = /pièce suivante : *\n\s*\n/;
+function champPiecesModele(f) {
+  var l = (f.pieces || []).filter(function (p) { return !p.recue_le; });
+  return '<fieldset class="champ" id="g-pieces" hidden><legend>Pièces à demander <span class="aide">' + (l.length ? "cochez-les : le texte se complète" : "écrivez la pièce dans le message") + "</span></legend>" +
+    l.map(function (p) { return '<label class="case"><input type="checkbox" data-piece-lib="' + esc(p.libelle || C.PIECES[p.code] || p.code) + '"> ' + esc(p.libelle || C.PIECES[p.code] || p.code) + "</label>"; }).join("") + "</fieldset>";
+}
+function phrasePieces(libs) {
+  return libs.length > 1 ? "des pièces suivantes :\n" + libs.map(function (x) { return "- " + x; }).join("\n") + "\n\nVous pouvez nous les envoyer"
+    : "de la pièce suivante : " + (libs[0] || "") + "\n\nVous pouvez nous l'envoyer";
+}
+function majPiecesModele(focus) {
+  var z = $("g-pieces"); if (!z) return;
+  z.hidden = $("g-modele").value !== "piece";
+  if (z.hidden) return;
+  z.querySelectorAll("input").forEach(function (c) {
+    c.onchange = function () {
+      var libs = []; z.querySelectorAll("input:checked").forEach(function (x) { libs.push(x.dataset.pieceLib); });
+      var t = $("g-texte"); t.value = t.value.replace(/(de la pièce suivante|des pièces suivantes) :[\s\S]*?\n\nVous pouvez nous (l'|les )envoyer/, phrasePieces(libs));
+      t.dispatchEvent(new Event("input"));
+    };
+  });
+  if (focus) placerTrouPiece();
+}
+function placerTrouPiece() {
+  var t = $("g-texte"), m = TROU_PIECE.exec(t.value); if (!m) return false;
+  var i = m.index + "pièce suivante : ".length; t.focus(); try { t.setSelectionRange(i, i); } catch (e) { }
+  return true;
+}
 function remplirModele(cle) { var m = MODELES_MSG[cle]; ouvrirComposeur(m ? { dest: m.dest, objet: m.objet, texte: m.texte, modele: cle } : {}); }
 function vehiculeConstat(cote, k, cases, assure) {
   return '<div class="vehicule-constat' + (assure ? " assure" : "") + '"><div class="vc-tete"><b>Véhicule ' + cote + "</b>" + (assure ? '<span class="pastille-mail info">Votre assuré</span>' : '<span class="pastille-mail neutre">Tiers</span>') + "</div>" +
@@ -1533,7 +1636,7 @@ function carteResponsabilite(f, v) {
   var adv = (p.tiers && p.tiers.assureur) || k[p.cote_assure === "A" ? "assureur_b" : "assureur_a"] || "";
   h += '<label class="champ">Assureur de l\'autre véhicule <span class="aide">sans lui, pas d\'indemnisation directe : la franchise s\'applique et le recours ne peut pas partir</span><input class="saisie" id="r-adv" value="' + esc(adv) + '" placeholder="Nom de la compagnie adverse"></label>';
   h += '<label class="champ">Commentaire <span class="aide">Obligatoire si vous changez la proposition ou reprenez la main.</span><textarea class="saisie" id="d-com" rows="2" style="min-height:64px"></textarea></label>' +
-    '<div class="decision-actions"><button class="btn primaire" id="d-oui" data-v="' + esc(v.id) + '">Valider et lancer la suite</button><button class="btn" id="d-non" data-v="' + esc(v.id) + '">Reprendre la main</button></div>' +
+    '<div class="decision-actions"><button class="btn primaire" id="d-oui" data-v="' + esc(v.id) + '">Valider et lancer la suite</button><button class="btn" id="d-oui-suivant" data-v="' + esc(v.id) + '">Valider et passer au suivant</button><button class="btn" id="d-non" data-v="' + esc(v.id) + '">Reprendre la main</button></div>' +
     '<p class="loi">La responsabilité n\'est jamais fixée sans votre validation. L\'assuré reçoit la répartition et peut la contester en répondant au courrier.</p></div><div class="tampon" id="tampon" aria-hidden="true"></div></section>';
   return h;
 }
@@ -1769,7 +1872,7 @@ function carteDoublon(f) {
     '<p class="explication">Le même client a déjà un dossier proche sur le même véhicule. Comparez, puis tranchez : rien n\'est payé tant que vous n\'avez pas décidé.</p>' + comparaisonDoublon(f, cands);
   h += '<label class="champ" style="margin-top:12px">Ce qui vous fait trancher <span class="aide">obligatoire si ce n\'est pas un doublon</span><input class="saisie" id="db-motif" placeholder="Ex. autre pare-brise, l\'assuré confirme deux impacts"></label>' +
     '<div class="decision-actions">' + cands.map(function (x) { return '<button class="btn" data-doublon="' + esc(x.numero) + '">Doublon de ' + esc(x.numero) + "</button>"; }).join("") +
-    '<button class="btn primaire" id="db-different">Ce n\'est pas un doublon : reprendre le circuit</button></div>' +
+    '<button class="btn primaire" id="db-different">Ce n\'est pas un doublon : reprendre le circuit</button></div><div id="db-apercu" class="db-apercu" hidden></div>' +
     '<p class="muet petit">En doublon, la déclaration est ajoutée au dossier d\'origine et l\'assuré reçoit un message lui indiquant son numéro de dossier.</p></div></section>';
   return h;
 }
@@ -1787,13 +1890,34 @@ function brancherDoublon(f) {
     corps.numero = f.numero; corps.action = "doublon"; C.occupe(b, true, "");
     api("gestion", { body: corps }).then(function (r) { C.toast(ok); rafraichirCompteur(); afficherDossier(r); }).catch(function (x) { C.occupe(b, false); C.toast(x.message, true); });
   };
+  // Avant de classer : le gestionnaire voit le mail exact qui partira à l'assuré et peut choisir de ne pas l'envoyer.
+  // L'aperçu vient du serveur (POST doublon-apercu, sans effet sur le dossier) ; tant qu'il ne la connaît pas, on prévient seulement qu'un mail part.
   document.querySelectorAll("[data-doublon]").forEach(function (b) {
-    b.onclick = function () { envoyer(b, { decision: "doublon", original: b.dataset.doublon, motif: ($("db-motif") || {}).value || undefined }, "Classé en doublon de " + b.dataset.doublon); };
+    b.onclick = function () {
+      var orig = b.dataset.doublon, z = $("db-apercu"), motif = ($("db-motif") || {}).value || undefined;
+      C.occupe(b, true, "");
+      api("doublon-apercu", { body: { numero: f.numero, original: orig } }).then(function (r) { return r && r.courrier && r.courrier.texte ? r.courrier : null; }, function () { return null; })
+        .then(function (m) {
+          C.occupe(b, false);
+          z.innerHTML = m
+            ? '<h3>Mail qui partira à l\'assuré' + (m.email ? " (" + esc(m.email) + ")" : "") + '</h3><div class="db-mail"><b>' + esc(m.objet || "") + '</b><div class="corps-courrier">' + esc(m.texte) + "</div></div>" +
+              '<label class="case"><input type="checkbox" id="db-prevenir" checked> Envoyer ce mail à l\'assuré</label>'
+            : '<h3>Un mail partira à l\'assuré</h3><p class="muet petit">En classant, l\'assuré reçoit automatiquement un mail lui indiquant son numéro de dossier d\'origine (' + esc(orig) + "). L\'aperçu exact de ce mail n\'est pas encore disponible.</p>";
+          z.innerHTML += '<div class="decision-actions"><button class="btn primaire" id="db-classer">Classer en doublon de ' + esc(orig) + (m ? "" : " et prévenir l\'assuré") + '</button><button class="btn" id="db-annuler">Annuler</button></div>';
+          z.hidden = false; $("db-classer").focus();
+          $("db-annuler").onclick = function () { z.hidden = true; b.focus(); };
+          $("db-classer").onclick = function () {
+            var corps = { decision: "doublon", original: orig, motif: motif };
+            if (m) corps.prevenir_assure = $("db-prevenir").checked;
+            envoyer(this, corps, "Classé en doublon de " + orig + (m && !corps.prevenir_assure ? ", sans mail à l'assuré" : ""));
+          };
+        });
+    };
   });
   var d = $("db-different");
   if (d) d.onclick = function () {
     var m = ($("db-motif").value || "").trim();
-    if (m.length < 5) { C.toast("Indiquez ce qui distingue ce sinistre.", true); return $("db-motif").focus(); }
+    if (m.length < 5) return C.erreurChamp("db-motif", "Indiquez ce qui distingue ce sinistre.");
     envoyer(d, { decision: "different", motif: m }, "Le dossier reprend le circuit");
   };
 }
@@ -1844,7 +1968,7 @@ function blocClient(f) {
 function vueClients() {
   var q = decodeURIComponent(location.hash.split("/")[2] || "");
   $("vue").innerHTML = '<div class="entete-vue"><div><h1>Clients</h1><p>Retrouvez un client par sa référence, son email, un numéro de contrat, une immatriculation ou un numéro de dossier : vous voyez tous ses contrats et tous ses dossiers, en cours comme terminés.</p></div></div>' +
-    '<section class="bloc"><div class="bloc-tete"><div class="filtres"><input class="saisie" id="cl-q" type="search" placeholder="Référence, email, contrat, immatriculation" value="' + esc(q) + '"></div><span class="muet petit" id="cl-n"></span></div><div class="tableau-wrap" id="cl-table"><div class="vide">Saisissez au moins 2 caractères.</div></div></section>';
+    '<section class="bloc"><div class="bloc-tete"><div class="filtres"><input class="saisie" id="cl-q" type="search" placeholder="Référence, email, contrat, immatriculation" aria-label="Rechercher un client" value="' + esc(q) + '"></div><span class="muet petit" id="cl-n"></span></div><div class="tableau-wrap" id="cl-table"><div class="vide">Saisissez au moins 2 caractères.</div></div></section>';
   var t;
   function charger() {
     var qq = $("cl-q").value.trim();
@@ -2382,7 +2506,7 @@ function carteAction(f) {
     return '<section class="decision" id="carte-decision"><div class="decision-entete">Décision requise</div><div class="decision-corps"><h2>' + esc(titre) + "</h2>" +
       (expl ? '<p class="explication">' + esc(expl) + "</p>" : "") + corps +
       '<label class="champ">Commentaire <span class="aide">Obligatoire si vous écartez la proposition.</span><textarea class="saisie" id="d-com" rows="2" style="min-height:64px"></textarea></label>' +
-      '<div class="decision-actions"><button class="btn primaire" id="d-oui" data-v="' + esc(v.id) + '"' + (horsPlafond ? " disabled" : "") + '>' + esc(oui) + '</button><button class="btn" id="d-non" data-v="' + esc(v.id) + '">' + esc(non) + "</button>" +
+      '<div class="decision-actions"><button class="btn primaire" id="d-oui" data-v="' + esc(v.id) + '"' + (horsPlafond ? " disabled" : "") + '>' + esc(oui) + '</button><button class="btn" id="d-oui-suivant" data-v="' + esc(v.id) + '"' + (horsPlafond ? " disabled" : "") + '>' + "Valider et passer au suivant" + '</button><button class="btn" id="d-non" data-v="' + esc(v.id) + '">' + esc(non) + "</button>" +
         (p.code === "VIGILANCE_VOL" ? '<button class="btn discret" id="d-enquete">Confier à un enquêteur (facultatif)</button>' : "") + "</div>" +
       (loi ? '<p class="loi">' + esc(loi) + "</p>" : "") + '</div><div class="tampon" id="tampon" aria-hidden="true"></div></section>';
   }
@@ -2542,7 +2666,7 @@ function blocDocuments(f) {
         }).join("") + "</div>" : "");
       if (d.statut === "a_verifier") {
         h += '<div class="decision-actions" style="margin-top:12px"><button class="btn primaire" data-appliquer-doc="' + esc(d.id) + '">Appliquer ces valeurs</button>' +
-          '<input class="saisie" id="ec-' + esc(d.id) + '" placeholder="Motif si vous écartez le document" style="flex:1;min-width:200px">' +
+          '<input class="saisie" id="ec-' + esc(d.id) + '" placeholder="Motif si vous écartez le document" aria-label="Motif si vous écartez le document" style="flex:1;min-width:200px">' +
           '<button class="btn" data-ecarter-doc="' + esc(d.id) + '">Écarter</button></div>' +
           '<p class="muet petit" style="margin-top:6px">Appliquer revient à valider les valeurs ci-dessus comme si l\'expert ou le garage les avait saisies. Les contrôles habituels du circuit s\'appliquent ensuite.</p>';
       }
@@ -2638,7 +2762,7 @@ function blocActivites(f) {
   var h = '<section class="bloc" id="bloc-activites"><div class="bloc-tete"><h2>Activités<span class="compte">' + l.filter(function (a) { return !a.a_venir; }).length + '</span></h2>' +
     (fini ? "" : '<button type="button" class="btn petit" id="b-rappel-ouvrir">Rappel ou mise en attente</button>') + "</div>";
   if (att) h += '<div class="bloc-corps"><div class="encart-constat"><div><b>En attente jusqu\'au ' + esc(C.dateFr(att.le)) + "</b><p class=\"muet petit\">" + esc(att.texte) +
-    ". Le dossier est sorti de la corbeille ; il revient seul à cette date.</p></div><button type=\"button\" class=\"btn petit\" data-rappel-fait=\"" + esc(att.id) + '">Reprendre maintenant</button></div></div>';
+    ". Le dossier est sorti de « À traiter » ; il revient seul à cette date.</p></div><button type=\"button\" class=\"btn petit\" data-rappel-fait=\"" + esc(att.id) + '">Reprendre maintenant</button></div></div>';
   h += l.length ? '<ul class="activites">' + l.map(function (a) {
       var fait = (a.code === "rappel" || (a.code === "attente" && !a.a_venir)) ? '<button type="button" class="btn petit" data-rappel-fait="' + esc(a.id) + '">Fait</button>' : "";
       if (a.code === "attente" && a.a_venir) return "";
@@ -2648,7 +2772,7 @@ function blocActivites(f) {
   if (!fini) h += '<form class="bloc-corps pile" id="form-rappel" hidden novalidate><div class="grille-2">' +
     '<label class="champ">Le<input class="saisie" type="date" id="rp-le" min="' + new Date().toISOString().slice(0, 10) + '"></label>' +
     '<label class="champ">À faire<input class="saisie" id="rp-texte" maxlength="300" placeholder="Ex. rappeler l\'assuré pour le constat"></label></div>' +
-    '<label class="case"><input type="checkbox" id="rp-attente"> Mettre le dossier en attente jusqu\'à cette date : il sort de la corbeille et revient seul (sauf délai légal)</label>' +
+    '<label class="case"><input type="checkbox" id="rp-attente"> Mettre le dossier en attente jusqu\'à cette date : il sort de « À traiter » et revient seul (sauf délai légal)</label>' +
     '<div class="decision-actions"><button class="btn primaire" type="submit" id="rp-ok">Enregistrer</button></div></form>';
   return h + "</section>";
 }
@@ -2673,18 +2797,25 @@ function brancherActivites(f) {
     };
   });
   var s = $("b-suivante");
-  if (s) s.onclick = function () {
-    C.occupe(s, true, "");
-    api("a-traiter" + qb()).then(function (l) {
-      var moi = (S.moi || {}).id;
-      var miens = (l || []).filter(function (d) { return d.numero !== f.numero && d.gestionnaire && d.gestionnaire.id === moi; });
-      var libres = (l || []).filter(function (d) { return d.numero !== f.numero && !d.gestionnaire; });
-      var n = miens[0] || libres[0];
-      C.occupe(s, false);
-      if (!n) return C.toast("Plus rien dans votre corbeille. Bien joué.");
-      ouvrirDossier(n.numero);
-    }).catch(function (x) { C.occupe(s, false); C.toast(x.message, true); });
-  };
+  if (s) s.onclick = function () { allerAuSuivant(f.numero, s); };
+}
+// Prochain dossier à traiter (les miens d'abord, puis les non attribués), en sautant celui qu'on quitte
+function dossierSuivant(courant) {
+  return api("a-traiter" + qb()).then(function (l) {
+    var moi = (S.moi || {}).id;
+    var miens = (l || []).filter(function (d) { return d.numero !== courant && d.gestionnaire && d.gestionnaire.id === moi; });
+    var libres = (l || []).filter(function (d) { return d.numero !== courant && !d.gestionnaire; });
+    var n = miens[0] || libres[0];
+    return n ? n.numero : null;
+  });
+}
+function allerAuSuivant(courant, btn) {
+  C.occupe(btn, true, "");
+  dossierSuivant(courant).then(function (n) {
+    C.occupe(btn, false);
+    if (!n) return C.toast("Plus aucun dossier à traiter.");
+    ouvrirDossier(n);
+  }).catch(function (x) { C.occupe(btn, false); C.toast(x.message, true); });
 }
 /* Messages du dossier : un seul fil pour les mails reçus, les messages envoyés et les appels notés.
    On y lit, on répond à un mail, on écrit un nouveau message ou on note un appel. */
@@ -2748,7 +2879,8 @@ function blocMessages(f) {
         .map(function (k) { return '<option value="' + k + '">' + esc(DEST_MSG[k]) + "</option>"; }).join("") + "</select></label>" +
       '<label class="champ">Adresse <span class="aide">si elle n\'est pas connue</span><input class="saisie" id="g-email" type="email" placeholder="facultatif"></label></div>' +
       '<label class="champ">Modèle <span class="aide">le texte reste modifiable</span><select class="saisie" id="g-modele"><option value="">Message libre</option>' +
-      (f.theme === "ACCIDENT_TIERS" ? '<option value="constat">Demander le constat amiable signé</option>' : "") + '<option value="piece">Demander une pièce</option><option value="point">Faire le point avec l\'assuré</option></select></label>' +
+      (f.theme === "ACCIDENT_TIERS" ? '<option value="constat">Demander le constat amiable signé</option>' : "") + '<option value="piece">Demander une pièce manquante</option><option value="point">Faire le point avec l\'assuré</option></select></label>' +
+      champPiecesModele(f) +
       '<label class="champ">Objet<input class="saisie" id="g-objet" maxlength="150"></label><label class="champ">Message <span class="aide">« Bonjour » et la signature du service sont ajoutés</span><textarea class="saisie" id="g-texte" rows="6" maxlength="6000"></textarea></label>' +
       '<div class="decision-actions"><button class="btn primaire" id="g-envoyer" type="submit">Envoyer</button><button class="btn" type="button" id="msg-annuler">Annuler</button><span class="muet petit">Le message part avec le lien sécurisé de la personne pour répondre ou envoyer un document.</span></div></form>';
   }
@@ -2780,15 +2912,16 @@ function ouvrirComposeur(o) {
   $("g-texte").value = o.texte || "";
   var cx = $("msg-contexte"); cx.hidden = !o.contexte; cx.textContent = o.contexte || "";
   fo.scrollIntoView({ behavior: "smooth", block: "center" });
-  (o.objet ? $("g-texte") : $("g-objet")).focus();
+  majPiecesModele(false);
+  if (!(o.modele === "piece" && placerTrouPiece())) (o.objet ? $("g-texte") : $("g-objet")).focus();
 }
 function brancherMessages(f) {
   var fo = $("msg-form"), b;
-  if ((b = $("b-msg-nouveau"))) b.onclick = function () { ouvrirComposeur({}); };
-  if ((b = $("msg-annuler"))) b.onclick = function () { fo.hidden = true; };
+  if ((b = $("b-msg-nouveau"))) b.onclick = function () { if (fo && !fo.hidden && messageEnCours(f.numero)) { fo.scrollIntoView({ block: "center" }); $("g-texte").focus(); return; } ouvrirComposeur({}); };
+  if ((b = $("msg-annuler"))) b.onclick = function () { fo.hidden = true; oublierBrouillon(f.numero, CHAMPS_MSG); $("b-msg-nouveau") && $("b-msg-nouveau").focus(); };
   if ((b = $("b-note-ouvrir"))) b.onclick = function () { if (fo) fo.hidden = true; var d = $("d-note"); d.hidden = !d.hidden; if (!d.hidden) $("n-texte").focus(); };
-  if ((b = $("note-annuler"))) b.onclick = function () { $("d-note").hidden = true; };
-  if ((b = $("g-modele"))) b.onchange = function () { var m = MODELES_MSG[this.value]; if (!m) return; $("g-dest").value = m.dest; $("g-objet").value = m.objet; $("g-texte").value = m.texte; };
+  if ((b = $("note-annuler"))) b.onclick = function () { $("d-note").hidden = true; oublierBrouillon(f.numero, CHAMPS_NOTE); $("b-note-ouvrir").focus(); };
+  if ((b = $("g-modele"))) b.onchange = function () { var m = MODELES_MSG[this.value]; majPiecesModele(false); if (!m) return; $("g-dest").value = m.dest; $("g-objet").value = m.objet; $("g-texte").value = m.texte; if (this.value === "piece") placerTrouPiece(); };
   document.querySelectorAll("[data-msg-repondre]").forEach(function (x) {
     x.onclick = function () {
       var o = x.dataset.objet.replace(/^\s*((re|réponse|relance)\s*:\s*)+/i, "");
@@ -2799,10 +2932,14 @@ function brancherMessages(f) {
   if (fo) fo.addEventListener("submit", function (e) {
     e.preventDefault();
     var v = function (id) { return $(id).value.trim(); }, ok = $("g-envoyer");
-    if (v("g-objet").length < 3 || v("g-texte").length < 10) return C.toast("Indiquez un objet et un message.", true);
+    if (v("g-objet").length < 3) return C.erreurChamp("g-objet", "Indiquez l'objet du message.");
+    if (v("g-texte").length < 10) return C.erreurChamp("g-texte", "Écrivez le message (10 caractères au moins).");
+    if (TROU_PIECE.test($("g-texte").value)) {
+      C.erreurChamp("g-texte", "Indiquez la pièce demandée avant d'envoyer."); placerTrouPiece(); return;
+    }
     C.occupe(ok, true, "Envoi");
     api("gestion", { body: { numero: f.numero, action: "courrier", destinataire: v("g-dest"), email: v("g-email") || undefined, objet: v("g-objet"), texte: v("g-texte") } })
-      .then(function (r) { C.toast("Message envoyé"); rafraichirCompteur(); afficherDossier(r); })
+      .then(function (r) { oublierBrouillon(f.numero, CHAMPS_MSG); C.toast("Message envoyé"); rafraichirCompteur(); afficherDossier(r); })
       .catch(function (x) { C.occupe(ok, false); C.toast(x.message, true); });
   });
   var filtre = "tout", plus = $("msg-plus"), tout = false;
@@ -2823,6 +2960,13 @@ function brancherMessages(f) {
   });
   if (plus) plus.onclick = function () { tout = true; appliquer(); };
 }
+// Échap ferme le panneau de message ou la note d'appel (le brouillon est gardé)
+document.addEventListener("keydown", function (e) {
+  if (e.key !== "Escape" || e.defaultPrevented || !$("p-alertes").hidden || !$("p-compte").hidden) return;
+  var fo = $("msg-form"), no = $("d-note");
+  if (fo && !fo.hidden) { fo.hidden = true; if ($("b-msg-nouveau")) $("b-msg-nouveau").focus(); }
+  else if (no && !no.hidden) { no.hidden = true; if ($("b-note-ouvrir")) $("b-note-ouvrir").focus(); }
+});
 /* Dépôt d'un document reçu hors de Klerio */
 function blocDepot(f) {
   if (FINIS.indexOf(f.statut) >= 0 || f.efface_le) return "";
@@ -2936,29 +3080,38 @@ function brancherFiche(f) {
     if (!a || !dp) { C.toast("Indiquez l'arrêté et sa date de publication.", true); return; }
     C.occupe(bc, true, ""); api("catnat", { body: { numero: f.numero, arrete: a, date_publication: dp } }).then(function (r) { C.toast("Arrêté enregistré"); afficherDossier(r); }).catch(function (x) { C.occupe(bc, false); C.toast(x.message, true); });
   };
-  var oui = $("d-oui"), non = $("d-non");
-  function decider(resultat, btn) {
+  var oui = $("d-oui"), non = $("d-non"), ouiS = $("d-oui-suivant");
+  function decider(resultat, btn, suivant) {
     var com = $("d-com").value.trim();
-    if (resultat === "rejete" && !com) { C.toast("Ajoutez un commentaire pour écarter la proposition.", true); $("d-com").focus(); return; }
+    if (resultat === "rejete" && !com) { C.erreurChamp("d-com", "Ajoutez un commentaire pour écarter la proposition."); return; }
     var corpsV = { validation_id: btn.dataset.v, resultat: resultat, commentaire: com || null };
     var parts = document.querySelectorAll("input[name=r-pct]");
     if (parts.length && resultat === "valide") {
       var choix = document.querySelector("input[name=r-pct]:checked"), propo = (propoValidation(f) || {}).proposition || {};
-      if (!choix) { C.toast("Choisissez la part de responsabilité de l'assuré.", true); parts[0].focus(); return; }
+      if (!choix) { C.erreurChamp(parts[0], "Choisissez la part de responsabilité de l'assuré."); return; }
       corpsV.responsabilite_pct = Number(choix.value);
       if ($("r-adv") && $("r-adv").value.trim()) corpsV.assureur_adverse = $("r-adv").value.trim();
       var sitC = document.querySelector("input[name=r-sit]:checked");
       if (sitC) corpsV.tiers_situation = sitC.value;
-      if (propo.pct != null && Number(propo.pct) !== corpsV.responsabilite_pct && !com) { C.toast("Vous changez la proposition : expliquez pourquoi en commentaire.", true); $("d-com").focus(); return; }
+      if (propo.pct != null && Number(propo.pct) !== corpsV.responsabilite_pct && !com) { C.erreurChamp("d-com", "Vous changez la proposition : expliquez pourquoi en commentaire."); return; }
     }
     C.occupe(btn, true, "Enregistrement");
     api("valider", { body: corpsV }).then(function (r) {
-      C.toast("Dossier " + f.numero + " : " + ((C.STATUTS[r.statut] || [r.statut])[0]));
+      var st = r && r.statut ? " : " + ((C.STATUTS[r.statut] || [r.statut])[0]) : " : décision enregistrée";
+      oublierBrouillon(f.numero, ["d-com"]);
       rafraichirCompteur();
-      vueDossier(f.numero);
+      if (!suivant) {
+        C.toast("Dossier " + f.numero + st, false, { libelle: "Ouvrir le dossier suivant", fn: function () { allerAuSuivant(f.numero); } });
+        vueDossier(f.numero); return;
+      }
+      dossierSuivant(f.numero).then(function (n) {
+        if (!n) { C.toast("Dossier " + f.numero + st + ". Plus aucun dossier à traiter."); vueDossier(f.numero); return; }
+        C.toast("Dossier " + f.numero + st); ouvrirDossier(n);
+      }, function () { vueDossier(f.numero); });
     }).catch(function (x) { C.occupe(btn, false); C.toast(x.message, true); });
   }
   if (oui) oui.addEventListener("click", function () { decider("valide", oui); });
+  if (ouiS) ouiS.addEventListener("click", function () { decider("valide", ouiS, true); });
   if (non) non.addEventListener("click", function () { decider("rejete", non); });
 
   var fvo = $("fv-ok");
@@ -3032,7 +3185,7 @@ function brancherTitulaire(f) {
     dossiersApi("collegues").then(function (l) {
       C.occupe(tt, false);
       if (!l.length) { C.toast("Personne d'autre dans votre équipe pour l'instant", true); return; }
-      $("t-collegues").innerHTML = '<select class="saisie" id="t-vers" style="max-width:200px">' + l.map(function (c) { return '<option value="' + esc(c.id) + '">' + esc(c.nom) + "</option>"; }).join("") + '</select><button class="btn petit primaire" id="t-confirmer">Transférer</button>';
+      $("t-collegues").innerHTML = '<select class="saisie" id="t-vers" style="max-width:200px" aria-label="Collègue qui reprend le dossier">' + l.map(function (c) { return '<option value="' + esc(c.id) + '">' + esc(c.nom) + "</option>"; }).join("") + '</select><button class="btn petit primaire" id="t-confirmer">Transférer</button>';
       $("t-confirmer").onclick = function () {
         var b = this; C.occupe(b, true, "");
         dossiersApi("transferer", { numero: f.numero, vers: $("t-vers").value }).then(function () { C.toast("Dossier transféré"); location.hash = "#/file"; })
@@ -3057,7 +3210,7 @@ function brancherTitulaire(f) {
     var source = S.moi && S.moi.role === "superviseur" ? equipeApi("pilotage", { branche: S.branche }) : api("pilotage-equipe" + qb());
     source.then(function (p) {
       var l = (p.gestionnaires || []).filter(function (g) { return g.actif && g.role !== "admin" && g.role !== "superviseur"; });
-      $("t-choix").innerHTML = '<select class="saisie" id="t-vers" style="min-width:200px"><option value="">File commune</option>' +
+      $("t-choix").innerHTML = '<select class="saisie" id="t-vers" style="min-width:200px" aria-label="Attribuer à"><option value="">File commune</option>' +
         l.map(function (g) { return '<option value="' + esc(g.id) + '"' + (f.gestionnaire && f.gestionnaire.id === g.id ? " selected" : "") + ">" + esc(g.nom) + " (" + g.a_traiter + " à traiter)</option>"; }).join("") +
         '</select> <button class="btn petit primaire" id="t-ok">Valider</button>';
       $("t-ok").onclick = function () {
@@ -3089,9 +3242,10 @@ function brancherSuivi(f) {
   if (fn) fn.addEventListener("submit", function (e) {
     e.preventDefault();
     var t = $("n-texte").value.trim(), b = $("n-ok");
-    if (!t) { C.toast("Écrivez ce que la personne vous a dit ou écrit.", true); $("n-texte").focus(); return; }
+    if (!t) return C.erreurChamp("n-texte", "Écrivez ce que la personne vous a dit ou écrit.");
     C.occupe(b, true, "Analyse en cours");
     api("note", { body: { numero: f.numero, canal: $("n-canal").value, interlocuteur: $("n-qui").value, contenu: t } }).then(function (r) {
+      oublierBrouillon(f.numero, CHAMPS_NOTE);
       var n = (r.note && r.note.actions || []).length;
       C.toast(n ? "Information enregistrée : " + n + " suite" + (n > 1 ? "s" : "") + " proposée" + (n > 1 ? "s" : "") : "Information enregistrée");
       vueDossier(f.numero);
@@ -3331,7 +3485,7 @@ function statsPilotage(pm) {
         : '<div class="delta">Aucun dossier en attente depuis plus de ' + J + " jours</div>") + "</div>" +
     '<div class="pil-stat"><div class="lib">Délai jusqu\'au paiement</div><div class="val">' + (dr != null ? C.nombre(dr, 1) + "<small>jours</small>" : "–") + "</div>" +
       (dr != null ? ecart(dr, p.delai_reglement_jours_avant, " j", true, 1) : '<div class="delta">Aucun dossier payé sur la période</div>') + "</div>" +
-    '<div class="pil-stat"><div class="lib">Réglés sans intervention</div><div class="val">' + (ts != null ? C.nombre(ts, 0) + "<small>%</small>" : "–") + "</div>" +
+    '<div class="pil-stat"><div class="lib">Traités sans intervention humaine</div><div class="val">' + (ts != null ? C.nombre(ts, 0) + "<small>%</small>" : "–") + "</div>" +
       (ts != null ? ecart(ts, p.taux_sans_intervention_avant, " pts", false, 0) : '<div class="delta">Aucun dossier terminé sur la période</div>') + "</div></div>";
 }
 
@@ -3450,8 +3604,8 @@ function blocEquipePilotage(eq, pm) {
   h += '<div class="tableau-wrap"><table class="tableau equipe-t"><thead><tr><th>Gestionnaire</th><th class="nb">À décider</th><th class="nb" title="Dossiers à décider sans action depuis plus de ' + J + ' jours">Sans action</th>' +
     '<th class="nb" title="Le dossier qui attend sa décision depuis le plus longtemps">Plus longue attente</th><th class="nb">En cours</th><th class="nb">Terminés 30 j</th><th class="nb" title="Temps moyen entre la demande de décision et la décision, 30 jours">Délai moyen</th><th>Présence</th><th></th></tr></thead><tbody>' +
     tri.map(function (x) {
-      var presence = !x.disponible ? '<span class="presence absent">Absent' + (x.absent_jusqu_au ? " jusqu'au " + esc(C.dateCourte(x.absent_jusqu_au)) : "") + "</span>"
-        : '<span class="presence">Présent' + (x.role !== "admin" && x.recoit_nouveaux === false ? ", sans nouveaux dossiers" : "") + (x.capacite_pct && x.capacite_pct < 100 ? ", " + x.capacite_pct + " %" : "") + "</span>";
+      var presence = !x.disponible ? '<span class="presence absent">Indisponible' + (x.absent_jusqu_au ? " jusqu'au " + esc(C.dateCourte(x.absent_jusqu_au)) : "") + "</span>"
+        : '<span class="presence">Disponible' + (x.role !== "admin" && x.recoit_nouveaux === false ? ", sans nouveaux dossiers" : "") + (x.capacite_pct && x.capacite_pct < 100 ? ", " + x.capacite_pct + " %" : "") + "</span>";
       return '<tr style="cursor:default"><td class="qui"><a class="lien-g" href="#/pilotage/' + esc(x.id) + '" title="Voir le détail de ' + esc(x.nom) + '">' + esc(x.nom) + "</a><small title=\"" + esc(x.derniere_connexion ? "Vu " + C.depuis(x.derniere_connexion) : "Jamais connecté") + '">' + esc(ROLES_G[x.role] || x.role) + ", " + esc(x.centre || (SERVICES[x.service] || x.service).toLowerCase()) + "</small></td>" +
         '<td class="nb">' + (x.a_traiter ? "<b>" + x.a_traiter + "</b>" : '<span class="muet">0</span>') + "</td>" +
         '<td class="nb">' + (x.sans_action ? '<span class="alerte-n">' + x.sans_action + "</span>" : '<span class="muet">0</span>') + "</td>" +
@@ -3472,9 +3626,9 @@ function blocEquipePilotage(eq, pm) {
 }
 function panneauGestion(x, g) {
   var autres = g.filter(function (y) { return y.id !== x.id && y.role !== "admin"; });
-  var dispo = !x.disponible ? '<div class="actions"><span class="muet">Absent' + (x.absent_jusqu_au ? " jusqu'au " + esc(C.dateFr(x.absent_jusqu_au)) : "") + "</span>" +
+  var dispo = !x.disponible ? '<div class="actions"><span class="muet">Indisponible' + (x.absent_jusqu_au ? " jusqu'au " + esc(C.dateFr(x.absent_jusqu_au)) : "") + "</span>" +
       '<button type="button" class="btn petit" data-dispo="' + esc(x.id) + '" data-etat="present">De retour</button></div>'
-    : '<div class="actions"><input type="date" class="saisie" style="width:150px" data-jusqu="' + esc(x.id) + '" aria-label="Absent jusqu\'au (facultatif)">' +
+    : '<div class="actions"><input type="date" class="saisie" style="width:150px" data-jusqu="' + esc(x.id) + '" aria-label="Indisponible jusqu\'au (facultatif)">' +
       '<button type="button" class="btn petit" data-dispo="' + esc(x.id) + '" data-etat="absent" title="Ses dossiers à décider sont confiés aux collègues présents">Marquer absent</button></div>';
   var nouveaux = x.role === "admin" ? '<p class="muet petit">Les administrateurs ne reçoivent pas de dossiers automatiquement.</p>'
     : '<div class="actions"><label class="case" style="margin:0"><input type="checkbox" data-recoit="' + esc(x.id) + '"' + (x.recoit_nouveaux !== false ? " checked" : "") + "> Reçoit les nouveaux dossiers</label>" +
@@ -3537,7 +3691,7 @@ function brancherEquipePilotage(eq) {
       var id = b.dataset.dispo, absent = b.dataset.etat === "absent", d = document.querySelector('[data-jusqu="' + id + '"]');
       C.occupe(b, true, "");
       api("disponibilite", { body: { gestionnaire: id, disponible: !absent, jusqu_au: absent && d ? d.value || null : null } }).then(function (r) {
-        C.toast(r.gestionnaire + (r.disponible ? " est de nouveau présent" : " est absent" + (r.dossiers_redistribues ? " : " + r.dossiers_redistribues + " dossier(s) confié(s) à ses collègues" : "")));
+        C.toast(r.disponible ? "Retour enregistré pour " + r.gestionnaire : "Absence enregistrée pour " + r.gestionnaire + (r.dossiers_redistribues ? " : " + r.dossiers_redistribues + " dossier(s) confié(s) à l'équipe" : ""));
         vuePilotage();
       }).catch(function (x) { C.occupe(b, false); C.toast(x.message, true); });
     };
@@ -3551,11 +3705,11 @@ function vueGestionnaire(id) {
     var membres = (S.equipePil || []).filter(function (x) { return x.id !== g.id && x.disponible !== false; });
     var abs = g.disponible === false;
     var h = '<div class="fil-g"><a href="#/pilotage">Pilotage</a> / ' + esc(g.nom) + "</div>" +
-      '<div class="entete-vue"><div><h1>' + esc(g.nom) + ' <span class="presence-g' + (abs ? " absent" : "") + '">' + (abs ? "Absent" + (g.absent_jusqu_au ? " jusqu'au " + esc(C.dateCourte(g.absent_jusqu_au)) : "") : "Présent") + "</span></h1>" +
+      '<div class="entete-vue"><div><h1>' + esc(g.nom) + ' <span class="presence-g' + (abs ? " absent" : "") + '">' + (abs ? "Indisponible" + (g.absent_jusqu_au ? " jusqu'au " + esc(C.dateCourte(g.absent_jusqu_au)) : "") : "Présent") + "</span></h1>" +
       "<p>" + esc(ROLES_G[g.role] || g.role) + (g.equipe ? ", équipe " + esc(g.equipe) : "") + (g.centre ? ", " + esc(g.centre) : "") +
       (g.plafond_eur ? ", plafond " + esc(C.eur(g.plafond_eur)) : "") + (g.capacite_pct && g.capacite_pct < 100 ? ", " + g.capacite_pct + " % du temps" : "") +
       ". " + (g.derniere_connexion ? "Connecté " + esc(C.depuis(g.derniere_connexion)) : "Jamais connecté") + (g.recoit_nouveaux === false ? ". Ne reçoit plus de nouveaux dossiers" : "") + ".</p></div>" +
-      '<div class="g-actions"><button type="button" class="btn" id="g-presence">' + (abs ? "Marquer de retour" : "Marquer absent") + "</button>" +
+      '<div class="g-actions"><button type="button" class="btn" id="g-presence">' + (abs ? "Enregistrer son retour" : "Enregistrer une absence") + "</button>" +
       (l.length ? '<button type="button" class="btn primaire" id="g-repartir" title="Chaque dossier va au collègue présent du même centre qui en a le moins, en priorité dans la même équipe">Répartir ses ' + l.length + " dossier" + pl(l.length, "") + "</button>" : "") + "</div></div>";
     h += '<div class="pil-stats g-stats">' +
       stat_g("À décider", c.a_decider || 0, c.sans_action ? '<span class="moins-bien">' + c.sans_action + "</span> sans action depuis plus de " + J + " jours" : "aucun en retard", c.sans_action) +
@@ -3581,10 +3735,10 @@ function vueGestionnaire(id) {
     }).join("") + "</ul>" : '<div class="vide">Aucune action enregistrée.</div>') + "</section>";
     $("vue").innerHTML = h;
     $("g-presence").onclick = function () {
-      if (!abs && !confirm("Marquer " + g.nom + " absent ? Ses dossiers à décider seront confiés aux collègues présents.")) return;
+      if (!abs && !confirm("Enregistrer une absence pour " + g.nom + " ? Ses dossiers à décider seront confiés aux collègues disponibles.")) return;
       var b = this; C.occupe(b, true, "");
       api("disponibilite", { body: { gestionnaire: g.id, disponible: abs } }).then(function (r) {
-        C.toast(abs ? g.nom + " est de retour" : g.nom + " est absent" + (r.dossiers_redistribues ? " : " + r.dossiers_redistribues + " dossier(s) redistribué(s)" : ""));
+        C.toast(abs ? "Retour enregistré pour " + g.nom : "Absence enregistrée pour " + g.nom + (r.dossiers_redistribues ? " : " + r.dossiers_redistribues + " dossier(s) confié(s) à l'équipe" : ""));
         vueGestionnaire(id);
       }).catch(function (x) { C.occupe(b, false); C.toast(x.message, true); });
     };
@@ -3688,7 +3842,7 @@ function pilotageSimple(i) {
   return '<div class="pil-stats">' +
     '<div class="pil-stat"><div class="lib">Dossiers en cours</div><div class="val">' + (i.en_cours || 0) + "</div></div>" +
     '<div class="pil-stat"><div class="lib">À décider</div><div class="val">' + (i.a_traiter || 0) + "</div></div>" +
-    '<div class="pil-stat"><div class="lib">Réglés sans intervention</div><div class="val">' + (i.taux_sans_intervention != null ? C.nombre(i.taux_sans_intervention, 0) + "<small>%</small>" : "–") + "</div></div>" +
+    '<div class="pil-stat"><div class="lib">Traités sans intervention humaine</div><div class="val">' + (i.taux_sans_intervention != null ? C.nombre(i.taux_sans_intervention, 0) + "<small>%</small>" : "–") + "</div></div>" +
     '<div class="pil-stat"><div class="lib">Délai moyen jusqu\'au paiement</div><div class="val">' + (d != null ? duree(d) : "–") + "</div></div></div>" +
     '<div class="pil-grille egale"><section class="bloc"><div class="bloc-tete"><h2>Par type de sinistre</h2></div><div class="bloc-corps">' +
     rangs(Object.keys(i.par_theme || {}).map(function (k) { return { k: k, n: i.par_theme[k] }; }).sort(function (a, b) { return b.n - a.n; }), function (x) { return esc(C.theme(x.k)); }, function (x) { return x.n; }) +
@@ -3821,7 +3975,7 @@ function rendreEquipe(d, envoi) {
   var libres = (d.equipes || []).filter(function (e) { return !e.manager_id; });
   if (!admin) h += '<section class="bloc"><div class="bloc-tete"><h2>' + (sansEquipe ? "Choisir mon équipe" : "Changer d'équipe") + '</h2></div><div class="bloc-corps pile"><div class="decision-actions">' +
     (libres.length ? '<select class="saisie" id="q-eq" style="min-width:240px;max-width:360px" aria-label="Équipe du centre">' + libres.map(function (e) { return '<option value="' + esc(e.id) + '">' + esc(e.nom) + "</option>"; }).join("") + '</select><button class="btn" id="q-prendre">Prendre cette équipe</button><span class="muet petit">ou</span>' : "") +
-    '<input class="saisie" id="q-nom" maxlength="80" placeholder="Nom de la nouvelle équipe, ex. Dommages Paris 1" style="min-width:260px;max-width:360px"><button class="btn' + (sansEquipe ? " primaire" : "") + '" id="q-creer">Créer l\'équipe</button></div>' +
+    '<input class="saisie" id="q-nom" maxlength="80" aria-label="Nom de la nouvelle équipe" placeholder="Nom de la nouvelle équipe, ex. Dommages Paris 1" style="min-width:260px;max-width:360px"><button class="btn' + (sansEquipe ? " primaire" : "") + '" id="q-creer">Créer l\'équipe</button></div>' +
     '<p class="muet petit">Une équipe a un seul manager. Les équipes déjà prises par un autre manager de votre centre n\'apparaissent pas.</p></div></section>';
   if (sansEquipe) { $("vue").innerHTML = h; brancherChoixEquipe(); return; }
   var eqNom = function (id) { var e = (d.equipes || []).filter(function (x) { return x.id === id; })[0]; return e ? e.nom : ""; };
@@ -3860,11 +4014,11 @@ function rendreEquipe(d, envoi) {
     membres.map(function (g) {
       var modifiable = admin || (g.role === "gestionnaire" && g.equipe_id === d.moi.equipe.id);
       var equipe = g.role !== "gestionnaire" ? (g.equipe_nom ? esc(g.equipe_nom) + ' <span class="muet petit">(manager)</span>' : '<span class="muet">—</span>')
-        : admin ? '<select class="saisie" data-equipe="' + g.id + '" style="min-width:170px">' + optsEquipes(g.equipe_id) + "</select>" : esc(g.equipe_nom || "");
-      var role = admin ? '<select class="saisie" data-role="' + g.id + '" style="min-width:150px">' + optionsHtml(ROLES_G, g.role) + "</select>" : esc(ROLES_G[g.role] || g.role);
-      var centre = admin ? '<input class="saisie" data-centre="' + g.id + '" list="liste-centres" placeholder="Aucun" value="' + esc(g.centre || "") + '" style="min-width:140px">' : '<span style="white-space:nowrap">' + esc(g.centre || "") + "</span>";
-      var service = modifiable ? '<select class="saisie" data-service="' + g.id + '" style="min-width:120px">' + optionsHtml(SERVICES, g.service) + "</select>" : esc(SERVICES[g.service] || g.service);
-      var plafond = modifiable ? '<input class="saisie" data-plafond="' + g.id + '" type="number" min="0" step="100" placeholder="Sans plafond" value="' + (g.plafond_eur == null ? "" : esc(g.plafond_eur)) + '" style="max-width:140px;text-align:right">'
+        : admin ? '<select class="saisie" data-equipe="' + g.id + '" aria-label="Équipe de ' + esc(g.nom) + '" style="min-width:170px">' + optsEquipes(g.equipe_id) + "</select>" : esc(g.equipe_nom || "");
+      var role = admin ? '<select class="saisie" data-role="' + g.id + '" aria-label="Rôle de ' + esc(g.nom) + '" style="min-width:150px">' + optionsHtml(ROLES_G, g.role) + "</select>" : esc(ROLES_G[g.role] || g.role);
+      var centre = admin ? '<input class="saisie" data-centre="' + g.id + '" aria-label="Centre de ' + esc(g.nom) + '" list="liste-centres" placeholder="Aucun" value="' + esc(g.centre || "") + '" style="min-width:140px">' : '<span style="white-space:nowrap">' + esc(g.centre || "") + "</span>";
+      var service = modifiable ? '<select class="saisie" data-service="' + g.id + '" aria-label="Service de ' + esc(g.nom) + '" style="min-width:120px">' + optionsHtml(SERVICES, g.service) + "</select>" : esc(SERVICES[g.service] || g.service);
+      var plafond = modifiable ? '<input class="saisie" data-plafond="' + g.id + '" aria-label="Plafond de règlement de ' + esc(g.nom) + '" type="number" min="0" step="100" placeholder="Sans plafond" value="' + (g.plafond_eur == null ? "" : esc(g.plafond_eur)) + '" style="max-width:140px;text-align:right">'
         : (g.plafond_eur == null ? '<span class="muet">Sans plafond</span>' : esc(C.nombre(g.plafond_eur, 0)) + " €");
       return '<tr style="cursor:default"><td>' + esc(g.nom) + (g.id === d.moi.id ? ' <span class="muet petit">(vous)</span>' : "") + '</td><td class="muet">' + esc(g.email) + "</td><td>" + role + "</td><td>" + centre + "</td><td>" + equipe + "</td><td>" + service + '</td><td class="nb">' + plafond + "</td>" +
         '<td class="muet">' + esc(g.derniere_connexion ? C.depuis(g.derniere_connexion) : "Jamais") + "</td><td>" + (g.actif ? '<span class="statut ok">Actif</span>' : '<span class="statut neutre">Désactivé</span>') + "</td>" +
@@ -4300,16 +4454,31 @@ function majPresence() {
   if (b.hidden) return;
   var la = m.disponible !== false;
   b.className = "presence" + (la ? "" : " absent");
-  b.textContent = la ? "Présent" : "Absent" + (m.absent_jusqu_au ? " jusqu'au " + C.dateCourte(m.absent_jusqu_au) : "");
-  b.title = la ? "Vous signaler absent : vos dossiers à décider seront confiés à vos collègues présents" : "Vous signaler de retour : vous recevez à nouveau des dossiers";
+  b.textContent = la ? "Disponible" : "Indisponible" + (m.absent_jusqu_au ? " jusqu'au " + C.dateCourte(m.absent_jusqu_au) : "");
+  b.title = la ? "Signaler votre absence : vos dossiers à décider seront confiés à vos collègues disponibles" : "Signaler votre retour : vous recevez à nouveau des dossiers";
+  var mp = $("m-presence"); mp.hidden = false; mp.textContent = la ? "Signaler mon absence" : "Signaler mon retour";
 }
+/* Menu Compte (tablette et téléphone, sous 960 px) : présence, thème, changement de compte, déconnexion */
+function fermerCompte() { $("p-compte").hidden = true; $("b-menu-compte").setAttribute("aria-expanded", "false"); }
+$("b-menu-compte").onclick = function (e) {
+  e.stopPropagation(); fermerAlertes();
+  var p = $("p-compte"); if (!p.hidden) return fermerCompte();
+  $("m-presence").hidden = $("b-presence").hidden;
+  p.hidden = false; this.setAttribute("aria-expanded", "true");
+  var b = p.querySelector("button:not([hidden])"); if (b) b.focus();
+};
+[["m-presence", "b-presence"], ["m-theme", "b-theme"], ["m-compte", "b-compte"], ["m-deco", "b-deco"]].forEach(function (x) {
+  $(x[0]).onclick = function () { fermerCompte(); $(x[1]).click(); };
+});
+document.addEventListener("click", function (e) { if (!$("p-compte").hidden && !e.target.closest(".compte-z")) fermerCompte(); });
+document.addEventListener("keydown", function (e) { if (e.key === "Escape" && !$("p-compte").hidden) { fermerCompte(); $("b-menu-compte").focus(); } });
 $("b-presence").addEventListener("click", function () {
   var la = S.moi.disponible !== false;
-  if (la && !confirm("Vous signaler absent ?\n\nVous ne recevrez plus de nouveaux dossiers, et vos dossiers à décider seront confiés à vos collègues présents.")) return;
+  if (la && !confirm("Signaler votre absence ?\n\nVous ne recevrez plus de nouveaux dossiers, et vos dossiers à décider seront confiés à vos collègues disponibles.")) return;
   var b = this; b.disabled = true;
   api("disponibilite", { body: { gestionnaire: S.moi.id, disponible: !la } }).then(function (r) {
     S.moi.disponible = !la; S.moi.absent_jusqu_au = null; majPresence();
-    C.toast(la ? "Vous êtes signalé absent" + (r.dossiers_redistribues ? " : " + r.dossiers_redistribues + " dossier(s) confié(s) à vos collègues" : "") : "Bon retour : vous recevez à nouveau des dossiers");
+    C.toast(la ? "Absence enregistrée" + (r.dossiers_redistribues ? " : " + r.dossiers_redistribues + " dossier(s) confié(s) à vos collègues" : "") : "Retour enregistré : vous recevez à nouveau des dossiers");
     router();
   }).catch(function (x) { C.toast(x.message, true); }).finally(function () { b.disabled = false; });
 });

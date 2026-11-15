@@ -81,7 +81,7 @@ form.carte-in { display: grid; gap: 18px; }
 @media (max-width: 560px) { .option { grid-template-columns: auto 1fr; } .option .montant { grid-column: 2; } }
 .pied { font-size: 12.5px; color: var(--gris); margin-top: 24px; line-height: 1.6; }
 </style>
-<link rel="stylesheet" href="charte.css?v=20261109b">
+<link rel="stylesheet" href="charte.css?v=20261115a">
 <style>
 /* Espace aux couleurs de l'assureur : la couleur de la compagnie remplace celle de l'outil */
 :root { --marque: #1E3A5F; }
@@ -89,6 +89,15 @@ form.carte-in { display: grid; gap: 18px; }
 .btn.primaire:hover { background: var(--marque) !important; border-color: var(--marque) !important; filter: brightness(1.12); }
 .haut { border-top: 3px solid var(--marque); }
 .haut .cie img { display: block; height: 30px; width: auto; margin-bottom: 4px; }
+/* Cibles tactiles d'au moins 44 px (assurés sur téléphone) */
+.btn, .piece-choisir, .depot label.btn { min-height: 44px; }
+.option { min-height: 44px; }
+.option input[type=radio], .case input[type=checkbox], .case input[type=radio], .option input[type=checkbox] { width: 22px; height: 22px; margin-top: 1px; accent-color: var(--marque); }
+.case { min-height: 44px; align-items: center; }
+.cadenas { color: var(--vert-texte); }
+.confirmer { display: grid; gap: 12px; padding: 14px 16px; border-radius: 8px; border: 1.5px solid var(--marque); background: var(--feuille-2); }
+.confirmer[hidden], .envoyer[hidden] { display: none; }
+.confirmer p { margin: 0; font-weight: 600; font-size: 15px; }
 </style>
 </head>
 <body>
@@ -96,7 +105,7 @@ form.carte-in { display: grid; gap: 18px; }
   <span class="cadenas"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><rect x="2.5" y="6" width="9" height="6.5" rx="1.5" fill="currentColor"/><path d="M4.5 6V4.5a2.5 2.5 0 015 0V6" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>Lien personnel</span></div></header>
 <main id="main"><div class="carte"><div class="etat"><span class="tourne" style="display:inline-block;color:var(--bleu)"></span></div></div></main>
 <div id="toast" class="toast" hidden role="status"></div>
-<script src="commun.js?v=20261112a"></script>
+<script src="commun.js?v=20261115a"></script>
 <script>
 (function () {
 "use strict";
@@ -131,7 +140,7 @@ function charger() {
 var TITRES = {
   expert_auto: ["Rapport d'expertise", "Indiquez vos conclusions. Le règlement au réparateur sera calculé sur le montant que vous retenez."],
   expert_medical: ["Conclusions médicales", "Indiquez uniquement vos conclusions. Conformément au secret médical, aucun compte rendu détaillé n'est demandé."],
-  garage: ["Facture", "Après réparation, transmettez la facture, avec votre RIB s'il a changé. Garage partenaire : le règlement vous est versé directement, franchise déduite."],
+  garage: ["Facture", "Après réparation, déposez votre facture : les montants se remplissent seuls, vous les vérifiez puis vous envoyez."],
   enqueteur: ["Conclusion de l'enquête", "Indiquez ce que vos vérifications ont établi. En cas de doute, un gestionnaire examine le dossier : aucune décision n'est prise automatiquement contre l'assuré."],
   assure: ["Pièces à nous transmettre", "Retrouvez ici ce que nous attendons de vous pour avancer : documents à envoyer, choix à faire. Vous pouvez répondre en plusieurs fois."]
 };
@@ -180,7 +189,7 @@ function ordreSepa(c) {
 function afficherComptable(c) {
   var r = c.reglement || {}, b = c.beneficiaire || {}, f = c.facture, o = origineValidation(r);
   var recent = b.iban_maj_le && (Date.now() - new Date(b.iban_maj_le).getTime()) < 30 * 864e5;
-  var h = '<div class="carte"><div class="carte-in"><span class="muet petit">Service comptable</span><h1>Bon à payer, dossier ' + esc(c.numero) + "</h1>" +
+  var h = '<div class="carte"><div class="carte-in"><span class="muet petit">Service comptable</span><h1>Bon à payer, dossier ' + '<span class="insecable">' + esc(c.numero) + '</span>' + "</h1>" +
     '<p class="intro">' + (c.reponse_attendue ? "Le règlement est validé : il ne reste que le virement. Indiquez sa référence en bas de page une fois qu'il est fait, le dossier se clôturera tout seul."
       : "Ce règlement est payé. Rien d'autre n'est attendu de votre part.") + "</p></div>" +
     '<div class="payer">' +
@@ -240,15 +249,27 @@ function afficherComptable(c) {
   if (fm) fm.addEventListener("submit", function (e) {
     e.preventDefault();
     var ref = $("f-ref").value.trim();
-    if (!ref) return C.toast("Indiquez la référence du virement.", true);
+    if (!ref) return C.erreurChamp("f-ref", "Indiquez la référence du virement.");
     var bt = $("b-envoyer"); C.occupe(bt, true, "Envoi");
     api("portail", { body: { t: jeton, ref_virement: ref } }).then(function () {
-      etat(ICONE_OK, "", "Paiement confirmé", "Le dossier " + esc(c.numero) + " est clôturé. Merci.");
+      etat(ICONE_OK, "", "Paiement confirmé", "Le dossier " + '<span class="insecable">' + esc(c.numero) + '</span>' + " est clôturé. Merci.");
     }).catch(function (x) { C.occupe(bt, false); C.toast(x.message, true); });
   });
 }
 
 // Choix de l'assuré : véhicule irréparable, véhicule volé retrouvé, garage
+// Un choix qui engage une somme ne part jamais en un seul geste : récapitulatif puis confirmation explicite
+function confirmerChoix(form, btn, phrase, libelleOui, envoyer) {
+  var z = form.querySelector(".confirmer");
+  if (!z) { z = document.createElement("div"); z.className = "confirmer"; btn.parentNode.parentNode.insertBefore(z, btn.parentNode.nextSibling); }
+  z.innerHTML = '<p>' + esc(phrase) + '</p><div class="envoyer"><button type="button" class="btn primaire" data-oui>' + esc(libelleOui) + '</button><button type="button" class="btn" data-non>Revenir</button></div>';
+  z.hidden = false; btn.parentNode.hidden = true;
+  var fermer = function () { z.hidden = true; btn.parentNode.hidden = false; };
+  z.querySelector("[data-non]").onclick = function () { fermer(); btn.focus(); };
+  z.querySelector("[data-oui]").onclick = function () { envoyer(this); };
+  form.addEventListener("change", fermer, { once: true });
+  z.querySelector("[data-oui]").focus();
+}
 function envoyerChoix(btn, corps, ok) {
   C.occupe(btn, true, "Envoi");
   corps.t = jeton;
@@ -303,14 +324,14 @@ function blocValeur(c) {
     // vol : l'assuré confirme la valeur ; une question passe par un message au gestionnaire, pas par une contestation en ligne
     return '<div class="carte"><form class="carte-in" id="form-val" novalidate><h2>La valeur de votre véhicule</h2>' +
       '<p class="intro">' + introValeur(val) + " Si votre véhicule n'est pas retrouvé, votre indemnité sera de <b>" + esc(eur(val.net_eur)) + "</b>, franchise de " + esc(eur(val.franchise_eur)) + " déduite.</p>" +
-      '<div class="choix"><label class="option"><input type="radio" name="val" value="accepter" checked><b>J\'accepte cette valeur</b><span class="montant">' + esc(eur(val.net_eur)) + "</span><p>L'indemnité vous est versée à la fin du délai de recherche, une fois les dernières pièces reçues.</p></label></div>" +
+      '<div class="choix"><label class="option"><input type="radio" name="val" value="accepter"><b>J\'accepte cette valeur</b><span class="montant">' + esc(eur(val.net_eur)) + "</span><p>L'indemnité vous est versée à la fin du délai de recherche, une fois les dernières pièces reçues.</p></label></div>" +
       '<p class="petit muet">Une question sur ce montant ? Répondez au mail reçu : un gestionnaire vous répondra.</p>' +
-      '<div class="envoyer"><button class="btn primaire" id="b-val" type="submit">Confirmer</button>' +
+      '<div class="envoyer"><button class="btn primaire" id="b-val" type="submit">Envoyer ma réponse</button>' +
       (val.echeance ? '<span class="muet petit">Avant le ' + esc(C.dateFr(val.echeance)) + "</span>" : "") + "</div></form></div>";
   }
   var txt = { reexamen: ["Votre contestation est chez l'expert", "Il réexamine son évaluation ; nous vous écrirons dès sa réponse. Pour appuyer votre demande, envoyez vos justificatifs en répondant au mail de confirmation."],
     desaccord: ["Un gestionnaire reprend votre dossier", "Il revient vers vous pour trouver une solution sur la valeur de votre véhicule."],
-    acceptee: ["Valeur acceptée", "Valeur retenue : " + eur(val.valeur_ttc) + ", soit une indemnité de " + eur(val.net_eur) + " après franchise."],
+    acceptee: ["Valeur acceptée", "Valeur retenue : " + eur(val.valeur_ttc) + ", soit une indemnité de " + eur(val.net_eur) + " après franchise. Une erreur ? Répondez au mail reçu."],
     fixee: ["Valeur retenue par votre assureur", "Valeur retenue : " + eur(val.valeur_ttc) + ", soit une indemnité de " + eur(val.net_eur) + " après franchise."] }[val.statut];
   return txt ? '<div class="carte"><div class="carte-in"><h2>' + esc(txt[0]) + '</h2><p class="intro">' + esc(txt[1]) + "</p></div></div>" : "";
 }
@@ -369,7 +390,7 @@ function blocsAssure(c) {
   }
   return h;
 }
-function brancherAssure() {
+function brancherAssure(c) {
   var fi = $("form-id");
   if (fi) fi.addEventListener("submit", function (e) {
     e.preventDefault(); var x = document.querySelector('input[name="idt"]:checked');
@@ -400,28 +421,35 @@ function brancherAssure() {
     });
   });
   var contestation = function () {
-    var m = $("val-motif").value.trim(), dem = $("val-dem").value.trim();
-    if (m.length < 15) { C.toast("Expliquez en quelques mots pourquoi la valeur ne vous convient pas.", true); $("val-motif").focus(); return null; }
+    var m = $("val-motif").value.trim(), dem = val("val-dem");
+    if (m.length < 15) { C.erreurChamp("val-motif", "Expliquez en quelques mots pourquoi la valeur ne vous convient pas."); return null; }
     return { decision: "contester", motif: m, montant_demande: dem || undefined };
   };
   var fval = $("form-val");
   if (fval) fval.addEventListener("submit", function (e) {
     e.preventDefault(); var x = document.querySelector('input[name="val"]:checked');
-    if (!x) return C.toast("Cochez « J'accepte cette valeur » pour confirmer.", true);
-    envoyerChoix($("b-val"), { reponse_valeur: { decision: "accepter" } }, "Merci, votre accord est enregistré");
+    if (!x) return C.erreurChamp(document.querySelector('input[name="val"]'), "Cochez « J'accepte cette valeur » si vous êtes d'accord, ou répondez au mail reçu pour poser une question.");
+    var net = eur((c.valeur || {}).net_eur);
+    confirmerChoix(fval, $("b-val"), "Vous acceptez une indemnité de " + net + ". Cette réponse est définitive.", "Oui, j'accepte " + net, function (b) {
+      envoyerChoix(b, { reponse_valeur: { decision: "accepter" } }, "Merci, votre accord est enregistré");
+    });
   });
   var fv = $("form-vei");
   if (fv) fv.addEventListener("submit", function (e) {
     e.preventDefault(); var x = document.querySelector('input[name="vei"]:checked');
-    if (!x) return C.toast("Choisissez une des possibilités.", true);
+    if (!x) return C.erreurChamp(document.querySelector('input[name="vei"]'), "Choisissez une des possibilités.");
     if (x.value === "contester") { var r = contestation(); if (!r) return; return envoyerChoix($("b-vei"), { reponse_valeur: r }, "Contestation envoyée : un mail de confirmation vous est adressé"); }
-    envoyerChoix($("b-vei"), { choix_vei: x.value }, "Choix enregistré");
+    var v = c.vei || {}, m = eur(x.value === "ceder" ? v.offre_cession : v.offre_conservation);
+    confirmerChoix(fv, $("b-vei"), (x.value === "ceder" ? "Vous cédez votre véhicule à votre assureur pour " : "Vous conservez votre véhicule et recevez ") + m + ". Ce choix est définitif.",
+      "Oui, je confirme (" + m + ")", function (b) { envoyerChoix(b, { choix_vei: x.value }, "Choix enregistré"); });
   });
   var fr = $("form-vr");
   if (fr) fr.addEventListener("submit", function (e) {
     e.preventDefault(); var x = document.querySelector('input[name="vr"]:checked');
-    if (!x) return C.toast("Choisissez une des deux possibilités.", true);
-    envoyerChoix($("b-vr"), { choix_vol_retrouve: x.value }, "Choix enregistré");
+    if (!x) return C.erreurChamp(document.querySelector('input[name="vr"]'), "Choisissez une des deux possibilités.");
+    var vi = eur((c.vol_retrouve || {}).indemnite);
+    confirmerChoix(fr, $("b-vr"), x.value === "garder_indemnite" ? "Vous gardez l'indemnité de " + vi + " : le véhicule devient la propriété de votre assureur. Ce choix est définitif." : "Vous reprenez votre véhicule et remboursez l'indemnité de " + vi + ". Ce choix est définitif.",
+      "Oui, je confirme", function (b) { envoyerChoix(b, { choix_vol_retrouve: x.value }, "Choix enregistré"); });
   });
   var ft = $("form-retrouve");
   if (ft) ft.addEventListener("submit", function (e) {
@@ -449,10 +477,10 @@ function afficherDeclarant(c) {
   if (c.identite_statut !== "en_cours") {
     var ok = c.identite_statut === "verifiee_questions" || c.identite_statut === "confirmee_titulaire";
     return etat(ok ? ICONE_OK : ICONE_ATT, ok ? "" : "attente", ok ? "Vérification terminée" : "Vérification en cours",
-      ok ? "Merci, la déclaration " + esc(c.numero) + " suit son cours. Les prochains messages seront envoyés au titulaire du contrat." : "Un gestionnaire reprend la déclaration avec le titulaire du contrat.");
+      ok ? "Merci, la déclaration " + '<span class="insecable">' + esc(c.numero) + '</span>' + " suit son cours. Les prochains messages seront envoyés au titulaire du contrat." : "Un gestionnaire reprend la déclaration avec le titulaire du contrat.");
   }
   var ENTREE = { date: 'type="date"', mois: 'type="month" placeholder="AAAA-MM"', texte: 'type="text" autocomplete="off" placeholder="Ex. AB-123-CD"' };
-  var h = '<div class="carte"><form class="carte-in" id="form-decl" novalidate><span class="muet petit">Déclaration ' + esc(c.numero) + '</span><h1>Une vérification rapide</h1>' +
+  var h = '<div class="carte"><form class="carte-in" id="form-decl" novalidate><span class="muet petit">Déclaration ' + '<span class="insecable">' + esc(c.numero) + '</span>' + '</span><h1>Une vérification rapide</h1>' +
     '<p class="intro">Votre déclaration a été envoyée depuis une adresse e-mail qui n\'est pas celle du contrat. Pour protéger nos assurés contre la fraude, répondez à ces questions. Si vous déclarez pour un proche, demandez-lui ces informations.</p>' +
     (c.questions_identite || []).map(function (q) { return '<label class="champ">' + esc(q.libelle) + '<input class="saisie" data-q="' + esc(q.code) + '" ' + (ENTREE[q.type] || ENTREE.texte) + "></label>"; }).join("") +
     (c.essais_restants < 2 ? '<p class="indice">Dernier essai : en cas d\'erreur, la déclaration sera vérifiée par un gestionnaire avec le titulaire du contrat.</p>' : "") +
@@ -465,7 +493,7 @@ function afficherDeclarant(c) {
     if (vide) return C.toast("Répondez à toutes les questions.", true);
     var bt = $("b-decl"); C.occupe(bt, true, "Vérification");
     api("portail", { body: { t: jeton, identite: rep } }).then(function (r) {
-      if (r.resultat === "verifiee") return etat(ICONE_OK, "", "Merci, c'est vérifié", "La déclaration " + esc(c.numero) + " suit son cours. Les prochains messages seront envoyés au titulaire du contrat.");
+      if (r.resultat === "verifiee") return etat(ICONE_OK, "", "Merci, c'est vérifié", "La déclaration " + '<span class="insecable">' + esc(c.numero) + '</span>' + " suit son cours. Les prochains messages seront envoyés au titulaire du contrat.");
       if (r.resultat === "echec") return etat(ICONE_KO, "ko", "Vérification impossible", esc(r.message));
       C.toast(r.message || "Une réponse ne correspond pas.", true); charger();
     }).catch(function (x) { C.occupe(bt, false); C.toast(x.message, true); });
@@ -482,8 +510,9 @@ function afficher(c) {
   document.title = "Dossier " + c.numero + ", " + (c.assureur || "service sinistres");
   if (c.role === "comptable") { document.title = "Bon à payer " + c.numero; return afficherComptable(c); }
   if (c.role === "declarant") { document.title = "Vérification, dossier " + c.numero; return afficherDeclarant(c); }
-  var t = TITRES[c.role] || ["Votre dossier", ""];
-  var h = '<div class="carte"><div class="carte-in"><span class="muet petit">' + esc(C.ROLES[c.role] || "") + "</span><h1>Dossier " + esc(c.numero) + '</h1><p class="intro">' + esc(t[1]) + "</p></div>" +
+  var t = (TITRES[c.role] || ["Votre dossier", ""]).slice();
+  if (c.role === "garage" && c.partenaire) t[1] += " Garage partenaire : le règlement vous est versé directement, franchise déduite.";
+  var h = '<div class="carte"><div class="carte-in"><span class="muet petit">' + esc(C.ROLES[c.role] || "") + "</span><h1>Dossier <span class=\"insecable\">" + esc(c.numero) + "</span>" + '</h1><p class="intro">' + esc(t[1]) + "</p></div>" +
     '<div class="resume"><div>Type<b>' + esc(C.theme(c.theme)) + "</b></div><div>Date du sinistre<b>" + esc(C.dateFr(c.date_sinistre)) + "</b></div>" +
     "<div>Lieu<b>" + esc([c.lieu && c.lieu.ville, c.lieu && c.lieu.code_postal].filter(Boolean).join(" ") || "Non précisé") + "</b></div>" +
     (c.vehicule ? "<div>Véhicule<b>" + esc(c.vehicule) + "</b></div>" : "") +
@@ -511,7 +540,7 @@ function afficher(c) {
       h += '<div class="carte"><div class="etat"><div class="rond">' + ICONE_OK + "</div><h1>Nous avons tout ce qu'il nous faut</h1><p>Vous serez informé par email de la suite du dossier.</p></div></div>";
     }
     $("main").innerHTML = h + pied();
-    brancherAssure();
+    brancherAssure(c);
     if (piecesAssure) brancher(c);
     return;
   }
@@ -541,9 +570,9 @@ function afficher(c) {
     $("form-rx").addEventListener("submit", function (e) {
       e.preventDefault(); var x = document.querySelector('input[name="rx"]:checked'), com = $("rx-com").value.trim();
       if (!x) return C.toast("Indiquez si vous maintenez ou révisez votre valeur.", true);
-      if (x.value === "reviser" && !(Number($("rx-nv").value) > 0)) return C.toast("Indiquez la nouvelle valeur.", true);
+      if (x.value === "reviser" && !(val("rx-nv") > 0)) return C.erreurChamp("rx-nv", "Indiquez la nouvelle valeur.");
       if (com.length < 10) return C.toast("Expliquez votre position en une ou deux phrases : elle est transmise à l'assuré.", true);
-      envoyerChoix($("b-rx"), { reexamen_valeur: { decision: x.value, valeur: x.value === "reviser" ? $("rx-nv").value : undefined, commentaire: com } }, "Merci, votre réponse est transmise à l'assuré");
+      envoyerChoix($("b-rx"), { reexamen_valeur: { decision: x.value, valeur: x.value === "reviser" ? val("rx-nv") : undefined, commentaire: com } }, "Merci, votre réponse est transmise à l'assuré");
     });
     return;
   }
@@ -558,7 +587,7 @@ function afficher(c) {
     $("main").innerHTML = h + pied(); return;
   }
   h += '<div class="carte"><form class="carte-in" id="form" novalidate><h2>' + esc(t[0]) + "</h2>" + zoneDepot(c) + formulaire(c) +
-    '<div class="envoyer"><button class="btn primaire" id="b-envoyer" type="submit">Envoyer au service sinistres</button><span class="muet petit">Vous pourrez vérifier votre envoi juste après.</span></div></form></div>';
+    '<div class="envoyer"><button class="btn primaire" id="b-envoyer" type="submit">Envoyer au service sinistres</button></div></form></div>';
   $("main").innerHTML = h + pied();
   brancher(c);
 }
@@ -580,7 +609,7 @@ function num(id, lib, aide, attrs) {
   // un seul attribut step : le premier l'emporterait. Montants : flèches de 1 €, centimes acceptés à la saisie
   if (!/\bstep=/.test(attrs)) attrs += ' step="any"';
   var entier = /\bstep="1"/.test(attrs);
-  return '<label class="champ">' + esc(lib) + (aide ? ' <span class="aide">' + esc(aide) + "</span>" : "") + '<input class="saisie" id="' + id + '" type="number" inputmode="' + (entier ? "numeric" : "decimal") + '" min="0" ' + attrs + "></label>";
+  return '<label class="champ">' + esc(lib) + (aide ? ' <span class="aide">' + esc(aide) + "</span>" : "") + '<input class="saisie" id="' + id + '" type="text" autocomplete="off" inputmode="' + (entier ? "numeric" : "decimal") + '" ' + attrs + "></label>";
 }
 
 function champsCles() {
@@ -642,7 +671,7 @@ function envoyerPieces(choisis, c) {
   function suivant() {
     if (i >= choisis.length) {
       if (!faites.length) { C.occupe(b, false); return; }
-      return api("portail", { body: { t: jeton, pieces: faites } }).then(function () { C.occupe(b, false); etat(ICONE_OK, "", "Merci, c'est transmis", "Le service sinistres a bien reçu " + (faites.length > 1 ? "vos " + faites.length + " pièces" : "votre pièce") + " pour le dossier " + esc(c.numero) + ". Vous serez informé par email de la suite."); }).catch(function (x) { C.occupe(b, false); C.toast(x.message, true); });
+      return api("portail", { body: { t: jeton, pieces: faites } }).then(function () { C.occupe(b, false); etat(ICONE_OK, "", "Merci, c'est transmis", "Le service sinistres a bien reçu " + (faites.length > 1 ? "vos " + faites.length + " pièces" : "votre pièce") + " pour le dossier " + '<span class="insecable">' + esc(c.numero) + '</span>' + ". Vous serez informé par email de la suite."); }).catch(function (x) { C.occupe(b, false); C.toast(x.message, true); });
     }
     var inp = choisis[i++], f = inp.files[0], code = inp.dataset.code, etatP = document.querySelector('[data-etat-piece="' + code + '"]');
     if (["application/pdf", "image/jpeg", "image/png", "image/webp"].indexOf(f.type) < 0) { etatP.textContent = "Format non accepté : PDF, JPEG, PNG ou WebP"; return suivant(); }
@@ -659,7 +688,10 @@ function envoyerPieces(choisis, c) {
   }
   suivant();
 }
-function val(id) { var e = $(id); if (!e || e.value === "") return undefined; return Number(e.value); }
+// Montants saisis à la française (« 1 652,40 € ») ou à l'anglaise : rendus en nombre, undefined si vide ou illisible
+function lireNombre(t) { t = String(t == null ? "" : t).replace(/[\s\u00a0\u202f€%]/g, "").replace(",", "."); if (t === "") return undefined; var n = Number(t); return isFinite(n) ? n : undefined; }
+function val(id) { var e = $(id); return e ? lireNombre(e.value) : undefined; }
+function ecrireNombre(n) { n = Number(n); return n.toLocaleString("fr-FR", { minimumFractionDigits: n % 1 ? 2 : 0, maximumFractionDigits: 2, useGrouping: false }); }
 
 // Champs du formulaire remplis par la lecture du document
 var CHAMPS_LUS = {
@@ -684,7 +716,7 @@ function brancherDepot(c) {
         (CHAMPS_LUS[c.role] || []).forEach(function (k) {
           var el = $(k[0]); if (!el || v[k[1]] === undefined || el.disabled) return;
           if (el.type === "checkbox") { if (k[0] === "f-deleg" && v[k[1]] !== true) return; el.checked = !!v[k[1]]; }
-          else el.value = v[k[1]];
+          else el.value = typeof v[k[1]] === "number" && el.getAttribute("inputmode") ? ecrireNombre(v[k[1]]) : v[k[1]];
           el.classList.add("lu"); n++;
           el.dispatchEvent(new Event("input", { bubbles: true }));
         });
@@ -749,13 +781,13 @@ function brancher(c) {
       if (!r.conclusion || r.synthese.length < 20) return C.toast("Choisissez une conclusion et résumez vos constatations.", true);
     } else if (c.role === "expert_auto" && !$("f-ttc")) {
       r = { cles_recues: val("f-cles"), cles_conformes: $("f-cles-ok").checked, cles_observations: $("f-cles-obs").value.trim() || undefined };
-      if (r.cles_recues == null) return C.toast("Indiquez le nombre de jeux de clés reçus.", true);
+      if (r.cles_recues == null) return C.erreurChamp("f-cles", "Indiquez le nombre de jeux de clés reçus.");
     } else if (c.role === "expert_auto") {
       r = { montant_devis_ttc: val("f-devis"), montant_ttc: val("f-ttc"), montant_ht: val("f-ht"), taux_horaire: val("f-taux"), heures: val("f-heures"),
         montant_pieces_ht: val("f-pieces"), vei: $("f-vei").checked, reglement_direct_autorise: $("f-direct").checked, conclusion: $("f-conclusion").value.trim() || undefined,
         vetuste_ttc: val("f-vet"), vrade_ttc: val("f-vrade"), valeur_epave_ttc: val("f-epave") };
       var veiRep = r.vei && !c.evaluation_vol;
-      if (!r.montant_ttc && !veiRep) return C.toast(c.evaluation_vol ? "Indiquez la valeur de remplacement (VRADE)." : "Indiquez le montant retenu TTC.", true);
+      if (!r.montant_ttc && !veiRep) return C.erreurChamp("f-ttc", c.evaluation_vol ? "Indiquez la valeur de remplacement (VRADE)." : "Indiquez le montant retenu TTC.");
       if ($("f-cles") && val("f-cles") != null) { r.cles_recues = val("f-cles"); r.cles_conformes = $("f-cles-ok").checked; r.cles_observations = $("f-cles-obs").value.trim() || undefined; }
       if (veiRep && (!r.vrade_ttc || r.valeur_epave_ttc == null)) return C.toast("Véhicule irréparable : indiquez la valeur de remplacement et la valeur de l'épave.", true);
       if (veiRep && r.valeur_epave_ttc >= r.vrade_ttc) return C.toast("La valeur de l'épave doit être inférieure à la valeur de remplacement.", true);
@@ -764,20 +796,20 @@ function brancher(c) {
       if (r.montant_ht && r.montant_ttc && r.montant_ht > r.montant_ttc) return C.toast("Le montant HT ne peut pas dépasser le montant TTC.", true);
     } else if (c.role === "expert_medical") {
       r = { aipp_pct: val("f-aipp"), date_consolidation: $("f-conso").value || undefined, dependance_totale: $("f-dep").checked, conclusion: $("f-conclusion").value.trim() || undefined };
-      if (r.aipp_pct == null || r.aipp_pct > 100) return C.toast("Indiquez un taux d'AIPP entre 0 et 100 %.", true);
+      if (r.aipp_pct == null || r.aipp_pct > 100) return C.erreurChamp("f-aipp", "Indiquez un taux d'AIPP entre 0 et 100 %.");
     } else if (c.role === "garage") {
       r = { delegation_paiement: $("f-deleg") ? $("f-deleg").checked : false };
-      if ($("f-ttc")) { r.montant_ttc = val("f-ttc"); r.montant_ht = val("f-ht"); r.conclusion = ($("f-conclusion").value || "").trim() || undefined; r.numero_facture = ($("f-num").value || "").trim() || undefined; if (!r.montant_ttc) return C.toast("Indiquez le montant TTC de la facture.", true); }
+      if ($("f-ttc")) { r.montant_ttc = val("f-ttc"); r.montant_ht = val("f-ht"); r.conclusion = ($("f-conclusion").value || "").trim() || undefined; r.numero_facture = ($("f-num").value || "").trim() || undefined; if (!r.montant_ttc) return C.erreurChamp("f-ttc", "Indiquez le montant TTC de la facture."); }
       else if (!r.delegation_paiement) return C.toast($("f-deleg") ? "Cochez la délégation de paiement pour l'envoyer." : "Rien d'autre n'est attendu de votre part.", true);
     } else {
       var choisis = Array.prototype.filter.call(document.querySelectorAll('input[name=piece]'), function (x) { return x.files && x.files[0]; });
-      if (!choisis.length) return C.toast("Choisissez au moins un fichier à envoyer.", true);
+      if (!choisis.length) return C.erreurChamp(document.querySelector("input[name=piece]"), "Choisissez au moins un fichier à envoyer.");
       return envoyerPieces(choisis, c);
     }
     r.t = jeton;
     var b = $("b-envoyer"); C.occupe(b, true, "Envoi");
     api("portail", { body: r }).then(function () {
-      etat(ICONE_OK, "", "Merci, c'est transmis", "Le service sinistres a bien reçu votre réponse pour le dossier " + esc(c.numero) + ". Vous serez informé par email de la suite.");
+      etat(ICONE_OK, "", "Merci, c'est transmis", "Le service sinistres a bien reçu votre réponse pour le dossier " + '<span class="insecable">' + esc(c.numero) + '</span>' + ". Vous serez informé par email de la suite.");
     }).catch(function (x) { C.occupe(b, false); C.toast(x.message, true); });
   });
 }

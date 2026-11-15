@@ -501,3 +501,28 @@ body { -webkit-font-smoothing: auto; }
 .ok-form { margin: 0; padding: 10px 12px; border-radius: 10px; font-size: 13px; line-height: 19px; color: #CDEBD9; background: rgba(76, 195, 138, .1); border: 1px solid rgba(76, 195, 138, .25); }
 .ok-form[hidden] { display: none; }
 .connexion .erreur-form:empty, .op-connexion .erreur-form:empty { display: none; }
+
+/* Erreurs : toast persistant avec bouton Fermer, message sous le champ fautif */
+.toast { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.toast[hidden] { display: none; }
+.toast.erreur { background: #A01F14; color: #fff; }
+.toast-action, .toast-fermer { border: 1px solid currentColor; background: transparent; color: inherit; font: inherit; font-weight: 600; border-radius: 6px; padding: 4px 10px; min-height: 32px; cursor: pointer; }
+.toast-action:hover, .toast-fermer:hover { background: rgba(255, 255, 255, .14); }
+.erreur-champ { margin: 4px 0 0; font-size: 13px; line-height: 18px; font-weight: 500; color: var(--rouge-texte); }
+.erreur-champ[hidden] { display: none; }
+.saisie[aria-invalid="true"] { border-color: var(--rouge); box-shadow: 0 0 0 1px var(--rouge); }
+
+/* Numéros de dossier insécables (CLM-2026-000412 ne se coupe jamais au tiret) */
+.ref, .insecable, a[href^="#/dossier/"]:not(.ligne):not(.btn), .fiche-tete h1, .ligne .num { white-space: nowrap; }
+.p-alertes a[href^="#/dossier/"], .ligne .num small { white-space: normal; }
+/* Échéances : dépassée en rouge, proche en orange (texte en plus de la couleur) */
+.echeance.retard { color: var(--rouge-texte); font-weight: 600; }
+.echeance.proche { color: var(--jaune-texte); font-weight: 600; }
+.echeance small { display: block; font-size: 12px; font-weight: 500; }
+/* Contraste : étapes à venir de la frise au moins 4,5:1 dans les deux thèmes */
+.route li { color: var(--gris); }
+/* Doublon : aperçu du mail à l'assuré avant de classer */
+.db-apercu { margin-top: 14px; padding: 14px 16px; border: 1px solid var(--trait); border-radius: 8px; background: var(--feuille-2); display: grid; gap: 10px; }
+.db-apercu[hidden] { display: none; }
+.db-apercu h3 { margin: 0; font-size: 14px; }
+.db-mail { display: grid; gap: 6px; padding: 12px; background: var(--feuille); border: 1px solid var(--trait); border-radius: 6px; white-space: pre-wrap; }

@@ -159,10 +159,41 @@
     }, 15000);
   }
 
-  function toast(msg, erreur) {
-    var t = $("toast"); if (!t) { t = document.createElement("div"); t.id = "toast"; t.setAttribute("role", "status"); document.body.appendChild(t); }
-    t.textContent = msg; t.className = "toast" + (erreur ? " erreur" : ""); t.hidden = false;
-    clearTimeout(minuteur); minuteur = setTimeout(function () { t.hidden = true; }, erreur ? 6500 : 3500);
+  // Message éphémère. Une erreur reste affichée (role="alert") jusqu'à ce qu'on la ferme ;
+  // action facultative : { libelle, fn } ajoute un bouton (ex. « Ouvrir le dossier suivant »)
+  function toast(msg, erreur, action) {
+    var t = $("toast"); if (!t) { t = document.createElement("div"); t.id = "toast"; document.body.appendChild(t); }
+    t.setAttribute("role", erreur ? "alert" : "status");
+    t.textContent = ""; var sp = document.createElement("span"); sp.textContent = msg; t.appendChild(sp);
+    t.className = "toast" + (erreur ? " erreur" : ""); t.hidden = false;
+    clearTimeout(minuteur);
+    if (action && action.libelle) {
+      var a = document.createElement("button"); a.type = "button"; a.className = "toast-action"; a.textContent = action.libelle;
+      a.onclick = function () { t.hidden = true; action.fn(); }; t.appendChild(a);
+    }
+    if (erreur) {
+      var f = document.createElement("button"); f.type = "button"; f.className = "toast-fermer"; f.textContent = "Fermer";
+      f.onclick = function () { t.hidden = true; }; t.appendChild(f);
+    } else minuteur = setTimeout(function () { t.hidden = true; }, action ? 8000 : 3500);
+  }
+  // Erreur de saisie affichée sous le champ concerné, annoncée et focalisée ; effacée dès que le champ change
+  function erreurChamp(el, msg) {
+    if (typeof el === "string") el = $(el);
+    if (!el) return toast(msg, true);
+    var id = (el.id || "champ") + "-erreur", p = $(id);
+    if (!p) {
+      p = document.createElement("p"); p.id = id; p.className = "erreur-champ"; p.setAttribute("role", "alert");
+      var ap = (el.type === "radio" || el.type === "checkbox") && el.closest("fieldset") || el.closest("label") || el; ap.parentNode.insertBefore(p, ap.nextSibling);
+    }
+    p.textContent = msg; p.hidden = false;
+    el.setAttribute("aria-invalid", "true");
+    var d = (el.getAttribute("aria-describedby") || "").split(" ").filter(function (x) { return x && x !== id; }); d.push(id);
+    el.setAttribute("aria-describedby", d.join(" "));
+    var effacer = function () { p.hidden = true; el.removeAttribute("aria-invalid"); el.removeEventListener("input", effacer); el.removeEventListener("change", effacer); };
+    el.addEventListener("input", effacer); el.addEventListener("change", effacer);
+    try { el.scrollIntoView({ block: "center" }); } catch (e) { }
+    el.focus();
+    var t = $("toast"); if (t && t.classList.contains("erreur")) t.hidden = true;
   }
   function occupe(btn, oui, libelle) {
     if (!btn) return;
@@ -226,7 +257,7 @@
     API_DEFAUT: API_DEFAUT, SUPABASE_URL: SUPABASE_URL, CAPTCHA: CAPTCHA, CLE_PUBLIQUE: CLE_PUBLIQUE, STATUTS: STATUTS, THEMES: THEMES, MOTIFS: MOTIFS, ANOMALIES: ANOMALIES, COURRIERS: COURRIERS,
     ROLES: ROLES, PIECES: PIECES, ESPACES: ESPACES, GARANTIES: GARANTIES, LIENS: LIENS, CLASSES: CLASSES, LOGO: LOGO,
     $: $, esc: esc, eur: eur, nombre: nombre, dateFr: dateFr, dateCourte: dateCourte, heure: heure, depuis: depuis,
-    statut: statut, theme: theme, motif: motif, attendVous: attendVous, toast: toast, occupe: occupe, client: client, surveillerInactivite: surveillerInactivite,
+    statut: statut, theme: theme, motif: motif, attendVous: attendVous, toast: toast, erreurChamp: erreurChamp, occupe: occupe, client: client, surveillerInactivite: surveillerInactivite,
     lireSession: lireSession, ecrireSession: ecrireSession, oublierSession: oublierSession, yeux: yeux
   };
 })(window);

@@ -16,7 +16,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css?v=20261105a">
-<link rel="stylesheet" href="charte.css?v=20261109b">
+<link rel="stylesheet" href="charte.css?v=20261115a">
 <style>
 body { background: var(--papier); }
 /* ---------- Connexion ---------- */
@@ -141,8 +141,9 @@ body { background: var(--papier); }
 .ad-page .bloc-tete { display: flex; align-items: center; justify-content: space-between; flex-wrap: nowrap; gap: 12px; }
 .ad-page .bloc-tete h2 { flex: 1 1 auto; min-width: 0; }
 .bloc-tete .sous { font-size: 13px; font-weight: 400; color: var(--gris); margin-left: 8px; }
-.ad-t select[data-role] { min-width: 150px; }
-.ad-t select[data-equipe] { min-width: 230px; }
+.ad-t select[data-role] { width: auto; min-width: 150px; }
+.ad-t select[data-equipe] { width: auto; min-width: 230px; max-width: none; }
+.equipe-tete select[data-eq-manager] { width: auto; min-width: 170px; }
 .equipe .ad-t td { padding-top: 10px; padding-bottom: 10px; }
 .ligne-form { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
 .ligne-form .saisie { height: 36px; }
@@ -245,7 +246,7 @@ body { background: var(--papier); }
 </div>
 
 <script src="vendor/supabase-js-2.118.0.js"></script>
-<script src="commun.js?v=20261112a"></script>
+<script src="commun.js?v=20261115a"></script>
 <script>
 var C = window.CA, $ = C.$, esc = C.esc;
 var sb = window.supabase.createClient(C.SUPABASE_URL, C.CLE_PUBLIQUE, { auth: { persistSession: true, storageKey: "klerio-operateur", storage: window.sessionStorage, autoRefreshToken: true } });
@@ -639,7 +640,7 @@ function rendreFiche(f) {
 
 function ongletOrganisation(f) {
   var s = f.structure || {}, charge = s.charge || {}, centres = s.centres || [];
-  if (!centres.length) return '<section class="bloc"><div class="vide">Pas encore de centre ni d\'équipe. L\'administrateur du client les crée depuis Klerio, ou vous pouvez créer une équipe ici.<div class="ligne-form" style="justify-content:center;margin-top:14px"><input class="saisie" id="eq-centre" placeholder="Centre, ex. Île-de-France" style="max-width:220px"><input class="saisie" id="eq-nouveau" placeholder="Nom de l\'équipe" style="max-width:220px"><button class="btn" id="eq-creer">Créer l\'équipe</button></div></div></section>';
+  if (!centres.length) return '<section class="bloc"><div class="vide">Pas encore de centre ni d\'équipe. L\'administrateur du client les crée depuis Klerio, ou vous pouvez créer une équipe ici.<div class="ligne-form" style="justify-content:center;margin-top:14px"><input class="saisie" id="eq-centre" placeholder="Centre, ex. Île-de-France" aria-label="Centre de gestion" style="max-width:220px"><input class="saisie" id="eq-nouveau" placeholder="Nom de l\'équipe" aria-label="Nom de l\'équipe" style="max-width:220px"><button class="btn" id="eq-creer">Créer l\'équipe</button></div></div></section>';
   if (etat.centre === null || !centres.some(function (c) { return (c.nom || "") === etat.centre; })) etat.centre = centres[0].nom || "";
   var c = centres.filter(function (x) { return (x.nom || "") === etat.centre; })[0];
   var managers = f.comptes.filter(function (g) { return g.role === "superviseur" && g.actif; });
@@ -650,14 +651,14 @@ function ongletOrganisation(f) {
     (c.equipes.length ? c.equipes.map(function (e) {
       e = f.equipes.filter(function (x) { return x.id === e.id; })[0] || e;
       var membres = f.comptes.filter(function (g) { return g.equipe_id === e.id; });
-      return '<div class="equipe"><div class="equipe-tete"><h3>' + esc(e.nom) + '</h3><span class="muet">' + plur(membres.length, "membre") + '</span><div class="droite"><label class="muet petit">Manager <select class="saisie" data-eq-manager="' + esc(e.id) + '" style="min-width:170px;height:32px"><option value="">Aucun</option>' +
+      return '<div class="equipe"><div class="equipe-tete"><h3>' + esc(e.nom) + '</h3><span class="muet">' + plur(membres.length, "membre") + '</span><div class="droite"><label class="muet petit">Manager <select class="saisie" data-eq-manager="' + esc(e.id) + '" style="height:32px"><option value="">Aucun</option>' +
         managers.map(function (m) { return '<option value="' + esc(m.id) + '"' + (m.id === e.manager_id ? " selected" : "") + ">" + esc(m.nom) + "</option>"; }).join("") + "</select></label>" +
         '<button class="btn petit discret" data-eq-renommer="' + esc(e.id) + '" data-nom="' + esc(e.nom) + '">Renommer</button>' + (membres.some(function (g) { return g.actif; }) ? "" : '<button class="btn petit discret" data-eq-suppr="' + esc(e.id) + '">Supprimer</button>') + "</div></div>" +
         (membres.length ? '<table class="ad-t"><tbody>' + membres.map(function (g) {
           return "<tr><td><b>" + esc(g.nom) + "</b>" + (g.id === e.manager_id ? ' <span class="pill essai">Manager</span>' : "") + "<small>" + esc(g.email) + '</small></td><td class="masque-m">' + esc(ROLES[g.role]) + '</td><td class="nb">' + plur(charge[g.id] || 0, "dossier") + '</td><td class="muet masque-m">' + esc(quand(g.derniere_connexion)) + "</td><td>" + (g.actif ? '<span class="sante">Actif</span>' : '<span class="sante gris">Désactivé</span>') + "</td></tr>";
         }).join("") + "</tbody></table>" : '<p class="muet" style="margin:0;padding:0 20px 16px">Personne dans cette équipe.</p>') + "</div>";
     }).join("") : '<div class="vide">Aucune équipe dans ce centre.</div>') +
-    '<div class="bloc-corps" style="border-top:1px solid var(--trait)"><div class="ligne-form"><input class="saisie" id="eq-nouveau" placeholder="Nom de la nouvelle équipe" style="max-width:280px"><button class="btn" id="eq-creer" data-c="' + esc(c.nom || "") + '">Créer l\'équipe dans ce centre</button></div></div></section></div>';
+    '<div class="bloc-corps" style="border-top:1px solid var(--trait)"><div class="ligne-form"><input class="saisie" id="eq-nouveau" placeholder="Nom de la nouvelle équipe" aria-label="Nom de la nouvelle équipe" style="max-width:280px"><button class="btn" id="eq-creer" data-c="' + esc(c.nom || "") + '">Créer l\'équipe dans ce centre</button></div></div></section></div>';
   return h;
 }
 function ongletComptes(f) {
@@ -672,9 +673,9 @@ function ongletComptes(f) {
   h += '<section class="bloc"><div class="bloc-tete"><h2>Comptes<span class="compte">' + f.comptes.length + '</span></h2></div><div class="tableau-wrap"><table class="ad-t ad-comptes"><thead><tr><th>Personne</th><th>Rôle</th><th>Équipe</th><th class="nb masque-m">Dossiers</th><th class="masque-m">Connexion</th><th></th></tr></thead><tbody>' +
     (f.comptes.map(function (g) {
       var absent = g.actif && g.disponible === false;
-      return "<tr><td><b>" + esc(g.nom) + "</b>" + (g.actif ? "" : ' <span class="pill neutre">Désactivé</span>') + (absent ? ' <span class="pill essai">Absent' + (g.absent_jusqu_au ? " jusqu'au " + esc(C.dateCourte(g.absent_jusqu_au)) : "") + "</span>" : "") +
-        (g.actif && g.role === "gestionnaire" && g.recoit_nouveaux === false ? ' <span class="pill neutre">Ne reçoit plus de nouveaux dossiers</span>' : "") + "<small>" + esc(g.email) + '</small></td><td><select class="saisie" data-role="' + esc(g.id) + '" data-avant="' + esc(g.role) + '" data-nom="' + esc(g.nom) + '">' + Object.keys(ROLES).map(function (r) { return '<option value="' + r + '"' + (r === g.role ? " selected" : "") + ">" + ROLES[r] + "</option>"; }).join("") + "</select></td>" +
-        '<td><select class="saisie" data-equipe="' + esc(g.id) + '" style="min-width:180px">' + opts(g.equipe_id) + '</select></td><td class="nb masque-m" data-l="Dossiers">' + (charge[g.id] || 0) + '</td><td class="muet masque-m">' + esc(quand(g.derniere_connexion)) + "</td>" +
+      return "<tr><td><b>" + esc(g.nom) + "</b>" + (g.actif ? "" : ' <span class="pill neutre">Désactivé</span>') + (absent ? ' <span class="pill essai">Indisponible' + (g.absent_jusqu_au ? " jusqu'au " + esc(C.dateCourte(g.absent_jusqu_au)) : "") + "</span>" : "") +
+        (g.actif && g.role === "gestionnaire" && g.recoit_nouveaux === false ? ' <span class="pill neutre">Ne reçoit plus de nouveaux dossiers</span>' : "") + "<small>" + esc(g.email) + '</small></td><td><select class="saisie" data-role="' + esc(g.id) + '" aria-label="Rôle de ' + esc(g.nom) + '" data-avant="' + esc(g.role) + '" data-nom="' + esc(g.nom) + '">' + Object.keys(ROLES).map(function (r) { return '<option value="' + r + '"' + (r === g.role ? " selected" : "") + ">" + ROLES[r] + "</option>"; }).join("") + "</select></td>" +
+        '<td><select class="saisie" data-equipe="' + esc(g.id) + '" aria-label="Équipe de ' + esc(g.nom) + '">' + opts(g.equipe_id) + '</select></td><td class="nb masque-m" data-l="Dossiers">' + (charge[g.id] || 0) + '</td><td class="muet masque-m">' + esc(quand(g.derniere_connexion)) + "</td>" +
         '<td class="nb ad-actions">' + (g.actif ? '<button class="btn petit" data-mdp="' + esc(g.id) + '" data-nom="' + esc(g.nom) + '">Lien mot de passe</button> ' : "") +
           (g.actif && g.role === "admin" && admins < 2 ? '<span class="muet petit" title="Invitez d\'abord un autre administrateur">Seul administrateur</span>'
             : '<button class="btn petit discret" data-actif="' + esc(g.id) + '" data-val="' + (!g.actif) + '" data-nom="' + esc(g.nom) + '" data-dossiers="' + (charge[g.id] || 0) + '">' + (g.actif ? "Désactiver" : "Réactiver") + "</button>") + "</td></tr>";
