@@ -775,7 +775,18 @@ function bandeauCorporel() {
 function entrer(session) {
   if (!session) return Promise.resolve();
   var base = C.API_DEFAUT; // serveur fixe, jamais modifiable depuis la page
-  S.base = base; api = C.client(base, jeton, entetesEnv);
+  S.base = base;
+  // session terminée (inactivité, déconnexion dans un autre onglet) : retour propre à l'écran de connexion plutôt qu'une erreur technique
+  var apiBrut = C.client(base, jeton, entetesEnv);
+  api = function (chemin, opts) {
+    return apiBrut(chemin, opts).catch(function (x) {
+      if (x && x.status === 401) {
+        x.message = "Votre session a expiré : reconnectez-vous.";
+        sb.auth.getSession().then(function (r) { if (!r.data.session) location.reload(); });
+      }
+      throw x;
+    });
+  };
   if (session.user && session.user.user_metadata && session.user.user_metadata.mdp_provisoire) {
     $("form-connexion").hidden = true; $("form-mdp").hidden = false; $("m-mdp").focus();
     return Promise.resolve();
@@ -1298,6 +1309,7 @@ function vueDossiers() {
   var t; function charger() {
     var s = $("f-statut").value, qq = $("f-q").value.trim();
     api("dossiers?limite=500&termines=0" + qb("&") + (s ? "&statut=" + s : "") + (qq ? "&q=" + encodeURIComponent(qq) : "")).then(function (l) {
+      if (!$("f-n")) return; // la page a changé entre-temps
       $("f-n").textContent = l.length + " dossier" + (l.length > 1 ? "s" : "");
       $("f-table").innerHTML = l.length ? '<table class="tableau"><thead><tr><th>Dossier</th><th>Type</th><th>Contrat</th><th>Sinistre</th><th>Statut</th><th>Suivi par</th><th class="nb">Montant</th><th>Mis à jour</th></tr></thead><tbody>' +
         l.map(function (d) {
