@@ -106,6 +106,8 @@
 .recherche svg { position: absolute; left: 11px; top: 50%; transform: translateY(-50%); color: var(--gris); }
 .barre .gestionnaire { margin-left: auto; font-size: 13px; color: var(--gris); display: flex; align-items: center; gap: 8px; }
 .alertes-z { position: relative; }
+#b-actualiser.tourne-1 svg { transition: transform .6s ease-out; transform: rotate(360deg); }
+@media (prefers-reduced-motion: reduce) { #b-actualiser.tourne-1 svg { transition: none; } }
 .cloche { position: relative; display: grid; place-items: center; width: 34px; height: 34px; border-radius: 8px; border: 1px solid transparent; background: none; color: var(--encre); cursor: pointer; }
 .cloche:hover { background: var(--survol); }
 .cloche:focus-visible { outline: 2px solid var(--bleu); outline-offset: 2px; }
@@ -595,7 +597,7 @@ a.tuile:hover { border-color: var(--trait-fort); text-decoration: none; }
           <button type="button" id="env-prod" aria-pressed="true">Production</button>
           <button type="button" id="env-essai" class="essai" aria-pressed="false">Essai</button>
         </div>
-        <div class="gestionnaire"><div class="alertes-z"><button type="button" class="cloche" id="b-alertes" aria-label="Alertes" aria-expanded="false" aria-controls="p-alertes"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg><span class="pastille" id="n-alertes" hidden></span></button><div class="p-alertes" id="p-alertes" hidden role="dialog" aria-label="Vos alertes"></div></div><button type="button" class="presence" id="b-presence" hidden></button><span class="avatar" id="n-avatar"></span><b id="n-gest"></b><button type="button" class="btn petit discret" id="b-compte" title="Se déconnecter pour se connecter avec un autre compte">Changer de compte</button><div class="compte-z"><button type="button" class="cloche compte-btn" id="b-menu-compte" aria-label="Compte" aria-expanded="false" aria-controls="p-compte"><span class="avatar" id="n-avatar-m" aria-hidden="true"></span></button><div class="p-alertes p-compte" id="p-compte" hidden><div class="pa-tete"><b id="n-gest-m"></b></div><button type="button" id="m-presence" hidden></button><button type="button" id="m-theme">Changer de thème</button><button type="button" id="m-compte">Changer de compte</button><button type="button" id="m-deco">Se déconnecter</button></div></div></div>
+        <div class="gestionnaire"><button type="button" class="cloche" id="b-actualiser" aria-label="Actualiser" title="Actualiser (R)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg></button><div class="alertes-z"><button type="button" class="cloche" id="b-alertes" aria-label="Alertes" aria-expanded="false" aria-controls="p-alertes"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg><span class="pastille" id="n-alertes" hidden></span></button><div class="p-alertes" id="p-alertes" hidden role="dialog" aria-label="Vos alertes"></div></div><button type="button" class="presence" id="b-presence" hidden></button><span class="avatar" id="n-avatar"></span><b id="n-gest"></b><button type="button" class="btn petit discret" id="b-compte" title="Se déconnecter pour se connecter avec un autre compte">Changer de compte</button><div class="compte-z"><button type="button" class="cloche compte-btn" id="b-menu-compte" aria-label="Compte" aria-expanded="false" aria-controls="p-compte"><span class="avatar" id="n-avatar-m" aria-hidden="true"></span></button><div class="p-alertes p-compte" id="p-compte" hidden><div class="pa-tete"><b id="n-gest-m"></b></div><button type="button" id="m-presence" hidden></button><button type="button" id="m-theme">Changer de thème</button><button type="button" id="m-compte">Changer de compte</button><button type="button" id="m-deco">Se déconnecter</button></div></div></div>
       </div>
     </header>
     <main class="contenu" id="vue" tabindex="-1"></main>
@@ -917,6 +919,15 @@ function rendreAlertes() {
   p.querySelectorAll("[data-alerte]").forEach(function (l) { l.onclick = function () { fermerAlertes(); }; });
 }
 function fermerAlertes() { $("p-alertes").hidden = true; $("b-alertes").setAttribute("aria-expanded", "false"); }
+// Actualiser : recharge la vue en cours, le compteur et les alertes, sans perdre la page ni les brouillons
+function actualiser() {
+  var b = $("b-actualiser"); b.classList.add("tourne-1"); setTimeout(function () { b.classList.remove("tourne-1"); }, 600);
+  rafraichirCompteur(); router(); C.toast("Données à jour");
+}
+$("b-actualiser").onclick = actualiser;
+document.addEventListener("keydown", function (e) {
+  if ((e.key === "r" || e.key === "R") && !e.metaKey && !e.ctrlKey && !e.altKey && !/^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName) && !e.target.isContentEditable && !$("ecran-app").hidden) { e.preventDefault(); actualiser(); }
+});
 $("b-alertes").onclick = function (e) {
   e.stopPropagation();
   var p = $("p-alertes");
