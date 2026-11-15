@@ -106,6 +106,7 @@
 .recherche svg { position: absolute; left: 11px; top: 50%; transform: translateY(-50%); color: var(--gris); }
 .barre .gestionnaire { margin-left: auto; font-size: 13px; color: var(--gris); display: flex; align-items: center; gap: 8px; }
 .alertes-z { position: relative; }
+.maj-dispo { position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%); z-index: 90; display: flex; align-items: center; gap: 12px; padding: 10px 12px 10px 16px; background: var(--feuille); border: 1px solid var(--trait-fort); border-radius: var(--rayon-carte, 12px); box-shadow: 0 8px 24px rgba(0,0,0,.12); font-size: 14px; color: var(--encre); max-width: calc(100vw - 32px); }
 #b-actualiser.tourne-1 svg { transition: transform .6s ease-out; transform: rotate(360deg); }
 @media (prefers-reduced-motion: reduce) { #b-actualiser.tourne-1 svg { transition: none; } }
 .cloche { position: relative; display: grid; place-items: center; width: 34px; height: 34px; border-radius: 8px; border: 1px solid transparent; background: none; color: var(--encre); cursor: pointer; }
@@ -940,6 +941,20 @@ $("b-alertes").onclick = function (e) {
 document.addEventListener("click", function (e) { if (!$("p-alertes").hidden && !e.target.closest(".alertes-z")) fermerAlertes(); });
 document.addEventListener("keydown", function (e) { if (e.key === "Escape" && !$("p-alertes").hidden) { fermerAlertes(); $("b-alertes").focus(); } });
 setInterval(function () { if (!document.hidden && !$("ecran-app").hidden) chargerAlertes(); }, 5 * 60 * 1000);
+// Nouvelle version du site publiée pendant que l'onglet est ouvert : on le dit, et on recharge en un clic (les brouillons sont gardés en session)
+var VERSION = "202611152218";
+function verifierVersion() {
+  fetch("version.txt?t=" + Date.now(), { cache: "no-store" }).then(function (r) { return r.ok ? r.text() : ""; }).then(function (t) {
+    t = (t || "").trim();
+    if (!t || t === VERSION || document.getElementById("maj-dispo")) return;
+    var d = document.createElement("div"); d.id = "maj-dispo"; d.className = "maj-dispo"; d.setAttribute("role", "status");
+    d.innerHTML = "<span>Une nouvelle version de Klerio est disponible.</span>";
+    var b = document.createElement("button"); b.type = "button"; b.className = "btn petit primaire"; b.textContent = "Recharger";
+    b.onclick = function () { location.reload(); }; d.appendChild(b); document.body.appendChild(d);
+  }).catch(function () { });
+}
+setInterval(function () { if (!document.hidden) verifierVersion(); }, 2 * 60 * 1000);
+document.addEventListener("visibilitychange", function () { if (!document.hidden) verifierVersion(); });
 // Alerte : un nouveau dossier vous est attribué (vérifié toutes les 2 minutes)
 var vus = null, minuterie = null;
 function verifierPriorites() {
