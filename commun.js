@@ -64,6 +64,7 @@
     doublon: "Doublon d'un dossier déjà enregistré",
     tempete_garantie_obligatoire: "Tempête : garantie par la loi même sans garantie climatique, à qualifier",
     relances_sans_reponse: "Trois relances sans réponse",
+    tiers_identifiable_recours: "Auteur non identifié (vandalisme, délit de fuite) : recours possible s'il est retrouvé, dossier mené par un gestionnaire",
     choix_vei: "Véhicule irréparable : choix de l'assuré attendu",
     valeur_contestee: "Valeur du véhicule contestée : réexamen par l'expert", contestation_valeur: "Valeur du véhicule : désaccord avec l'assuré",
     valeur_sans_reponse: "Valeur du véhicule : l'assuré ne répond pas",

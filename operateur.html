@@ -239,7 +239,7 @@ body { background: var(--papier); }
 </div>
 
 <script src="vendor/supabase-js-2.118.0.js"></script>
-<script src="commun.js?v=20261115b"></script>
+<script src="commun.js?v=20261117a"></script>
 <script>
 var C = window.CA, $ = C.$, esc = C.esc;
 var sb = window.supabase.createClient(C.SUPABASE_URL, C.CLE_PUBLIQUE, { auth: { persistSession: true, storageKey: "klerio-operateur", storage: window.sessionStorage, autoRefreshToken: true } });
@@ -336,7 +336,7 @@ function libAction(j) {
   else if (j.action === "envois_mode") l = d.reel === true ? "Mails aux assurés passés en réel" : "Mails aux assurés repassés en test";
   return d.refus ? l + " : refusé" : l;
 }
-var LIB_CHAMP = { nom: "nom", email: "email", role: "rôle", centre: "centre", equipe_id: "équipe", manager_id: "manager", statut: "statut", offre: "offre", debut: "début", fin: "échéance", prix_annuel_eur: "prix annuel", utilisateurs_max: "utilisateurs prévus", contact_nom: "contact", contact_email: "email du contact", reponse: "réponse", actif: "actif", refus: "motif du refus", dossiers_reaffectes: "dossiers réaffectés", ancien_nom: "ancien nom", envoye: "mail parti", logo_url: "logo", couleur: "couleur", expediteur_nom: "nom d'expéditeur", expediteur_adresse: "adresse d'envoi", email_reception: "adresse de réception", reel: "réel", confirmation: "confirmation", filtre_action: "action", admin_nom: "administrateur", admin_email: "email de l'administrateur", cible: "personne", motif: "motif", suspendre: "suspendre" };
+var LIB_CHAMP = { nom: "nom", email: "email", role: "rôle", centre: "centre", equipe_id: "équipe", manager_id: "manager", statut: "statut", offre: "offre", debut: "début", fin: "échéance", prix_annuel_eur: "prix annuel", utilisateurs_max: "utilisateurs prévus", contact_nom: "contact", contact_email: "email du contact", reponse: "réponse", actif: "actif", refus: "motif du refus", dossiers_reaffectes: "dossiers réaffectés", ancien_nom: "ancien nom", envoye: "mail parti", logo_url: "logo", couleur: "couleur", telephone: "téléphone", expediteur_nom: "nom d'expéditeur", expediteur_adresse: "adresse d'envoi", email_reception: "adresse de réception", reel: "réel", confirmation: "confirmation", filtre_action: "action", admin_nom: "administrateur", admin_email: "email de l'administrateur", cible: "personne", motif: "motif", suspendre: "suspendre" };
 var ONGLETS = [["organisation", "Organisation"], ["comptes", "Comptes"], ["service", "Mise en service"], ["contrat", "Contrat"], ["support", "Support"], ["journal", "Journal"]];
 var etat = { clients: [], support: [], global: {}, fiche: null, onglet: "organisation", centre: null, filtre: "tous", cherche: "", ouvrir: false };
 var THEME = "claimai-theme";
@@ -721,6 +721,7 @@ function ongletService(f) {
     '<div class="grille-3"><label class="champ">Nom de l\'expéditeur<input class="saisie" id="m-nom" maxlength="80" value="' + v(r.expediteur_nom) + '" placeholder="Service sinistres"></label>' +
     '<label class="champ">Adresse d\'envoi<input class="saisie" id="m-adr" type="email" value="' + v(r.expediteur_adresse) + '" placeholder="sinistres@compagnie.fr"></label>' +
     '<label class="champ">Adresse de réception des réponses<input class="saisie" id="m-rec" type="email" value="' + v(r.email_reception) + '" placeholder="sinistres@compagnie.fr"></label></div>' +
+    '<div class="grille-3"><label class="champ">Téléphone du service sinistres <span class="aide">ajouté à la signature de chaque mail</span><input class="saisie" id="m-tel" type="tel" maxlength="25" value="' + v(r.telephone) + '" placeholder="01 23 45 67 89"></label><div></div><div></div></div>' +
     '<div class="grille-3" style="align-items:start"><label class="champ">Logo (adresse https)<input class="saisie" id="m-logo" value="' + v(r.logo_url) + '" placeholder="https://compagnie.fr/logo.png"></label>' +
     '<label class="champ">Couleur principale<span style="display:flex;gap:8px;align-items:center"><input type="color" id="m-coul-p" value="' + v(r.couleur || "#1f4e8c") + '" aria-label="Choisir la couleur"><input class="saisie" id="m-coul" value="' + v(r.couleur) + '" placeholder="#1f4e8c" maxlength="7" style="max-width:120px;flex:1"></span></label>' +
     '<div class="champ"><span>Aperçu</span><div class="mes-apercu" id="m-apercu"></div></div></div>' +
@@ -839,7 +840,7 @@ function brancherFiche(f) {
     apercuMes();
     $("f-mes").addEventListener("submit", function (e) {
       e.preventDefault(); C.occupe($("m-ok"), true, "Enregistrement");
-      op("mise_en_service_maj", { assureur_id: id, expediteur_nom: $("m-nom").value, expediteur_adresse: $("m-adr").value, email_reception: $("m-rec").value, logo_url: $("m-logo").value, couleur: $("m-coul").value })
+      op("mise_en_service_maj", { assureur_id: id, expediteur_nom: $("m-nom").value, expediteur_adresse: $("m-adr").value, email_reception: $("m-rec").value, logo_url: $("m-logo").value, couleur: $("m-coul").value, telephone: $("m-tel").value })
         .then(function (d) { etat.mes = { id: id, d: d }; C.toast("Réglages enregistrés"); rendreFiche(etat.fiche); })
         .catch(function (x) { C.toast(x.message, true); C.occupe($("m-ok"), false); });
     });

@@ -608,7 +608,7 @@ a.tuile:hover { border-color: var(--trait-fort); text-decoration: none; }
 <div id="toast" class="toast" hidden role="status"></div>
 
 <script src="vendor/supabase-js-2.118.0.js"></script>
-<script src="commun.js?v=20261115b"></script>
+<script src="commun.js?v=20261117a"></script>
 <script>
 (function () {
 "use strict";
@@ -942,7 +942,7 @@ document.addEventListener("click", function (e) { if (!$("p-alertes").hidden && 
 document.addEventListener("keydown", function (e) { if (e.key === "Escape" && !$("p-alertes").hidden) { fermerAlertes(); $("b-alertes").focus(); } });
 setInterval(function () { if (!document.hidden && !$("ecran-app").hidden) chargerAlertes(); }, 5 * 60 * 1000);
 // Nouvelle version du site publiée pendant que l'onglet est ouvert : on le dit, et on recharge en un clic (les brouillons sont gardés en session)
-var VERSION = "20261115222301";
+var VERSION = "20261117233817";
 function verifierVersion() {
   fetch("version.txt?t=" + Date.now(), { cache: "no-store" }).then(function (r) { return r.ok ? r.text() : ""; }).then(function (t) {
     t = (t || "").trim();
